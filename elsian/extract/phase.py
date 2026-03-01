@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from elsian.models.field import FieldResult, Provenance
-from elsian.models.result import ExtractionResult, PeriodResult, AuditRecord
+from elsian.models.result import ExtractionResult, PeriodResult, AuditRecord, PhaseResult
 from elsian.extract.detect import analyze_filing
 from elsian.extract.html_tables import (
     extract_tables_from_clean_md,
@@ -29,6 +29,8 @@ from elsian.normalize.aliases import AliasResolver
 from elsian.normalize.scale import infer_scale_cascade, validate_scale_sanity
 from elsian.normalize.audit import AuditLog
 from elsian.merge.merger import merge_extractions
+from elsian.context import PipelineContext
+from elsian.pipeline import PipelinePhase
 
 
 # ── Sign normalisation ───────────────────────────────────────────────
@@ -273,7 +275,7 @@ def _make_field_result(
     )
 
 
-class ExtractPhase:
+class ExtractPhase(PipelinePhase):
     """Core extraction orchestrator. Zero LLM calls."""
 
     def __init__(self, config_dir: str = "") -> None:
@@ -283,6 +285,22 @@ class ExtractPhase:
         self._alias_resolver = AliasResolver(
             str(Path(config_dir) / "field_aliases.json")
         )
+
+    def run(self, context: PipelineContext) -> PhaseResult:
+        """PipelinePhase interface: extract from filings in context.case.case_dir."""
+        case_dir = context.case.case_dir
+        if not case_dir:
+            return PhaseResult(
+                phase_name="ExtractPhase", success=False, message="No case_dir set",
+            )
+        result = self.extract(case_dir)
+        context.result = result
+        total_fields = sum(len(pr.fields) for pr in result.periods.values())
+        msg = (
+            f"{result.ticker}: extracted {total_fields} fields across "
+            f"{len(result.periods)} periods from {result.filings_used} filings"
+        )
+        return PhaseResult(phase_name="ExtractPhase", success=True, message=msg)
 
     def _load_selection_rules(self) -> Dict:
         """Load selection_rules.json from config dir."""

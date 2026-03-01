@@ -3,6 +3,17 @@
 ## 2026-03-03
 
 ### [Ticker] KAR — 8th ticker, Australian ASX, IFRS, PDF-based
+
+### [Architecture] Wire phases to PipelinePhase ABC
+- **What:** Made all three core phases inherit `PipelinePhase` with `run(context) -> PhaseResult`:
+  - `elsian/acquire/phase.py`: NEW — `AcquirePhase(PipelinePhase)` wraps fetcher routing
+  - `elsian/evaluate/phase.py`: NEW — `EvaluatePhase(PipelinePhase)` wraps evaluator
+  - `elsian/extract/phase.py`: `ExtractPhase` now inherits `PipelinePhase`, adds `run()` that
+    delegates to `extract()` and stores result in `context.result`
+  - `elsian/cli.py`: `cmd_run` uses `Pipeline([ExtractPhase(), EvaluatePhase()])` orchestrator
+  - `tests/unit/test_phases.py`: NEW — 6 tests for phase inheritance, run() contract, pipeline chain
+- **Tests:** 157 passed, 0 failed (+6 new phase tests)
+- **Regression:** ALL 8/8 at 100% (833/833)
 - **What:** Created KAR (Karoon Energy Ltd) as 8th regression ticker.
   Australian ASX company, IFRS, PDF annual reports, USD presentation currency.
   - `cases/KAR/case.json`: eu_manual source_hint, 3 PDF annual report sources

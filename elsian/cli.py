@@ -133,32 +133,44 @@ def cmd_extract(args: argparse.Namespace) -> None:
 
 
 def cmd_run(args: argparse.Namespace) -> None:
-    """Run full pipeline: extract + eval."""
+    """Run full pipeline: extract + eval via Pipeline orchestrator."""
     from elsian.extract.phase import ExtractPhase
+    from elsian.evaluate.phase import EvaluatePhase
+    from elsian.pipeline import Pipeline
+    from elsian.context import PipelineContext
 
     case_dir = _find_case_dir(args.ticker)
     if not case_dir:
         print(f"Case not found: {args.ticker}")
         sys.exit(1)
 
-    phase = ExtractPhase()
-    result = phase.extract(str(case_dir))
+    case = CaseConfig.from_file(case_dir)
+    context = PipelineContext(case=case, config_dir=str(case_dir.parent.parent / "config"))
 
+    phases = [ExtractPhase(), EvaluatePhase()]
+    pipeline = Pipeline(phases)
+    context = pipeline.run(context)
+
+    # Save extraction result
     out_path = case_dir / "extraction_result.json"
     out_path.write_text(
-        json.dumps(result.to_dict(), indent=2, ensure_ascii=False),
+        json.dumps(context.result.to_dict(), indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
 
-    total_fields = sum(len(pr.fields) for pr in result.periods.values())
+    # Print phase results
+    for error in context.errors:
+        print(f"  ERROR: {error}")
+
+    total_fields = sum(len(pr.fields) for pr in context.result.periods.values())
     print(
         f"{args.ticker}: extracted {total_fields} fields across "
-        f"{len(result.periods)} periods from {result.filings_used} filings"
+        f"{len(context.result.periods)} periods from {context.result.filings_used} filings"
     )
 
     expected_path = case_dir / "expected.json"
     if expected_path.exists():
-        report = evaluate(result, str(expected_path))
+        report = evaluate(context.result, str(expected_path))
         status = "PASS" if report.score == 100.0 else "FAIL"
         print(
             f"  Eval: {status} -- {report.score}% ({report.matched}/{report.total_expected}) "
