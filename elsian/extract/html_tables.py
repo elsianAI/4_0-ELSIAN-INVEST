@@ -702,9 +702,10 @@ _DATE_COL_RE = re.compile(r"\b(\d{1,2}/\d{1,2}/(20\d{2}))\b")
 _SECTION_HEADER_RE = re.compile(
     r"(?:CONSOLIDATED\s+)?(?:INCOME\s+STATEMENTS?|BALANCE\s+SHEETS?|"
     r"CASH\s+FLOW\s+STATEMENTS?|STATEMENTS?\s+OF\s+(?:FINANCIAL\s+POSITION|"
-    r"INCOME|OPERATIONS|CASH[-\s]?FLOWS?|"
+    r"INCOME|OPERATIONS|CASH[-\s]+FLOWS?|"
+    r"PROFIT\s+(?:AND|OR)\s+LOSS|"
     r"COMPREHENSIVE\s+(?:INCOME|LOSS))|"
-    r"FINANCIAL\s+HIGHLIGHTS|KEY\s+(?:FINANCIAL\s+)?(?:DATA|FIGURES))",
+    r"FINANCIAL\s+(?:HIGHLIGHTS|SUMMARY)|KEY\s+(?:FINANCIAL\s+)?(?:DATA|FIGURES))",
     re.IGNORECASE,
 )
 
@@ -718,7 +719,7 @@ _BS_KEYWORDS = re.compile(
     re.IGNORECASE,
 )
 _CF_KEYWORDS = re.compile(
-    r"CASH\s+FLOW|CASH[-\s]?FLOWS?",
+    r"CASH\s+FLOW|CASH[-\s]+FLOWS?",
     re.IGNORECASE,
 )
 

@@ -15,10 +15,10 @@ from elsian.evaluate.evaluator import evaluate
 CASES_DIR = Path(__file__).resolve().parent.parent.parent / "cases"
 
 # Tickers expected to score 100% (curated and validated in 3.0)
-VALIDATED_TICKERS = ["TZOO", "GCT", "IOSP", "NEXN", "SONO", "TEP"]
+VALIDATED_TICKERS = ["TZOO", "GCT", "IOSP", "NEXN", "SONO", "TEP", "TALO", "KAR"]
 
 # Tickers still being curated (expected to fail, not blocking)
-WIP_TICKERS = ["TALO"]
+WIP_TICKERS: list[str] = []
 
 
 def _has_case(ticker: str) -> bool:

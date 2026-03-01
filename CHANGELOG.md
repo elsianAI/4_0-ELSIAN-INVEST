@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-03-03
+
+### [Ticker] KAR — 8th ticker, Australian ASX, IFRS, PDF-based
+- **What:** Created KAR (Karoon Energy Ltd) as 8th regression ticker.
+  Australian ASX company, IFRS, PDF annual reports, USD presentation currency.
+  - `cases/KAR/case.json`: eu_manual source_hint, 3 PDF annual report sources
+  - `cases/KAR/expected.json`: 2 periods (FY2025, FY2024), 14 fields each = 28 total
+  - Fixed `elsian/extract/html_tables.py` section header regex:
+    added `PROFIT AND LOSS` (IFRS income statement), `FINANCIAL SUMMARY/HIGHLIGHTS`,
+    fixed `CASH[-\s]+FLOWS` for multi-space PDF text
+  - Added ~15 IFRS/British aliases to `config/field_aliases.json`:
+    "profit for financial year" (net_income), "depreciation and amortisation"
+    (British spelling), "net cash flows from operating activities" (cfo),
+    "basic/diluted earnings per ordinary share" (eps), "borrowings" (total_debt)
+  - KAR added to VALIDATED_TICKERS in regression suite
+- **Tests:** 151 passed, 0 failed
+- **Regression:** ALL 8/8 at 100% (833/833): GCT(108) IOSP(95) KAR(28) NEXN(76) SONO(116) TALO(85) TEP(55) TZOO(270)
+
 ## 2026-03-02
 
 ### [Acquire] Port acquisition layer — SecEdgarFetcher, EuRegulatorsFetcher, convert modules

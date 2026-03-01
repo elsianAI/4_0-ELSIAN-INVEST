@@ -1,0 +1,31 @@
+{
+  "ticker": "KAR",
+  "company_name": "Karoon Energy Ltd",
+  "currency": "USD",
+  "source_hint": "eu_manual",
+  "market": "ASX (Australian Securities Exchange)",
+  "accounting_standard": "IFRS",
+  "fiscal_year_end_month": 12,
+  "filings_expected_count": 6,
+  "filings_sources": [
+    {
+      "url": "https://www.karoonenergy.com.au/wp-content/uploads/260226-Karoon-2025-Annual-Report.pdf",
+      "filename": "SRC_001_ANNUAL_REPORT_2025-12-31.pdf",
+      "filing_type": "ANNUAL_REPORT",
+      "period_end": "2025-12-31"
+    },
+    {
+      "url": "https://www.karoonenergy.com.au/wp-content/uploads/2024-Annual-Report-3.pdf",
+      "filename": "SRC_002_ANNUAL_REPORT_2024-12-31.pdf",
+      "filing_type": "ANNUAL_REPORT",
+      "period_end": "2024-12-31"
+    },
+    {
+      "url": "https://www.karoonenergy.com.au/wp-content/uploads/Annual-Report-TY23.pdf",
+      "filename": "SRC_003_ANNUAL_REPORT_2023-12-31.pdf",
+      "filing_type": "ANNUAL_REPORT",
+      "period_end": "2023-12-31"
+    }
+  ],
+  "notes": "Australian oil & gas company. Reports in USD (functional currency). Changed fiscal year from June to December in 2023; TY23 is a 6-month transition period (Jul-Dec 2023). FY2024 and FY2025 are full calendar years. Annual reports are PDF-based from IR website."
+}
