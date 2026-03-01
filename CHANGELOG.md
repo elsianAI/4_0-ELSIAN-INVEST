@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-03-02
+
+### [Sync] Port 3.0 TALO+TEP improvements — 7/7 at 100% (805/805)
+- **What:** Synced all extraction improvements from 3.0 (794914e→bf9ef15):
+  - `config/field_aliases.json`: 3 DD&A aliases (depletion variants, dd&a)
+  - `elsian/normalize/aliases.py`: global reject patterns (section titles
+    misinterpreted as data), capex "included in accounts payable" reject,
+    `_is_rejected` checks global patterns first
+  - `elsian/extract/html_tables.py`: numeric-anchor calibration for sparse
+    headers, "per common/ordinary share" heading normalization, plural
+    regex for section headers (STATEMENTS?, SHEETS?), Schedule I exclusion
+    zone, TOC F-page skip, split-line section header detection
+  - `elsian/extract/vertical.py`: NEW module — vertical-format balance
+    sheet extraction from EDGAR .txt (221 lines, key BS totals + debt synthesis)
+  - `elsian/extract/phase.py`: vertical BS integration (+20 bonus),
+    _section_bonus canonical-aware (total_equity IS penalty),
+    negative total_debt IS rejection, _STRONGLY_DEPRIORITIZED expanded
+    (Schedule I patterns), manual_overrides support from case.json
+  - `cases/TEP/`: updated expected.json (48→55 fields: +FY2022, FY2021,
+    FY2019), case.json with manual_overrides and filings_sources, 28 new filings
+- **Ported from:** 3.0 commits 794914e→bf9ef15 (6 files, 774 insertions)
+- **Tests:** 105 passed, 0 failed
+- **Regression:** ALL 7/7 at 100% (805/805): GCT(108) IOSP(95) NEXN(76) SONO(116) TALO(85) TEP(55) TZOO(270)
+
 ## 2026-03-01
 
 ### [Bootstrap] Project scaffold and core modules (Steps 1-7)

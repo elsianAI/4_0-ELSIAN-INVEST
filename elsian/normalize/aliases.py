@@ -15,6 +15,16 @@ from typing import Dict, List, Optional, Tuple
 # Maps canonical field name -> list of regex patterns. If a raw label
 # matches any pattern for the resolved canonical, that resolution is
 # rejected (returns None).
+
+# Global reject patterns: applied to ALL canonical fields before
+# per-field patterns.  These catch section titles / headers that the
+# space-aligned parser might misinterpret as data rows.
+_GLOBAL_REJECT_PATTERNS: List[re.Pattern] = [
+    re.compile(r"for\s+the\s+years?\s+ended", re.I),
+    re.compile(r"statements?\s+of\s+changes?\s+in", re.I),
+    re.compile(r"we\s+have\s+audited", re.I),
+]
+
 _REJECT_PATTERNS: Dict[str, List[re.Pattern]] = {
     "net_income": [
         re.compile(r"per\s*share", re.I),
@@ -67,6 +77,10 @@ _REJECT_PATTERNS: Dict[str, List[re.Pattern]] = {
     "capex": [
         re.compile(r"finance\s+lease", re.I),
         re.compile(r"accrued\s+but\s+not\s+paid", re.I),
+        # Reject supplemental non-cash disclosures like "Capital expenditures
+        # included in accounts payable and accrued liabilities" — these are
+        # not actual capex from the investing section.
+        re.compile(r"included\s+in\s+accounts\s+payable", re.I),
     ],
     "income_tax": [
         re.compile(r"before\s+income\s+tax", re.I),
@@ -221,6 +235,9 @@ class AliasResolver:
     @staticmethod
     def _is_rejected(canonical: str, raw_label: str) -> bool:
         """Return True if raw_label is contextually invalid for canonical."""
+        for pat in _GLOBAL_REJECT_PATTERNS:
+            if pat.search(raw_label):
+                return True
         patterns = _REJECT_PATTERNS.get(canonical, [])
         for pat in patterns:
             if pat.search(raw_label):

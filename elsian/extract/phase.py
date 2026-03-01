@@ -23,6 +23,7 @@ from elsian.extract.html_tables import (
     extract_tables_from_text,
     TableField,
 )
+from elsian.extract.vertical import extract_vertical_bs
 from elsian.extract.narrative import extract_from_narrative, NarrativeField
 from elsian.normalize.aliases import AliasResolver
 from elsian.normalize.scale import infer_scale_cascade, validate_scale_sanity
@@ -117,7 +118,8 @@ _STRONGLY_DEPRIORITIZED_SECTION = re.compile(
     r"|statutory_rate"
     r"|:statements_of_operations:"
     r"|:balance_sheets:"
-    r"|:statements_of_cash_flows:",
+    r"|:statements_of_cash_flows:"
+    r"|the_following_table_presents.*balance_sheet",
     re.I,
 )
 
@@ -126,8 +128,14 @@ _ROW_RE = re.compile(r"row(\d+)")
 _COL_RE = re.compile(r"col(\d+)")
 
 
-def _section_bonus(source_location: str, rules: Optional[Dict] = None) -> int:
-    """Return a priority bonus based on the table's sub-section."""
+def _section_bonus(source_location: str, rules: Optional[Dict] = None,
+                   canonical: Optional[str] = None) -> int:
+    """Return a priority bonus based on the table's sub-section.
+
+    When *canonical* is ``"total_equity"`` and the source is an
+    income-statement section, applies a severe penalty (equity
+    never belongs on the IS).
+    """
     bonus = 5
     penalty = -5
     severe_penalty = -100
@@ -137,12 +145,22 @@ def _section_bonus(source_location: str, rules: Optional[Dict] = None) -> int:
         penalty = sw.get("deprioritized_penalty", -5)
         severe_penalty = sw.get("strongly_deprioritized_penalty", -100)
     if _PRIMARY_IS_SECTION.search(source_location):
-        return bonus
-    if _STRONGLY_DEPRIORITIZED_SECTION.search(source_location):
-        return severe_penalty
-    if _DEPRIORITIZED_SECTION.search(source_location):
-        return penalty
-    return 0
+        base = bonus
+    elif _STRONGLY_DEPRIORITIZED_SECTION.search(source_location):
+        base = severe_penalty
+    elif _DEPRIORITIZED_SECTION.search(source_location):
+        base = penalty
+    else:
+        base = 0
+
+    # total_equity from income-statement is always a misclassification
+    # (typically par value or shares outstanding).
+    if canonical == "total_equity":
+        loc_lower = source_location.lower()
+        if ":income_statement:" in loc_lower:
+            base = min(base, severe_penalty)
+
+    return base
 
 
 def _filing_rank(period_key: str, filing_type: str,
@@ -370,6 +388,11 @@ class ExtractPhase:
             filing_extractions, ticker=ticker, currency=currency
         )
 
+        # Inject manual_overrides from case.json — ONLY for fields that the
+        # extractor could not find (e.g. corrupted PDF sources). If the
+        # extractor already produced a value, it always wins.
+        self._apply_manual_overrides(config, result)
+
         # Update audit
         result.audit.fields_extracted += audit.accepted_count
         result.audit.fields_discarded += audit.discarded_count
@@ -457,6 +480,106 @@ class ExtractPhase:
                 period_fields, additive_labels,
                 source_type="table",
                 use_section_bonus=False,
+            )
+
+        # ── Vertical-format consolidated BS extraction ───
+        # EDGAR .txt may have the consolidated BS in a vertical
+        # layout (one label per line) that the space-aligned
+        # parser cannot handle.  This targeted extractor pulls
+        # key BS totals directly.  A high section_bonus (+20)
+        # ensures these authoritative consolidated values beat
+        # Schedule I / parent-only values from other sources.
+        _VERTICAL_BS_BONUS = 20
+        for tf in extract_vertical_bs(
+            text, source_filename=filing_path.name,
+        ):
+            canonical = self._alias_resolver.resolve(tf.label)
+            if canonical is None:
+                # Synthetic labels (e.g. "Total debt (current +
+                # long-term)") may not resolve via aliases.
+                # The source_location encodes the canonical name.
+                loc = tf.source_location
+                if ":total_debt" in loc:
+                    canonical = "total_debt"
+                elif ":total_assets" in loc:
+                    canonical = "total_assets"
+                elif ":total_liabilities" in loc:
+                    canonical = "total_liabilities"
+                elif ":total_equity" in loc:
+                    canonical = "total_equity"
+                elif ":cash_and_equivalents" in loc:
+                    canonical = "cash_and_equivalents"
+            if canonical is None:
+                continue
+
+            field_mult = self._alias_resolver.get_multiplier(canonical)
+            scale, confidence = infer_scale_cascade(
+                filing_scale, "", metadata.scale, field_mult
+            )
+
+            if not validate_scale_sanity(tf.value, canonical, scale):
+                audit.discard(
+                    field_name=canonical,
+                    period=tf.column_header,
+                    reason="scale_uncertain",
+                    source_filing=filing_path.name,
+                    raw_label=tf.label,
+                    raw_value=tf.value,
+                )
+                continue
+
+            period_key = tf.column_header
+            if not period_key or not period_key.startswith("FY"):
+                continue
+
+            label_pri = self._alias_resolver.label_priority(
+                canonical, tf.label
+            )
+            new_sort_key = compute_sort_key(
+                period_key=period_key,
+                filing_type=metadata.filing_type,
+                source_type="table",
+                label_priority=label_pri,
+                section_bonus_val=_VERTICAL_BS_BONUS,
+                source_filing=filing_path.name,
+                source_location=tf.source_location,
+                rules=rules,
+            )
+
+            if period_key not in period_fields:
+                period_fields[period_key] = {}
+
+            if canonical in period_fields[period_key]:
+                existing = period_fields[period_key][canonical]
+                old_sort_key = getattr(
+                    existing, "_sort_key",
+                    (999, 999, 999, 999, (999,)),
+                )
+                if new_sort_key >= old_sort_key:
+                    audit.discard(
+                        field_name=canonical,
+                        period=period_key,
+                        reason="lower_priority_duplicate",
+                        source_filing=filing_path.name,
+                        raw_label=tf.label,
+                        raw_value=tf.value,
+                        scale=scale,
+                    )
+                    continue
+
+            fr = _make_field_result(
+                _normalize_sign(canonical, tf.label, tf.value),
+                scale, filing_path.name, tf.source_location, confidence,
+            )
+            fr._sort_key = new_sort_key  # type: ignore[attr-defined]
+            period_fields[period_key][canonical] = fr
+            audit.accept(
+                field_name=canonical,
+                period=period_key,
+                source_filing=filing_path.name,
+                raw_label=tf.label,
+                raw_value=tf.value,
+                scale=scale,
             )
 
         # Narrative extraction
@@ -567,6 +690,24 @@ class ExtractPhase:
             )
             return
 
+        # Reject negative total_debt from IS sections — on
+        # the income statement, negative values matching the
+        # total_debt alias are always something else (e.g.
+        # "Loss on extinguishment of debt").
+        if (canonical == "total_debt"
+                and tf.value < 0
+                and ":income_statement:" in tf.source_location.lower()):
+            audit.discard(
+                field_name=canonical,
+                period=tf.column_header,
+                reason="negative_debt_in_IS",
+                source_filing=filing_path.name,
+                raw_label=tf.label,
+                raw_value=tf.value,
+                scale=scale,
+            )
+            return
+
         period_key = tf.column_header
         if not period_key or period_key == "unknown":
             audit.discard(
@@ -581,7 +722,7 @@ class ExtractPhase:
             period_fields[period_key] = {}
 
         new_lp = self._alias_resolver.label_priority(canonical, tf.label)
-        sec_bonus = _section_bonus(tf.source_location, rules) if use_section_bonus else 0
+        sec_bonus = _section_bonus(tf.source_location, rules, canonical=canonical) if use_section_bonus else 0
         if not use_section_bonus:
             loc_lower = tf.source_location.lower()
             if any(s in loc_lower for s in ("income_statement", "balance_sheet", "cash_flow")):
@@ -706,3 +847,68 @@ class ExtractPhase:
                         source_filename, nc_loc,
                         filing_scale_confidence,
                     )
+
+    # ── MANUAL OVERRIDES ─────────────────────────────────────────────
+
+    @staticmethod
+    def _apply_manual_overrides(
+        config: Dict,
+        result: ExtractionResult,
+    ) -> None:
+        """Inject manual_overrides from case.json only for missing fields.
+
+        A field is considered missing if the extractor produced no value for
+        that period+field combination after merging all filings.  If the
+        extractor found anything — even with low confidence — it always wins
+        and the override is silently skipped.
+        """
+        overrides = config.get("manual_overrides")
+        if not overrides or not isinstance(overrides, dict):
+            return
+
+        for period_key, fields in overrides.items():
+            if not isinstance(fields, dict):
+                continue
+
+            # Pre-validate specs: only consider dict entries with a numeric value.
+            valid_specs = {
+                fn: spec
+                for fn, spec in fields.items()
+                if isinstance(spec, dict) and "value" in spec
+            }
+            if not valid_specs:
+                continue
+
+            # Create the period entry if the extractor found nothing at all.
+            if period_key not in result.periods:
+                fecha_fin = ""
+                m = re.match(r"FY(\d{4})$", period_key)
+                if m:
+                    fecha_fin = f"{m.group(1)}-12-31"
+                result.periods[period_key] = PeriodResult(
+                    fecha_fin=fecha_fin,
+                    tipo_periodo="anual",
+                )
+
+            period_result = result.periods[period_key]
+
+            for field_name, spec in valid_specs.items():
+                # Extractor wins: skip if any value already present.
+                if field_name in period_result.fields:
+                    continue
+
+                try:
+                    value = float(spec["value"])
+                except (TypeError, ValueError):
+                    continue
+
+                note = spec.get("note", "")
+                loc = (
+                    f"case.json:manual_overrides:{period_key}:{field_name}"
+                    + (f":{note}" if note else "")
+                )
+                fr = _make_field_result(
+                    value, "raw", "manual_override", loc, "manual",
+                )
+                period_result.fields[field_name] = fr
+                result.audit.fields_extracted += 1
