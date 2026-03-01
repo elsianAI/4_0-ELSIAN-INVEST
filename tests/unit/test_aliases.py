@@ -23,4 +23,4 @@ def test_resolve_canonical_name():
 
 def test_canonical_names_count():
     resolver = AliasResolver()
-    assert len(resolver.canonical_names) >= 22
+    assert len(resolver.get_all_canonical_names()) >= 22

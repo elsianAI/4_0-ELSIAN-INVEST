@@ -28,9 +28,12 @@ class Filing:
 class FilingMetadata:
     """Detected metadata from a filing's content."""
 
+    filename: str = ""
+    language: str = "en"
     currency: str = "USD"
     scale: str = "raw"
-    language: str = "en"
-    periods: list[str] = field(default_factory=list)
-    sections: list[str] = field(default_factory=list)
+    scale_confidence: str = "low"
+    sections_found: list[str] = field(default_factory=list)
+    periods_visible: list[str] = field(default_factory=list)
     filing_type: str = ""
+    period_end_date: str = ""

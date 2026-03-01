@@ -62,6 +62,74 @@ def _load_extraction_result(case_dir: Path) -> ExtractionResult | None:
     return result
 
 
+def cmd_extract(args: argparse.Namespace) -> None:
+    """Run extraction on a ticker."""
+    from elsian.extract.phase import ExtractPhase
+
+    case_dir = _find_case_dir(args.ticker)
+    if not case_dir:
+        print(f"Case not found: {args.ticker}")
+        sys.exit(1)
+
+    phase = ExtractPhase()
+    result = phase.extract(str(case_dir))
+
+    # Save extraction result
+    out_path = case_dir / "extraction_result.json"
+    out_path.write_text(
+        json.dumps(result.to_dict(), indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    total_fields = sum(len(pr.fields) for pr in result.periods.values())
+    print(
+        f"{args.ticker}: extracted {total_fields} fields across "
+        f"{len(result.periods)} periods from {result.filings_used} filings"
+    )
+    print(f"  Saved to {out_path}")
+
+
+def cmd_run(args: argparse.Namespace) -> None:
+    """Run full pipeline: extract + eval."""
+    from elsian.extract.phase import ExtractPhase
+
+    case_dir = _find_case_dir(args.ticker)
+    if not case_dir:
+        print(f"Case not found: {args.ticker}")
+        sys.exit(1)
+
+    phase = ExtractPhase()
+    result = phase.extract(str(case_dir))
+
+    out_path = case_dir / "extraction_result.json"
+    out_path.write_text(
+        json.dumps(result.to_dict(), indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    total_fields = sum(len(pr.fields) for pr in result.periods.values())
+    print(
+        f"{args.ticker}: extracted {total_fields} fields across "
+        f"{len(result.periods)} periods from {result.filings_used} filings"
+    )
+
+    expected_path = case_dir / "expected.json"
+    if expected_path.exists():
+        report = evaluate(result, str(expected_path))
+        status = "PASS" if report.score == 100.0 else "FAIL"
+        print(
+            f"  Eval: {status} -- {report.score}% ({report.matched}/{report.total_expected}) "
+            f"wrong={report.wrong} missed={report.missed} extra={report.extra}"
+        )
+        if report.score < 100.0:
+            for d in report.details:
+                if d.status != "matched":
+                    print(f"    {d.status} {d.period}/{d.field_name} exp={d.expected} got={d.actual}")
+            sys.exit(1)
+    else:
+        print("  No expected.json — skipping evaluation")
+
+
 def cmd_eval(args: argparse.Namespace) -> None:
     """Evaluate extraction vs expected.json."""
     if args.all:
@@ -80,11 +148,10 @@ def cmd_eval(args: argparse.Namespace) -> None:
             all_ok = False
             continue
 
-        result = _load_extraction_result(case_dir)
-        if not result:
-            print(f"{ticker}: no extraction_result.json")
-            all_ok = False
-            continue
+        # Run extraction on-the-fly
+        from elsian.extract.phase import ExtractPhase
+        phase = ExtractPhase()
+        result = phase.extract(str(case_dir))
 
         report = evaluate(result, str(case_dir / "expected.json"))
         status = "PASS" if report.score == 100.0 else "FAIL"
@@ -132,6 +199,14 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(prog="elsian", description="ELSIAN 4.0 CLI")
     sub = parser.add_subparsers(dest="command")
+
+    p_extract = sub.add_parser("extract", help="Extract fields from filings")
+    p_extract.add_argument("ticker")
+    p_extract.set_defaults(func=cmd_extract)
+
+    p_run = sub.add_parser("run", help="Full pipeline: extract + eval")
+    p_run.add_argument("ticker")
+    p_run.set_defaults(func=cmd_run)
 
     p_eval = sub.add_parser("eval", help="Evaluate extraction vs expected.json")
     p_eval.add_argument("ticker", nargs="?", default="")

@@ -1,0 +1,708 @@
+"""ExtractPhase -- core extraction orchestrator.
+
+Ported from 3.0 deterministic/src/pipeline.py extract() method.
+Iterates filings, detects metadata, runs table + narrative extraction,
+resolves aliases, applies scale cascade, handles collision resolution
+and additive fields, applies sign convention, and post-processes results.
+
+Adapted for 4.0 models: FieldResult wraps provenance in Provenance dataclass.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+from elsian.models.field import FieldResult, Provenance
+from elsian.models.result import ExtractionResult, PeriodResult, AuditRecord
+from elsian.extract.detect import analyze_filing
+from elsian.extract.html_tables import (
+    extract_tables_from_clean_md,
+    extract_tables_from_text,
+    TableField,
+)
+from elsian.extract.narrative import extract_from_narrative, NarrativeField
+from elsian.normalize.aliases import AliasResolver
+from elsian.normalize.scale import infer_scale_cascade, validate_scale_sanity
+from elsian.normalize.audit import AuditLog
+from elsian.merge.merger import merge_extractions
+
+
+# ── Sign normalisation ───────────────────────────────────────────────
+_ALWAYS_POSITIVE_FIELDS = frozenset({
+    "cost_of_revenue",
+    "sga",
+    "research_and_development",
+    "depreciation_amortization",
+    "interest_expense",
+})
+
+_BENEFIT_RE = re.compile(r"\bbenefit\b", re.IGNORECASE)
+
+
+def _normalize_sign(canonical: str, raw_label: str, value: float) -> float:
+    """Ensure expense fields use the correct sign convention."""
+    if canonical in _ALWAYS_POSITIVE_FIELDS:
+        return abs(value)
+    if canonical == "income_tax" and value < 0:
+        if not _BENEFIT_RE.search(raw_label):
+            return abs(value)
+    return value
+
+
+# ── Dividend per share from equity statement ─────────────────────────
+_DIVIDEND_PER_SHARE_RE = re.compile(
+    r"Dividend\s+paid\s*\(\s*\$\s*([\d,.]+)\s*per\s+share\s*\)",
+    re.IGNORECASE,
+)
+_BALANCE_DATE_RE = re.compile(
+    r"Balance\s+at\s+December\s+31[,]?\s+(20\d{2})",
+    re.IGNORECASE,
+)
+
+
+def _extract_dividends_per_share(
+    text: str, source_filename: str
+) -> List[Tuple[str, float, str]]:
+    """Extract dividends_per_share from equity statement labels."""
+    results: List[Tuple[str, float, str]] = []
+    balance_positions: List[Tuple[int, int]] = []
+    for m in _BALANCE_DATE_RE.finditer(text):
+        balance_positions.append((m.start(), int(m.group(1))))
+
+    for m in _DIVIDEND_PER_SHARE_RE.finditer(text):
+        try:
+            value = float(m.group(1).replace(",", ""))
+        except ValueError:
+            continue
+        preceding_year = None
+        for bpos, byear in reversed(balance_positions):
+            if bpos < m.start():
+                preceding_year = byear
+                break
+        if preceding_year is None:
+            continue
+        period_key = f"FY{preceding_year + 1}"
+        loc = f"{source_filename}:equity_statement:char{m.start()}"
+        results.append((period_key, value, loc))
+    return results
+
+
+# ── Section priority patterns ────────────────────────────────────────
+_PRIMARY_IS_SECTION = re.compile(
+    r":operating_income|:operating_profit|:consolidated_statements_of_operations"
+    r"|:consolidated_statements_of_income"
+    r"|:consolidated_balance_sheets|:consolidated_statements_of_comprehensive",
+    re.I,
+)
+_DEPRIORITIZED_SECTION = re.compile(
+    r":loss_from_operations"
+    r"|:income.*from_operations"
+    r"|discontinued_operations"
+    r"|:discontinued"
+    r"|:net_income_\(loss\)"
+    r"|prepaid_income_taxes"
+    r"|:income_tax_payable"
+    r"|details_of_income_tax"
+    r"|components_of_income"
+    r"|components_of_results"
+    r"|net_income.*margin"
+    r"|balance_sheet_data",
+    re.I,
+)
+_STRONGLY_DEPRIORITIZED_SECTION = re.compile(
+    r"federal_income_taxes"
+    r"|statutory_rate"
+    r"|:statements_of_operations:"
+    r"|:balance_sheets:"
+    r"|:statements_of_cash_flows:",
+    re.I,
+)
+
+_TBL_RE = re.compile(r"tbl(\d+)")
+_ROW_RE = re.compile(r"row(\d+)")
+_COL_RE = re.compile(r"col(\d+)")
+
+
+def _section_bonus(source_location: str, rules: Optional[Dict] = None) -> int:
+    """Return a priority bonus based on the table's sub-section."""
+    bonus = 5
+    penalty = -5
+    severe_penalty = -100
+    if rules and "section_weights" in rules:
+        sw = rules["section_weights"]
+        bonus = sw.get("primary_is_bonus", 5)
+        penalty = sw.get("deprioritized_penalty", -5)
+        severe_penalty = sw.get("strongly_deprioritized_penalty", -100)
+    if _PRIMARY_IS_SECTION.search(source_location):
+        return bonus
+    if _STRONGLY_DEPRIORITIZED_SECTION.search(source_location):
+        return severe_penalty
+    if _DEPRIORITIZED_SECTION.search(source_location):
+        return penalty
+    return 0
+
+
+def _filing_rank(period_key: str, filing_type: str,
+                 rules: Optional[Dict] = None) -> int:
+    """Rank a filing type for a given period (lower = better)."""
+    if rules and "filing_priority_by_period" in rules:
+        priorities = rules["filing_priority_by_period"]
+        if period_key.startswith("FY"):
+            period_type = "FY"
+        elif period_key.startswith("H"):
+            period_type = "H"
+        else:
+            period_type = "Q"
+        plist = priorities.get(period_type, [])
+        ft_upper = filing_type.upper()
+        for idx, ft in enumerate(plist):
+            if ft.upper() == ft_upper:
+                return idx
+        return len(plist)
+    from elsian.merge.merger import _filing_priority
+    return _filing_priority(filing_type)
+
+
+def _source_type_rank(source_type: str,
+                      rules: Optional[Dict] = None) -> int:
+    """Rank a source type (lower = better). table < narrative."""
+    if rules and "source_type_priority" in rules:
+        plist = rules["source_type_priority"]
+        try:
+            return plist.index(source_type)
+        except ValueError:
+            return len(plist)
+    return 0 if source_type == "table" else 1
+
+
+def _parse_stable_order(source_filing: str, source_location: str,
+                        rules: Optional[Dict] = None) -> Tuple:
+    """Extract stable tiebreak key from filing coords."""
+    tbl_m = _TBL_RE.search(source_location)
+    row_m = _ROW_RE.search(source_location)
+    col_m = _COL_RE.search(source_location)
+    tbl_num = int(tbl_m.group(1)) if tbl_m else 0
+    row_num = int(row_m.group(1)) if row_m else 0
+    col_num = int(col_m.group(1)) if col_m else 0
+
+    tbl_sign = -1
+    row_sign = -1
+    col_sign = 1
+    if rules and "stable_tiebreaker" in rules:
+        st = rules["stable_tiebreaker"]
+        if st.get("tbl_order", "").startswith("ascending"):
+            tbl_sign = 1
+        if st.get("row_order", "").startswith("ascending"):
+            row_sign = 1
+        if st.get("col_order", "").startswith("descending"):
+            col_sign = -1
+
+    return (source_filing, tbl_sign * tbl_num, row_sign * row_num, col_sign * col_num)
+
+
+def _period_affinity(period_key: str, source_filing: str) -> int:
+    """Return 0 if source_filing is the primary filing for period_key, 1 otherwise."""
+    if period_key.startswith("FY"):
+        return 0
+    if period_key in source_filing:
+        return 0
+    return 1
+
+
+def compute_sort_key(
+    period_key: str,
+    filing_type: str,
+    source_type: str,
+    label_priority: int,
+    section_bonus_val: int,
+    source_filing: str,
+    source_location: str,
+    rules: Optional[Dict] = None,
+) -> Tuple:
+    """Compute a comparable sort key for collision resolution.
+
+    Lower key = better candidate. Comparison order:
+    1. filing_rank
+    2. period_affinity
+    3. source_type_rank
+    4. semantic_rank (negated label_priority + section_bonus)
+    5. stable_order
+    """
+    fr = _filing_rank(period_key, filing_type, rules)
+    affinity = _period_affinity(period_key, source_filing)
+    src_rank = _source_type_rank(source_type, rules)
+    semantic_rank = -(label_priority + section_bonus_val)
+    stable = _parse_stable_order(source_filing, source_location, rules)
+    return (fr, affinity, src_rank, semantic_rank, stable)
+
+
+def _make_field_result(
+    value: float, scale: str, source_filing: str,
+    source_location: str, confidence: str,
+) -> FieldResult:
+    """Create a FieldResult with Provenance from flat args."""
+    return FieldResult(
+        value=value,
+        provenance=Provenance(
+            source_filing=source_filing,
+            source_location=source_location,
+        ),
+        scale=scale,
+        confidence=confidence,
+    )
+
+
+class ExtractPhase:
+    """Core extraction orchestrator. Zero LLM calls."""
+
+    def __init__(self, config_dir: str = "") -> None:
+        if not config_dir:
+            config_dir = str(Path(__file__).parent.parent.parent / "config")
+        self._config_dir = config_dir
+        self._alias_resolver = AliasResolver(
+            str(Path(config_dir) / "field_aliases.json")
+        )
+
+    def _load_selection_rules(self) -> Dict:
+        """Load selection_rules.json from config dir."""
+        path = Path(self._config_dir) / "selection_rules.json"
+        if path.exists():
+            return json.loads(path.read_text(encoding="utf-8"))
+        return {}
+
+    def extract(self, case_dir: str) -> ExtractionResult:
+        """Extract financial data from filings in a case directory."""
+        case_path = Path(case_dir)
+        filings_dir = case_path / "filings"
+
+        # Read case config
+        case_json_path = case_path / "case.json"
+        config: Dict = {}
+        if case_json_path.exists():
+            config = json.loads(case_json_path.read_text(encoding="utf-8"))
+
+        ticker = config.get("ticker", case_path.name)
+        currency = config.get("currency", "USD")
+
+        # Load selection rules
+        rules = dict(self._load_selection_rules())
+        case_overrides = config.get("selection_overrides")
+        if case_overrides and isinstance(case_overrides, dict):
+            rules.update(case_overrides)
+
+        if not filings_dir.exists() or not any(filings_dir.iterdir()):
+            return ExtractionResult(ticker=ticker, currency=currency, filings_used=0)
+
+        audit = AuditLog()
+        filing_extractions: List[Tuple[str, str, Dict[str, Dict[str, FieldResult]]]] = []
+
+        for filing_path in sorted(filings_dir.iterdir()):
+            if not filing_path.is_file():
+                continue
+
+            suffix = filing_path.suffix.lower()
+            if suffix not in {".md", ".txt"}:
+                if not filing_path.name.endswith(".clean.md"):
+                    continue
+
+            is_clean_md = filing_path.name.endswith(".clean.md")
+            text = filing_path.read_text(encoding="utf-8", errors="replace")
+            if not text.strip():
+                continue
+
+            metadata = analyze_filing(filing_path.name, text)
+            filing_scale = metadata.scale
+            filing_scale_confidence = metadata.scale_confidence
+
+            period_fields: Dict[str, Dict[str, FieldResult]] = {}
+            additive_labels: Dict[str, Dict[str, set]] = {}
+            _raw_table_fields: list = []
+
+            if is_clean_md:
+                self._extract_from_clean_md(
+                    text, filing_path, metadata, filing_scale,
+                    filing_scale_confidence, rules, audit,
+                    period_fields, additive_labels, _raw_table_fields,
+                )
+            else:
+                self._extract_from_txt(
+                    text, filing_path, metadata, filing_scale,
+                    filing_scale_confidence, rules, audit,
+                    period_fields, additive_labels, _raw_table_fields,
+                )
+
+            # Post-process: recover total_liabilities from sub-totals
+            self._recover_total_liabilities(
+                period_fields, _raw_table_fields, filing_path.name,
+                filing_scale, filing_scale_confidence,
+            )
+
+            if period_fields:
+                filing_extractions.append(
+                    (metadata.filing_type, filing_path.name, period_fields)
+                )
+
+        # Post-process: EPS duplication (basic and diluted)
+        for _ft, _fn, pf in filing_extractions:
+            for _pk in pf:
+                if "eps_basic" in pf[_pk] and "eps_diluted" not in pf[_pk]:
+                    src = pf[_pk]["eps_basic"]
+                    pf[_pk]["eps_diluted"] = _make_field_result(
+                        src.value, src.scale,
+                        src.provenance.source_filing,
+                        src.provenance.source_location,
+                        src.confidence,
+                    )
+                elif "eps_diluted" in pf[_pk] and "eps_basic" not in pf[_pk]:
+                    src = pf[_pk]["eps_diluted"]
+                    pf[_pk]["eps_basic"] = _make_field_result(
+                        src.value, src.scale,
+                        src.provenance.source_filing,
+                        src.provenance.source_location,
+                        src.confidence,
+                    )
+
+        # Merge all filing extractions
+        result = merge_extractions(
+            filing_extractions, ticker=ticker, currency=currency
+        )
+
+        # Update audit
+        result.audit.fields_extracted += audit.accepted_count
+        result.audit.fields_discarded += audit.discarded_count
+        result.audit.discarded_reasons.extend(audit.discard_reasons)
+        result.audit.discarded_reasons = list(set(result.audit.discarded_reasons))
+
+        return result
+
+    # ── Clean MD extraction ──────────────────────────────────────────
+
+    def _extract_from_clean_md(
+        self,
+        text: str,
+        filing_path: Path,
+        metadata: object,
+        filing_scale: str,
+        filing_scale_confidence: str,
+        rules: Dict,
+        audit: AuditLog,
+        period_fields: Dict[str, Dict[str, FieldResult]],
+        additive_labels: Dict[str, Dict[str, set]],
+        raw_table_fields: list,
+    ) -> None:
+        """Extract from .clean.md files (markdown tables)."""
+        table_fields = extract_tables_from_clean_md(
+            text, source_filename=filing_path.name,
+            filing_type=metadata.filing_type,
+        )
+        raw_table_fields.extend(table_fields)
+
+        for tf in table_fields:
+            self._process_table_field(
+                tf, filing_path, metadata, filing_scale,
+                filing_scale_confidence, rules, audit,
+                period_fields, additive_labels,
+                source_type="table",
+                use_section_bonus=True,
+            )
+
+        # Dividend per share from equity statement
+        for dps_period, dps_value, dps_loc in _extract_dividends_per_share(
+            text, filing_path.name
+        ):
+            if dps_period not in period_fields:
+                period_fields[dps_period] = {}
+            if "dividends_per_share" not in period_fields[dps_period]:
+                fr = _make_field_result(
+                    dps_value, "raw", filing_path.name, dps_loc, "high"
+                )
+                period_fields[dps_period]["dividends_per_share"] = fr
+                audit.accept(
+                    field_name="dividends_per_share",
+                    period=dps_period,
+                    source_filing=filing_path.name,
+                    raw_label="Dividend paid ($ per share)",
+                    raw_value=dps_value,
+                    scale="raw",
+                )
+
+    # ── TXT extraction ───────────────────────────────────────────────
+
+    def _extract_from_txt(
+        self,
+        text: str,
+        filing_path: Path,
+        metadata: object,
+        filing_scale: str,
+        filing_scale_confidence: str,
+        rules: Dict,
+        audit: AuditLog,
+        period_fields: Dict[str, Dict[str, FieldResult]],
+        additive_labels: Dict[str, Dict[str, set]],
+        raw_table_fields: list,
+    ) -> None:
+        """Extract from .txt files (space-aligned tables + narrative)."""
+        txt_table_fields = extract_tables_from_text(
+            text, source_filename=filing_path.name,
+        )
+        raw_table_fields.extend(txt_table_fields)
+
+        for tf in txt_table_fields:
+            self._process_table_field(
+                tf, filing_path, metadata, filing_scale,
+                filing_scale_confidence, rules, audit,
+                period_fields, additive_labels,
+                source_type="table",
+                use_section_bonus=False,
+            )
+
+        # Narrative extraction
+        narrative_fields = extract_from_narrative(
+            text, source_filename=filing_path.name
+        )
+        for nf in narrative_fields:
+            canonical = self._alias_resolver.resolve(nf.label)
+            if canonical is None:
+                audit.discard(
+                    field_name=nf.label,
+                    period=nf.period_hint,
+                    reason="label_ambiguous",
+                    source_filing=filing_path.name,
+                    raw_label=nf.label,
+                    raw_value=nf.value,
+                )
+                continue
+
+            scale = nf.scale if nf.scale != "raw" else filing_scale
+            confidence = "medium" if nf.scale != "raw" else filing_scale_confidence
+            period_key = nf.period_hint
+            if not period_key:
+                audit.discard(
+                    field_name=canonical, period="unknown",
+                    reason="period_unknown",
+                    source_filing=filing_path.name,
+                    raw_label=nf.label, raw_value=nf.value, scale=scale,
+                )
+                continue
+
+            if period_key not in period_fields:
+                period_fields[period_key] = {}
+
+            new_lp = self._alias_resolver.label_priority(canonical, nf.label)
+            new_sk = compute_sort_key(
+                period_key=period_key,
+                filing_type=metadata.filing_type,
+                source_type="narrative",
+                label_priority=new_lp,
+                section_bonus_val=0,
+                source_filing=filing_path.name,
+                source_location=nf.source_location,
+                rules=rules,
+            )
+            if canonical in period_fields[period_key]:
+                existing = period_fields[period_key][canonical]
+                old_sk = getattr(existing, "_sort_key", (999, 999, 0, ("", 0, 0, 0)))
+                if new_sk >= old_sk:
+                    audit.discard(
+                        field_name=canonical, period=period_key,
+                        reason="lower_priority_duplicate",
+                        source_filing=filing_path.name,
+                        raw_label=nf.label, raw_value=nf.value, scale=scale,
+                    )
+                    continue
+
+            fr = _make_field_result(
+                _normalize_sign(canonical, nf.label, nf.value),
+                scale, filing_path.name, nf.source_location, confidence,
+            )
+            fr._sort_key = new_sk  # type: ignore[attr-defined]
+            period_fields[period_key][canonical] = fr
+            audit.accept(
+                field_name=canonical, period=period_key,
+                source_filing=filing_path.name,
+                raw_label=nf.label, raw_value=nf.value, scale=scale,
+            )
+
+    # ── Common table field processing ────────────────────────────────
+
+    def _process_table_field(
+        self,
+        tf: TableField,
+        filing_path: Path,
+        metadata: object,
+        filing_scale: str,
+        filing_scale_confidence: str,
+        rules: Dict,
+        audit: AuditLog,
+        period_fields: Dict[str, Dict[str, FieldResult]],
+        additive_labels: Dict[str, Dict[str, set]],
+        source_type: str = "table",
+        use_section_bonus: bool = True,
+    ) -> None:
+        """Process a single TableField through alias resolution, scale, and collision handling."""
+        canonical = self._alias_resolver.resolve(tf.label)
+        if canonical is None:
+            audit.discard(
+                field_name=tf.label, period=tf.column_header,
+                reason="label_ambiguous",
+                source_filing=filing_path.name,
+                raw_label=tf.label, raw_value=tf.value,
+            )
+            return
+
+        field_mult = self._alias_resolver.get_multiplier(canonical)
+        scale, confidence = infer_scale_cascade(
+            filing_scale, "", metadata.scale, field_mult
+        )
+
+        if not validate_scale_sanity(tf.value, canonical, scale):
+            audit.discard(
+                field_name=canonical, period=tf.column_header,
+                reason="scale_uncertain",
+                source_filing=filing_path.name,
+                raw_label=tf.label, raw_value=tf.value, scale=scale,
+            )
+            return
+
+        period_key = tf.column_header
+        if not period_key or period_key == "unknown":
+            audit.discard(
+                field_name=canonical, period="unknown",
+                reason="period_unknown",
+                source_filing=filing_path.name,
+                raw_label=tf.label, raw_value=tf.value, scale=scale,
+            )
+            return
+
+        if period_key not in period_fields:
+            period_fields[period_key] = {}
+
+        new_lp = self._alias_resolver.label_priority(canonical, tf.label)
+        sec_bonus = _section_bonus(tf.source_location, rules) if use_section_bonus else 0
+        if not use_section_bonus:
+            loc_lower = tf.source_location.lower()
+            if any(s in loc_lower for s in ("income_statement", "balance_sheet", "cash_flow")):
+                sec_bonus = 1
+        new_sk = compute_sort_key(
+            period_key=period_key,
+            filing_type=metadata.filing_type,
+            source_type=source_type,
+            label_priority=new_lp,
+            section_bonus_val=sec_bonus,
+            source_filing=filing_path.name,
+            source_location=tf.source_location,
+            rules=rules,
+        )
+
+        if canonical in period_fields[period_key]:
+            existing = period_fields[period_key][canonical]
+            norm_lbl = self._alias_resolver._normalize(tf.label)
+
+            # Additive fields
+            if self._alias_resolver.is_additive(canonical):
+                seen = additive_labels.get(period_key, {}).get(canonical, set())
+                if use_section_bonus:
+                    is_new = not any(s in norm_lbl or norm_lbl in s for s in seen)
+                else:
+                    dedup_key = norm_lbl + "|" + tf.source_location
+                    is_new = dedup_key not in seen
+
+                if is_new:
+                    combined_value = existing.value + _normalize_sign(
+                        canonical, tf.label, tf.value
+                    )
+                    fr = _make_field_result(
+                        combined_value, existing.scale,
+                        existing.provenance.source_filing,
+                        existing.provenance.source_location,
+                        existing.confidence,
+                    )
+                    fr._sort_key = existing._sort_key  # type: ignore[attr-defined]
+                    period_fields[period_key][canonical] = fr
+                    if use_section_bonus:
+                        additive_labels.setdefault(period_key, {}).setdefault(canonical, set()).add(norm_lbl)
+                    else:
+                        additive_labels.setdefault(period_key, {}).setdefault(canonical, set()).add(dedup_key)
+                    audit.accept(
+                        field_name=canonical, period=period_key,
+                        source_filing=filing_path.name,
+                        raw_label=tf.label, raw_value=tf.value, scale=scale,
+                    )
+                    return
+                else:
+                    audit.discard(
+                        field_name=canonical, period=period_key,
+                        reason="additive_duplicate_constituent",
+                        source_filing=filing_path.name,
+                        raw_label=tf.label, raw_value=tf.value, scale=scale,
+                    )
+                    return
+
+            # Normal collision resolution
+            old_sk = getattr(existing, "_sort_key", (999, 999, 0, ("", 0, 0, 0)))
+            if new_sk >= old_sk:
+                audit.discard(
+                    field_name=canonical, period=period_key,
+                    reason="lower_priority_duplicate",
+                    source_filing=filing_path.name,
+                    raw_label=tf.label, raw_value=tf.value, scale=scale,
+                )
+                return
+
+        fr = _make_field_result(
+            _normalize_sign(canonical, tf.label, tf.value),
+            scale, filing_path.name, tf.source_location, confidence,
+        )
+        fr._sort_key = new_sk  # type: ignore[attr-defined]
+        period_fields[period_key][canonical] = fr
+
+        if self._alias_resolver.is_additive(canonical):
+            norm_lbl = self._alias_resolver._normalize(tf.label)
+            if use_section_bonus:
+                additive_labels.setdefault(period_key, {}).setdefault(canonical, set()).add(norm_lbl)
+            else:
+                dedup_seed = norm_lbl + "|" + tf.source_location
+                additive_labels.setdefault(period_key, {}).setdefault(canonical, set()).add(dedup_seed)
+
+        audit.accept(
+            field_name=canonical, period=period_key,
+            source_filing=filing_path.name,
+            raw_label=tf.label, raw_value=tf.value, scale=scale,
+        )
+
+    # ── Post-processing ──────────────────────────────────────────────
+
+    @staticmethod
+    def _recover_total_liabilities(
+        period_fields: Dict[str, Dict[str, FieldResult]],
+        raw_table_fields: list,
+        source_filename: str,
+        filing_scale: str,
+        filing_scale_confidence: str,
+    ) -> None:
+        """Recover total_liabilities from non-current + current sub-totals."""
+        _NC_LIAB_RE = re.compile(r"total\s+non[- ]?current\s+liabilities", re.I)
+        _C_LIAB_RE = re.compile(r"total\s+current\s+liabilities", re.I)
+
+        for pk in list(period_fields.keys()):
+            if "total_liabilities" not in period_fields[pk]:
+                nc_val = None
+                c_val = None
+                nc_loc = ""
+                for rtf in raw_table_fields:
+                    if rtf.column_header != pk:
+                        continue
+                    if _NC_LIAB_RE.search(rtf.label):
+                        nc_val = rtf.value
+                        nc_loc = rtf.source_location
+                    elif _C_LIAB_RE.search(rtf.label):
+                        c_val = rtf.value
+                if nc_val is not None and c_val is not None:
+                    period_fields[pk]["total_liabilities"] = _make_field_result(
+                        nc_val + c_val, filing_scale,
+                        source_filename, nc_loc,
+                        filing_scale_confidence,
+                    )
