@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026-03-04
+
+### [Acquire] Full audit and port of acquire module from 3.0
+- **What:** Ported 6 blocks of acquire infrastructure from 3.0 `sec_fetcher_v2_runner.py`,
+  `filing_preflight.py`, and `ir_url_resolver.py`:
+  - **Block A** `elsian/markets.py`: Exchange/country awareness — `NON_US_EXCHANGES`,
+    `NON_US_COUNTRIES`, `LOCAL_FILING_KEYWORDS_*`, `normalize_country()`,
+    `normalize_exchange()`, `is_non_us()`, `infer_regulator_code()`. (25 tests)
+  - **Block B** `elsian/analyze/preflight.py`: Filing pre-flight metadata extractor —
+    language (en/fr/es/de), accounting standard (IFRS/US-GAAP/FR-GAAP), currency (9),
+    sections (6), units per section, restatement signals, fiscal year. (26 tests)
+  - **Block C** `elsian/acquire/dedup.py`: Content-based deduplication via SHA-256 —
+    `normalize_text_for_hash()`, `content_hash()`, `is_duplicate()`, `dedup_texts()`. (17 tests)
+  - **Block D** `elsian/acquire/classify.py`: Filing classification and quality —
+    `classify_filing_type()` (ANNUAL_REPORT/INTERIM/REGULATORY/IR_NEWS/OTHER),
+    `financial_signal_hits()`, `classify_annual_extractability()`. (15 tests)
+  - **Block E** `elsian/acquire/ir_crawler.py`: IR website crawling toolkit —
+    `build_ir_url_candidates()`, `resolve_ir_base_url()`, `derive_ir_roots()`,
+    `build_ir_pages()`, `discover_ir_subpages()`, `extract_filing_candidates()`,
+    `select_fallback_candidates()`. (32 tests)
+  - **Block F** `elsian/acquire/asx.py`: Integrated content dedup via `content_hash()`
+    in AsxFetcher download loop to skip duplicate PDFs.
+- **Ported from:** sec_fetcher_v2_runner.py (2660 lines), filing_preflight.py (319 lines),
+  ir_url_resolver.py (145 lines)
+- **Tests:** 277 passed, 1 skipped, 0 failed (+115 new tests)
+- **Regression:** 8/8 tickers at 100%
+
 ## 2026-03-03
 
 ### [Ticker] KAR — 8th ticker, Australian ASX, IFRS, PDF-based

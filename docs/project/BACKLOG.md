@@ -1,0 +1,172 @@
+# ELSIAN-INVEST 4.0 — Backlog Priorizado
+
+> Cola de trabajo ordenada por prioridad. El agente técnico toma tareas de arriba a abajo.
+> El agente director reordena según el estado del proyecto.
+
+---
+
+## Protocolo de uso
+
+**Quién escribe:** El agente director (prioriza, añade, reordena, cierra).
+**Quién lee:** Los agentes técnicos. Al iniciar sesión, leer las primeras 3-5 tareas para saber qué hacer.
+**Quién actualiza estado:** El agente técnico marca IN_PROGRESS al empezar y DONE al terminar. El director limpia periódicamente las tareas DONE.
+
+**Estados posibles:**
+- `TODO` — Pendiente, nadie la ha empezado
+- `IN_PROGRESS` — Un agente la está ejecutando (indicar cuál)
+- `BLOCKED` — No se puede avanzar, indicar por qué
+- `DONE` — Completada, pendiente de que el director la revise y archive
+
+**Formato por tarea:**
+```
+### BL-XXX — Título corto
+- **Prioridad:** CRÍTICA | ALTA | MEDIA | BAJA
+- **Estado:** TODO | IN_PROGRESS (agente) | BLOCKED (razón) | DONE
+- **Asignado a:** elsian-4 | director | sin asignar
+- **Depende de:** BL-XXX (si aplica)
+- **Descripción:** Qué hay que hacer y por qué
+- **Criterio de aceptación:** Cómo sabemos que está terminado
+```
+
+---
+
+## Tareas activas
+
+### BL-008 — Reescribir AsxFetcher con endpoint por compañía
+- **Prioridad:** CRÍTICA
+- **Estado:** TODO
+- **Asignado a:** elsian-4
+- **Depende de:** —
+- **Descripción:** El AsxFetcher actual usa el endpoint genérico `/asx/1/announcement/list` que devuelve TODOS los anuncios de TODAS las empresas del ASX, y filtra por ticker en Python. Esto requiere ~78 requests HTTP en ventanas de 14 días para cubrir 3 años (DEC-008). ASX ofrece un endpoint por compañía: `GET /asx/1/company/{TICKER}/announcements?count=50`. Reescribir AsxFetcher para: 1) usar el endpoint por compañía, 2) paginar si es necesario, 3) clasificar filings (annual, halfyear, results), 4) descargar PDFs y convertir a texto. Eliminar `filings_sources` de case.json de KAR — el Fetcher debe encontrar los filings solo.
+- **Criterio de aceptación:** `python3 -m elsian.cli acquire KAR` descarga ≥3 annual reports automáticamente en <30 segundos. No usa filings_sources. Tests existentes siguen pasando.
+
+### BL-001 — Rehacer KAR desde cero
+- **Prioridad:** CRÍTICA
+- **Estado:** TODO
+- **Asignado a:** elsian-4
+- **Depende de:** BL-008 (AsxFetcher funcional)
+- **Descripción:** El caso KAR fue eliminado completamente por el usuario (intento anterior violaba DEC-006). Debe rehacerse **desde cero**: 1) crear case.json (ticker, source_hint=asx, currency=USD, fiscal_year_end_month=12), 2) ejecutar acquire con el nuevo AsxFetcher, 3) curar expected.json desde los filings descargados (≥15 campos/periodo cubriendo IS+BS+CF), 4) extraer con pipeline, 5) evaluar honestamente. **Atención:** NO usar filings_sources (DEC-008). NO truncar expected.json.
+- **Criterio de aceptación:** KAR en VALIDATED_TICKERS con score real ≥80%. filings/ tiene PDFs + .txt generados automáticamente por acquire. expected.json tiene ≥15 campos por periodo. Regresión 7/7 al 100%.
+
+### BL-002 — Nuevo ticker NVDA
+- **Prioridad:** ALTA
+- **Estado:** IN_PROGRESS (elsian-4)
+- **Asignado a:** elsian-4
+- **Depende de:** —
+- **Descripción:** Añadir NVIDIA como ticker SEC large-cap. case.json ya existe. Falta: acquire (descargar filings SEC), curar expected.json completo, extraer, evaluar. Es prueba de estrés real para filings complejos de empresa grande (segmentos, escalas, notas extensas). Seguir new_ticker_protocol.
+- **Criterio de aceptación:** NVDA en VALIDATED_TICKERS al 100%. expected.json completo (≥15 campos/periodo). filings/ tiene los .htm/.txt descargados. Sin regresiones.
+
+### BL-003 — Wire ExtractPhase a PipelinePhase.run(context)
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** elsian-4
+- **Depende de:** —
+- **Descripción:** ExtractPhase tiene 914 líneas con su propio extract() pero no implementa PipelinePhase.run(context). Esto impide que Pipeline encadene fases correctamente. Debe implementar run(context) delegando a extract() internamente.
+- **Criterio de aceptación:** `Pipeline([AcquirePhase(), ExtractPhase(), EvaluatePhase()]).run(context)` funciona end-to-end. cmd_run lo usa. 150 tests siguen pasando.
+
+### BL-004 — Portar IxbrlExtractor desde 3.0
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** — (BL-003 ya completado)
+- **Descripción:** Portar ixbrl_extractor.py de 3.0 y envolver en IxbrlExtractor(Extractor). iXBRL es fuente primaria donde exista (SEC). Cross-validation con HTML. Provenance nativa (concepto, periodo, contexto).
+- **Criterio de aceptación:** IxbrlExtractor pasa tests unitarios. Al menos 1 ticker SEC extraído vía iXBRL con score ≥ resultado HTML. Sin regresiones.
+
+### BL-005 — Expandir a 15 tickers validados
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** BL-001, BL-002 (los primeros nuevos tickers)
+- **Descripción:** Objetivo Fase 1: 15-20 tickers validados. Candidatos: large-cap US (AAPL, MSFT), sector financiero (JPM), micro-cap, Europa continental (SAP.DE, SAN.MC), Asia (Toyota). Cada uno valida un gap diferente en las reglas de extracción.
+- **Criterio de aceptación:** ≥15 tickers en VALIDATED_TICKERS. Cada ticker cubre un gap diferente (documentado en regression_suite).
+
+### BL-006 — Provenance Level 2 completa en todos los extractores
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** El modelo Provenance tiene campos table_title, row_label, col_label, raw_text pero no siempre se pueblan. Auditar cada extractor y asegurar que todos propagan coordenadas completas.
+- **Criterio de aceptación:** Cada FieldResult en extraction_result.json tiene provenance con al menos source_filing + table_index + row + col + raw_text.
+
+### BL-007 — Crear PdfTableExtractor
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** pdfplumber está integrado para conversión pero no hay un Extractor(ABC) dedicado a tablas PDF. Necesario para tickers como TEP y KAR que dependen de PDF.
+- **Criterio de aceptación:** PdfTableExtractor(Extractor) con tests. TEP sigue al 100% usando el nuevo extractor.
+
+### BL-009 — Portar Filing Preflight desde 3.0
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-04)
+- **Asignado a:** elsian-4
+- **Depende de:** —
+- **Descripción:** Portar `3_0-ELSIAN-INVEST/scripts/runners/filing_preflight.py` (320 líneas) al 4.0. Este módulo detecta idioma, estándar contable (IFRS/US-GAAP), moneda, secciones financieras, unidades por sección, restatement, y año fiscal — todo determinístico, <1ms por filing. El 4.0 tiene `detect.py` con funcionalidad parcial pero le falta: detección de restatement, unidades por sección (crítico para escala), multiidioma (fr, es, de), y confianza por señal. **Portar, no reimplementar (DEC-009).** Leer el código fuente del 3.0 primero, adaptar a la arquitectura 4.0.
+- **Criterio de aceptación:** Preflight corre sobre todos los filings existentes. Detecta correctamente idioma, estándar, moneda, y unidades por sección para TZOO (US-GAAP, USD), TEP (IFRS, EUR, FR), y KAR (IFRS, USD). Tests unitarios con fixtures de cada tipo. Sin regresiones.
+- **Referencia 3.0:** `scripts/runners/filing_preflight.py`
+
+### BL-010 — Deduplicación de filings por contenido
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-04)
+- **Asignado a:** elsian-4
+- **Depende de:** —
+- **Descripción:** Portar la lógica de content hash del 3.0 (`_content_hash`, `_normalize_text_for_hash` en `sec_fetcher_v2_runner.py` líneas ~411-418). El pipeline puede procesar múltiples representaciones del mismo filing (.htm, .txt, .clean.md) como si fueran documentos distintos, generando colisiones en merge. **Portar, no reimplementar (DEC-009).**
+- **Criterio de aceptación:** Dos filings con el mismo contenido textual se detectan como duplicados. Se procesan una sola vez. TZOO (28 filings, muchos con versiones .htm/.txt) no tiene colisiones por duplicación.
+- **Referencia 3.0:** `sec_fetcher_v2_runner.py` funciones `_content_hash`, `_normalize_text_for_hash`
+
+### BL-011 — Exchange/Country awareness unificada
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-04)
+- **Asignado a:** elsian-4
+- **Depende de:** —
+- **Descripción:** Portar del 3.0 las funciones `normalize_exchange()`, `normalize_country()`, `is_non_us()`, `infer_regulator_code()` (líneas ~297-358 de `sec_fetcher_v2_runner.py`) y las constantes `NON_US_EXCHANGES`, `NON_US_COUNTRIES`, `LOCAL_FILING_KEYWORDS_BY_EXCHANGE`. Unificar en `elsian/config/markets.py`. Usado por AcquirePhase para routing y por futuros fetchers. **Portar, no reimplementar (DEC-009).**
+- **Criterio de aceptación:** Module con funciones puras + tests. AcquirePhase usa el módulo para routing en vez de string matching en `_get_fetcher()`.
+- **Referencia 3.0:** `sec_fetcher_v2_runner.py` líneas 50-170 (constantes) y 297-358 (funciones)
+
+### BL-012 — Filing Classification automática
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-04)
+- **Asignado a:** elsian-4
+- **Depende de:** —
+- **Descripción:** Portar `_classify_local_filing_type()` del 3.0 (líneas ~686-742 de `sec_fetcher_v2_runner.py`). Clasifica filings en ANNUAL_REPORT / INTERIM_REPORT / REGULATORY_FILING / IR_NEWS basándose en keywords del título, URL y snippet. **Portar, no reimplementar (DEC-009).**
+- **Criterio de aceptación:** Función que recibe (title, url, snippet) → filing_type. Tests con ejemplos de SEC, ASX y EU. Integrado en los fetchers que no tienen clasificación propia.
+- **Referencia 3.0:** `sec_fetcher_v2_runner.py` función `_classify_local_filing_type`
+
+---
+
+## Tareas completadas
+
+### BL-003 — Wire ExtractPhase a PipelinePhase.run(context)
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅
+- **Completado:** 2026-03-03
+- **Asignado a:** elsian-4
+- **Resultado:** Todas las fases (Acquire, Extract, Evaluate) heredan PipelinePhase con run(context). Pipeline orquesta correctamente. cmd_run usa Pipeline([ExtractPhase(), EvaluatePhase()]). +6 tests nuevos. 157 tests pasando.
+
+---
+
+## Tareas descubiertas durante el port del módulo acquire (2026-03-04)
+
+### BL-013 — Integrar IR Crawler en EuRegulatorsFetcher
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** BL-012 (DONE)
+- **Descripción:** `elsian/acquire/ir_crawler.py` está portado con todas las funciones de crawling (build_ir_pages, discover_ir_subpages, extract_filing_candidates, select_fallback_candidates, resolve_ir_base_url). Falta integrarlo en EuRegulatorsFetcher como fallback automático cuando `filings_sources` no está definido en case.json. El fetcher debería: 1) intentar `web_ir` → resolve_ir_base_url, 2) crawlear páginas IR, 3) extraer candidatos, 4) seleccionar y descargar. Esto eliminaría la dependencia de URLs manuales para tickers EU.
+- **Criterio de aceptación:** `python3 -m elsian.cli acquire TEP` funciona sin `filings_sources` en case.json (usando solo web_ir). Tests de integración.
+
+### BL-014 — Integrar preflight en el pipeline de extracción
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** BL-009 (DONE)
+- **Descripción:** `elsian/analyze/preflight.py` está portado pero no se ejecuta automáticamente. Debe integrarse en ExtractPhase para que cada filing pase por preflight antes de la extracción. Los resultados de preflight (currency, standard, units_by_section) deben alimentar ScaleCascade y AliasResolver.
+- **Criterio de aceptación:** Cada filing en extraction_result.json incluye metadata de preflight. ScaleCascade usa units_by_section del preflight. Sin regresiones.
+
+---
+
+## Notas
+
+- Las prioridades las establece el director según el estado del proyecto y el ROADMAP.
+- Si un agente técnico descubre una tarea nueva durante su trabajo, la añade al final con prioridad MEDIA y estado TODO. El director la reordenará en la siguiente sesión.
+- Las dependencias son orientativas. Si un agente puede resolver una tarea sin que su dependencia esté completada, puede hacerlo.
