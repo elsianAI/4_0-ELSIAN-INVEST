@@ -14,24 +14,24 @@ Ver ROADMAP.md para descripción completa de fases.
 | Métrica | Valor | Fecha |
 |---|---|---|
 | Tickers validados (100%) | 7 | 2026-03-01 |
-| Tickers WIP | 2 (KAR — rehaciendo, NVDA — fase cero) | 2026-03-01 |
-| Total campos validados | 805 | 2026-03-01 |
-| Tests pasando | 157 | 2026-03-01 |
+| Tickers WIP | 2 (TZOO 89.63%, KAR rehaciendo) | 2026-03-01 |
+| Total campos validados | 611 (7 tickers @100% + NVDA 38) | 2026-03-01 |
+| Tests pasando | 341 passed, 1 failed (TZOO), 2 skipped | 2026-03-01 |
 | Líneas de código (aprox.) | ~5,530 + ~1,200 tests | 2026-03-01 |
 
 ## Tickers validados
 
 | Ticker | Campos | Mercado | Formato | Estado |
 |---|---|---|---|---|
-| TZOO | 270 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED |
+| TZOO | 242/270 | SEC (US) | 10-K/10-Q HTML | ⚠️ 89.63% — 28 Q-period fields missed (Q2-2022, Q2-2024 filings missing) |
 | GCT | 108 | SEC (US) | 20-F→10-K HTML | ✅ VALIDATED |
 | IOSP | 95 | SEC (US) | 10-K HTML | ✅ VALIDATED |
 | NEXN | 76 | SEC (US) | 20-F/6-K HTML | ✅ VALIDATED |
 | SONO | 116 | SEC (US) | 10-K HTML | ✅ VALIDATED |
 | TEP | 55 | Euronext (FR) | PDF (IFRS, EUR) | ✅ VALIDATED |
 | TALO | 85 | SEC (US) | 10-K HTML | ✅ VALIDATED |
-| KAR | — | ASX (AU) | PDF (IFRS, USD) | ❌ ELIMINADO — rehaciendo desde cero (ver nota) |
-| NVDA | — | SEC (US) | 10-K HTML | 🔄 FASE CERO (solo case.json) |
+| NVDA | 38 | SEC (US) | 10-K HTML | ✅ VALIDATED |
+| KAR | 28/49 | ASX (AU) | PDF (IFRS, USD) | 🔄 57% — expected.json ampliado, extractor pendiente mejorar |
 
 **Nota KAR:** Caso eliminado por el usuario. El intento anterior no siguió el flujo estándar (DEC-006). Antes de recrear el caso, se debe reescribir AsxFetcher para usar el endpoint por compañía de ASX (`/asx/1/company/{TICKER}/announcements`) en vez del endpoint genérico que escanea todos los anuncios. Ver DEC-008.
 

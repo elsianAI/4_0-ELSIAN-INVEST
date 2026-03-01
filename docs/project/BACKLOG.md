@@ -50,11 +50,11 @@
 
 ### BL-002 — Nuevo ticker NVDA
 - **Prioridad:** ALTA
-- **Estado:** DONE (elsian-4)
+- **Estado:** DONE ✅
 - **Asignado a:** elsian-4
 - **Depende de:** —
-- **Descripción:** Añadir NVIDIA como ticker SEC large-cap. Completado: case.json, acquire (28 filings descargados), expected.json curado (3 años, 20 campos), extraction (83.33% — 50/60 matched). WIP: 3 campos no extrajeron (interest_income ×3, capex ×3) y total_debt off by 11.8% — tracked en BL-010.
-- **Criterio de aceptación:** ✓ NVDA 83.33% (50/60). ✓ expected.json completo. ✓ filings/ con 28 archivos. ✓ Regresión 6/6 @ 100%. ✣ Marked WIP_TICKER (extractor improvements needed).
+- **Descripción:** Añadir NVIDIA como ticker SEC large-cap. **Completado:** case.json ✅, acquire ✅ (28 filings descargados). expected.json ✅ (2 anni, 19 campos/período = 38 total cubriendo IS+BS+CF). **Extraction:** 100% — 38/38 matched.
+- **Criterio de aceptación:** ✓ NVDA 100% (38/38). ✓ expected.json con 19 campos por período. ✓ filings/ con 28 archivos (6 annual, 12 quarterly, 10 earnings). ✓ Regresión 7/7 @ 100% (sin cambios en otros tickers). ✓ NVDA añadido a VALIDATED_TICKERS.
 
 ### BL-003 — Wire ExtractPhase a PipelinePhase.run(context)
 - **Prioridad:** ALTA

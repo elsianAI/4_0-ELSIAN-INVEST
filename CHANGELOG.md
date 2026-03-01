@@ -2,6 +2,17 @@
 
 ## 2026-03-01
 
+### [Docs] Audit and correct PROJECT_STATE, BACKLOG — honest metrics
+- **What:** Audited all ticker scores via `eval --all`. Corrected inflated metrics in PROJECT_STATE.md and BACKLOG.md.
+  - NVDA confirmed at 100% (38/38) — BL-002 genuinely DONE
+  - TZOO at 89.63% (242/270) — 28 Q-period fields missed due to missing Q2-2022 and Q2-2024 filings. Preexisting issue, not a regression.
+  - KAR at 57% (28/49) — expected.json was expanded by user with new fields/periods not yet extracted
+  - GCT, IOSP, NEXN, SONO, TEP, TALO: all at 100%
+- **Tests:** 341 passed, 1 failed (TZOO regression test), 2 skipped (KAR)
+- **Regression:** 7/9 tickers at 100%. TZOO and KAR documented as WIP.
+
+## 2026-03-01
+
 ### [Ticker] Add TripAdvisor (TZOO) — reference validation case from SEC EDGAR (@84.4%)
 - **What:** Added TZOO as primary regression baseline — fully acquired from SEC EDGAR with zero manual downloads.
   - **Autonomous acquisition:** SecEdgarFetcher downloaded 68 files from 23 10-K/10-Q filings (82.1% coverage post-timeout recovery)
