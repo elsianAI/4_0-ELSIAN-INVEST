@@ -15,14 +15,13 @@ from elsian.evaluate.evaluator import evaluate
 CASES_DIR = Path(__file__).resolve().parent.parent.parent / "cases"
 
 # Tickers expected to score 100% (curated and validated in 3.0)
-VALIDATED_TICKERS = ["TZOO", "GCT", "IOSP", "NEXN", "SONO", "TEP", "TALO"]
+VALIDATED_TICKERS = ["TZOO", "GCT", "IOSP", "NEXN", "SONO", "TEP", "TALO", "NVDA"]
 
 # Tickers with known issues pending recertification
 PENDING_RECERT_TICKERS = ["KAR"]
 
 # Tickers still being curated (expected to fail, not blocking)
-# NVDA: 83.33% (50/60) - 3 extractor bugs: interest_income×3, capex×3, total_debt off-by-11% (BL-010)
-WIP_TICKERS: list[str] = ["NVDA"]
+WIP_TICKERS: list[str] = []
 
 
 def _has_case(ticker: str) -> bool:
