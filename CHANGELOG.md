@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-03-01
+
+### [Phase A] Unify closure patch — IR date fallback + KAR pending recert
+- **What:** Implemented Phase A stabilization from `PLAN_CIERRE_UNIFICADO.md`.
+  - **IR crawler parity** (`elsian/acquire/ir_crawler.py`):
+    - `extract_filing_candidates()` now computes page-level date once via `_extract_date_from_html_document()`.
+    - Applies fallback when candidate date is missing:
+      - `fecha_publicacion = page_date`
+      - `fecha_source = "page_*"`
+      - `fecha_publicacion_estimated = True`
+    - `_extract_embedded_pdf_candidates()` now supports page-date fallback.
+    - Candidate ordering now uses tie-break by publication date on equal `selection_score` in:
+      - `extract_filing_candidates()`
+      - `select_fallback_candidates()`
+  - **Regression stabilization** (`tests/integration/test_regression.py`):
+    - `KAR` removed from `VALIDATED_TICKERS`.
+    - Added `PENDING_RECERT_TICKERS = ["KAR"]` with explicit skip:
+      - `KAR recertification pending — BL-001 + BL-008`
+  - **Unit tests** (`tests/unit/test_ir_crawler.py`):
+    - Added page-date fallback coverage.
+    - Added non-override test when contextual date exists.
+    - Added tie-break-by-date test for equal scores.
+- **Notes:** `cases/KAR/expected.json` remains untouched. Recertification stays in BL-001/BL-008.
+
 ## 2026-03-04
 
 ### [Acquire/Preflight] Complete gaps in IR Crawler (Block E) and Preflight (Block B)

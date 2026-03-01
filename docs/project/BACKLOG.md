@@ -163,6 +163,80 @@
 - **Descripción:** `elsian/analyze/preflight.py` está portado pero no se ejecuta automáticamente. Debe integrarse en ExtractPhase para que cada filing pase por preflight antes de la extracción. Los resultados de preflight (currency, standard, units_by_section) deben alimentar ScaleCascade y AliasResolver.
 - **Criterio de aceptación:** Cada filing en extraction_result.json incluye metadata de preflight. ScaleCascade usa units_by_section del preflight. Sin regresiones.
 
+### BL-015 — Portar calculadora de métricas derivadas (tp_calculator.py)
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** BL-022
+- **Descripción:** Portar `scripts/runners/tp_calculator.py` (3.0) a `elsian/calculate/derived.py`. Debe cubrir TTM, FCF, EV, working capital, márgenes, retornos, net debt y per-share. Mantener enfoque determinístico y paridad funcional.
+- **Criterio de aceptación:** Módulo con tests unitarios; cálculo correcto sobre fixtures de TZOO/GCT; sin regresiones.
+
+### BL-016 — Portar sanity checks del normalizer (tp_normalizer.py)
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** Portar sanity checks y value-unwrapping de `scripts/runners/tp_normalizer.py` a `elsian/normalize/sanity.py` e integrarlo post-extracción. Incluye reglas de coherencia (revenue>0, gross<=revenue, saltos extremos YoY, wrappers `{\"value\": X}`).
+- **Criterio de aceptación:** Sanity checks activos en pipeline, con tests de aceptación y sin regresiones.
+
+### BL-017 — Portar validate_expected.py
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** Portar `deterministic/src/validate_expected.py` (3.0) a `elsian/evaluate/validate_expected.py` e integrarlo en `evaluate()` como pre-check estructural y de calidad.
+- **Criterio de aceptación:** `evaluate()` falla con mensaje claro ante expected inválido; tests unitarios para casos válidos e inválidos.
+
+### BL-018 — Extender quality gates de clean.md (gap parcial)
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** `elsian/convert/html_to_markdown.py` ya implementa quality gate básico (`_is_clean_md_useful`) y mínimos numéricos por tabla. Portar solo las validaciones granulares faltantes de `scripts/runners/clean_md_quality.py` (métricas por sección, detección avanzada de stubs, diagnóstico exportable).
+- **Criterio de aceptación:** Quality report granular por clean.md y gates reforzados sin degradar conversión actual.
+
+### BL-020 — Portar validator autónomo de Truth Pack (tp_validator.py)
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** BL-015, BL-016
+- **Descripción:** Portar validaciones autónomas de `scripts/runners/tp_validator.py` a `elsian/evaluate/validation.py` para checks intrínsecos (sin expected.json): identidad BS/CF, sanity de márgenes/escala/consistencia.
+- **Criterio de aceptación:** Validator ejecutable sobre extraction/calc outputs con score de calidad y tests.
+
+### BL-021 — Portar prefetch coverage audit
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** Portar `scripts/runners/prefetch_coverage_audit.py` a `elsian/evaluate/coverage_audit.py` para medir cobertura por ticker/mercado antes de extracción.
+- **Criterio de aceptación:** Reporte de coverage por caso con thresholds por tipo de mercado y tests.
+
+### BL-022 — Portar market data fetcher (market_data_v1_runner.py)
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** Portar `scripts/runners/market_data_v1_runner.py` a `elsian/acquire/market_data.py` (Fetcher ABC). Necesario para múltiplos de valoración en BL-015.
+- **Criterio de aceptación:** Fetcher de market cap/shares/precio con tests y contrato de salida estable.
+
+### BL-023 — Portar sources compiler
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** BL-022, BL-024
+- **Descripción:** Portar `scripts/runners/sources_compiler_runner.py` para consolidar fuentes multi-fetcher (dedup URL/hash, prioridad de representación, IDs canónicos `SRC_*`).
+- **Criterio de aceptación:** SourcesPack compilado de forma determinística con tests de dedup/prioridad.
+
+### BL-024 — Portar transcript finder
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** Portar `scripts/runners/transcript_finder_v2_runner.py` a `elsian/acquire/transcripts.py` (Fetcher ABC) para captura de earnings transcripts.
+- **Criterio de aceptación:** Fetcher funcional con tests y outputs integrables en acquire pipeline.
+
+> Nota: **BL-019 no se crea** porque la extracción financiera por secciones y presupuestos ya está portada en `elsian/convert/html_to_markdown.py`.
+
 ---
 
 ## Notas

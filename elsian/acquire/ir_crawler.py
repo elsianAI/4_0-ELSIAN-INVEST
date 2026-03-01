@@ -285,6 +285,8 @@ def _extract_embedded_pdf_candidates(
     html: str,
     base_url: str,
     exchange: Optional[str],
+    page_date: Optional[str] = None,
+    page_date_source: str = "unknown",
 ) -> list[dict[str, Any]]:
     """Extract PDF candidates from embedded/linked PDFs in HTML.
 
@@ -376,6 +378,10 @@ def _extract_embedded_pdf_candidates(
             context_window,
             full_url,
         )
+        if not date_guess and page_date:
+            date_guess = page_date
+            date_source = f"page_{page_date_source}"
+            date_estimated = True
         basename_hint = unquote(
             Path(urlparse(full_url).path).name
         ).replace("+", " ")
@@ -755,6 +761,7 @@ def extract_filing_candidates(
     from elsian.acquire.classify import classify_filing_type
 
     soup = BeautifulSoup(html, "html.parser")
+    page_date, page_date_source = _extract_date_from_html_document(html, base_url)
     ex = (exchange or "").upper()
     kws = set(LOCAL_FILING_KEYWORDS_COMMON)
     kws.update(LOCAL_FILING_KEYWORDS_BY_EXCHANGE.get(ex, ()))
@@ -811,6 +818,10 @@ def extract_filing_candidates(
         date_guess, date_source, date_estimated = _resolve_local_candidate_date(
             text, row_text, full_url,
         )
+        if not date_guess and page_date:
+            date_guess = page_date
+            date_source = f"page_{page_date_source}"
+            date_estimated = True
 
         selection_score = float(score)
         if filing_type == "ANNUAL_REPORT":
@@ -843,7 +854,13 @@ def extract_filing_candidates(
             by_url[full_url] = candidate
 
     # Merge embedded PDF candidates
-    for emb_cand in _extract_embedded_pdf_candidates(html, base_url, exchange):
+    for emb_cand in _extract_embedded_pdf_candidates(
+        html,
+        base_url,
+        exchange,
+        page_date=page_date,
+        page_date_source=page_date_source,
+    ):
         emb_url = emb_cand["url"]
         prev = by_url.get(emb_url)
         if prev is None or _prefer_new_candidate(prev, emb_cand):
@@ -851,7 +868,10 @@ def extract_filing_candidates(
 
     candidates = sorted(
         by_url.values(),
-        key=lambda x: float(x.get("selection_score", 0.0)),
+        key=lambda x: (
+            float(x.get("selection_score", 0.0)),
+            x.get("fecha_publicacion") or "0000-00-00",
+        ),
         reverse=True,
     )
     return candidates[:20]
@@ -878,7 +898,10 @@ def select_fallback_candidates(
 
     ordered = sorted(
         candidates,
-        key=lambda x: float(x.get("selection_score", 0.0)),
+        key=lambda x: (
+            float(x.get("selection_score", 0.0)),
+            x.get("fecha_publicacion") or "0000-00-00",
+        ),
         reverse=True,
     )
 

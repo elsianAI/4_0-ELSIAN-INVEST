@@ -179,6 +179,34 @@ class TestExtractFilingCandidates:
         for i in range(len(candidates) - 1):
             assert candidates[i]["selection_score"] >= candidates[i + 1]["selection_score"]
 
+    def test_fallback_page_date_when_candidate_has_no_date(self) -> None:
+        html = """
+        <html>
+          <head><meta property="article:published_time" content="2024-07-31"></head>
+          <body><a href="/docs/annual-report.pdf">Annual Report</a></body>
+        </html>
+        """
+        candidates = extract_filing_candidates(html, "https://www.example.com/investors")
+        assert len(candidates) >= 1
+        cand = next(c for c in candidates if "annual-report.pdf" in c["url"])
+        assert cand["fecha_publicacion"] == "2024-07-31"
+        assert cand["fecha_source"] == "page_html_meta"
+        assert cand["fecha_publicacion_estimated"] is True
+
+    def test_do_not_override_context_date_with_page_date(self) -> None:
+        html = """
+        <html>
+          <head><meta property="article:published_time" content="2024-07-31"></head>
+          <body>
+            <a href="/docs/annual-report.pdf">Annual Report March 15, 2024</a>
+          </body>
+        </html>
+        """
+        candidates = extract_filing_candidates(html, "https://www.example.com/investors")
+        cand = next(c for c in candidates if "annual-report.pdf" in c["url"])
+        assert cand["fecha_publicacion"] == "2024-03-15"
+        assert cand["fecha_source"] == "context"
+
 
 # ── select_fallback_candidates ────────────────────────────────────────
 
@@ -205,6 +233,26 @@ class TestSelectFallbackCandidates:
 
     def test_empty(self) -> None:
         assert select_fallback_candidates([]) == []
+
+    def test_tie_break_by_fecha_when_score_equal(self) -> None:
+        candidates = [
+            {
+                "tipo_guess": "ANNUAL_REPORT",
+                "selection_score": 10.0,
+                "fecha_publicacion": "2024-03-15",
+            },
+            {
+                "tipo_guess": "ANNUAL_REPORT",
+                "selection_score": 10.0,
+                "fecha_publicacion": "2024-10-01",
+            },
+        ]
+        selected = select_fallback_candidates(
+            candidates,
+            max_total=2,
+            per_type={"ANNUAL_REPORT": 5, "_default": 2},
+        )
+        assert selected[0]["fecha_publicacion"] == "2024-10-01"
 
 
 # ── parse_date_loose ──────────────────────────────────────────────────
@@ -478,6 +526,25 @@ class TestExtractEmbeddedPdfCandidates:
             assert "fecha_source" in c
             assert "fecha_publicacion_estimated" in c
             assert c.get("discovered_via") == "embedded_pdf"
+
+    def test_embedded_fallback_uses_page_date(self) -> None:
+        html = """
+        <div>
+          "title": "Annual Report"
+          https://cdn.example.com/reports/annual-report.pdf
+        </div>
+        """
+        cands = _extract_embedded_pdf_candidates(
+            html,
+            "https://example.com/investors",
+            "EPA",
+            page_date="2024-06-30",
+            page_date_source="html_meta",
+        )
+        assert len(cands) >= 1
+        cand = next(c for c in cands if "annual-report.pdf" in c["url"])
+        assert cand["fecha_publicacion"] == "2024-06-30"
+        assert cand["fecha_source"] == "page_html_meta"
 
 
 # ── extract_filing_candidates integration ─────────────────────────────
