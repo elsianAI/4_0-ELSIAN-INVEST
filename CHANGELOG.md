@@ -2,6 +2,27 @@
 
 ## 2026-03-02
 
+### [Acquire] Port acquisition layer — SecEdgarFetcher, EuRegulatorsFetcher, convert modules
+- **What:** Ported complete acquisition infrastructure from 3.0:
+  - `elsian/convert/html_to_markdown.py`: Full HTML→Markdown converter with
+    section detection (IS, BS, CF, Equity), table extraction, quality gate.
+    Ported from 3.0 `deterministic/src/acquire/html_to_markdown.py`.
+  - `elsian/convert/pdf_to_text.py`: pdfplumber (layout=True) + pypdf fallback.
+    Ported from 3.0 `deterministic/src/acquire/pdf_to_text.py`.
+  - `elsian/acquire/sec_edgar.py`: SecEdgarFetcher — CIK resolution, filing
+    collection (annual/quarterly/earnings), Exhibit 99 discovery, download with
+    HTML/PDF conversion. Rate-limited SecClient. Ported from 3.0
+    `deterministic/src/acquire/sec_edgar.py`.
+  - `elsian/acquire/eu_regulators.py`: EuRegulatorsFetcher — HTTP download from
+    filings_sources in case.json, raw filings import fallback. Ported from 3.0
+    `deterministic/src/acquire/eu_regulators.py`.
+  - `elsian/models/result.py`: Added AcquisitionResult model.
+  - `elsian/cli.py`: Added `acquire` CLI command with auto-routing by source_hint.
+- **Ported from:** 3.0 sec_edgar.py (469 lines), eu_regulators.py (314 lines),
+  html_to_markdown.py (295 lines), pdf_to_text.py (96 lines)
+- **Tests:** 150 passed, 0 failed (+45 new tests)
+- **Regression:** ALL 7/7 at 100% (805/805)
+
 ### [Sync] Port 3.0 TALO+TEP improvements — 7/7 at 100% (805/805)
 - **What:** Synced all extraction improvements from 3.0 (794914e→bf9ef15):
   - `config/field_aliases.json`: 3 DD&A aliases (depletion variants, dd&a)

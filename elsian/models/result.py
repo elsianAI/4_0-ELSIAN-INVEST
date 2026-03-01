@@ -10,6 +10,38 @@ from elsian.models.field import FieldResult
 
 
 @dataclass
+class AcquisitionResult:
+    """Result of the acquire phase."""
+
+    ticker: str = ""
+    source: str = ""
+    cik: str | None = None
+    filings_downloaded: int = 0
+    filings_failed: int = 0
+    filings_coverage_pct: float = 0.0
+    coverage: dict[str, Any] = field(default_factory=dict)
+    gaps: list[str] = field(default_factory=list)
+    notes: str = ""
+    download_date: str = field(
+        default_factory=lambda: dt.date.today().isoformat()
+    )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "ticker": self.ticker,
+            "source": self.source,
+            "cik": self.cik,
+            "filings_downloaded": self.filings_downloaded,
+            "filings_failed": self.filings_failed,
+            "filings_coverage_pct": self.filings_coverage_pct,
+            "coverage": self.coverage,
+            "gaps": self.gaps,
+            "notes": self.notes,
+            "download_date": self.download_date,
+        }
+
+
+@dataclass
 class PeriodResult:
     """Extraction results for a single fiscal period."""
 

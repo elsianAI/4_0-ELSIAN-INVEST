@@ -62,6 +62,49 @@ def _load_extraction_result(case_dir: Path) -> ExtractionResult | None:
     return result
 
 
+def _get_fetcher(case: CaseConfig):
+    """Return the appropriate fetcher for a case."""
+    hint = case.source_hint.lower()
+    if hint in ("sec", "sec_edgar"):
+        from elsian.acquire.sec_edgar import SecEdgarFetcher
+        return SecEdgarFetcher()
+    elif hint in ("eu", "eu_manual", "manual_http"):
+        from elsian.acquire.eu_regulators import EuRegulatorsFetcher
+        return EuRegulatorsFetcher()
+    else:
+        from elsian.acquire.manual import ManualFetcher
+        return ManualFetcher()
+
+
+def cmd_acquire(args: argparse.Namespace) -> None:
+    """Download filings for a ticker."""
+    case_dir = _find_case_dir(args.ticker)
+    if not case_dir:
+        print(f"Case not found: {args.ticker}")
+        sys.exit(1)
+
+    case = CaseConfig.from_file(case_dir)
+    fetcher = _get_fetcher(case)
+
+    # For fetchers with acquire(), use it for detailed output
+    if hasattr(fetcher, 'acquire'):
+        result = fetcher.acquire(case)
+        manifest_path = case_dir / "filings_manifest.json"
+        manifest_path.write_text(
+            json.dumps(result.to_dict(), indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        print(f"{args.ticker}: {result.filings_downloaded} filings downloaded ({result.source})")
+        if result.gaps:
+            for gap in result.gaps:
+                print(f"  GAP: {gap}")
+        print(f"  Coverage: {result.filings_coverage_pct}%")
+        print(f"  Saved manifest to {manifest_path}")
+    else:
+        filings = fetcher.fetch(case)
+        print(f"{args.ticker}: {len(filings)} filings found")
+
+
 def cmd_extract(args: argparse.Namespace) -> None:
     """Run extraction on a ticker."""
     from elsian.extract.phase import ExtractPhase
@@ -199,6 +242,10 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(prog="elsian", description="ELSIAN 4.0 CLI")
     sub = parser.add_subparsers(dest="command")
+
+    p_acquire = sub.add_parser("acquire", help="Download filings for a ticker")
+    p_acquire.add_argument("ticker")
+    p_acquire.set_defaults(func=cmd_acquire)
 
     p_extract = sub.add_parser("extract", help="Extract fields from filings")
     p_extract.add_argument("ticker")
