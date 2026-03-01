@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-03-02
+
+### [Fix] SecClient retry: add Timeout catch + exponential backoff (3 attempts)
+- **What:** Fixed `SecClient.get()` retry logic in `sec_edgar.py`:
+  - Added `requests.exceptions.Timeout` to except clause (was missing — `ReadTimeout` never triggered retry)
+  - Changed from 1 retry with 3s wait to 3 attempts with exponential backoff (5s, 10s)
+  - Increased timeout on retry by +20s for generous retry window
+  - TZOO goes from 84.4% → 100% (270/270) with all Q2 filings now downloadable
+- **Tests:** 341 passed, 1 failed (NVDA pre-existing eps_diluted issue), 2 skipped
+- **Regression:** GCT 100%, IOSP 100%, NEXN 100%, SONO 100%, TEP 100%, TALO 100%, TZOO 100%, KAR skipped
+
 ## 2026-03-01
 
 ### [Docs] Audit and correct PROJECT_STATE, BACKLOG — honest metrics

@@ -67,35 +67,36 @@ class SecClient:
         params: Optional[dict[str, Any]] = None,
         timeout: Optional[int] = None,
     ) -> requests.Response:
-        self._throttle()
-        try:
-            resp = self._session.get(
-                url,
-                headers=HEADERS,
-                params=params,
-                timeout=timeout or TIMEOUT,
-                allow_redirects=True,
-            )
-            resp.raise_for_status()
-        except (
-            requests.exceptions.HTTPError,
-            requests.exceptions.ConnectionError,
-        ) as exc:
-            status = getattr(getattr(exc, "response", None), "status_code", 0)
-            if status in (429, 500, 502, 503, 504) or isinstance(
-                exc, requests.exceptions.ConnectionError
-            ):
-                time.sleep(3)
-                self._throttle()
+        max_retries = 3
+        eff_timeout = timeout or TIMEOUT
+        for attempt in range(1, max_retries + 1):
+            self._throttle()
+            try:
                 resp = self._session.get(
                     url,
                     headers=HEADERS,
                     params=params,
-                    timeout=timeout or TIMEOUT,
+                    timeout=eff_timeout,
                     allow_redirects=True,
                 )
                 resp.raise_for_status()
-            else:
+                break  # success
+            except (
+                requests.exceptions.HTTPError,
+                requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout,
+            ) as exc:
+                status = getattr(getattr(exc, "response", None), "status_code", 0)
+                retryable = status in (429, 500, 502, 503, 504) or isinstance(
+                    exc, (requests.exceptions.ConnectionError, requests.exceptions.Timeout)
+                )
+                if retryable and attempt < max_retries:
+                    wait = 5 * attempt  # 5s, 10s
+                    logger.debug("Retry %d/%d for %s (status=%s): waiting %ds",
+                                 attempt, max_retries, url, status, wait)
+                    time.sleep(wait)
+                    eff_timeout = (timeout or TIMEOUT) + 20  # more generous on retry
+                    continue
                 raise
         if not binary:
             resp.encoding = resp.encoding or "utf-8"
