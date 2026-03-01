@@ -2,6 +2,18 @@
 
 ## 2026-03-01
 
+### [Ticker] Add TripAdvisor (TZOO) — reference validation case from SEC EDGAR (@84.4%)
+- **What:** Added TZOO as primary regression baseline — fully acquired from SEC EDGAR with zero manual downloads.
+  - **Autonomous acquisition:** SecEdgarFetcher downloaded 68 files from 23 10-K/10-Q filings (82.1% coverage post-timeout recovery)
+  - **Ground truth:** `expected.json` with 27 periods (annual + quarterly), 270 expected fields
+  - **Extraction:** Pipeline extracted 516 fields across 40 periods from 44 filings processed
+  - **Score:** 84.4% (228/270 matched, 0 wrong, 42 missed quarterly periods)
+- **Ported from:** 3.0 expected.json skeleton only (no filing copies — all acquired autonomously)
+- **Real metrics:** Quarterly period extraction gaps identified as area for improvement
+- **Next:** Improve Q-period detection and balance-sheet line extraction for full 100%
+
+## 2026-03-01
+
 ### [Ticker] Add NVIDIA (NVDA) — 8th case ✓✓ COMPLETED @ 100%
 - **What:** Integrated NVIDIA as 8th regression case (NASDAQ, US, USD currency).
   - Created `cases/NVDA/case.json` with correct CIK (1045810), fiscal_year_end_month=1
