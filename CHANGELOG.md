@@ -2,6 +2,24 @@
 
 ## 2026-03-02
 
+### [Certify] KAR (Karoon Energy) — 9th validated case @ 100% (49/49)
+- **What:** Full ASX/PDF extraction pipeline for KAR. Key additions:
+  - `_YEAR_FOOTNOTE_RE`: handles "20231" → 2023 footnoted years in PDF tables
+  - `extract_shares_outstanding_from_text()`: dedicated regex-based shares extractor for full-text search
+  - Note column detection (`_NOTE_HDR_RE`) + integer-only note filter (`val == int(val)`)
+  - Multi-line label continuation (`prev_text_line` tracking), sentence rejection
+  - Split-header whitespace normalization (`re.sub(r"\s+", " ", combined)`)
+  - Header search window expanded to `[:15]`; section length cap 120 lines for ALL sections
+  - Abbreviated date fallback (`_ABBREV_DATE_RE`): "31 DEC 25" → FY2025
+  - Attached footnote stripping: `re.sub(r'([a-zA-Z])\d{1,2}$', r'\1', label)`
+  - Dash-qualified label penalty (space-surrounded dashes only): sub-categories get priority -10
+  - Slash `/` normalization added to alias resolver punctuation regex
+  - IS `sec_bonus=3` vs BS/CFS `sec_bonus=1` for TXT extraction path
+  - Reject patterns for eps_diluted/eps_basic: "anti-dilutive", "excluded from"
+- **Files:** elsian/extract/html_tables.py, elsian/extract/phase.py, elsian/normalize/aliases.py, cases/KAR/expected.json, tests/integration/test_regression.py
+- **Tests:** 342 passed, 0 failed, 2 skipped
+- **Regression:** ALL 9 tickers @ 100% (GCT, IOSP, KAR, NEXN, NVDA, SONO, TALO, TEP, TZOO)
+
 ### [Fix] SecClient retry: add Timeout catch + exponential backoff (3 attempts)
 - **What:** Fixed `SecClient.get()` retry logic in `sec_edgar.py`:
   - Added `requests.exceptions.Timeout` to except clause (was missing — `ReadTimeout` never triggered retry)

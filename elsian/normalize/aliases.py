@@ -33,6 +33,14 @@ _REJECT_PATTERNS: Dict[str, List[re.Pattern]] = {
         re.compile(r"\bbasic\b", re.I),
         re.compile(r"before\s+income\s+tax", re.I),
     ],
+    "eps_diluted": [
+        re.compile(r"anti.?dilutive", re.I),
+        re.compile(r"excluded\s+from", re.I),
+    ],
+    "eps_basic": [
+        re.compile(r"anti.?dilutive", re.I),
+        re.compile(r"excluded\s+from", re.I),
+    ],
     "ebit": [
         re.compile(r"non[\s-]?gaap", re.I),
     ],
@@ -227,7 +235,7 @@ class AliasResolver:
         )
         # Replace common punctuation with space (not just remove) so that
         # "share—basic" becomes "share basic" not "sharebasic".
-        text = re.sub(r"['\u2018\u2019\u201C\u201D\",():\u2014\u2013]", " ", text)
+        text = re.sub(r"['\u2018\u2019\u201C\u201D\",():/\u2014\u2013]", " ", text)
         # Collapse whitespace
         text = re.sub(r"\s+", " ", text).strip()
         return text
@@ -249,6 +257,8 @@ class AliasResolver:
         """Return a priority score (higher = better) for label-to-canonical match.
 
         100 = exact priority match, 50 = contains priority substring, 0 = default.
+        Labels with dash qualifiers (e.g. "D&A – oil and gas") get -10 as they
+        are typically sub-categories, not totals.
         """
         patterns = _PRIORITY_PATTERNS.get(canonical, [])
         for pat in patterns:
@@ -256,6 +266,11 @@ class AliasResolver:
                 return 100
             if pat.search(raw_label):
                 return 50
+        # Penalize dash-qualified sub-category labels (space-surrounded dashes
+        # only, e.g. "D&A \u2013 oil and gas assets").  Embedded dashes like
+        # "Net income per share\u2014Diluted" are NOT penalized.
+        if " \u2013 " in raw_label or " \u2014 " in raw_label:
+            return -10
         return 0
 
     def resolve(self, raw_label: str) -> Optional[str]:

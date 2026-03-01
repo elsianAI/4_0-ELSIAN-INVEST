@@ -21,6 +21,7 @@ from elsian.extract.detect import analyze_filing
 from elsian.extract.html_tables import (
     extract_tables_from_clean_md,
     extract_tables_from_text,
+    extract_shares_outstanding_from_text,
     TableField,
 )
 from elsian.extract.vertical import extract_vertical_bs
@@ -500,6 +501,21 @@ class ExtractPhase(PipelinePhase):
                 use_section_bonus=False,
             )
 
+        # ── Dedicated shares_outstanding extraction ──────
+        # Shares data often lives in Notes sections, beyond the
+        # 120-line section cap.  A dedicated regex extractor
+        # searches the full text for weighted-average share counts.
+        for tf in extract_shares_outstanding_from_text(
+            text, source_filename=filing_path.name,
+        ):
+            self._process_table_field(
+                tf, filing_path, metadata, filing_scale,
+                filing_scale_confidence, rules, audit,
+                period_fields, additive_labels,
+                source_type="table",
+                use_section_bonus=False,
+            )
+
         # ── Vertical-format consolidated BS extraction ───
         # EDGAR .txt may have the consolidated BS in a vertical
         # layout (one label per line) that the space-aligned
@@ -744,7 +760,7 @@ class ExtractPhase(PipelinePhase):
         if not use_section_bonus:
             loc_lower = tf.source_location.lower()
             if any(s in loc_lower for s in ("income_statement", "balance_sheet", "cash_flow")):
-                sec_bonus = 1
+                sec_bonus = 3 if "income_statement" in loc_lower else 1
         new_sk = compute_sort_key(
             period_key=period_key,
             filing_type=metadata.filing_type,

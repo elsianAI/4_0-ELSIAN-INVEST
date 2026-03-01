@@ -695,6 +695,9 @@ _NUM_TOKEN_RE = re.compile(
 # Regex matching a year like 2025, 2024, etc.
 _YEAR_RE = re.compile(r"\b(20\d{2})\b")
 
+# Regex matching a year followed by a footnote digit, e.g. "20231" → 2023
+_YEAR_FOOTNOTE_RE = re.compile(r"\b(20\d{2})\d\b")
+
 # Regex matching a date-headed column like 12/31/2025
 _DATE_COL_RE = re.compile(r"\b(\d{1,2}/\d{1,2}/(20\d{2}))\b")
 
@@ -836,24 +839,120 @@ def _guided_anchors_from_headers(
     return sorted(anchors)
 
 
+# ── Dedicated shares_outstanding extractor ─────────────────────────
+_SHARES_LABEL_RE = re.compile(
+    r"weighted\s+average\s+(?:number\s+of\s+)?(?:ordinary\s+)?shares"
+    r"(?:\s+(?:on\s+issue|outstanding|used))",
+    re.IGNORECASE,
+)
+_LARGE_INT_RE = re.compile(r"[\d,]{7,}")  # 7+ chars to catch 1,000,000+
+
+
+def extract_shares_outstanding_from_text(
+    text: str, source_filename: str = "",
+) -> List[TableField]:
+    """Extract shares_outstanding from text using dedicated regex.
+
+    Searches for 'weighted average (number of) (ordinary) shares'
+    patterns followed by large integers. Returns TableField with
+    period hints derived from surrounding year context.
+    """
+    results: List[TableField] = []
+    lines = text.split("\n")
+
+    for i, line in enumerate(lines):
+        if not _SHARES_LABEL_RE.search(line):
+            continue
+        # Might be on this line or next (multi-line wrapping)
+        search_text = line
+        if i + 1 < len(lines):
+            search_text += " " + lines[i + 1]
+
+        ints = _LARGE_INT_RE.findall(search_text)
+        if not ints:
+            continue
+
+        # Reject diluted shares: if "diluted" appears in the label, skip.
+        label_area = line.lower()
+        if "dilut" in label_area:
+            continue
+
+        values = []
+        for raw in ints:
+            v = raw.replace(",", "")
+            try:
+                values.append(int(v))
+            except ValueError:
+                continue
+
+        if not values:
+            continue
+
+        # Find year context from nearby lines (look back up to 30 lines)
+        periods: List[str] = []
+        for j in range(max(0, i - 30), i + 2):
+            yr_matches = list(_YEAR_RE.finditer(lines[j]))
+            if len(yr_matches) >= 2:
+                for ym in yr_matches:
+                    pk = f"FY{ym.group(1)}"
+                    if pk not in periods:
+                        periods.append(pk)
+                if len(periods) >= 2:
+                    break
+
+        if not periods:
+            continue
+
+        # Assign values to periods (left-to-right = most recent first)
+        for idx, val in enumerate(values[:len(periods)]):
+            location = f"{source_filename}:shares:L{i + 1}"
+            results.append(TableField(
+                label="Weighted average number of ordinary shares",
+                value=float(val),
+                column_header=periods[idx],
+                source_location=location,
+            ))
+
+    return results
+
+
 def _extract_value_at_column(
     line: str, col_anchor: int, all_anchors: List[int],
+    note_col_end: int = -1,
 ) -> Optional[float]:
     """Extract the numeric value from a line closest to a column anchor.
 
     Uses nearest-number assignment: each number token on the line is assigned
     to the closest column anchor, and we return the one assigned to col_anchor.
+    When note_col_end > 0, small integers (1-30) whose end position falls
+    within the note reference zone are filtered out.
     """
     matches = list(_NUM_TOKEN_RE.finditer(line))
     if not matches:
         # Check for dash-as-zero near the column
-        # Look in a window around the anchor
         window_start = max(0, col_anchor - 10)
         window_end = min(len(line), col_anchor + 3)
         segment = line[window_start:window_end].strip()
         if segment in {"—", "–", "-"}:
             return 0.0
         return None
+
+    # Filter out note references in the NOTE column zone
+    if note_col_end > 0:
+        filtered = []
+        for m in matches:
+            raw = m.group().replace(",", "").replace(" ", "")
+            try:
+                val = float(raw)
+            except ValueError:
+                filtered.append(m)
+                continue
+            if 1 <= val <= 30 and val == int(val) and m.end() <= note_col_end:
+                continue  # skip note reference
+            filtered.append(m)
+        matches = filtered
+        if not matches:
+            return None
 
     # Assign each match to its nearest anchor
     best_match = None
@@ -880,23 +979,69 @@ def _extract_space_aligned_table(
     period_headers: Dict[int, str],
     col_anchors: List[int],
     source_filename: str,
+    note_col_end: int = -1,
 ) -> List[TableField]:
     """Extract fields from a block of space-aligned table lines."""
     results: List[TableField] = []
+    prev_text_line: str = ""  # for multi-line label continuation
 
     for row_idx, line in enumerate(lines):
         stripped = line.strip()
         if not stripped:
+            prev_text_line = ""
             continue
 
         # Find all number tokens on this line
         num_matches = list(_NUM_TOKEN_RE.finditer(line))
+
+        # Filter note references (small integers 1-30) in the note zone
+        if note_col_end > 0 and num_matches:
+            filtered = []
+            for m in num_matches:
+                raw = m.group().replace(",", "").replace(" ", "")
+                try:
+                    val = float(raw)
+                except ValueError:
+                    filtered.append(m)
+                    continue
+                if 1 <= val <= 30 and val == int(val) and m.end() <= note_col_end:
+                    continue  # skip note reference
+                filtered.append(m)
+            num_matches = filtered
+
         if not num_matches:
+            # Text-only line: store for potential multi-line label
+            if stripped and not stripped.startswith("---") and not stripped.startswith("==="):
+                # Strip trailing note references like "  6(a)"
+                clean = re.sub(r'\s+\d{1,2}\s*\([a-z]+\)\s*$', '', stripped)
+                if clean:
+                    prev_text_line = clean
             continue
 
         # The label is everything before the first number
         first_num_start = num_matches[0].start()
         label = line[:first_num_start].strip()
+
+        # Multi-line label continuation: if label starts lowercase,
+        # it's likely a continuation of the previous text-only line
+        if label and label[0].islower() and prev_text_line:
+            label = prev_text_line + " " + label
+            prev_text_line = ""
+        elif not label and prev_text_line:
+            label = prev_text_line
+            prev_text_line = ""
+        else:
+            prev_text_line = ""
+
+        # Strip trailing note references from the label:
+        # - "label 6(a)" or "label 5(a)(ii)"
+        # - "label 6"  (standalone note integer when note zone is active)
+        label = re.sub(r'\s+\d{1,2}\s*\([a-z]+\)(\s*\([ivx]+\))?\s*$', '', label)
+        if note_col_end > 0:
+            label = re.sub(r'\s+\d{1,2}\s*$', '', label)
+        # Strip footnote digits attached directly to words: "amortisation4" → "amortisation"
+        label = re.sub(r'([a-zA-Z])\d{1,2}$', r'\1', label)
+
         if not label:
             continue
 
@@ -918,7 +1063,7 @@ def _extract_space_aligned_table(
             if col_idx not in period_headers:
                 continue
             extracted[col_idx] = _extract_value_at_column(
-                line, anchor, col_anchors,
+                line, anchor, col_anchors, note_col_end=note_col_end,
             )
 
         # Fallback: when position-based assignment leaves columns empty
@@ -1029,6 +1174,9 @@ def extract_tables_from_text(
         # notes paragraphs mention these terms much further in).
         if m.start() > 15:
             continue
+        # Skip narrative sentences that happen to contain section keywords
+        if stripped.endswith("."):
+            continue
         # Skip everything in the exclusion zones (notes + parent company)
         if i >= exclusion_zone_start:
             continue
@@ -1058,9 +1206,12 @@ def extract_tables_from_text(
             continue
         # Try concatenation without space (split word) and with space
         for combined in (prev_s + curr_s, prev_s + " " + curr_s):
-            if len(combined) > 120:
+            # Normalize internal whitespace before length check to handle
+            # PDF-extracted text with excessive spacing between words.
+            combined_norm = re.sub(r"\s+", " ", combined)
+            if len(combined_norm) > 120:
                 continue
-            m = _SECTION_HEADER_RE.search(combined)
+            m = _SECTION_HEADER_RE.search(combined_norm)
             if m and m.start() <= 15:
                 context_start = max(0, i - 21)
                 context = " ".join(
@@ -1068,8 +1219,8 @@ def extract_tables_from_text(
                 )
                 if "parent company" in context or "comptes sociaux" in context:
                     break
-                section_type = _detect_section_type(combined)
-                sections.append((i - 1, combined, section_type))
+                section_type = _detect_section_type(combined_norm)
+                sections.append((i - 1, combined_norm, section_type))
                 _existing_section_lines.add(i - 1)
                 break
 
@@ -1082,9 +1233,10 @@ def extract_tables_from_text(
     global_tbl_idx = 0
 
     for sec_idx, (start_line, header_text, section_type) in enumerate(sections):
-        # Section ends at next section or end of file (max 120 lines)
+        # Section ends at next section or end of file, capped at 120 lines
+        # to prevent notes/appendix data from leaking in.
         if sec_idx + 1 < len(sections):
-            end_line = sections[sec_idx + 1][0]
+            end_line = min(sections[sec_idx + 1][0], start_line + 120)
         else:
             end_line = min(start_line + 120, len(lines))
 
@@ -1113,7 +1265,7 @@ def extract_tables_from_text(
         header_line_idx = -1
         header_end_positions: List[int] = []  # end positions of year/date headers
 
-        for j, sline in enumerate(section_lines[:10]):  # Look in first 10 lines
+        for j, sline in enumerate(section_lines[:15]):  # Look in first 15 lines
             # Try date columns first: 12/31/2025  12/31/2024
             date_matches = list(_DATE_COL_RE.finditer(sline))
             if len(date_matches) >= 2:
@@ -1132,7 +1284,16 @@ def extract_tables_from_text(
                 break
 
             # Try simple year columns: 2025    2024
+            # Also detect years with footnote digits: "20231" → 2023
             year_matches = list(_YEAR_RE.finditer(sline))
+            footnote_matches = list(_YEAR_FOOTNOTE_RE.finditer(sline))
+            # Merge: for positions not already covered by a clean year match,
+            # accept footnote matches as additional year columns.
+            covered_starts = {m.start() for m in year_matches}
+            for fm in footnote_matches:
+                if fm.start() not in covered_starts:
+                    year_matches.append(fm)
+            year_matches.sort(key=lambda m: m.start())
             # Filter to years that make sense (2019-2030) and are positioned
             # in the right half of the line (where data columns go)
             if len(year_matches) >= 2:
@@ -1149,6 +1310,30 @@ def extract_tables_from_text(
                         header_end_positions.append(dy.end())
                     header_line_idx = j
                     break
+
+        if not period_headers or header_line_idx < 0:
+            # Try abbreviated date headers: "31 DEC 25  31 DEC 24"
+            _ABBREV_DATE_RE = re.compile(
+                r"31\s+(?:DEC|JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV)\s+(\d{2})\b",
+                re.IGNORECASE,
+            )
+            for j, sline in enumerate(section_lines[:15]):
+                abbrev_matches = list(_ABBREV_DATE_RE.finditer(sline))
+                if len(abbrev_matches) >= 2:
+                    label_area_end = len(sline) // 3
+                    data_abbrevs = [
+                        am for am in abbrev_matches
+                        if am.start() > label_area_end
+                    ]
+                    if len(data_abbrevs) >= 2:
+                        header_end_positions = []
+                        for da_idx, da in enumerate(data_abbrevs):
+                            yy = int(da.group(1))
+                            full_year = 2000 + yy if yy < 100 else yy
+                            period_headers[da_idx] = f"FY{full_year}"
+                            header_end_positions.append(da.end())
+                        header_line_idx = j
+                        break
 
         if not period_headers or header_line_idx < 0:
             continue
@@ -1205,6 +1390,19 @@ def extract_tables_from_text(
                         data_lines[:50], header_end_positions,
                     )
 
+        # Detect NOTE column: look for "NOTE" header near the data columns.
+        # If present, note references (small integers 1-30) in that zone
+        # must be filtered to avoid misassigning them as field values.
+        note_col_end = -1
+        _NOTE_HDR_RE = re.compile(
+            r"\bNOTE\s+(?:US\$|A\$|\$|€|£|¥)", re.IGNORECASE,
+        )
+        for sline in section_lines[max(0, header_line_idx - 2):header_line_idx + 2]:
+            m_note = _NOTE_HDR_RE.search(sline)
+            if m_note:
+                note_col_end = m_note.end() + 12
+                break
+
         fields = _extract_space_aligned_table(
             data_lines,
             section_type,
@@ -1212,6 +1410,7 @@ def extract_tables_from_text(
             period_headers,
             col_anchors,
             source_filename,
+            note_col_end=note_col_end,
         )
         global_tbl_idx += 1
         all_fields.extend(fields)
