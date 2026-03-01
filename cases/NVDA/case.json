@@ -1,0 +1,11 @@
+{
+  "ticker": "NVDA",
+  "exchange": "NASDAQ",
+  "country": "US",
+  "currency": "USD",
+  "cik": "1045810",
+  "source_hint": "sec",
+  "filings_expected_count": null,
+  "fiscal_year_end_month": 1,
+  "notes": "Nvidia Corporation, NVIDIA is the world's leading AI computing company. Fiscal year ends January 31. 10-K/10-Q filer with strong iXBRL support."
+}

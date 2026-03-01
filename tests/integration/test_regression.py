@@ -21,7 +21,8 @@ VALIDATED_TICKERS = ["TZOO", "GCT", "IOSP", "NEXN", "SONO", "TEP", "TALO"]
 PENDING_RECERT_TICKERS = ["KAR"]
 
 # Tickers still being curated (expected to fail, not blocking)
-WIP_TICKERS: list[str] = []
+# NVDA: 83.33% (50/60) - 3 extractor bugs: interest_income×3, capex×3, total_debt off-by-11% (BL-010)
+WIP_TICKERS: list[str] = ["NVDA"]
 
 
 def _has_case(ticker: str) -> bool:

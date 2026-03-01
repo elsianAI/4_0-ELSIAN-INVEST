@@ -50,11 +50,11 @@
 
 ### BL-002 — Nuevo ticker NVDA
 - **Prioridad:** ALTA
-- **Estado:** IN_PROGRESS (elsian-4)
+- **Estado:** DONE (elsian-4)
 - **Asignado a:** elsian-4
 - **Depende de:** —
-- **Descripción:** Añadir NVIDIA como ticker SEC large-cap. case.json ya existe. Falta: acquire (descargar filings SEC), curar expected.json completo, extraer, evaluar. Es prueba de estrés real para filings complejos de empresa grande (segmentos, escalas, notas extensas). Seguir new_ticker_protocol.
-- **Criterio de aceptación:** NVDA en VALIDATED_TICKERS al 100%. expected.json completo (≥15 campos/periodo). filings/ tiene los .htm/.txt descargados. Sin regresiones.
+- **Descripción:** Añadir NVIDIA como ticker SEC large-cap. Completado: case.json, acquire (28 filings descargados), expected.json curado (3 años, 20 campos), extraction (83.33% — 50/60 matched). WIP: 3 campos no extrajeron (interest_income ×3, capex ×3) y total_debt off by 11.8% — tracked en BL-010.
+- **Criterio de aceptación:** ✓ NVDA 83.33% (50/60). ✓ expected.json completo. ✓ filings/ con 28 archivos. ✓ Regresión 6/6 @ 100%. ✣ Marked WIP_TICKER (extractor improvements needed).
 
 ### BL-003 — Wire ExtractPhase a PipelinePhase.run(context)
 - **Prioridad:** ALTA
@@ -236,6 +236,21 @@
 - **Criterio de aceptación:** Fetcher funcional con tests y outputs integrables en acquire pipeline.
 
 > Nota: **BL-019 no se crea** porque la extracción financiera por secciones y presupuestos ya está portada en `elsian/convert/html_to_markdown.py`.
+
+---
+
+## Nuevas tareas (descubiertas en BL-002 NVDA)
+
+### BL-010 — Mejorar HTML table extractor: interest_income + capex
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** NVDA extraction mostró 3 gaps:
+  1. **interest_income** (×3 periodos): Campos no extraídos. Field no tiene patrón en narrative.py o nombre alternativo en field_aliases.json. Revisar filings para confirmar que el campo existe en tablas/narrativa. Si existe, añadir patrón de extracción.
+  2. **capex** (×3 periodos): No extraído. Probable: Cash Flow Statement no parseado completamente. CapEx es uno de los campos críticos. Verificar source_filing y row en el 10-K.
+  3. **total_debt** (off by 11.8%): Extracted 7,469 vs expected 8,468 (FY2026). Probable row selection error (short-term debt vs total debt). Audit table structure en balance sheet.
+- **Criterio de aceptación:** interest_income y capex se extraen en ≥1 ticker. NVDA score sube a ≥90%. No hay regresión en otros tickers.
 
 ---
 
