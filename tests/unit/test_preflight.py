@@ -254,3 +254,95 @@ class TestSectionBoundaries:
     def test_empty_text(self) -> None:
         bounds = _find_section_boundaries("")
         assert bounds == []
+
+
+# ── confidence_by_signal ──────────────────────────────────────────────
+
+class TestConfidenceBySignal:
+    def test_language_signal(self) -> None:
+        result = preflight(US_GAAP_TEXT)
+        assert "lang:en" in result.confidence_by_signal
+
+    def test_standard_signal(self) -> None:
+        result = preflight(US_GAAP_TEXT)
+        assert "standard:US-GAAP" in result.confidence_by_signal
+
+    def test_currency_signal(self) -> None:
+        result = preflight(US_GAAP_TEXT)
+        assert "currency:USD" in result.confidence_by_signal
+
+    def test_fiscal_year_signal(self) -> None:
+        result = preflight(US_GAAP_TEXT)
+        assert "fiscal_year" in result.confidence_by_signal
+
+    def test_restatement_signal(self) -> None:
+        text = US_GAAP_TEXT + "\nThe figures have been restated for comparison."
+        result = preflight(text)
+        assert "restatement" in result.confidence_by_signal
+        assert result.confidence_by_signal["restatement"] in ("high", "medium")
+
+    def test_ifrs_signals(self) -> None:
+        result = preflight(IFRS_EUR_TEXT)
+        assert "lang:fr" in result.confidence_by_signal
+        assert "standard:IFRS" in result.confidence_by_signal
+        assert "currency:EUR" in result.confidence_by_signal
+
+    def test_empty_text_no_signals(self) -> None:
+        result = preflight("")
+        assert result.confidence_by_signal == {}
+
+    def test_confidence_in_to_dict(self) -> None:
+        result = preflight(US_GAAP_TEXT)
+        d = result.to_dict()
+        assert "confidence_by_signal" in d
+        assert isinstance(d["confidence_by_signal"], dict)
+
+
+# ── to_prompt_block ───────────────────────────────────────────────────
+
+class TestToPromptBlock:
+    def test_us_gaap_block(self) -> None:
+        result = preflight(US_GAAP_TEXT)
+        block = result.to_prompt_block()
+        assert block is not None
+        assert "METADATA DEL DOCUMENTO" in block
+        assert "en" in block.lower()
+
+    def test_includes_currency(self) -> None:
+        result = preflight(US_GAAP_TEXT)
+        block = result.to_prompt_block()
+        assert "USD" in block
+
+    def test_includes_accounting_standard(self) -> None:
+        result = preflight(US_GAAP_TEXT)
+        block = result.to_prompt_block()
+        assert "US-GAAP" in block
+
+    def test_includes_units(self) -> None:
+        result = preflight(US_GAAP_TEXT)
+        block = result.to_prompt_block()
+        assert block is not None
+        # Should mention units (thousands or global)
+        assert "unit" in block.lower() or "Units" in block
+
+    def test_restatement_warning(self) -> None:
+        text = US_GAAP_TEXT + "\nThe figures have been restated for comparison."
+        result = preflight(text)
+        block = result.to_prompt_block()
+        assert "RESTATEMENT" in block
+
+    def test_empty_returns_none(self) -> None:
+        result = preflight("")
+        block = result.to_prompt_block()
+        assert block is None
+
+    def test_no_confidence_returns_none(self) -> None:
+        result = PreflightResult()
+        block = result.to_prompt_block()
+        assert block is None
+
+    def test_ifrs_block(self) -> None:
+        result = preflight(IFRS_EUR_TEXT)
+        block = result.to_prompt_block()
+        assert block is not None
+        assert "EUR" in block or "IFRS" in block

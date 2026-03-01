@@ -123,6 +123,7 @@ class PreflightResult:
     units_global: Optional[dict[str, Any]] = None
     restatement_detected: bool = False
     restatement_signals: list[dict[str, Any]] = field(default_factory=list)
+    confidence_by_signal: dict[str, str] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -139,7 +140,60 @@ class PreflightResult:
             "units_global": self.units_global,
             "restatement_detected": self.restatement_detected,
             "restatement_signals": self.restatement_signals,
+            "confidence_by_signal": self.confidence_by_signal,
         }
+
+    def to_prompt_block(self) -> Optional[str]:
+        """Format preflight metadata as a markdown prompt block.
+
+        Only includes high/medium confidence signals.  Returns None if
+        no useful signals detected (graceful degradation).
+
+        Ported from 3_0 filing_preflight.py ``format_prompt_block()``.
+        """
+        lines: list[str] = []
+
+        if self.language and self.language_confidence in ("high", "medium"):
+            lines.append(f"- Document language: {self.language}")
+
+        if self.accounting_standard and self.accounting_standard_confidence in ("high", "medium"):
+            lines.append(f"- Accounting standard: {self.accounting_standard}")
+
+        if self.currency and self.currency_confidence in ("high", "medium"):
+            lines.append(f"- Primary currency: {self.currency}")
+
+        if self.fiscal_year and self.fiscal_year_confidence in ("high", "medium"):
+            lines.append(f"- Fiscal year: {self.fiscal_year}")
+
+        # Units by section (critical for non-US filings)
+        if self.units_by_section:
+            unit_lines: list[str] = []
+            for section, info in self.units_by_section.items():
+                unit_lines.append(f"  - {section}: {info['unit']} (×{info['multiplier']:,})")
+            if unit_lines:
+                lines.append("- Units by section:")
+                lines.extend(unit_lines)
+        elif self.units_global:
+            ug = self.units_global
+            lines.append(f"- Units (global): {ug['unit']} (×{ug['multiplier']:,})")
+
+        # Restatement warning
+        if self.restatement_detected:
+            high_signals = [s for s in self.restatement_signals if s["confidence"] == "high"]
+            if high_signals:
+                sample = high_signals[0]["sample"]
+                lines.append(f'- ⚠ RESTATEMENT DETECTED: "{sample}" — compare periods carefully')
+            elif self.restatement_signals:
+                lines.append("- ⚠ Possible restatement detected — compare periods carefully")
+
+        if not lines:
+            return None
+
+        block = "# METADATA DEL DOCUMENTO (pre-flight determinista)\n\n"
+        block += "\n".join(lines)
+        block += "\n\nUsa esta información para guiar tu extracción. "
+        block += "Presta especial atención a las unidades por sección para no cometer errores de escala."
+        return block
 
 
 # ── Internal helpers ──────────────────────────────────────────────────
@@ -185,10 +239,11 @@ def preflight(text: str) -> PreflightResult:
 
     # ── Language ──
     lang_scores: dict[str, int] = {}
-    for lang, pattern, _confidence in _LANG_PATTERNS:
+    for lang, pattern, confidence in _LANG_PATTERNS:
         matches = pattern.findall(text_sample)
         if matches:
             lang_scores[lang] = lang_scores.get(lang, 0) + len(matches)
+            result.confidence_by_signal[f"lang:{lang}"] = confidence
     if lang_scores:
         best_lang = max(lang_scores, key=lang_scores.get)  # type: ignore[arg-type]
         result.language = best_lang
@@ -199,6 +254,7 @@ def preflight(text: str) -> PreflightResult:
         if pattern.search(text_sample):
             result.accounting_standard = standard
             result.accounting_standard_confidence = confidence
+            result.confidence_by_signal[f"standard:{standard}"] = confidence
             break
 
     # ── Currency ──
@@ -214,6 +270,7 @@ def preflight(text: str) -> PreflightResult:
         best_currency = max(currency_scores, key=currency_scores.get)  # type: ignore[arg-type]
         result.currency = best_currency
         result.currency_confidence = currency_conf.get(best_currency, "medium")
+        result.confidence_by_signal[f"currency:{best_currency}"] = result.currency_confidence
 
     # ── Fiscal year ──
     for pattern, confidence in _FY_PATTERNS:
@@ -225,6 +282,7 @@ def preflight(text: str) -> PreflightResult:
                 if 1990 <= year <= 2040:
                     result.fiscal_year = year
                     result.fiscal_year_confidence = confidence
+                    result.confidence_by_signal["fiscal_year"] = confidence
                     break
             except ValueError:
                 continue
@@ -268,5 +326,8 @@ def preflight(text: str) -> PreflightResult:
             result.restatement_signals.append(signal)
     if result.restatement_signals:
         result.restatement_detected = True
+        result.confidence_by_signal["restatement"] = max(
+            s["confidence"] for s in result.restatement_signals
+        )
 
     return result

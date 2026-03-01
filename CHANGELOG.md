@@ -2,6 +2,29 @@
 
 ## 2026-03-04
 
+### [Acquire/Preflight] Complete gaps in IR Crawler (Block E) and Preflight (Block B)
+- **What:** Ported missing functions from 3.0 to bring Block E and Block B to 100%:
+  - **IR Crawler** (`elsian/acquire/ir_crawler.py`):
+    - `parse_date_loose()`: Flexible date parser (ISO, compact, text dates)
+    - `parse_year_hint()`: Fiscal year keyword extraction from text
+    - `_resolve_local_candidate_date()`: Date resolution from anchor/row/URL context
+    - `_extract_date_from_html_document()`: Date from HTML meta tags, <time>, title, URL
+    - `_local_event_registration_penalty()`: Soft-penalize webcast/registration links
+    - `_clean_embedded_pdf_url()`: Clean escaped PDF URLs from JSON/HTML
+    - `_extract_embedded_title()`: Title extraction from context around PDF URLs
+    - `_extract_embedded_pdf_candidates()`: ~120-line embedded PDF extractor with regex, scoring, dedup
+    - `_prefer_new_candidate()`: Score-based dedup with date-aware protection
+    - Updated `extract_filing_candidates()`: now resolves dates per candidate, applies event penalty,
+      merges embedded PDF candidates, uses `_prefer_new_candidate()` for dedup
+  - **Preflight** (`elsian/analyze/preflight.py`):
+    - Added `confidence_by_signal: dict[str, str]` field to `PreflightResult`
+    - Populated during `preflight()` with keys: `lang:*`, `standard:*`, `currency:*`, `fiscal_year`, `restatement`
+    - Added `to_prompt_block()` method (ported from 3.0 `format_prompt_block()`)
+    - Updated `to_dict()` to include `confidence_by_signal`
+- **Ported from:** sec_fetcher_v2_runner.py (lines 358-410, 500-522, 743-972), filing_preflight.py (lines 268-319)
+- **Tests:** 344 passed, 1 skipped, 0 failed (+67 new tests)
+- **Regression:** 8/8 tickers at 100%
+
 ### [Acquire] Full audit and port of acquire module from 3.0
 - **What:** Ported 6 blocks of acquire infrastructure from 3.0 `sec_fetcher_v2_runner.py`,
   `filing_preflight.py`, and `ir_url_resolver.py`:

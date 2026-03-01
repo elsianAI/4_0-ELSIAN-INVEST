@@ -13,10 +13,13 @@ IrCrawlerFetcher can compose.
 
 from __future__ import annotations
 
+import datetime as dt
+import html as html_lib
 import logging
 import re
-from typing import Any, Optional
-from urllib.parse import urljoin, urlparse
+from pathlib import Path
+from typing import Any, Optional, Tuple
+from urllib.parse import unquote, urljoin, urlparse
 
 from elsian.markets import (
     LOCAL_FILING_KEYWORDS_BY_EXCHANGE,
@@ -83,6 +86,372 @@ HEADERS = {
 
 _WEAK_STATUS = {403, 429}
 _VALID_STATUS = {200, 403, 429}
+
+LOCAL_EVENT_REGISTRATION_HINTS_STRONG: tuple[str, ...] = (
+    "engagestream",
+    "register",
+    "registration",
+    "signup",
+    "webcast",
+)
+
+
+# ── Date parsing helpers (ported from sec_fetcher_v2_runner.py) ───────
+
+def parse_date_loose(text: str) -> Optional[str]:
+    """Parse a date from free text.  Returns ISO date string or None.
+
+    Handles: YYYY-MM-DD, YYYYMMDD, "March 15, 2024", "15 March 2024".
+    """
+    value = re.sub(r"\s+", " ", str(text or "")).strip()
+    if not value:
+        return None
+
+    # ISO-like: 2024-03-15, 2024/03/15
+    for m in re.finditer(r"\b((?:19|20)\d{2})[-/](\d{1,2})[-/](\d{1,2})\b", value):
+        try:
+            y, mo, day = int(m.group(1)), int(m.group(2)), int(m.group(3))
+            return dt.date(y, mo, day).isoformat()
+        except ValueError:
+            continue
+
+    # Compact: 20240315
+    for m in re.finditer(r"(?<!\d)((?:19|20)\d{2})(\d{2})(\d{2})(?!\d)", value):
+        try:
+            y, mo, day = int(m.group(1)), int(m.group(2)), int(m.group(3))
+            return dt.date(y, mo, day).isoformat()
+        except ValueError:
+            continue
+
+    # Text dates: "March 15, 2024" or "15 March 2024"
+    for pattern in (
+        r"([A-Za-z]{3,9}\s+\d{1,2},\s+\d{4})",
+        r"(\d{1,2}\s+[A-Za-z]{3,9}\s+20\d{2})",
+    ):
+        m = re.search(pattern, value, flags=re.IGNORECASE)
+        if not m:
+            continue
+        raw = m.group(1).strip()
+        normalized = raw.title()
+        for fmt in ("%B %d, %Y", "%b %d, %Y", "%d %B %Y", "%d %b %Y"):
+            try:
+                return dt.datetime.strptime(normalized, fmt).date().isoformat()
+            except ValueError:
+                continue
+    return None
+
+
+def parse_year_hint(text: str) -> Optional[int]:
+    """Extract a fiscal year hint from text containing keywords like 'annual', 'year', etc."""
+    low = re.sub(r"\s+", " ", str(text or "")).lower()
+    if not low:
+        return None
+    if not any(k in low for k in ("annual", "interim", "year", "fy", "report", "results")):
+        return None
+    years = [int(m.group(0)) for m in re.finditer(r"(?<!\d)(?:19|20)\d{2}(?!\d)", low)]
+    if not years:
+        return None
+    return max(years)
+
+
+# ── Candidate date resolution (ported from sec_fetcher_v2_runner.py) ──
+
+def _resolve_local_candidate_date(
+    anchor_text: str,
+    row_text: str,
+    full_url: str,
+) -> Tuple[Optional[str], str, bool]:
+    """Resolve publication date from context around a filing link.
+
+    Tries parse_date_loose on (anchor_text + row_text), then URL.
+    Falls back to parse_year_hint → "{year}-12-31".
+
+    Returns:
+        (date_str | None, source_name, is_estimated)
+    """
+    for source_name, chunk in (
+        ("context", f"{anchor_text} {row_text}"),
+        ("url", full_url),
+    ):
+        date_guess = parse_date_loose(chunk)
+        if date_guess:
+            estimated = source_name != "context"
+            return date_guess, source_name, estimated
+    for source_name, chunk in (
+        ("title_year", f"{anchor_text} {row_text}"),
+        ("url_year", full_url),
+    ):
+        year_hint = parse_year_hint(chunk)
+        if year_hint:
+            inferred = f"{int(year_hint):04d}-12-31"
+            return inferred, source_name, True
+    return None, "unknown", True
+
+
+def _extract_date_from_html_document(html: str, doc_url: str) -> Tuple[Optional[str], str]:
+    """Extract publication date from an HTML document's metadata.
+
+    Checks meta tags (article:published_time, date, publishdate,
+    publication_date, dc.date), then <time> tags, title, and URL.
+    """
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return None, "unknown"
+
+    soup = BeautifulSoup(html, "html.parser")
+    meta_selectors = (
+        ("html_meta", {"property": "article:published_time"}),
+        ("html_meta", {"name": "date"}),
+        ("html_meta", {"name": "publishdate"}),
+        ("html_meta", {"name": "publication_date"}),
+        ("html_meta", {"name": "dc.date"}),
+    )
+    for source_name, attrs in meta_selectors:
+        tag = soup.find("meta", attrs=attrs)
+        if tag and tag.get("content"):
+            parsed = parse_date_loose(str(tag.get("content")))
+            if parsed:
+                return parsed, source_name
+
+    for t in soup.find_all("time"):
+        text = str(t.get("datetime") or t.get_text(" ", strip=True) or "")
+        parsed = parse_date_loose(text)
+        if parsed:
+            return parsed, "html_time_tag"
+
+    if soup.title and soup.title.get_text():
+        parsed = parse_date_loose(soup.title.get_text(" ", strip=True))
+        if parsed:
+            return parsed, "html_title"
+
+    parsed = parse_date_loose(doc_url)
+    if parsed:
+        return parsed, "url"
+    return None, "unknown"
+
+
+# ── Event registration penalty (ported from sec_fetcher_v2_runner.py) ─
+
+def _local_event_registration_penalty(context_norm: str, full_url: str) -> float:
+    """Soft-penalize event/registration links so annual reports rank higher."""
+    ctx = f"{context_norm} {full_url.lower()}"
+    penalty = 0.0
+    if any(hint in ctx for hint in LOCAL_EVENT_REGISTRATION_HINTS_STRONG):
+        penalty -= 3.0
+    if re.search(r"\bevents?\b", ctx):
+        penalty -= 1.0
+    return penalty
+
+
+# ── Embedded PDF helpers (ported from sec_fetcher_v2_runner.py) ───────
+
+def _clean_embedded_pdf_url(raw_url: str) -> str:
+    """Clean raw PDF URL from embedded HTML/JSON contexts."""
+    if not raw_url:
+        return ""
+    cleaned = str(raw_url).strip().strip("\"'`")
+    cleaned = html_lib.unescape(cleaned)
+    cleaned = cleaned.replace("\\/", "/")
+    cleaned = re.sub(r"\\u0*2f", "/", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\\x2f", "/", cleaned, flags=re.IGNORECASE)
+    cleaned = cleaned.replace("\\\\", "\\")
+    cleaned = cleaned.strip().strip("\"'`")
+    if cleaned.startswith("//"):
+        cleaned = f"https:{cleaned}"
+    return cleaned
+
+
+def _extract_embedded_title(context_window: str, full_url: str) -> str:
+    """Extract title from context window around a PDF URL match."""
+    patterns = (
+        r'data-gtm-elem-text\\?"?\s*[:=]\s*["\']([^"\']{6,220})["\']',
+        r'"name"\s*:\s*\{\s*"Value"\s*:\s*"([^"]{6,220})"',
+        r'"name"\s*:\s*\{\s*"value"\s*:\s*"([^"]{6,220})"',
+        r'"title"\s*:\s*"([^"]{6,220})"',
+    )
+    for pat in patterns:
+        m = re.search(pat, context_window, flags=re.IGNORECASE)
+        if not m:
+            continue
+        candidate = re.sub(r"\s+", " ", html_lib.unescape(m.group(1))).strip()
+        if candidate:
+            return candidate[:240]
+    basename = unquote(Path(urlparse(full_url).path).name).replace("+", " ").strip()
+    return basename[:240] or "Local filing"
+
+
+def _extract_embedded_pdf_candidates(
+    html: str,
+    base_url: str,
+    exchange: Optional[str],
+) -> list[dict[str, Any]]:
+    """Extract PDF candidates from embedded/linked PDFs in HTML.
+
+    Searches for absolute, relative, and slash-relative PDF URLs
+    via regex, extracts context windows, scores by keyword hits,
+    and deduplicates.
+    """
+    from elsian.acquire.classify import classify_filing_type
+
+    ex = (exchange or "").upper()
+    kws = set(LOCAL_FILING_KEYWORDS_COMMON)
+    kws.update(LOCAL_FILING_KEYWORDS_BY_EXCHANGE.get(ex, ()))
+
+    positive_plain_hints = (
+        "annual",
+        "results",
+        "registration document",
+        "universal registration document",
+        "integrated report",
+        "interim",
+        "financial",
+        "urd",
+    )
+    negative_plain_hints = ("privacy", "cookie", "terms", "policy")
+    event_register_re = re.compile(
+        r"(webcast|event)[\w\s:/-]{0,40}register|signup", re.IGNORECASE
+    )
+    period_hint_re = re.compile(r"\b(q[1-4]|h[12])\b", re.IGNORECASE)
+
+    pattern = re.compile(
+        r"""(?ix)
+        (?:
+            (?P<absolute>https?://[^\s"'<>\\]+?\.pdf(?:\?[^\s"'<>\\]*)?)
+            |
+            (?P<relative>(?:\\?/)?media/[^\s"'<>\\]+?\.pdf(?:\?[^\s"'<>\\]*)?)
+            |
+            (?P<slash_relative>\\?/media/[^\s"'<>\\]+?\.pdf(?:\?[^\s"'<>\\]*)?)
+        )
+        """
+    )
+
+    by_url: dict[str, dict[str, Any]] = {}
+    for match in pattern.finditer(html):
+        raw_url = (
+            match.group("absolute")
+            or match.group("relative")
+            or match.group("slash_relative")
+            or ""
+        )
+        cleaned_url = _clean_embedded_pdf_url(raw_url)
+        if not cleaned_url:
+            continue
+
+        if not cleaned_url.startswith(("http://", "https://", "/")):
+            continue
+        if cleaned_url.startswith("media/"):
+            cleaned_url = f"/{cleaned_url}"
+        full_url = urljoin(base_url, cleaned_url)
+        if not full_url.lower().startswith(("http://", "https://")):
+            continue
+        if not full_url.lower().endswith(".pdf") and ".pdf?" not in full_url.lower():
+            continue
+
+        start, end = match.span()
+        left = max(0, start - 180)
+        right = min(len(html), end + 180)
+        context_window = html[left:right]
+        context_window = html_lib.unescape(context_window.replace("\\/", "/"))
+        context_window = re.sub(r"\s+", " ", context_window).strip()
+        context_low = context_window.lower()
+        context_norm = re.sub(r"[-_/]+", " ", context_low)
+        merged_ctx = f"{full_url.lower()} {context_low}"
+
+        if any(neg in merged_ctx for neg in negative_plain_hints):
+            continue
+        if event_register_re.search(merged_ctx):
+            continue
+
+        title = _extract_embedded_title(context_window, full_url)
+        url_title_ctx = f"{full_url.lower()} {title.lower()}"
+        has_positive = any(
+            pos in url_title_ctx for pos in positive_plain_hints
+        ) or bool(period_hint_re.search(url_title_ctx))
+        if not has_positive:
+            continue
+
+        date_guess, date_source, date_estimated = _resolve_local_candidate_date(
+            title,
+            context_window,
+            full_url,
+        )
+        basename_hint = unquote(
+            Path(urlparse(full_url).path).name
+        ).replace("+", " ")
+        filing_type = classify_filing_type(title, full_url, basename_hint)
+
+        score = 1  # Base score for embedded PDF match
+        kw_hits = sum(
+            1 for kw in kws if kw in context_norm or kw in url_title_ctx
+        )
+        score += min(3, kw_hits)
+        if "annual" in url_title_ctx or "integrated report" in url_title_ctx or "urd" in url_title_ctx:
+            score += 2
+        if "interim" in url_title_ctx or re.search(r"\b(h1|h2|q[1-4])\b", url_title_ctx):
+            score += 2
+
+        selection_score = float(score)
+        if filing_type == "ANNUAL_REPORT":
+            selection_score += 4.0
+        elif filing_type == "INTERIM_REPORT":
+            selection_score += 3.0
+        elif filing_type == "REGULATORY_FILING":
+            selection_score += 2.0
+        elif filing_type == "IR_NEWS":
+            selection_score += 1.0
+        if date_guess:
+            selection_score += 0.5
+        selection_score += _local_event_registration_penalty(context_norm, full_url)
+
+        snippet = context_window[:280] if context_window else title[:280]
+        candidate = {
+            "url": full_url,
+            "titulo": title[:240],
+            "score": score,
+            "fecha_publicacion": date_guess,
+            "fecha_source": date_source,
+            "fecha_publicacion_estimated": date_estimated,
+            "snippet": snippet,
+            "tipo_guess": filing_type,
+            "selection_score": selection_score,
+            "discovered_via": "embedded_pdf",
+        }
+        prev = by_url.get(full_url)
+        if prev is None or _prefer_new_candidate(prev, candidate):
+            by_url[full_url] = candidate
+
+    return list(by_url.values())
+
+
+# ── Candidate dedup helper (ported from sec_fetcher_v2_runner.py) ─────
+
+def _prefer_new_candidate(
+    prev: dict[str, Any], candidate: dict[str, Any]
+) -> bool:
+    """Decide whether *candidate* should replace *prev* for the same URL.
+
+    Score comparison with date-aware protection: protects date-carrying
+    candidates from date-less overwrite unless the score delta is >= 2.
+    """
+    prev_score = int(prev.get("score", 0))
+    new_score = int(candidate.get("score", 0))
+    if new_score > prev_score:
+        if prev.get("fecha_publicacion") and not candidate.get("fecha_publicacion"):
+            return (new_score - prev_score) >= 2
+        return True
+    if new_score < prev_score:
+        return False
+    # Scores tied — prefer the one with a date
+    prev_has_date = bool(prev.get("fecha_publicacion"))
+    new_has_date = bool(candidate.get("fecha_publicacion"))
+    if new_has_date and not prev_has_date:
+        return True
+    if prev_has_date and not new_has_date:
+        return False
+    return float(candidate.get("selection_score", 0.0)) > float(
+        prev.get("selection_score", 0.0)
+    )
 
 
 # ── URL normalisation helpers ─────────────────────────────────────────
@@ -367,8 +736,15 @@ def extract_filing_candidates(
 ) -> list[dict[str, Any]]:
     """Extract filing candidates from an IR page's HTML.
 
-    Returns a list of dicts with: url, titulo, score, tipo_guess, snippet, etc.
+    Returns a list of dicts with: url, titulo, score, tipo_guess, snippet,
+    fecha_publicacion, fecha_source, fecha_publicacion_estimated, etc.
     Sorted by selection_score descending, capped at 20.
+
+    Integrates:
+    - Date resolution per candidate (anchor text, row text, URL)
+    - Event registration penalty (soft-penalize webcasts/signups)
+    - Embedded PDF extraction via regex (non-anchor PDFs)
+    - Duplicate resolution via _prefer_new_candidate
     """
     try:
         from bs4 import BeautifulSoup
@@ -431,6 +807,11 @@ def extract_filing_candidates(
         title = text or urlparse(full_url).path.rsplit("/", 1)[-1] or "Local filing"
         filing_type = classify_filing_type(title, full_url, row_text)
 
+        # Date resolution
+        date_guess, date_source, date_estimated = _resolve_local_candidate_date(
+            text, row_text, full_url,
+        )
+
         selection_score = float(score)
         if filing_type == "ANNUAL_REPORT":
             selection_score += 4.0
@@ -440,19 +821,33 @@ def extract_filing_candidates(
             selection_score += 2.0
         elif filing_type == "IR_NEWS":
             selection_score += 1.0
+        if date_guess:
+            selection_score += 0.5
+        # Event registration penalty
+        selection_score += _local_event_registration_penalty(context_norm, full_url)
 
         candidate = {
             "url": full_url,
             "titulo": title[:240],
             "score": score,
+            "fecha_publicacion": date_guess,
+            "fecha_source": date_source,
+            "fecha_publicacion_estimated": date_estimated,
             "snippet": row_text[:280] if row_text else title[:280],
             "tipo_guess": filing_type,
             "selection_score": selection_score,
         }
 
         prev = by_url.get(full_url)
-        if prev is None or candidate["selection_score"] > prev.get("selection_score", 0):
+        if prev is None or _prefer_new_candidate(prev, candidate):
             by_url[full_url] = candidate
+
+    # Merge embedded PDF candidates
+    for emb_cand in _extract_embedded_pdf_candidates(html, base_url, exchange):
+        emb_url = emb_cand["url"]
+        prev = by_url.get(emb_url)
+        if prev is None or _prefer_new_candidate(prev, emb_cand):
+            by_url[emb_url] = emb_cand
 
     candidates = sorted(
         by_url.values(),

@@ -3,12 +3,21 @@
 import pytest
 
 from elsian.acquire.ir_crawler import (
+    _clean_embedded_pdf_url,
+    _extract_date_from_html_document,
+    _extract_embedded_pdf_candidates,
+    _extract_embedded_title,
+    _local_event_registration_penalty,
+    _prefer_new_candidate,
+    _resolve_local_candidate_date,
     build_ir_pages,
     build_ir_url_candidates,
     derive_ir_roots,
     discover_ir_subpages,
     extract_filing_candidates,
     normalize_web_ir,
+    parse_date_loose,
+    parse_year_hint,
     select_fallback_candidates,
 )
 
@@ -196,3 +205,305 @@ class TestSelectFallbackCandidates:
 
     def test_empty(self) -> None:
         assert select_fallback_candidates([]) == []
+
+
+# ── parse_date_loose ──────────────────────────────────────────────────
+
+class TestParseDateLoose:
+    def test_iso_date(self) -> None:
+        assert parse_date_loose("2024-03-15") == "2024-03-15"
+
+    def test_slash_date(self) -> None:
+        assert parse_date_loose("2024/06/01") == "2024-06-01"
+
+    def test_compact_date(self) -> None:
+        assert parse_date_loose("report_20240315.pdf") == "2024-03-15"
+
+    def test_text_date_us(self) -> None:
+        assert parse_date_loose("March 15, 2024") == "2024-03-15"
+
+    def test_text_date_eu(self) -> None:
+        assert parse_date_loose("15 March 2024") == "2024-03-15"
+
+    def test_abbreviated_month(self) -> None:
+        assert parse_date_loose("Sep 1, 2023") == "2023-09-01"
+
+    def test_empty_returns_none(self) -> None:
+        assert parse_date_loose("") is None
+        assert parse_date_loose(None) is None
+
+    def test_no_date_returns_none(self) -> None:
+        assert parse_date_loose("just some text") is None
+
+
+# ── parse_year_hint ───────────────────────────────────────────────────
+
+class TestParseYearHint:
+    def test_annual_report(self) -> None:
+        assert parse_year_hint("Annual Report 2024") == 2024
+
+    def test_fy_prefix(self) -> None:
+        assert parse_year_hint("FY2023 results") == 2023
+
+    def test_no_keyword_returns_none(self) -> None:
+        assert parse_year_hint("some text 2024") is None
+
+    def test_empty_returns_none(self) -> None:
+        assert parse_year_hint("") is None
+
+    def test_picks_max_year(self) -> None:
+        assert parse_year_hint("Annual Report 2023 2024") == 2024
+
+
+# ── _resolve_local_candidate_date ─────────────────────────────────────
+
+class TestResolveLocalCandidateDate:
+    def test_date_from_anchor_text(self) -> None:
+        date, source, estimated = _resolve_local_candidate_date(
+            "Annual Report March 15, 2024", "", "https://example.com/report.pdf"
+        )
+        assert date == "2024-03-15"
+        assert source == "context"
+        assert estimated is False
+
+    def test_date_from_url(self) -> None:
+        date, source, estimated = _resolve_local_candidate_date(
+            "Report", "", "https://example.com/reports/2024-06-30/report.pdf"
+        )
+        assert date == "2024-06-30"
+        assert source == "url"
+        assert estimated is True
+
+    def test_year_hint_fallback(self) -> None:
+        date, source, estimated = _resolve_local_candidate_date(
+            "Annual Report 2024", "", "https://example.com/report.pdf"
+        )
+        assert date == "2024-12-31"
+        assert source == "title_year"
+        assert estimated is True
+
+    def test_no_date(self) -> None:
+        date, source, estimated = _resolve_local_candidate_date(
+            "Some doc", "", "https://example.com/doc.pdf"
+        )
+        assert date is None
+        assert source == "unknown"
+
+
+# ── _extract_date_from_html_document ──────────────────────────────────
+
+class TestExtractDateFromHtmlDocument:
+    def test_meta_published_time(self) -> None:
+        html = '<html><head><meta property="article:published_time" content="2024-03-15"></head></html>'
+        date, source = _extract_date_from_html_document(html, "https://example.com")
+        assert date == "2024-03-15"
+        assert source == "html_meta"
+
+    def test_meta_date_name(self) -> None:
+        html = '<html><head><meta name="date" content="2024-06-01"></head></html>'
+        date, source = _extract_date_from_html_document(html, "https://example.com")
+        assert date == "2024-06-01"
+        assert source == "html_meta"
+
+    def test_time_tag(self) -> None:
+        html = '<html><body><time datetime="2024-09-01">Sep 1, 2024</time></body></html>'
+        date, source = _extract_date_from_html_document(html, "https://example.com")
+        assert date == "2024-09-01"
+        assert source == "html_time_tag"
+
+    def test_title_date(self) -> None:
+        html = "<html><head><title>Results March 15, 2024</title></head></html>"
+        date, source = _extract_date_from_html_document(html, "https://example.com")
+        assert date == "2024-03-15"
+        assert source == "html_title"
+
+    def test_url_fallback(self) -> None:
+        html = "<html><head><title>Report</title></head></html>"
+        date, source = _extract_date_from_html_document(
+            html, "https://example.com/2024-01-15/report"
+        )
+        assert date == "2024-01-15"
+        assert source == "url"
+
+    def test_no_date(self) -> None:
+        html = "<html><body>No date here</body></html>"
+        date, source = _extract_date_from_html_document(html, "https://example.com")
+        assert date is None
+        assert source == "unknown"
+
+
+# ── _local_event_registration_penalty ─────────────────────────────────
+
+class TestLocalEventRegistrationPenalty:
+    def test_strong_hint_engagestream(self) -> None:
+        penalty = _local_event_registration_penalty("engagestream link", "https://example.com")
+        assert penalty <= -3.0
+
+    def test_webcast_penalty(self) -> None:
+        penalty = _local_event_registration_penalty("webcast invitation", "https://example.com")
+        assert penalty <= -3.0
+
+    def test_event_only(self) -> None:
+        penalty = _local_event_registration_penalty("some event today", "https://example.com")
+        assert penalty == -1.0
+
+    def test_no_penalty(self) -> None:
+        penalty = _local_event_registration_penalty("annual report 2024", "https://example.com/report.pdf")
+        assert penalty == 0.0
+
+    def test_registration_in_url(self) -> None:
+        penalty = _local_event_registration_penalty("report", "https://example.com/registration/2024")
+        assert penalty <= -3.0
+
+
+# ── _clean_embedded_pdf_url ───────────────────────────────────────────
+
+class TestCleanEmbeddedPdfUrl:
+    def test_basic_cleanup(self) -> None:
+        assert _clean_embedded_pdf_url('"https://example.com/report.pdf"') == "https://example.com/report.pdf"
+
+    def test_html_entity(self) -> None:
+        url = _clean_embedded_pdf_url("https://example.com/report&amp;v=1.pdf")
+        assert "&amp;" not in url
+
+    def test_escaped_slashes(self) -> None:
+        url = _clean_embedded_pdf_url("https:\\/\\/example.com\\/report.pdf")
+        assert url == "https://example.com/report.pdf"
+
+    def test_unicode_escape(self) -> None:
+        url = _clean_embedded_pdf_url("https:\\u002f\\u002fexample.com\\u002freport.pdf")
+        assert url == "https://example.com/report.pdf"
+
+    def test_protocol_relative(self) -> None:
+        url = _clean_embedded_pdf_url("//cdn.example.com/report.pdf")
+        assert url == "https://cdn.example.com/report.pdf"
+
+    def test_empty(self) -> None:
+        assert _clean_embedded_pdf_url("") == ""
+
+
+# ── _extract_embedded_title ───────────────────────────────────────────
+
+class TestExtractEmbeddedTitle:
+    def test_gtm_elem_text(self) -> None:
+        ctx = 'data-gtm-elem-text="Annual Report 2024 Full Year"'
+        assert _extract_embedded_title(ctx, "https://example.com/report.pdf") == "Annual Report 2024 Full Year"
+
+    def test_name_value_json(self) -> None:
+        ctx = '"name": {"Value": "Integrated Annual Report 2024"}'
+        assert _extract_embedded_title(ctx, "https://example.com/report.pdf") == "Integrated Annual Report 2024"
+
+    def test_title_json(self) -> None:
+        ctx = '"title": "Q1 2024 Financial Results"'
+        assert _extract_embedded_title(ctx, "https://example.com/report.pdf") == "Q1 2024 Financial Results"
+
+    def test_fallback_to_filename(self) -> None:
+        ctx = "some random context without patterns"
+        result = _extract_embedded_title(ctx, "https://example.com/Annual_Report_2024.pdf")
+        assert "Annual_Report_2024" in result
+
+
+# ── _prefer_new_candidate ─────────────────────────────────────────────
+
+class TestPreferNewCandidate:
+    def test_higher_score_wins(self) -> None:
+        prev = {"score": 3, "selection_score": 5.0}
+        new = {"score": 5, "selection_score": 7.0}
+        assert _prefer_new_candidate(prev, new) is True
+
+    def test_lower_score_loses(self) -> None:
+        prev = {"score": 5, "selection_score": 7.0}
+        new = {"score": 3, "selection_score": 5.0}
+        assert _prefer_new_candidate(prev, new) is False
+
+    def test_date_protection(self) -> None:
+        prev = {"score": 3, "fecha_publicacion": "2024-03-15", "selection_score": 5.0}
+        new = {"score": 4, "selection_score": 6.0}  # no date, score delta = 1
+        assert _prefer_new_candidate(prev, new) is False
+
+    def test_date_protection_overridden_by_large_delta(self) -> None:
+        prev = {"score": 3, "fecha_publicacion": "2024-03-15", "selection_score": 5.0}
+        new = {"score": 5, "selection_score": 7.0}  # no date, but delta = 2
+        assert _prefer_new_candidate(prev, new) is True
+
+    def test_tied_score_prefers_date(self) -> None:
+        prev = {"score": 3, "selection_score": 5.0}
+        new = {"score": 3, "fecha_publicacion": "2024-03-15", "selection_score": 5.0}
+        assert _prefer_new_candidate(prev, new) is True
+
+    def test_tied_score_keeps_dated(self) -> None:
+        prev = {"score": 3, "fecha_publicacion": "2024-03-15", "selection_score": 5.0}
+        new = {"score": 3, "selection_score": 5.0}
+        assert _prefer_new_candidate(prev, new) is False
+
+    def test_tied_with_both_dates_uses_selection_score(self) -> None:
+        prev = {"score": 3, "fecha_publicacion": "2024-03-15", "selection_score": 5.0}
+        new = {"score": 3, "fecha_publicacion": "2024-06-01", "selection_score": 6.0}
+        assert _prefer_new_candidate(prev, new) is True
+
+
+# ── _extract_embedded_pdf_candidates ──────────────────────────────────
+
+class TestExtractEmbeddedPdfCandidates:
+    def test_finds_absolute_pdf_urls(self) -> None:
+        html = '''
+        <div>
+            <script>var data = {"url": "https://cdn.example.com/annual-report-2024.pdf", "title": "Annual Report 2024"}</script>
+        </div>
+        '''
+        cands = _extract_embedded_pdf_candidates(html, "https://example.com", "EPA")
+        assert len(cands) >= 1
+        assert any("annual-report-2024.pdf" in c["url"] for c in cands)
+
+    def test_filters_negative_hints(self) -> None:
+        html = '<a href="https://example.com/privacy-policy.pdf">Privacy Policy</a>'
+        cands = _extract_embedded_pdf_candidates(html, "https://example.com", None)
+        assert all("privacy" not in c["url"].lower() for c in cands)
+
+    def test_requires_positive_hints(self) -> None:
+        html = '<div>Link to https://example.com/random-document.pdf in context</div>'
+        cands = _extract_embedded_pdf_candidates(html, "https://example.com", None)
+        # No positive hints → should not be included
+        assert len(cands) == 0
+
+    def test_candidates_have_date_fields(self) -> None:
+        html = '''
+        <div>Published on March 15, 2024:
+            See https://cdn.example.com/annual-results-2024.pdf for details
+        </div>
+        '''
+        cands = _extract_embedded_pdf_candidates(html, "https://example.com", None)
+        for c in cands:
+            assert "fecha_publicacion" in c
+            assert "fecha_source" in c
+            assert "fecha_publicacion_estimated" in c
+            assert c.get("discovered_via") == "embedded_pdf"
+
+
+# ── extract_filing_candidates integration ─────────────────────────────
+
+class TestExtractFilingCandidatesIntegration:
+    def test_candidates_have_date_fields(self) -> None:
+        html = '''
+        <html><body>
+        <a href="/reports/annual-report-2024.pdf">Annual Report March 15, 2024</a>
+        </body></html>
+        '''
+        cands = extract_filing_candidates(html, "https://example.com")
+        assert len(cands) >= 1
+        for c in cands:
+            assert "fecha_publicacion" in c
+            assert "fecha_source" in c
+            assert "fecha_publicacion_estimated" in c
+
+    def test_event_penalty_applied(self) -> None:
+        html = '''
+        <html><body>
+        <a href="/reports/annual-report-2024.pdf">Annual Report 2024 results filing</a>
+        <a href="https://engagestream.com/webcast/2024">Annual Webcast Registration results filing</a>
+        </body></html>
+        '''
+        cands = extract_filing_candidates(html, "https://example.com")
+        # The annual report should rank higher than the webcast
+        if len(cands) >= 1:
+            assert "annual-report" in cands[0]["url"]
