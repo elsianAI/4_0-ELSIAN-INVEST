@@ -1,0 +1,153 @@
+"""CLI entry point for ELSIAN 4.0."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+import sys
+from pathlib import Path
+
+from elsian.evaluate.evaluator import evaluate
+from elsian.evaluate.dashboard import format_dashboard
+from elsian.models.case import CaseConfig
+from elsian.models.result import ExtractionResult, DashboardRow
+
+logger = logging.getLogger(__name__)
+
+CASES_DIR = Path(__file__).resolve().parent.parent / "cases"
+
+
+def _find_case_dir(ticker: str) -> Path | None:
+    """Find case directory for a ticker."""
+    d = CASES_DIR / ticker
+    if d.exists():
+        return d
+    for child in CASES_DIR.iterdir():
+        if child.is_dir() and child.name.upper() == ticker.upper():
+            return child
+    return None
+
+
+def _load_extraction_result(case_dir: Path) -> ExtractionResult | None:
+    """Load extraction_result.json from a case directory."""
+    result_file = case_dir / "extraction_result.json"
+    if not result_file.exists():
+        return None
+    data = json.loads(result_file.read_text(encoding="utf-8"))
+    from elsian.models.field import FieldResult, Provenance
+    from elsian.models.result import PeriodResult
+
+    result = ExtractionResult(
+        schema_version=data.get("schema_version", "2.0"),
+        ticker=data.get("ticker", ""),
+        currency=data.get("currency", "USD"),
+    )
+    for pk, pv in data.get("periods", {}).items():
+        pr = PeriodResult(
+            fecha_fin=pv.get("fecha_fin", ""),
+            tipo_periodo=pv.get("tipo_periodo", ""),
+        )
+        for fname, fdata in pv.get("fields", {}).items():
+            pr.fields[fname] = FieldResult(
+                value=fdata.get("value", 0),
+                provenance=Provenance(
+                    source_filing=fdata.get("source_filing", ""),
+                    source_location=fdata.get("source_location", ""),
+                ),
+                scale=fdata.get("scale", "raw"),
+                confidence=fdata.get("confidence", "high"),
+            )
+        result.periods[pk] = pr
+    return result
+
+
+def cmd_eval(args: argparse.Namespace) -> None:
+    """Evaluate extraction vs expected.json."""
+    if args.all:
+        tickers = sorted(
+            d.name for d in CASES_DIR.iterdir()
+            if d.is_dir() and (d / "expected.json").exists()
+        )
+    else:
+        tickers = [args.ticker]
+
+    all_ok = True
+    for ticker in tickers:
+        case_dir = _find_case_dir(ticker)
+        if not case_dir:
+            print(f"Case not found: {ticker}")
+            all_ok = False
+            continue
+
+        result = _load_extraction_result(case_dir)
+        if not result:
+            print(f"{ticker}: no extraction_result.json")
+            all_ok = False
+            continue
+
+        report = evaluate(result, str(case_dir / "expected.json"))
+        status = "PASS" if report.score == 100.0 else "FAIL"
+        print(
+            f"{ticker}: {status} -- {report.score}% ({report.matched}/{report.total_expected}) "
+            f"wrong={report.wrong} missed={report.missed} extra={report.extra}"
+        )
+
+        if report.score < 100.0:
+            all_ok = False
+            for d in report.details:
+                if d.status != "matched":
+                    print(f"  {d.status} {d.period}/{d.field_name} exp={d.expected} got={d.actual}")
+
+    if not all_ok:
+        sys.exit(1)
+
+
+def cmd_dashboard(args: argparse.Namespace) -> None:
+    """Show dashboard summary."""
+    rows: list[DashboardRow] = []
+    for d in sorted(CASES_DIR.iterdir()):
+        if not d.is_dir() or not (d / "expected.json").exists():
+            continue
+        case = CaseConfig.from_file(d)
+        result = _load_extraction_result(d)
+        if not result:
+            continue
+        report = evaluate(result, str(d / "expected.json"))
+        rows.append(DashboardRow(
+            ticker=case.ticker or d.name,
+            source=case.source_hint,
+            filings=result.filings_used,
+            periods=len(result.periods),
+            expected=report.total_expected,
+            matched=report.matched,
+            score=report.score,
+        ))
+
+    print(format_dashboard(rows))
+
+
+def main() -> None:
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
+
+    parser = argparse.ArgumentParser(prog="elsian", description="ELSIAN 4.0 CLI")
+    sub = parser.add_subparsers(dest="command")
+
+    p_eval = sub.add_parser("eval", help="Evaluate extraction vs expected.json")
+    p_eval.add_argument("ticker", nargs="?", default="")
+    p_eval.add_argument("--all", action="store_true")
+    p_eval.set_defaults(func=cmd_eval)
+
+    p_dash = sub.add_parser("dashboard", help="Summary table of all cases")
+    p_dash.set_defaults(func=cmd_dashboard)
+
+    args = parser.parse_args()
+    if not args.command:
+        parser.print_help()
+        sys.exit(1)
+
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()

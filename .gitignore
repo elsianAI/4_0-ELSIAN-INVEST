@@ -1,0 +1,36 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.log
+
+# Generated pipeline outputs (regenerable)
+cases/*/extraction_result.json
+cases/*/filings_manifest.json
+
+# Downloaded filings (large, not tracked)
+cases/*/filings/*.htm
+cases/*/filings/*.html
+cases/*/filings/*.txt
+cases/*/filings/*.pdf
+cases/*/filings/*.clean.md
+cases/*/filings/*.source_map.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

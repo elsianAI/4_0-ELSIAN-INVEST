@@ -1,0 +1,18 @@
+#!/bin/bash
+# Pre-commit hook: ensures CHANGELOG.md is staged when code changes.
+
+STAGED=$(git diff --cached --name-only)
+
+CODE_CHANGED=$(echo "$STAGED" | grep -E "^(elsian/|tests/|config/|cases/)" || true)
+
+if [ -n "$CODE_CHANGED" ]; then
+    CHANGELOG_STAGED=$(echo "$STAGED" | grep "^CHANGELOG.md$" || true)
+    if [ -z "$CHANGELOG_STAGED" ]; then
+        echo "ERROR: Code files changed but CHANGELOG.md not staged."
+        echo "Staged code files:"
+        echo "$CODE_CHANGED"
+        echo ""
+        echo "Add CHANGELOG.md: git add CHANGELOG.md"
+        exit 1
+    fi
+fi
