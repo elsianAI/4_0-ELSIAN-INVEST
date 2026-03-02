@@ -25,6 +25,7 @@ Announcement PDF URLs are direct links:
 
 from __future__ import annotations
 
+import calendar
 import datetime as dt
 import logging
 import re
@@ -140,35 +141,43 @@ def _find_filings_in_month(
     ticker: str,
     year: int,
     month: int,
-) -> list[dict[str, Any]]:
+) -> tuple[list[dict[str, Any]], set[str]]:
     """Scan backward from month end until financial filings are found.
 
     Returns all ticker announcements from the first day that contains at
-    least one financial filing.  Gives up after ``_MAX_SCAN_DAYS`` days.
+    least one financial filing, plus the detected filing types for that day.
+    Gives up after scanning ``_MAX_SCAN_DAYS`` valid calendar days.
     """
     today = dt.date.today()
+    last_day = calendar.monthrange(year, month)[1]
+    scanned_days = 0
 
-    for day in range(28, max(28 - _MAX_SCAN_DAYS, 0), -1):
-        try:
-            d = dt.date(year, month, day)
-        except ValueError:
-            continue
+    for day in range(last_day, 0, -1):
+        d = dt.date(year, month, day)
         if d > today:
             continue
+        if scanned_days >= _MAX_SCAN_DAYS:
+            break
+        scanned_days += 1
 
         items = _scan_day(ticker, d)
-        financial = [i for i in items if _is_financial_filing(i.get("header", ""))]
+        detected_types: list[str] = []
+        for item in items:
+            filing_type = _is_financial_filing(item.get("header", ""))
+            if filing_type:
+                detected_types.append(filing_type)
+        day_types = set(detected_types)
 
-        if financial:
+        if day_types:
             logger.info(
                 "Found %d financial filings on %s (%d total ticker items)",
-                len(financial), d, len(items),
+                len(detected_types), d, len(items),
             )
-            return items  # Return ALL ticker items from that day (includes results)
+            return items, day_types
 
         time.sleep(_RATE_LIMIT)
 
-    return []
+    return [], set()
 
 
 def _reporting_months(fy_end_month: int) -> tuple[list[int], list[int]]:
@@ -192,8 +201,8 @@ def _search_all_windows(
     """Search targeted 1-day windows around expected reporting dates.
 
     For each year going back, scans the months where annual and half-year
-    reports are expected.  For each target month, scans backward from the
-    28th until financial filings are found (max ``_MAX_SCAN_DAYS`` days).
+    reports are expected.  For each target month, scans backward from month
+    end until financial filings are found (max ``_MAX_SCAN_DAYS`` days).
 
     Early stops once enough annual + half-year filings are collected.
     Set *halfyear_target* to 0 to skip half-year scans entirely.
@@ -218,7 +227,7 @@ def _search_all_windows(
                 except ValueError:
                     continue
 
-                items = _find_filings_in_month(ticker, scan_year, m)
+                items, day_types = _find_filings_in_month(ticker, scan_year, m)
                 if items:
                     new = 0
                     for item in items:
@@ -227,13 +236,13 @@ def _search_all_windows(
                             seen_ids.add(ann_id)
                             all_announcements.append(item)
                             new += 1
-                    if new:
+                    if "annual" in day_types:
                         annual_years_found += 1
                         logger.info(
-                            "Annual batch %d: %d new items from %d/%d",
-                            annual_years_found, new, scan_year, m,
+                            "Annual batch %d confirmed from %d/%d (%d new items)",
+                            annual_years_found, scan_year, m, new,
                         )
-                    break  # Found annual filings for this year; skip next month
+                        break  # Found annual filings for this year; skip next month
 
         # ── Half-year reporting season ─────────────────────────────
         if halfyear_target > 0 and halfyear_years_found < halfyear_target:
@@ -245,7 +254,7 @@ def _search_all_windows(
                 except ValueError:
                     continue
 
-                items = _find_filings_in_month(ticker, scan_year, m)
+                items, day_types = _find_filings_in_month(ticker, scan_year, m)
                 if items:
                     new = 0
                     for item in items:
@@ -254,13 +263,13 @@ def _search_all_windows(
                             seen_ids.add(ann_id)
                             all_announcements.append(item)
                             new += 1
-                    if new:
+                    if "halfyear" in day_types:
                         halfyear_years_found += 1
                         logger.info(
-                            "Half-year batch %d: %d new items from %d/%d",
-                            halfyear_years_found, new, scan_year, m,
+                            "Half-year batch %d confirmed from %d/%d (%d new items)",
+                            halfyear_years_found, scan_year, m, new,
                         )
-                    break
+                        break
 
         # Early stop: all targets met
         if (annual_years_found >= ANNUAL_TARGET
@@ -376,12 +385,17 @@ class AsxFetcher(Fetcher):
         out_path.mkdir(parents=True, exist_ok=True)
 
         # Cache: if filings already exist, skip
-        existing = list(out_path.glob("SRC_*"))
+        existing = [f for f in out_path.glob("SRC_*") if f.is_file()]
         if existing:
+            logical_filing_count = len(
+                {f.stem for f in existing if f.suffix in (".pdf", ".txt")}
+            )
+            if logical_filing_count == 0:
+                logical_filing_count = len({f.stem for f in existing})
             return AcquisitionResult(
                 ticker=ticker,
                 source="asx",
-                filings_downloaded=len(existing),
+                filings_downloaded=logical_filing_count,
                 filings_coverage_pct=100.0,
                 notes="Using cached filings (directory not empty).",
             )
@@ -480,7 +494,7 @@ class AsxFetcher(Fetcher):
 
         # Coverage
         total_expected = min(
-            ANNUAL_TARGET + HALFYEAR_TARGET,
+            ANNUAL_TARGET + hy_target,
             len(annual) + len(halfyear),
         )
         coverage_pct = (
@@ -507,7 +521,7 @@ class AsxFetcher(Fetcher):
                     "found": len(
                         [ft for ft, _, _ in financial_filings if ft == "halfyear"]
                     ),
-                    "target": HALFYEAR_TARGET,
+                    "target": hy_target,
                     "downloaded": len(halfyear),
                 },
                 "results": {

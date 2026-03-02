@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-03-02
+
+### [Acquire] BL-008 hardening: ASX scan accuracy + cache/metric fixes
+- **What:** Hardened `AsxFetcher` logic after BL-008 with targeted correctness fixes:
+  - `_find_filings_in_month()` now scans from real month end (`calendar.monthrange`) and returns detected filing types for the matched day.
+  - `_search_all_windows()` now increments annual/half-year counters only when those filing types are actually present (avoids false-positive early stop).
+  - Cache mode now reports logical filings (unique `SRC_*` stems), not raw file count (`.pdf` + `.txt` double count).
+  - `ANNUAL_ONLY` metrics now use `hy_target=0` for coverage targets and total expected filings.
+- **Tests:** Added `tests/unit/test_asx.py` with 5 offline unit tests covering scan bounds, type-aware counting, `ANNUAL_ONLY` behavior, and cache counting.
+- **Validation:** 351 passed, 2 skipped.
+
 ## 2026-03-05
 
 ### [Backlog] Close BL-001 (KAR) and BL-003 (Pipeline wiring)
