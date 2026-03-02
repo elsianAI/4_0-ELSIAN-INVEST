@@ -81,11 +81,11 @@
 
 ### BL-026 — Promover tickers SEC a FULL vía curate
 - **Prioridad:** ALTA
-- **Estado:** DONE ✅ (2026-03-03)
+- **Estado:** DONE ✅ (2026-03-02, oleada 3)
 - **Asignado a:** elsian-4
 - **Depende de:** BL-025 (comando curate funcional)
-- **Descripción:** Oleada 1 (IOSP, SONO, GCT) + Oleada 2 (TALO) completadas. SONO→FULL 100% (311/311, 18p). GCT→FULL 100% (202/202, 12p). TALO→FULL 100% (183/183, 12p). IOSP permanece ANNUAL_ONLY (pipeline bug en IS trimestral, ver BL-038). PR promovido a FULL 100% (141/141, BL-033). NVDA y TZOO ya estaban en FULL.
-- **Criterio de aceptación:** ≥5 tickers en FULL al 100% (incluyendo TZOO y NVDA). Sin regresiones en tickers que no cambian de scope. ✅ Cumplido: 6 tickers en FULL (TZOO, NVDA, SONO, GCT, TALO, PR). Oleada 3 pendiente (NEXN, IOSP — IOSP depende de BL-038).
+- **Descripción:** Oleada 1 (SONO, GCT) + Oleada 2 (TALO) + Oleada 3 (IOSP, GCT Q1-Q3 2024) completadas. SONO→FULL 100% (311/311, 18p). GCT→FULL 100% (202/202→252/252, 15p). TALO→FULL 100% (183/183, 12p). IOSP→FULL 100% (95/95→338/338, 22p, 17 trimestres añadidos). PR promovido a FULL 100% (141/141). NVDA y TZOO ya estaban en FULL.
+- **Criterio de aceptación:** ≥5 tickers en FULL al 100% (incluyendo TZOO y NVDA). Sin regresiones en tickers que no cambian de scope. ✅ Cumplido: 7 tickers en FULL (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP). Oleada 3 completada (IOSP desbloqueado por BL-038). 9/9 tickers PASS 100%.
 
 ### BL-027 — Scope Governance: coherencia case.json vs expected.json
 - **Prioridad:** CRÍTICA
@@ -332,8 +332,31 @@
 - **Depende de:** —
 - **Descripción:** Dos tickers (IOSP, GCT) no podían promoverse a FULL porque el pipeline fallaba al extraer IS desde 10-Q con formatos específicos: (1) IOSP: parenthetical `( value | )` generaba columnas extra. (2) GCT: `$` como celda separada desplazaba valores. (3) IOSP: scale-note cell bloqueaba detección de subheaders. Fix en dos commits: `_collapse_split_parentheticals()` + grouped year assignment + scale-note tolerance en `_is_subheader_row()`. IOSP ahora extrae 24+ periodos Q, GCT Q1-Q3 2024 ahora disponibles.
 - **Criterio de aceptación:** ✅ Pipeline extrae IS para IOSP Q* (24+ periodos) y GCT Q1-Q3 2024 (18-20 campos). 10/10 tickers al 100%. 473 tests pass.
+- **Nota (2026-03-02):** Hay 72 líneas adicionales sin commit en `html_tables.py` (lógica dollar-calibration para tablas MD&A con celdas `$`/`%` alternadas). Los tests pasan al 100% con estos cambios. Pendiente: el agente técnico debe commitear este cambio con regresión verde.
 
+### BL-036 — SecEdgarFetcher: descargar Exhibit 99.1 de 6-K (NEXN quarterly)
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** El SecEdgarFetcher actual descarga `primary_doc` para 6-Ks, pero para foreign private issuers como NEXN (Israel/UK, 20-F/6-K), los datos financieros trimestrales están en el **Exhibit 99.1** adjunto al 6-K, no en el primary_doc (que es solo la portada del formulario, ~48 líneas). El fetcher ya tiene `_find_exhibit_99()` para 8-Ks pero no lo aplica a 6-Ks. Fix: extender la lógica de exhibit discovery a 6-Ks que contengan earnings results. Verificado: SRC_010_6-K_Q4-2025.txt referencia explícitamente "Exhibit 99.1" con financial statements completos (IS/BS/CF para three/nine months). Sin este fix, NEXN no puede promoverse a FULL.
+- **Criterio de aceptación:** `acquire NEXN` descarga los .htm de Exhibit 99.1 de los 6-K con earnings results. Los .htm se convierten a .clean.md. `extract NEXN` produce periodos Q* con datos de IS/BS/CF. Tests unitarios para la nueva lógica de 6-K exhibit discovery. Sin regresiones en otros tickers SEC.
 
+### BL-034 — Field Dependency Matrix: análisis de dependencias 3.0→4.0
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-02) — Draft publicado, pendiente revisión Elsian.
+- **Asignado a:** Copilot (Project Director)
+- **Depende de:** — (paralelo a BL-038)
+- **Descripción:** Analizar estáticamente `scripts/runners/tp_validator.py` y `scripts/runners/tp_calculator.py` del 3.0 para generar una matriz objetiva de dependencias de campos. Para cada campo: clasificar como critical/required/optional según reglas objetivas: (1) critical = su ausencia provoca FAIL/SKIP en gates críticos del validator, (2) required = su ausencia degrada cálculos del calculator sin romper gates, (3) optional = solo afecta enriquecimiento no bloqueante. Publicar con evidencia por campo: archivo fuente, función, gate/métrica impactada, clasificación, justificación. **Análisis puro — no se toca código del 4.0.** Revisión Codex (2026-03-02): AR/INV/AP reclasificados como "required por producto (tp_calculator), no por gate (tp_validator)". `delta_cash` confirmado CRITICAL (CASHFLOW_IDENTITY gate).
+- **Criterio de aceptación:** ✓ Documento `docs/project/FIELD_DEPENDENCY_MATRIX.md` publicado. ✓ Snapshot máquina `docs/project/field_dependency_matrix.json` publicado. ✓ 100% de campos con evidencia rastreable al código fuente del 3.0. Pendiente: revisión final por Elsian antes de pasar a Fase B.
+
+### BL-035 — Expandir campos canónicos según Field Dependency Matrix
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** BL-034 (matriz revisada) + BL-038 (DONE) + oleada 3 IOSP/NEXN (DONE)
+- **Descripción:** Con la matriz de BL-034 en mano, expandir el extractor 4.0 y expected.json para cubrir campos faltantes priorizados como critical y luego required. **Oleada 1 (critical):** `cfi` (cash from investing), `cff` (cash from financing), `delta_cash` (variación neta de caja) — los 3 inputs del gate CASHFLOW_IDENTITY del validator. **Oleada 2 (required por producto):** `accounts_receivable`, `inventories`, `accounts_payable` — inputs de working capital en tp_calculator (no disparan gates del validator, pero son necesarios para completitud de producto). **Oleada 3:** resto de campos critical/required según matriz, solo si oleadas 1+2 están validadas. Pilotos: TZOO (primario) y NVDA (secundario). Usar `elsian curate` para generar drafts ampliados. Mantener formato expected.json v1 actual — solo se añaden más campos, sin nuevas claves estructurales. Toda priorización de campos sale de la matriz objetiva (BL-034), no de agrupaciones temáticas.
+- **Criterio de aceptación:** Nuevos campos de oleada 1 extraídos y evaluados al 100% en TZOO y NVDA para periodos donde estén en expected.json. Sin regresiones en tickers validados. Cada campo nuevo en expected.json referencia filing fuente consistente con extracción. Tests unitarios por campo nuevo (caso positivo + caso negativo).
 
 ---
 
