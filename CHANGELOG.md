@@ -2,6 +2,17 @@
 
 ## 2026-03-02
 
+### [DATA] BL-026 — GCT Q1-Q3 2024 expansion (252/252, 100%)
+- `cases/GCT/expected.json`: Added Q1-2024, Q2-2024, Q3-2024 (50 new expected fields total).
+  Q1-2024 from SRC_010_10-Q_Q1-2024.clean.md: 18 fields (income stmt + balance sheet + cfo/capex).
+  Q2-2024 from SRC_009_10-Q_Q2-2024.clean.md: 16 fields (income stmt + balance sheet).
+  Q3-2024 from SRC_008_10-Q_Q3-2024.clean.md: 16 fields (income stmt + balance sheet).
+  Excluded per policy: depreciation_amortization (extracted as 0.05 — wrong cell from per-share row),
+  ebitda (adjusted EBITDA not included in quarterly periods per existing GCT expected.json convention;
+  also Q1 ebitda < ebit is mathematically impossible — extraction bug in parenthetical column).
+  Math cross-checks: gross_profit = ingresos − CoR verified for all 3 quarters.
+- Regression before: 100% (202/202). After: 252/252, 9/9 tickers PASS 100%.
+
 ### [DATA] BL-026 — IOSP promoted to FULL scope (338/338, 100%)
 - `cases/IOSP/case.json`: Set `period_scope` to `FULL`.
 - `cases/IOSP/expected.json`: Added 17 quarterly periods (Q1-Q3 2021-2025, Q4-2023, Q4-2024).
