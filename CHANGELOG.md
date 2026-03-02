@@ -2,6 +2,17 @@
 
 ## 2026-03-02
 
+### [4.0] BL-031: Tests de integración para `elsian curate`
+- **What:** `tests/integration/test_curate.py` (nuevo, 18 tests) — validación E2E del flujo `cmd_curate`.
+  - `TestCurateTZOO` (6 tests, `@slow`): verifica que `expected_draft.json` se crea, tiene ≥1 periodo con ≥5 campos, cada campo lleva `_concept` y `_filing`, top-level keys completas.
+  - `TestCurateTEP` (4 tests, `@slow`): verifica skeleton con `_generated_by: "elsian curate (skeleton)"`, `periods: {}`, keys obligatorias.
+  - `TestTZOODraftCoverage` (2 tests, `@slow`): todos los periodos FY presentes; cobertura de campos ≥80% (real: **100.0%**, 102/102 campos × 6 FY periods).
+  - `TestSanityChecks` (6 tests): balance inconsistente → warning `A≠L+E`; revenue negativa; signos opuestos NI/EPS; casos limpios → sin warnings.
+  - Fixtures `scope="module"`: `cmd_curate` se ejecuta 1 vez por ticker; teardown elimina `expected_draft.json` siempre.
+- **Files:** `tests/integration/test_curate.py` (new), `CHANGELOG.md`
+- **Tests:** 463 passed, 2 skipped, 0 failed (+18 nuevos)
+- **Regression:** 9/9 tickers al 100%
+
 ### [4.0] WP-4: Preflight integrado en ExtractPhase (BL-014)
 - **What:** `preflight()` se ejecuta ahora por filing en `ExtractPhase.extract()` (non-blocking, errors silenciosos). `ScaleCascade` recibe `preflight_scale` derivado de `units_by_section` del preflight (sección específica: income_statement / balance_sheet / cash_flow), con fallback a `metadata.scale`. Añadidos `preflight_currency`, `preflight_standard`, `preflight_units_hint` opcionales a `Provenance` y su `to_dict()`.
 - **Files:** `elsian/extract/phase.py`, `elsian/models/field.py`, `tests/unit/test_preflight_integration.py` (new)
