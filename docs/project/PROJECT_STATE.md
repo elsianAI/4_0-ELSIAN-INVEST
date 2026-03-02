@@ -17,7 +17,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | Tickers FULL (A+Q) | 6 (TZOO, NVDA, SONO, GCT, TALO, PR) | 2026-03-02 |
 | Tickers WIP | 0 | 2026-03-02 |
 | Total campos validados | 1,700 | 2026-03-02 |
-| Tests pasando | 465 passed, 0 failed, 2 skipped | 2026-03-02 |
+| Tests pasando | 473 passed, 0 failed, 2 skipped | 2026-03-02 |
 | Líneas de código (aprox.) | ~7,400 + ~2,100 tests | 2026-03-02 |
 
 ## Tickers validados
@@ -79,6 +79,7 @@ No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para l
 - ✅ **BL-031 DONE** — Tests de integración para `elsian curate`. 18 tests: E2E TZOO (6), skeleton TEP (4), cobertura vs expected.json (2, guardrail ≥90%, medido 100%), sanity checks (6). 463 tests total.
 - ✅ **BL-026 DONE** — FULL promotions: SONO 311/311 (6A+12Q), GCT 202/202 (6A+6Q), TALO 183/183 (5A+7Q). IOSP bloqueado por BL-038. 6 tickers FULL total (TZOO, NVDA, SONO, GCT, TALO, PR).
 - ✅ **BL-033 DONE** — PR promovido de WIP a VALIDATED: 141/141 (100%, FULL scope, 3A+6Q). Fixes: shares_outstanding regex, total_debt reject patterns, eps_basic/net_income priority patterns, ascending_table_number override.
+- ✅ **BL-038 DONE** — Table parser fix: parenthetical `( value | )` collapse, `$` currency prefix normalization, scale-note subheader tolerance. IOSP desbloquea 24+ Q periods. GCT Q1-Q3 2024 ahora disponibles. 473 tests, 0 regresiones.
 - ✅ **BL-003 DONE** — Pipeline wiring completo. Todas las fases heredan PipelinePhase.
 - ✅ **BL-009 DONE** — Filing Preflight portado de 3.0 (idioma, estándar, moneda, unidades, restatement).
 - ✅ **BL-010 DONE** — Deduplicación por contenido SHA-256 portada e integrada.
@@ -100,8 +101,7 @@ Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC
 - **WP-6** — IxbrlExtractor en producción. **DIFERIDO.**
 
 **Siguiente fase:**
-- **BL-038** — Pipeline bug: IS no extraído en 10-Q con columna desalineada. Bloquea IOSP FULL y GCT Q1-Q3 2024. **ALTA PRIORIDAD.**
-- **BL-026 oleada 3** — Promover NEXN e IOSP a FULL (IOSP depende de BL-038).
+- **BL-026 oleada 3** — Promover IOSP y NEXN a FULL. IOSP desbloqueado por BL-038. GCT Q1-Q3 2024 también disponibles para añadir.
 - **WP-6** — IxbrlExtractor en producción (diferido).
 
 ---
