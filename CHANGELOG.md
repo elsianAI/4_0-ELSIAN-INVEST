@@ -2,6 +2,25 @@
 
 ## 2026-03-02
 
+### [FIX] GCT Q1-Q3 2024 regression — dollar/pct annotation-row filter (252/252, 100%)
+- **Root cause:** GCT 2024 10-Q MD&A comparison tables contain a `| | $ | | % | | $ | | % | |`
+  annotation row (empty label, all non-empty cells are `$` or `%`). After the BL-038 grouped-year
+  fix consumed the year sub-header, this annotation row remained in data rows. The colspan-collapsed
+  period headers placed Q1-2024 at col 3, but the actual 2024 dollar values for non-`$` rows
+  (e.g. "Total revenues") sit at col 7. The sparse scan from col 3 jumped to col 4 = 100.0 (pct)
+  instead of col 7 = 251,077 (dollar). Rows with `$` markers self-calibrated correctly, but
+  non-`$` rows (Total revenues, Gross profit, Operating income, R&D, Interest expense, Income tax)
+  extracted percentage values — 7 wrong fields × 3 quarters = 21 total wrong values.
+- **Fix:** `elsian/extract/html_tables.py` — new annotation-row filter in `extract_from_markdown_table`.
+  Detects tables where ≥1 row has an empty label and ALL non-empty cells are exclusively `$` or `%`
+  (with ≥2 of each). Returns `[]` immediately — skips the supplemental MD&A comparison table.
+  The primary IS table (processed first in the same clean.md file) provides the correct dollar-only
+  values, so skipping the MD&A table is safe.
+- **Tests:** `tests/unit/test_html_tables.py` — 2 new tests:
+  `test_dollar_pct_annotation_row_skips_table` (exact GCT pattern → returns [])
+  `test_dollar_pct_annotation_row_does_not_suppress_normal_is_table` (IS table unaffected).
+- **Regression:** 475 passed, 2 skipped. eval --all: 10/10 PASS 100%.
+
 ### [DATA] BL-026 — GCT Q1-Q3 2024 expansion (252/252, 100%)
 - `cases/GCT/expected.json`: Added Q1-2024, Q2-2024, Q3-2024 (50 new expected fields total).
   Q1-2024 from SRC_010_10-Q_Q1-2024.clean.md: 18 fields (income stmt + balance sheet + cfo/capex).

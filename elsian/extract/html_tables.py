@@ -526,6 +526,38 @@ def extract_from_markdown_table(
 
     results: List[TableField] = []
 
+    # ── Dollar/pct annotation-row filter ────────────────────────────
+    # Detect MD&A comparison tables that interleave dollar amounts and
+    # percentage-of-revenue columns under the same period header.
+    # Signature: at least one row whose label is empty AND all non-empty
+    # cells are exclusively "$" or "%" with at least two of each symbol.
+    #
+    # Example (GCT 2024 10-Q):
+    #   |  | 2023 |  | 2024 |  |        ← year sub-header (consumed)
+    #   |  | $ |  | % |  | $ |  | % |  ← annotation row (this filter)
+    #   | Total revenues | 127,797 |  |  | 100.0 |  |  | 251,077 |  |  | 100.0 |
+    #
+    # The colspan header places "2024" at col 3 in the year sub-header,
+    # but the actual 2024 dollar values are at col 7 in data rows — a
+    # displacement caused by colspan collapsing in the HTML→markdown
+    # converter.  Non-$ data rows then pick up the adjacent percentage
+    # value (100.0) via sparse scan instead of the dollar value (251,077).
+    #
+    # The primary IS/CF table in the same filing provides the correct
+    # dollar-only values and is processed first, so skipping these
+    # supplemental MD&A tables is safe and avoids overwriting correct values.
+    for _ann_row in rows:
+        if not _ann_row or _ann_row[0].strip():
+            continue  # label must be empty
+        _non_empty_ann = [c.strip() for c in _ann_row[1:] if c.strip()]
+        if (
+            len(_non_empty_ann) >= 4
+            and all(c in ("$", "%") for c in _non_empty_ann)
+            and _non_empty_ann.count("$") >= 2
+            and _non_empty_ann.count("%") >= 2
+        ):
+            return []  # Mixed $/pct MD&A comparison table — skip
+
     # ── Percentage-table filter ──────────────────────────────────────
     # Skip tables that are pure percentage breakdowns (e.g. MD&A common-
     # size IS with "100.0 %", "12.5", etc.).  Detected when ≥2 data rows

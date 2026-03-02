@@ -311,3 +311,62 @@ def test_scale_note_first_cell_detected_as_subheader():
     assert by_period.get(("Gross profit", "Q2-2024")) == 126.9
     # Must NOT produce 'unknown' period
     assert all(f.column_header != "unknown" for f in fields if f.label in {"Net sales", "Gross profit"})
+
+
+# ── Bug GCT-Q1-2024: dollar/pct annotation-row filter ────────────────────────
+
+def test_dollar_pct_annotation_row_skips_table():
+    """MD&A comparison tables with a '$ / %' annotation row are skipped.
+
+    GCT 2024 10-Qs contain tables like:
+        |  | 2023  |  | 2024  |           ← year sub-header (consumed)
+        |  | $  |  | %  |  | $  |  | %  |  ← annotation row
+        | Total revenues | 127,797 | | | 100.0 | | | 251,077 | | | 100.0 | |
+
+    The year sub-header places Q1-2024 at col 3, but the actual 2024
+    dollar values sit at col 7.  The sparse scan from col 3 picks up
+    100.0 (pct) instead of 251,077 (dollar).
+
+    The fix: detect the annotation row and return [] immediately.
+    """
+    table = (
+        "|  | Three Months Ended March 31, |  |  |  |  |  |  |  |  |  |  |  |  |\n"
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n"
+        "|  | 2023 |  | 2024 |  |  |  |  |  |  |  |  |  |  |\n"
+        "|  | $ |  | % |  | $ |  | % |  |  |  |  |  |  |\n"
+        "|  | (In thousands, except for percentages) |  |  |  |  |  |  |  |  |  |  |  |  |\n"
+        "| Revenues |  |  |  |  |  |  |  |  |  |  |  |  |  |\n"
+        "| Service revenues | $ | 35,096 |  |  | 27.5 |  |  | $ | 67,415 |  |  | 26.9 |  |\n"
+        "| Product revenues | 92,701 |  |  | 72.5 |  |  | 183,662 |  |  | 73.1 |  |  |  |\n"
+        "| Total revenues | 127,797 |  |  | 100.0 |  |  | 251,077 |  |  | 100.0 |  |  |  |\n"
+        "| Operating income | 17,856 |  |  | 14.0 |  |  | 34,817 |  |  | 13.9 |  |  |  |\n"
+    )
+    fields = extract_from_markdown_table(table, filing_type="10-Q")
+    # The whole table must be skipped — no extraction from the pct/dollar mix
+    assert fields == []
+
+
+def test_dollar_pct_annotation_row_does_not_suppress_normal_is_table():
+    """The IS table with $ markers but NO annotation row must extract correctly.
+
+    The plain IS table (no '| | $ | | % |' annotation row) should still
+    extract dollar values from rows with and without $ prefixes.
+    """
+    table = (
+        "|  | Three Months Ended March 31, |  |  |  |  |  |  |\n"
+        "| --- | --- | --- | --- | --- | --- | --- | --- |\n"
+        "|  | 2023 |  | 2024 |  |  |  |  |\n"
+        "| Revenues |  |  |  |  |  |  |  |\n"
+        "| Service revenues | $ | 35,096 |  |  | $ | 67,415 |  |\n"
+        "| Product revenues | 92,701 |  |  | 183,662 |  |  |  |\n"
+        "| Total revenues | 127,797 |  |  | 251,077 |  |  |  |\n"
+        "| Operating income | 17,856 |  |  | 34,817 |  |  |  |\n"
+    )
+    fields = extract_from_markdown_table(table, filing_type="10-Q")
+    by_period = {(f.label, f.column_header): f.value for f in fields}
+    # Dollar values must be extracted correctly from both $ and non-$ rows
+    assert by_period.get(("Total revenues", "Q1-2024")) == 251077.0
+    assert by_period.get(("Total revenues", "Q1-2023")) == 127797.0
+    assert by_period.get(("Service revenues", "Q1-2024")) == 67415.0
+    assert by_period.get(("Service revenues", "Q1-2023")) == 35096.0
+    assert by_period.get(("Operating income", "Q1-2024")) == 34817.0
