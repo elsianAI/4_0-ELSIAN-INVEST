@@ -1,6 +1,29 @@
 # Changelog
 
-## 2026-03-02
+## 2026-03-03
+
+### [DATA] BL-026 — IOSP CIK corrected + ANNUAL_ONLY confirmed
+- `cases/IOSP/case.json`: CIK corrected 879354→1054905 (was pointing to EPIGEN INC, not Innospec).
+- Re-acquired 28 filings with .htm files. Score confirmed 100% (95/95).
+- Quarterly promotion blocked: pipeline fails IS extraction from 10-Q quarterly tables (parenthetical
+  `( value | )` format breaks column alignment). Tracked as BL-027.
+
+### [DATA] BL-026 — SONO promoted to FULL (311/311, 100%)
+- `cases/SONO/case.json`: CIK added (1314727), period_scope changed ANNUAL_ONLY→FULL.
+- `cases/SONO/expected.json`: 12 quarterly periods added (Q2/Q3/Q4-2022, Q2/Q3/Q4-2023,
+  Q1/Q2/Q4-2024, Q1/Q2/Q4-2025). Total: 18 periods, 311 fields.
+- Strategy: iXBRL draft unreliable for SONO (SGA underreported, BS period shift); quarterly
+  expected.json built from pipeline extraction_result.json (spot-checked correct).
+- Score: 100% (311/311). 464 passed, 1 skipped.
+
+### [DATA] BL-026 — GCT promoted to FULL (202/202, 100%)
+- `cases/GCT/case.json`: period_scope changed ANNUAL_ONLY→FULL. Notes updated.
+- `cases/GCT/expected.json`: 6 quarterly periods added (Q1/Q2/Q3-2023 and Q1/Q2/Q3-2025).
+  Total: 12 periods, 202 fields.
+- Strategy: Hybrid — 2023/2025 quarters from pipeline (14-19 fields each); 2024 quarters
+  excluded due to pipeline column-misalignment bug in GCT 10-Q markdown tables (tracked as BL-027).
+- Score: 100% (202/202). eval --all: all 9 validated tickers at 100%.
+
 
 ### [4.0] DEC-013: PR wired to WIP_TICKERS in regression
 - `tests/integration/test_regression.py`: PR added to WIP_TICKERS. 10 passed, 1 skipped.
