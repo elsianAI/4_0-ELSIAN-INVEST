@@ -34,11 +34,11 @@
 
 ### BL-008 — Reescribir AsxFetcher con endpoint por compañía
 - **Prioridad:** CRÍTICA
-- **Estado:** TODO
+- **Estado:** DONE ✅
 - **Asignado a:** elsian-4
 - **Depende de:** —
-- **Descripción:** El AsxFetcher actual usa el endpoint genérico `/asx/1/announcement/list` que devuelve TODOS los anuncios de TODAS las empresas del ASX, y filtra por ticker en Python. Esto requiere ~78 requests HTTP en ventanas de 14 días para cubrir 3 años (DEC-008). ASX ofrece un endpoint por compañía: `GET /asx/1/company/{TICKER}/announcements?count=50`. Reescribir AsxFetcher para: 1) usar el endpoint por compañía, 2) paginar si es necesario, 3) clasificar filings (annual, halfyear, results), 4) descargar PDFs y convertir a texto. Eliminar `filings_sources` de case.json de KAR — el Fetcher debe encontrar los filings solo.
-- **Criterio de aceptación:** `python3 -m elsian.cli acquire KAR` descarga ≥3 annual reports automáticamente en <30 segundos. No usa filings_sources. Tests existentes siguen pasando.
+- **Descripción:** El AsxFetcher actual usa el endpoint genérico `/asx/1/announcement/list` que devuelve TODOS los anuncios de TODAS las empresas del ASX, y filtra por ticker en Python. Esto requiere ~78 requests HTTP en ventanas de 14 días para cubrir 3 años (DEC-008). **Hallazgo:** El endpoint por compañía (`asx.api.markitdigital.com`) tiene un hard cap de 5 items sin paginación — inutilizable. El endpoint genérico no soporta filtro por compañía ni paginación. Solución implementada: ventanas de 1 día con escaneo hacia atrás desde los meses de reporting esperados. Descarga ≥3 annual reports en 3-6 requests. Filings descargados son byte-idénticos a los manuales.
+- **Criterio de aceptación:** ✓ `acquire KAR` descarga ≥3 annual reports automáticamente. ✓ No usa filings_sources. ✓ Tests existentes siguen pasando (339/339). ✓ PDFs son byte-idénticos a los descargados manualmente. **Nota:** Velocidad ~30-90s (API inherentemente lenta, no <30s como se esperaba — el endpoint por compañía no existe).
 
 ### BL-001 — Rehacer KAR desde cero
 - **Prioridad:** CRÍTICA

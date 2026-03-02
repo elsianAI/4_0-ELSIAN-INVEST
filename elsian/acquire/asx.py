@@ -9,6 +9,16 @@ API endpoint:
   Parameters: page_size, end_date (unix ms), date_from (unix ms)
   Returns JSON with announcement_data[] containing all ASX announcements.
 
+API limitations (verified empirically):
+  - No company-level filtering: all params (issuer_code, ticker, etc.) ignored.
+  - No pagination: page, page_no, offset, start all ignored.
+  - Hard cap: always returns the 2000 most recent items in the date window.
+  - No company-specific endpoint: asx.api.markitdigital.com endpoint is
+    limited to 5 items with no pagination.
+
+Strategy: use narrow 1-day windows and scan backward from expected reporting
+months to find the target company's financial filings within the 2000-item cap.
+
 Announcement PDF URLs are direct links:
   https://announcements.asx.com.au/asxpdf/{date}/pdf/{id}.pdf
 """
@@ -42,8 +52,9 @@ _HEADERS = {
     "Accept": "application/json,*/*;q=0.8",
 }
 _TIMEOUT = 60
-_RATE_LIMIT = 1.0  # ASX is a public website; be respectful
+_RATE_LIMIT = 0.15  # Minimal delay between requests (API ignores page_size)
 _PAGE_SIZE = 2000
+_MAX_SCAN_DAYS = 15  # Max days to scan backward per target month
 
 # Financial filing types we want to download (ASX announcement headers)
 _ANNUAL_PATTERNS = [
@@ -100,138 +111,165 @@ def _is_financial_filing(header: str) -> str | None:
     return None
 
 
-def _ms_timestamp(d: dt.date) -> int:
-    """Convert date to Unix milliseconds."""
-    return int(dt.datetime.combine(d, dt.time.max).timestamp() * 1000)
+def _scan_day(ticker: str, d: dt.date) -> list[dict[str, Any]]:
+    """Query the ASX announcement list for a single day, filter by ticker.
 
-
-def _search_window(
-    ticker: str,
-    date_from: dt.date,
-    date_to: dt.date,
-) -> list[dict[str, Any]]:
-    """Query ASX announcement list API for a date window, filtered by ticker."""
+    Returns all announcements for *ticker* released on *d*.
+    The API returns up to 2000 items from ALL companies; we filter locally.
+    """
     params = {
         "page_size": _PAGE_SIZE,
-        "end_date": _ms_timestamp(date_to),
-        "date_from": _ms_timestamp(date_from),
+        "date_from": int(dt.datetime.combine(d, dt.time.min).timestamp() * 1000),
+        "end_date": int(dt.datetime.combine(d, dt.time.max).timestamp() * 1000),
     }
-
     try:
         resp = requests.get(
             _BASE_URL, headers=_HEADERS, params=params, timeout=_TIMEOUT,
         )
         resp.raise_for_status()
-        data = resp.json()
+        items = resp.json().get("announcement_data", [])
     except Exception as exc:
-        logger.warning("ASX API request failed: %s", exc)
+        logger.warning("ASX API request failed for %s: %s", d, exc)
         return []
 
-    items = data.get("announcement_data", [])
     ticker_upper = ticker.upper()
-    return [
-        item for item in items
-        if item.get("issuer_code", "").upper() == ticker_upper
-    ]
+    return [i for i in items if i.get("issuer_code", "").upper() == ticker_upper]
+
+
+def _find_filings_in_month(
+    ticker: str,
+    year: int,
+    month: int,
+) -> list[dict[str, Any]]:
+    """Scan backward from month end until financial filings are found.
+
+    Returns all ticker announcements from the first day that contains at
+    least one financial filing.  Gives up after ``_MAX_SCAN_DAYS`` days.
+    """
+    today = dt.date.today()
+
+    for day in range(28, max(28 - _MAX_SCAN_DAYS, 0), -1):
+        try:
+            d = dt.date(year, month, day)
+        except ValueError:
+            continue
+        if d > today:
+            continue
+
+        items = _scan_day(ticker, d)
+        financial = [i for i in items if _is_financial_filing(i.get("header", ""))]
+
+        if financial:
+            logger.info(
+                "Found %d financial filings on %s (%d total ticker items)",
+                len(financial), d, len(items),
+            )
+            return items  # Return ALL ticker items from that day (includes results)
+
+        time.sleep(_RATE_LIMIT)
+
+    return []
+
+
+def _reporting_months(fy_end_month: int) -> tuple[list[int], list[int]]:
+    """Calculate the expected reporting months for annual and half-year.
+
+    Annual reports are typically published 2-3 months after fiscal year end.
+    Half-year reports are 2-3 months after mid-year.
+    Returns: (annual_months, halfyear_months) as lists of calendar months.
+    """
+    ann = [(fy_end_month + offset) % 12 + 1 for offset in [1, 2]]
+    hy = [(fy_end_month + offset) % 12 + 1 for offset in [7, 8]]
+    return ann, hy
 
 
 def _search_all_windows(
     ticker: str,
     years_back: int = 3,
     fy_end_month: int = 12,
+    halfyear_target: int = HALFYEAR_TARGET,
 ) -> list[dict[str, Any]]:
-    """Search targeted date windows to find financial filings for a ticker.
+    """Search targeted 1-day windows around expected reporting dates.
 
-    Rather than scanning every 14-day window backwards, this targets the
-    months when financial filings typically appear based on fiscal year end.
-    For Dec FY: Feb-Mar (annual) and Aug-Sep (half-year).
-    Falls back to a broader scan to catch any additional filings.
+    For each year going back, scans the months where annual and half-year
+    reports are expected.  For each target month, scans backward from the
+    28th until financial filings are found (max ``_MAX_SCAN_DAYS`` days).
+
+    Early stops once enough annual + half-year filings are collected.
+    Set *halfyear_target* to 0 to skip half-year scans entirely.
     """
     all_announcements: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
     today = dt.date.today()
 
-    # Determine reporting months: annual ~2-3 months after FY end,
-    # half-year ~2-3 months after mid-year
-    annual_months = [(fy_end_month % 12) + 1, (fy_end_month % 12) + 2, (fy_end_month % 12) + 3]
-    halfyear_month = (fy_end_month + 6) % 12 or 12
-    halfyear_months = [halfyear_month % 12 + 1, halfyear_month % 12 + 2, halfyear_month % 12 + 3]
+    ann_months, hy_months = _reporting_months(fy_end_month)
 
-    # Normalize months to 1-12
-    annual_months = [((m - 1) % 12) + 1 for m in annual_months]
-    halfyear_months = [((m - 1) % 12) + 1 for m in halfyear_months]
+    annual_years_found = 0
+    halfyear_years_found = 0
 
-    target_months = set(annual_months + halfyear_months)
-
-    annual_found = 0
-    halfyear_found = 0
-    results_found = 0
-
-    # Generate targeted windows: scan reporting months for each year
-    windows: list[tuple[dt.date, dt.date]] = []
     for year_offset in range(years_back + 1):
-        year = today.year - year_offset
-        for month in target_months:
-            # Build a 30-day window around mid-month (split into 2x14-day)
-            start1 = dt.date(year, month, 1)
-            end1 = dt.date(year, month, 15)
-            start2 = dt.date(year, month, 15)
-            # Handle month end
-            if month == 12:
-                end2 = dt.date(year + 1, 1, 1)
-            else:
-                end2 = dt.date(year, month + 1, 1)
+        # ── Annual reporting season ────────────────────────────────
+        if annual_years_found < ANNUAL_TARGET:
+            for m in ann_months:
+                scan_year = today.year - year_offset
+                try:
+                    if dt.date(scan_year, m, 1) > today:
+                        continue
+                except ValueError:
+                    continue
 
-            # Only include windows that aren't in the future
-            if start1 <= today:
-                windows.append((start1, min(end1, today)))
-            if start2 <= today:
-                windows.append((start2, min(end2, today)))
+                items = _find_filings_in_month(ticker, scan_year, m)
+                if items:
+                    new = 0
+                    for item in items:
+                        ann_id = item.get("id", "")
+                        if ann_id and ann_id not in seen_ids:
+                            seen_ids.add(ann_id)
+                            all_announcements.append(item)
+                            new += 1
+                    if new:
+                        annual_years_found += 1
+                        logger.info(
+                            "Annual batch %d: %d new items from %d/%d",
+                            annual_years_found, new, scan_year, m,
+                        )
+                    break  # Found annual filings for this year; skip next month
 
-    # Sort windows by date (most recent first)
-    windows.sort(key=lambda x: x[1], reverse=True)
+        # ── Half-year reporting season ─────────────────────────────
+        if halfyear_target > 0 and halfyear_years_found < halfyear_target:
+            for m in hy_months:
+                scan_year = today.year - year_offset
+                try:
+                    if dt.date(scan_year, m, 1) > today:
+                        continue
+                except ValueError:
+                    continue
 
-    for start, end in windows:
-        if start >= end:
-            continue
+                items = _find_filings_in_month(ticker, scan_year, m)
+                if items:
+                    new = 0
+                    for item in items:
+                        ann_id = item.get("id", "")
+                        if ann_id and ann_id not in seen_ids:
+                            seen_ids.add(ann_id)
+                            all_announcements.append(item)
+                            new += 1
+                    if new:
+                        halfyear_years_found += 1
+                        logger.info(
+                            "Half-year batch %d: %d new items from %d/%d",
+                            halfyear_years_found, new, scan_year, m,
+                        )
+                    break
 
-        items = _search_window(ticker, start, end)
-        new_in_window = 0
-        financial_in_window = 0
-        for item in items:
-            ann_id = item.get("id", "")
-            if ann_id and ann_id not in seen_ids:
-                seen_ids.add(ann_id)
-                all_announcements.append(item)
-                new_in_window += 1
-                header = item.get("header", "")
-                ftype = _is_financial_filing(header)
-                if ftype:
-                    financial_in_window += 1
-                    logger.debug("  → %s: %s", ftype, header)
-                if ftype == "annual":
-                    annual_found += 1
-                elif ftype == "halfyear":
-                    halfyear_found += 1
-                elif ftype == "results":
-                    results_found += 1
-
-        if new_in_window > 0:
+        # Early stop: all targets met
+        if (annual_years_found >= ANNUAL_TARGET
+                and halfyear_years_found >= halfyear_target):
             logger.info(
-                "Window %s to %s: %d items (%d financial) [A:%d H:%d R:%d]",
-                start.isoformat(), end.isoformat(), new_in_window,
-                financial_in_window, annual_found, halfyear_found, results_found,
-            )
-
-        # Early stop: found enough of each type
-        if annual_found >= ANNUAL_TARGET and halfyear_found >= HALFYEAR_TARGET:
-            logger.info(
-                "Early stop (target met): %d annual + %d halfyear + %d results",
-                annual_found, halfyear_found, results_found,
+                "Early stop: %d annual + %d half-year batches collected",
+                annual_years_found, halfyear_years_found,
             )
             break
-
-        time.sleep(_RATE_LIMIT)
 
     all_announcements.sort(
         key=lambda x: x.get("document_release_date", ""),
@@ -349,8 +387,12 @@ class AsxFetcher(Fetcher):
             )
 
         # Search ASX for all announcements
+        hy_target = HALFYEAR_TARGET if case.period_scope == "FULL" else 0
         all_announcements = _search_all_windows(
-            ticker, years_back=3, fy_end_month=case.fiscal_year_end_month,
+            ticker,
+            years_back=3,
+            fy_end_month=case.fiscal_year_end_month,
+            halfyear_target=hy_target,
         )
         logger.info(
             "Found %d total ASX announcements for %s",
@@ -376,7 +418,7 @@ class AsxFetcher(Fetcher):
         ][:ANNUAL_TARGET]
         halfyear = [
             (h, a) for ft, h, a in financial_filings if ft == "halfyear"
-        ][:HALFYEAR_TARGET]
+        ][:hy_target]
         results_list = [
             (h, a) for ft, h, a in financial_filings if ft == "results"
         ]
@@ -387,7 +429,7 @@ class AsxFetcher(Fetcher):
 
         # Add results releases (they often have summary tables)
         for h, a in results_list:
-            if len(selected) < (ANNUAL_TARGET + HALFYEAR_TARGET + 3):
+            if len(selected) < (ANNUAL_TARGET + hy_target + 3):
                 selected.append((h, a))
 
         # Download

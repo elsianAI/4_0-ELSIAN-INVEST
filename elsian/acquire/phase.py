@@ -20,6 +20,9 @@ def _get_fetcher(case: CaseConfig):
     if hint in ("sec", "sec_edgar"):
         from elsian.acquire.sec_edgar import SecEdgarFetcher
         return SecEdgarFetcher()
+    elif hint in ("asx",):
+        from elsian.acquire.asx import AsxFetcher
+        return AsxFetcher()
     elif hint in ("eu", "eu_manual", "manual_http"):
         from elsian.acquire.eu_regulators import EuRegulatorsFetcher
         return EuRegulatorsFetcher()

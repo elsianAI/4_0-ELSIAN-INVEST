@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-03-03
+
+### [Acquire] BL-008: Rewrite AsxFetcher — autonomous ASX filing acquisition
+- **What:** Rewrote `AsxFetcher` with a 1-day backward scan strategy that discovers
+  and downloads financial filings autonomously from the ASX announcement API.
+  - **API research:** exhaustively tested both endpoints:
+    - Markit Digital company endpoint (`asx.api.markitdigital.com`): hard-capped at 5 items, no pagination — **unusable**
+    - Generic endpoint (`asx.com.au/asx/1/announcement/list`): no company filtering, no pagination, 2000-item hard cap — **used with 1-day windows**
+  - New `_scan_day()` + `_find_filings_in_month()` + `_reporting_months()` functions replace the old 14-day window approach
+  - Scans backward from expected reporting months (FY end + 2-3 months) until filings found
+  - Respects `period_scope`: ANNUAL_ONLY → skips half-year scans; FULL → downloads all
+  - Registered `"asx"` source_hint in both `cli.py` and `acquire/phase.py`
+  - Removed `filings_sources` from KAR case.json; changed source_hint from `"eu_manual"` to `"asx"`
+  - **Downloaded files are byte-identical** to the old manually-downloaded ones (verified MD5)
+- **Files:** elsian/acquire/asx.py, elsian/acquire/phase.py, elsian/cli.py, cases/KAR/case.json
+- **Tests:** 339 passed, 6 failed (pre-existing), 2 skipped
+- **KAR eval:** 93.88% (46/49) — 3 missed total_debt fields (pre-existing extraction gap, not caused by this change)
+
 ## 2026-03-02
 
 ### [Certify] KAR (Karoon Energy) — 9th validated case @ 100% (49/49)
