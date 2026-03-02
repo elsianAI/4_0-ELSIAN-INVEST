@@ -2,6 +2,34 @@
 
 ## 2026-03-02
 
+### [CODE] BL-038 part 2 — Currency prefix columns + subheader scale-note detection
+
+**Bug A — Grouped year assignment for colspan subheaders:**
+- `elsian/extract/html_tables.py`: Added `_PERIOD_TYPE_HDR_RE` and `_SCALE_NOTE_RE` module-level constants.
+  Enhanced subheader merge in `_parse_markdown_table()` with a grouped-year algorithm: when M
+  period-type headers ("Three Months Ended", "Nine Months Ended", etc.) and N year sub-cells
+  satisfy N%M==0, years are assigned in sequential order (N/M per group). This fixes the HTML
+  colspan mislabeling where the markdown converter places later years at columns occupied by the
+  NEXT period-type header (e.g. GCT Q3 table: col 3 had "Nine Months..., 2024" instead of
+  "Three Months..., 2024"). Non-year sub-cells (date fragments, scale notes) are still merged
+  via the standard concatenation path.
+- Effect: GCT Q1-2024, Q2-2024, Q3-2024 now appear in extraction_result.json.
+
+**Bug B — Scale-note first cell in subheader row:**
+- `elsian/extract/html_tables.py`: `_is_subheader_row()` previously returned False whenever
+  the first cell was non-empty, rejecting rows like `| (in millions, ...) | | 2025 | | 2024 | |`.
+  Fix: if the first cell matches `_SCALE_NOTE_RE` (starts/ends with parens, contains
+  "in thousands/millions/billions"), the row is not rejected and year/date detection proceeds
+  on `cells[1:]` as usual.
+- Effect: IOSP quarterly tables now yield Q1-Q3 for all years (previously 0 quarterly periods).
+
+**Tests:** Added 3 unit tests to `tests/unit/test_html_tables.py`:
+  `test_grouped_subheader_two_periods_same_type`, `test_grouped_subheader_four_periods_two_types`,
+  `test_scale_note_first_cell_detected_as_subheader`. Total: 23 passed, 0 failed.
+- Regression: 11/11 tickers PASS 100% (GCT 202, IOSP 95, KAR 49, NEXN 76, NVDA 318, PR 141,
+  SONO 311, TALO 183, TEP 55, TZOO 270, TZOO_backup 270).
+  Extra counts increased: GCT 101→207, IOSP 212→535 (new quarterly periods).
+
 ### [CODE] BL-038 part 1 — Parenthetical column normalization
 - `elsian/extract/html_tables.py`: Added `_collapse_split_parentheticals()` and `_SPLIT_PAREN_CELL_RE`. Collapses `( value | )` split-cell patterns in markdown tables into single `(value)` cells. Applied conditionally: only when the row is wider than the header by exactly the number of paren pairs — this prevents shifting correctly-aligned values in tables (TALO, SONO) where `parse_number` already handles split-paren cells at the right period columns.
 - `tests/unit/test_html_tables.py`: Added 5 unit tests (`test_collapse_split_parens_*`, `test_split_paren_roundtrip_extraction`).

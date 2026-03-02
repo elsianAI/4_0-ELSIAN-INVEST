@@ -81,6 +81,24 @@ _PERIOD_INDICATOR_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Matches a scale-note cell in the first column of a subheader row.
+# E.g. "(in millions, except share and per share data)", "(in thousands)".
+# Such rows should still be recognised as subheaders when the remaining
+# cells contain year/date information.
+_SCALE_NOTE_RE = re.compile(
+    r"^\(.*\bin\s+(?:thousands|millions|billions)\b.*\)$",
+    re.IGNORECASE,
+)
+
+# Detects period-type indicators in header cells used for grouped year
+# assignment.  Matches "Three/Six/Nine Months Ended", "Year Ended",
+# "Fiscal Year", and "Quarters Ended".
+_PERIOD_TYPE_HDR_RE = re.compile(
+    r"(?:three|six|nine)\s+months?\s+ended"
+    r"|year\s+ended|fiscal\s+year|quarters?\s+ended",
+    re.IGNORECASE,
+)
+
 
 def _is_subheader_row(cells: List[str]) -> bool:
     """Check if a row is a sub-header containing year/period/date fragments.
@@ -90,11 +108,18 @@ def _is_subheader_row(cells: List[str]) -> bool:
     - | | (In thousands) | | | | | |         (scale sub-header)
     - | | September 30, | | December 31, |   (date fragment sub-header)
     - | | Three Months Ended | | Nine ... |  (period indicator sub-header)
-    These appear as data rows after the separator in multi-header tables.
+    - | (in millions, ...) | | 2025 | | 2024 | (scale-note first cell — Bug B)
+
+    When the first cell is a scale note like "(in millions, ...)", the row
+    is still accepted as a subheader if the remaining cells contain years or
+    date fragments.
     """
     first_cell = cells[0].strip() if cells else ""
     if first_cell and not re.match(r"^\s*$", first_cell):
-        return False
+        # Allow rows whose first cell is a scale note — they can still carry
+        # year/date sub-header content in the remaining cells (Bug B fix).
+        if not _SCALE_NOTE_RE.match(first_cell):
+            return False
     # Check if any non-first cell contains a year or scale indicator
     rest = [c.strip() for c in cells[1:] if c.strip()]
     if not rest:
@@ -219,19 +244,78 @@ def _parse_markdown_table(table_text: str) -> Tuple[List[str], List[List[str]]]:
     #   Row 0 (header):     | | Three Months Ended | | Nine Months Ended |
     #   Row 1 (sub-header): | | September 30, | | September 30, |
     #   Row 2 (sub-header): | | 2025 | | 2024 | | 2025 | | 2024 |
+    #
+    # Grouped-year assignment (Bug A fix)
+    # ─────────────────────────────────────────────────────────────────────
+    # HTML colspan headers produce misleading markdown column alignment.
+    # E.g. for a table with "Three Months / Nine Months" (each spanning 2
+    # year columns), the markdown renderer places:
+    #   header:    | | Three Months Ended Sep 30, | | Nine Months...  | |
+    #   sub-years: | | 2023 | | 2024 | | 2023 | | 2024 | | | | |
+    # A naïve merge assigns sub[3]="2024" to the "Nine Months" header at
+    # col 3, producing "Nine Months..., 2024" instead of the correct
+    # "Three Months..., 2024".
+    #
+    # Fix: when M period-type headers and N year sub-cells satisfy N%M==0,
+    # assign years in sequential order (N/M per group).  Period types are
+    # read from the CURRENT header state (after any earlier sub-rows), so
+    # three-row headers (label + date + year) are handled correctly.
     rows = raw_rows
     while rows and _is_subheader_row(rows[0]):
         sub = rows[0]
-        for idx in range(min(len(headers), len(sub))):
+        sub_len = min(len(headers), len(sub))
+
+        # Collect period-type header positions (using current header state).
+        period_type_positions = [
+            (idx, headers[idx].strip())
+            for idx in range(sub_len)
+            if headers[idx].strip() and _PERIOD_TYPE_HDR_RE.search(headers[idx])
+        ]
+        # Collect sub-year cell positions (strict 4-digit year match).
+        sub_year_positions = [
+            (idx, sub[idx].strip())
+            for idx in range(sub_len)
+            if re.fullmatch(r"20\d{2}", sub[idx].strip())
+        ]
+
+        use_grouped = (
+            len(period_type_positions) > 0
+            and len(sub_year_positions) > 0
+            and len(sub_year_positions) % len(period_type_positions) == 0
+        )
+
+        if use_grouped:
+            years_per_group = len(sub_year_positions) // len(period_type_positions)
+            for year_seq, (s_idx, year_val) in enumerate(sub_year_positions):
+                grp = year_seq // years_per_group
+                # Strip any year already appended from an earlier sub-row
+                # so we always work from the clean period-type prefix.
+                base = re.sub(
+                    r"\s+20\d{2}\s*$",
+                    "",
+                    period_type_positions[grp][1],
+                ).strip()
+                headers[s_idx] = f"{base} {year_val}"
+
+        # Merge remaining sub cells (non-year, or all cells when not grouped).
+        # Date fragments ("September 30,"), scale notes ("(in millions)"), and
+        # any year cells in the non-grouped path are handled here.
+        for idx in range(sub_len):
             sub_val = sub[idx].strip()
             if not sub_val:
                 continue
+            if use_grouped and re.fullmatch(r"20\d{2}", sub_val):
+                continue  # already handled by grouped assignment above
             hdr_val = headers[idx].strip()
             if hdr_val:
-                # Concatenate: "Three Months Ended" + " " + "September 30,"
+                # Skip cells already finalised by the grouped year assignment
+                # (they end with a 4-digit year).
+                if use_grouped and re.search(r"\b20\d{2}$", hdr_val):
+                    continue
                 headers[idx] = f"{hdr_val} {sub_val}"
             else:
                 headers[idx] = sub_val
+
         rows = rows[1:]
 
     return headers, rows
