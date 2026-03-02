@@ -74,16 +74,39 @@ def test_source_type_rank_table_wins():
 
 # ── Period affinity ──────────────────────────────────────────────────
 
-def test_period_affinity_fy_always_zero():
-    assert _period_affinity("FY2024", "anything.clean.md") == 0
+def test_period_affinity_split_sensitive_primary():
+    """Split-sensitive field: FY2024 data from FY2024 filing → affinity 0."""
+    assert _period_affinity("FY2024", "SRC_003_10-K_FY2024.clean.md", "eps_basic") == 0
+
+
+def test_period_affinity_split_sensitive_comparative():
+    """Split-sensitive field: FY2024 data from a LATER filing → affinity 1."""
+    assert _period_affinity("FY2024", "SRC_001_10-K_FY2026.clean.md", "eps_diluted") == 1
+
+
+def test_period_affinity_non_split_always_zero():
+    """Non-split fields: always affinity 0 regardless of filing, so newer filing wins."""
+    assert _period_affinity("FY2019", "SRC_006_10-K_FY2019.clean.md", "ingresos") == 0
+    assert _period_affinity("FY2019", "SRC_005_10-K_FY2020.clean.md", "ingresos") == 0
+
+
+def test_period_affinity_fy_no_tag():
+    """FY period from a file without FY tag → affinity 1 for split-sensitive,
+    0 for non-split (newer file wins)."""
+    assert _period_affinity("FY2024", "anything.clean.md", "eps_basic") == 1
+    assert _period_affinity("FY2024", "anything.clean.md", "ingresos") == 0
 
 
 def test_period_affinity_q_primary():
-    assert _period_affinity("Q1-2024", "SRC_010_10-Q_Q1-2024.clean.md") == 0
+    """Q periods always prefer primary filing regardless of field."""
+    assert _period_affinity("Q1-2024", "SRC_010_10-Q_Q1-2024.clean.md", "eps_basic") == 0
+    assert _period_affinity("Q1-2024", "SRC_010_10-Q_Q1-2024.clean.md", "ingresos") == 0
 
 
 def test_period_affinity_q_comparative():
-    assert _period_affinity("Q1-2024", "SRC_012_10-Q_Q3-2024.clean.md") == 1
+    """Q periods: comparative filing → affinity 1 for ALL fields."""
+    assert _period_affinity("Q1-2024", "SRC_012_10-Q_Q3-2024.clean.md", "eps_basic") == 1
+    assert _period_affinity("Q1-2024", "SRC_012_10-Q_Q3-2024.clean.md", "ingresos") == 1
 
 
 # ── Sort key ─────────────────────────────────────────────────────────

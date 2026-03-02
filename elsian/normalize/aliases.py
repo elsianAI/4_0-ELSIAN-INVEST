@@ -36,13 +36,26 @@ _REJECT_PATTERNS: Dict[str, List[re.Pattern]] = {
     "eps_diluted": [
         re.compile(r"anti.?dilutive", re.I),
         re.compile(r"excluded\s+from", re.I),
+        re.compile(r"\badjusted\b", re.I),
+        re.compile(r"non[\s-]?gaap", re.I),
+        re.compile(r"weighted\s+average", re.I),
+        re.compile(r"number\s+of.*shares", re.I),
     ],
     "eps_basic": [
         re.compile(r"anti.?dilutive", re.I),
         re.compile(r"excluded\s+from", re.I),
+        re.compile(r"\badjusted\b", re.I),
+        re.compile(r"non[\s-]?gaap", re.I),
+        re.compile(r"weighted\s+average", re.I),
+        re.compile(r"number\s+of.*shares", re.I),
+        # Reject "diluted" labels UNLESS "basic" is also present
+        # (combined "basic and diluted" labels are valid eps_basic).
+        re.compile(r"^(?!.*\bbasic\b).*\bdiluted\b", re.I),
     ],
     "ebit": [
         re.compile(r"non[\s-]?gaap", re.I),
+        re.compile(r"loss\s+carryforward", re.I),
+        re.compile(r"operating\s+loss\s+carryforward", re.I),
     ],
     "ingresos": [
         re.compile(r"non[\s-]?gaap", re.I),
@@ -91,7 +104,7 @@ _REJECT_PATTERNS: Dict[str, List[re.Pattern]] = {
         re.compile(r"included\s+in\s+accounts\s+payable", re.I),
     ],
     "income_tax": [
-        re.compile(r"before\s+income\s+tax", re.I),
+        re.compile(r"before\s+.*income\s+tax", re.I),
         re.compile(r"accrued\s+income\s+tax", re.I),
         re.compile(r"prepaid\s+income\s+tax", re.I),
         re.compile(r"income\s+tax\s+payable", re.I),
@@ -115,25 +128,21 @@ _REJECT_PATTERNS: Dict[str, List[re.Pattern]] = {
         re.compile(r"^(?!.*\bbasic\b).*\bdiluted\b", re.I),
         re.compile(r"class\s+[a-z]\s", re.I),
     ],
-    "eps_diluted": [
-        re.compile(r"\badjusted\b", re.I),
+    # eps_diluted and eps_basic patterns are consolidated above (lines ~36-50).
+    # Do NOT add a second eps_diluted/eps_basic key — Python dicts silently
+    # overwrite duplicate keys, losing the earlier patterns.
+    "sga": [
+        re.compile(r"\bper\s+boe\b", re.I),
+        re.compile(r"\bunallocated\b", re.I),
+        re.compile(r"\bupstream\b", re.I),
         re.compile(r"non[\s-]?gaap", re.I),
-        re.compile(r"weighted\s+average", re.I),
-        re.compile(r"number\s+of.*shares", re.I),
-    ],
-    "eps_basic": [
-        re.compile(r"\badjusted\b", re.I),
-        re.compile(r"non[\s-]?gaap", re.I),
-        re.compile(r"weighted\s+average", re.I),
-        re.compile(r"number\s+of.*shares", re.I),
-        # Reject "diluted" labels UNLESS "basic" is also present
-        # (combined "basic and diluted" labels are valid eps_basic).
-        re.compile(r"^(?!.*\bbasic\b).*\bdiluted\b", re.I),
     ],
     "total_debt": [
         re.compile(r"\brepayment\b", re.I),
         re.compile(r"\breceipt\b", re.I),
         re.compile(r"\bproceeds\b", re.I),
+        re.compile(r"\bsecurities\b", re.I),
+        re.compile(r"fair\s+value\s+adjust", re.I),
     ],
     "interest_expense": [
         re.compile(r"^add:", re.I),

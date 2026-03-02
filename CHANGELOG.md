@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-03-04
+
+### [Extract/Normalize] NVDA to 100% — fix alias rejection, period_affinity, and regressions
+- **What:** Brought NVDA from 94.97% to 100.0% (318/318) while fixing regressions in 5 other tickers.
+  - **Root cause 1 — Duplicate dict keys:** `_REJECT_PATTERNS` in `aliases.py` had two entries for `eps_diluted` and `eps_basic`. Python silently overwrote the first (containing `anti.?dilutive`, `excluded\s+from`) with the second. Merged into single entries.
+  - **Root cause 2 — total_debt alias matching:** "total debt" substring-matched "total debt securities with fair value adjustments" from NVDA investment portfolio tables. Added `\bsecurities\b` and `fair\s+value\s+adjust` rejection patterns.
+  - **Root cause 3 — _period_affinity overcorrection:** Initial fix preferred primary filing for ALL FY fields, breaking restatement handling (TZOO FY2019, IOSP FY2024/FY2023). Refined: only split-sensitive fields (EPS, shares, DPS) prefer primary FY filing; all others prefer newest filing so implicit restatements are picked up. Quarterly periods always prefer primary filing.
+  - **SONO fix:** `income_tax` reject pattern `before\s+income\s+tax` missed "before provision for (benefit from) income taxes". Changed to `before\s+.*income\s+tax`.
+  - **TALO fix:** `sga` additive over-accumulated sub-items ("per Boe", "unallocated corporate"). Added reject patterns.
+  - **TEP fix:** Re-added "other financial liabilities" and "borrowings" total_debt aliases with `additive:true` (needed for IFRS split-line debt). The `\bsecurities\b` rejection protects NVDA from false positives.
+  - **ebit fix:** Added `loss\s+carryforward` reject pattern.
+- **Files:** elsian/normalize/aliases.py, elsian/extract/phase.py, config/field_aliases.json, tests/unit/test_extract_phase.py
+- **Tests:** 346 passed, 0 failed, 2 skipped
+- **Regression:** ALL 8 tickers at 100% (NVDA, TZOO, IOSP, SONO, TEP, TALO, GCT, NEXN)
+
 ## 2026-03-03
 
 ### [Acquire] BL-008: Rewrite AsxFetcher — autonomous ASX filing acquisition

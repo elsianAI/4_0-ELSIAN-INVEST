@@ -122,7 +122,9 @@ _STRONGLY_DEPRIORITIZED_SECTION = re.compile(
     r"|:statements_of_operations:"
     r"|:balance_sheets:"
     r"|:statements_of_cash_flows:"
-    r"|the_following_table_presents.*balance_sheet",
+    r"|the_following_table_presents.*balance_sheet"
+    r"|unremitted_earnings"
+    r"|undistributed_earnings",
     re.I,
 )
 
@@ -224,10 +226,42 @@ def _parse_stable_order(source_filing: str, source_location: str,
     return (source_filing, tbl_sign * tbl_num, row_sign * row_num, col_sign * col_num)
 
 
-def _period_affinity(period_key: str, source_filing: str) -> int:
-    """Return 0 if source_filing is the primary filing for period_key, 1 otherwise."""
+# Fields where stock-splits / reverse-splits cause the SAME line item to
+# change value across filings.  For these, prefer the PRIMARY filing
+# (the one whose FY tag matches the period) to honour "as-reported".
+# For all other fields, prefer the NEWEST filing (lowest SRC number) so
+# that implicit restatements / reclassifications are picked up.
+_SPLIT_SENSITIVE_FIELDS: set = {
+    "eps_basic", "eps_diluted", "shares_outstanding", "dividends_per_share",
+}
+
+
+def _period_affinity(period_key: str, source_filing: str,
+                     canonical_field: str | None = None) -> int:
+    """Return 0 when the filing is the best source for *period_key*, else 1.
+
+    **FY periods — split-sensitive fields** (EPS, shares, DPS): the primary
+    filing is preferred (FY tag matches) so as-reported pre-split values win.
+
+    **FY periods — all other fields**: affinity is always 0. The tiebreaker
+    becomes filing_rank (lower SRC number = newer filing), so implicit
+    restatements / reclassifications in newer comparative columns are
+    picked up automatically.
+
+    **Quarterly periods**: always prefer the primary filing regardless of
+    field, because quarterly values vary across filings (3-month vs YTD
+    cumulative in 10-Q comparatives).
+    """
     if period_key.startswith("FY"):
-        return 0
+        # Non-split FY fields: no preference → newer filing wins
+        if canonical_field and canonical_field not in _SPLIT_SENSITIVE_FIELDS:
+            return 0
+        # Split-sensitive (or unknown): prefer primary filing
+        fy_tag = period_key
+        if fy_tag in source_filing:
+            return 0
+        return 1
+    # Quarterly: always prefer primary filing
     if period_key in source_filing:
         return 0
     return 1
@@ -242,6 +276,7 @@ def compute_sort_key(
     source_filing: str,
     source_location: str,
     rules: Optional[Dict] = None,
+    canonical_field: str | None = None,
 ) -> Tuple:
     """Compute a comparable sort key for collision resolution.
 
@@ -253,7 +288,7 @@ def compute_sort_key(
     5. stable_order
     """
     fr = _filing_rank(period_key, filing_type, rules)
-    affinity = _period_affinity(period_key, source_filing)
+    affinity = _period_affinity(period_key, source_filing, canonical_field)
     src_rank = _source_type_rank(source_type, rules)
     semantic_rank = -(label_priority + section_bonus_val)
     stable = _parse_stable_order(source_filing, source_location, rules)
@@ -578,6 +613,7 @@ class ExtractPhase(PipelinePhase):
                 source_filing=filing_path.name,
                 source_location=tf.source_location,
                 rules=rules,
+                canonical_field=canonical,
             )
 
             if period_key not in period_fields:
@@ -658,6 +694,7 @@ class ExtractPhase(PipelinePhase):
                 source_filing=filing_path.name,
                 source_location=nf.source_location,
                 rules=rules,
+                canonical_field=canonical,
             )
             if canonical in period_fields[period_key]:
                 existing = period_fields[period_key][canonical]
@@ -770,6 +807,7 @@ class ExtractPhase(PipelinePhase):
             source_filing=filing_path.name,
             source_location=tf.source_location,
             rules=rules,
+            canonical_field=canonical,
         )
 
         if canonical in period_fields[period_key]:
