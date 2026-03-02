@@ -21,7 +21,7 @@ VALIDATED_TICKERS = ["TZOO", "GCT", "IOSP", "NEXN", "SONO", "TEP", "TALO", "NVDA
 PENDING_RECERT_TICKERS: list[str] = []
 
 # Tickers still being curated (expected to fail, not blocking)
-WIP_TICKERS: list[str] = []
+WIP_TICKERS: list[str] = ["PR"]
 
 
 def _has_case(ticker: str) -> bool:

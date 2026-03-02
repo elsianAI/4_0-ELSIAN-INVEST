@@ -2,6 +2,9 @@
 
 ## 2026-03-02
 
+### [4.0] DEC-013: PR wired to WIP_TICKERS in regression
+- `tests/integration/test_regression.py`: PR added to WIP_TICKERS. 10 passed, 1 skipped.
+
 ### [4.0] DEC-013: PR (Permian Resources) tracked as WIP
 - `cases/PR/case.json` + `expected.json` added to repo (88.65%, 125/141 fields).
 - PROJECT_STATE: PR as WIP ticker. BACKLOG: BL-032 closed, BL-033 created.
