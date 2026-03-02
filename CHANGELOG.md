@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-05-28
+
+### [DATA] BL-026 — TALO promoted to FULL scope (183/183, 100%)
+- `cases/TALO/case.json`: Set `period_scope` to `FULL`.
+- `cases/TALO/expected.json`: Added 7 quarterly periods (Q3-2025, Q2-2025, Q1-2025, Q3-2024,
+  Q3-2022, Q2-2022, Q1-2022). Updated `scale_notes` with quarterly CF convention.
+- Pipeline bugs documented and fields excluded from affected periods:
+  - BL-EX-001: `ingresos` excluded from 6 quarterly periods (Q2/Q3 multi-column 10-Q tables —
+    pipeline reads price-volume decomposition table from MD&A instead of IS Total revenues).
+  - BL-EX-002: `depreciation_amortization` excluded from Q2-2022 (pipeline reads per-Boe
+    unit cost ~17.56 $/Boe from MD&A instead of absolute IS value 104,511 thousands).
+- Regression: 10/10 tickers PASS 100% (GCT 202, IOSP 95, KAR 49, NEXN 76, NVDA 318, PR 141,
+  SONO 311, TALO 183, TEP 55, TZOO 270).
+
 ## 2026-05-27
 
 ### [DATA+CODE] BL-??? — PR promoted to VALIDATED (141/141, 100%, FULL scope)
