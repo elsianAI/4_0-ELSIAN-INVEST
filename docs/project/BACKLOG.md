@@ -331,8 +331,7 @@
 - **Asignado a:** Claude (elsian-4)
 - **Depende de:** —
 - **Descripción:** Dos tickers (IOSP, GCT) no podían promoverse a FULL porque el pipeline fallaba al extraer IS desde 10-Q con formatos específicos: (1) IOSP: parenthetical `( value | )` generaba columnas extra. (2) GCT: `$` como celda separada desplazaba valores. (3) IOSP: scale-note cell bloqueaba detección de subheaders. Fix en dos commits: `_collapse_split_parentheticals()` + grouped year assignment + scale-note tolerance en `_is_subheader_row()`. IOSP ahora extrae 24+ periodos Q, GCT Q1-Q3 2024 ahora disponibles.
-- **Criterio de aceptación:** ✅ Pipeline extrae IS para IOSP Q* (24+ periodos) y GCT Q1-Q3 2024 (18-20 campos). 10/10 tickers al 100%. 473 tests pass.
-- **Nota (2026-03-02):** Hay 72 líneas adicionales sin commit en `html_tables.py` (lógica dollar-calibration para tablas MD&A con celdas `$`/`%` alternadas). Los tests pasan al 100% con estos cambios. Pendiente: el agente técnico debe commitear este cambio con regresión verde.
+- **Criterio de aceptación:** ✅ Pipeline extrae IS para IOSP Q* (24+ periodos) y GCT Q1-Q3 2024 (18-20 campos). 10/10 tickers al 100%. 475 tests pass.
 
 ### BL-036 — SecEdgarFetcher: descargar Exhibit 99.1 de 6-K (NEXN quarterly)
 - **Prioridad:** ALTA
@@ -343,15 +342,15 @@
 - **Criterio de aceptación:** `acquire NEXN` descarga los .htm de Exhibit 99.1 de los 6-K con earnings results. Los .htm se convierten a .clean.md. `extract NEXN` produce periodos Q* con datos de IS/BS/CF. Tests unitarios para la nueva lógica de 6-K exhibit discovery. Sin regresiones en otros tickers SEC.
 
 ### BL-034 — Field Dependency Matrix: análisis de dependencias 3.0→4.0
-- **Prioridad:** ALTA
-- **Estado:** DONE ✅ (2026-03-02) — Draft publicado, pendiente revisión Elsian.
-- **Asignado a:** Copilot (Project Director)
-- **Depende de:** — (paralelo a BL-038)
-- **Descripción:** Analizar estáticamente `scripts/runners/tp_validator.py` y `scripts/runners/tp_calculator.py` del 3.0 para generar una matriz objetiva de dependencias de campos. Para cada campo: clasificar como critical/required/optional según reglas objetivas: (1) critical = su ausencia provoca FAIL/SKIP en gates críticos del validator, (2) required = su ausencia degrada cálculos del calculator sin romper gates, (3) optional = solo afecta enriquecimiento no bloqueante. Publicar con evidencia por campo: archivo fuente, función, gate/métrica impactada, clasificación, justificación. **Análisis puro — no se toca código del 4.0.** Revisión Codex (2026-03-02): AR/INV/AP reclasificados como "required por producto (tp_calculator), no por gate (tp_validator)". `delta_cash` confirmado CRITICAL (CASHFLOW_IDENTITY gate).
-- **Criterio de aceptación:** ✓ Documento `docs/project/FIELD_DEPENDENCY_MATRIX.md` publicado. ✓ Snapshot máquina `docs/project/field_dependency_matrix.json` publicado. ✓ 100% de campos con evidencia rastreable al código fuente del 3.0. Pendiente: revisión final por Elsian antes de pasar a Fase B.
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** Analizar estáticamente `scripts/runners/tp_validator.py` y `scripts/runners/tp_calculator.py` del 3.0 para generar una matriz objetiva de dependencias de campos. Para cada campo: clasificar como critical/required/optional según reglas objetivas: (1) critical = su ausencia provoca FAIL/SKIP en gates críticos del validator, (2) required = su ausencia degrada cálculos del calculator sin romper gates, (3) optional = solo afecta enriquecimiento no bloqueante. Publicar con evidencia por campo: archivo fuente, función, gate/métrica impactada, clasificación, justificación. **Análisis puro — no se toca código del 4.0.**
+- **Criterio de aceptación:** Documento `docs/project/FIELD_DEPENDENCY_MATRIX.md` publicado. Snapshot máquina `docs/project/field_dependency_matrix.json` publicado. 100% de campos con evidencia rastreable al código fuente del 3.0. Revisión final por Elsian antes de pasar a Fase B.
 
 ### BL-035 — Expandir campos canónicos según Field Dependency Matrix
-- **Prioridad:** ALTA
+- **Prioridad:** MEDIA
 - **Estado:** TODO
 - **Asignado a:** sin asignar
 - **Depende de:** BL-034 (matriz revisada) + BL-038 (DONE) + oleada 3 IOSP/NEXN (DONE)

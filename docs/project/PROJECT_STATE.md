@@ -13,26 +13,28 @@ Ver ROADMAP.md para descripción completa de fases.
 
 | Métrica | Valor | Target Fase 1→2 | Fecha |
 |---|---|---|---|
-| Tickers FULL 100% (DEC-015) | 6 (TZOO, NVDA, SONO, GCT, TALO, PR) | ≥15 | 2026-03-02 |
-| Tickers validados (ANNUAL_ONLY) | 4 (IOSP, KAR, NEXN, TEP) | Promover a FULL o documentar excepción | 2026-03-02 |
+| Tickers FULL 100% (DEC-015) | 8 (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, +KAR*) | ≥15 | 2026-03-02 |
+| Tickers ANNUAL_ONLY pendientes | 2 (NEXN — blocked BL-036, TEP — sin quarterly publicados) | Promover o documentar excepción | 2026-03-02 |
 | Tickers WIP | 0 | 0 | 2026-03-02 |
-| Total campos validados | 1,700 | — | 2026-03-02 |
-| Tests pasando | 473 passed, 0 failed, 2 skipped | — | 2026-03-02 |
-| Líneas de código (aprox.) | ~7,400 + ~2,100 tests | 2026-03-02 |
+| Total campos validados | 2,093 | — | 2026-03-02 |
+| Tests pasando | 475 passed, 0 failed, 2 skipped | — | 2026-03-02 |
+| Líneas de código (aprox.) | ~7,500 + ~2,200 tests | 2026-03-02 |
+
+*KAR (49 campos, 3A): ASX annual-only — no quarterly filings disponibles en ASX para este ticker. Cuenta como FULL bajo DEC-015 excepción.
 
 ## Tickers validados
 
 | Ticker | Campos | Mercado | Formato | Estado |
 |---|---|---|---|---|
 | TZOO | 270 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
-| GCT | 202 | SEC (US) | 20-F→10-K HTML | ✅ VALIDATED (FULL: 6A+6Q) |
-| IOSP | 95 | SEC (US) | 10-K HTML | ✅ VALIDATED (ANNUAL_ONLY — ready for FULL, BL-038 DONE) |
-| NEXN | 76 | SEC (US) | 20-F/6-K HTML | ✅ VALIDATED |
+| GCT | 252 | SEC (US) | 20-F→10-K HTML | ✅ VALIDATED (FULL: 6A+9Q) |
+| IOSP | 338 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 5A+17Q) |
+| NEXN | 76 | SEC (US) | 20-F/6-K HTML | ✅ VALIDATED (ANNUAL_ONLY — blocked BL-036: 6-K exhibits) |
 | SONO | 311 | SEC (US) | 10-K HTML | ✅ VALIDATED (FULL: 6A+12Q) |
-| TEP | 55 | Euronext (FR) | PDF (IFRS, EUR) | ✅ VALIDATED |
+| TEP | 55 | Euronext (FR) | PDF (IFRS, EUR) | ✅ VALIDATED (ANNUAL_ONLY — sin quarterly publicados) |
 | TALO | 183 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 5A+7Q) |
 | NVDA | 318 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
-| KAR | 49 | ASX (AU) | PDF (IFRS, USD) | ✅ VALIDATED |
+| KAR | 49 | ASX (AU) | PDF (IFRS, USD) | ✅ VALIDATED (DEC-015 excepción: no quarterly en ASX) |
 | PR | 141 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 3A+6Q) |
 
 ## Componentes implementados
@@ -101,7 +103,8 @@ Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC
 - **WP-6** — IxbrlExtractor en producción. **DIFERIDO.**
 
 **Siguiente fase:**
-- **BL-026 oleada 3** — Promover IOSP y NEXN a FULL. IOSP desbloqueado por BL-038. GCT Q1-Q3 2024 también disponibles para añadir.
+- **BL-036** — NEXN 6-K exhibit download → desbloquea NEXN FULL.
+- **BL-005** — 5 tickers nuevos para llegar a 15 FULL (DEC-015).
 - **WP-6** — IxbrlExtractor en producción (diferido).
 
 ---
