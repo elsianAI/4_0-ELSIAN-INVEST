@@ -6,5 +6,6 @@
   "cik": "1857816",
   "source_hint": "sec",
   "filings_expected_count": null,
-  "notes": "Foreign private issuer (Cayman Islands). Files 20-F (annual) and 6-K (current). B2B e-commerce, large parcel. IPO 2022."
+  "notes": "Foreign private issuer (Cayman Islands). Files 20-F (annual) and 6-K (current). B2B e-commerce, large parcel. IPO 2022. GCT transitioned from 20-F to 10-K starting FY2023. Q1-Q3 2024 quarterly IS not extractable by pipeline (markdown column misalignment bug — tracked as BL-027). Quarterly scope covers Q1-Q3 2023 and Q1-Q3 2025 only.",
+  "period_scope": "FULL"
 }

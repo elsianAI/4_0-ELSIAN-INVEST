@@ -24,6 +24,7 @@
 - Strategy: Hybrid — 2023/2025 quarters from pipeline (14-19 fields each); 2024 quarters
   excluded due to pipeline column-misalignment bug in GCT 10-Q markdown tables (tracked as BL-027).
 - Score: 100% (202/202). eval --all: all 9 validated tickers at 100%.
+<!-- commit: GCT promoted to FULL -->
 
 
 ### [4.0] DEC-013: PR wired to WIP_TICKERS in regression
