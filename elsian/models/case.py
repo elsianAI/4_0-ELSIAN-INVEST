@@ -21,6 +21,7 @@ class CaseConfig:
     fiscal_year_end_month: int = 12
     period_scope: str = "ANNUAL_ONLY"
     case_dir: str = ""
+    cik: str | None = None
     config_overrides: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -39,5 +40,6 @@ class CaseConfig:
             fiscal_year_end_month=data.get("fiscal_year_end_month", 12),
             period_scope=data.get("period_scope", "ANNUAL_ONLY"),
             case_dir=str(case_dir),
+            cik=data.get("cik"),
             config_overrides=data.get("config_overrides", {}),
         )

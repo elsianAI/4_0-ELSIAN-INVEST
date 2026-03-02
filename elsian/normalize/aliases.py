@@ -126,7 +126,16 @@ _REJECT_PATTERNS: Dict[str, List[re.Pattern]] = {
         # Reject "diluted" labels UNLESS "basic" is also present
         # (combined "basic and diluted" labels are valid share counts).
         re.compile(r"^(?!.*\bbasic\b).*\bdiluted\b", re.I),
-        re.compile(r"class\s+[a-z]\s", re.I),
+        # Reject balance-sheet equity rows that START with "Class A/B/C"
+        # (e.g. "Class A Common Stock, $0.0001 par value…") — anchored to ^
+        # so that IS labels like "Basic weighted average shares of Class A
+        # Common Stock outstanding" are NOT rejected.
+        re.compile(r"^class\s+[a-z]\b", re.I),
+        # Reject balance-sheet caption rows that describe shares issued/outstanding
+        # (e.g. "Class A: 757,854,120 shares issued and 751,746,410 shares
+        # outstanding") — the numeric value is par value in $K, not shares counts.
+        re.compile(r"shares\s+issued\s+and", re.I),
+        re.compile(r"class\s+[a-z]:", re.I),
     ],
     # eps_diluted and eps_basic patterns are consolidated above (lines ~36-50).
     # Do NOT add a second eps_diluted/eps_basic key — Python dicts silently
@@ -154,6 +163,10 @@ _REJECT_PATTERNS: Dict[str, List[re.Pattern]] = {
         re.compile(r"right-of-use", re.I),
         re.compile(r"right[\s-]?of[\s-]?use", re.I),
         re.compile(r"intangible\s+assets\s+acquired", re.I),
+        # Reject the balance-sheet contra-asset row ("Accumulated depreciation,
+        # depletion and amortization") — it carries a cumulative stock value,
+        # not the income-statement period charge.
+        re.compile(r"\baccumulated\b", re.I),
     ],
     "research_and_development": [
         re.compile(r"tax\s+credit", re.I),
@@ -164,6 +177,14 @@ _REJECT_PATTERNS: Dict[str, List[re.Pattern]] = {
 # Priority patterns: when multiple rows could map to same canonical,
 # a label matching one of these gets preference (score=100 exact, else 50).
 _PRIORITY_PATTERNS: Dict[str, List[re.Pattern]] = {
+    # "Total equity" is the fully-consolidated line including noncontrolling
+    # interests (NCI).  It should win over "Total shareholders/stockholders'
+    # equity" which reflects only the parent company's interest.  This matters
+    # for Up-C structures (e.g. Permian Resources) where both rows appear on
+    # the same balance sheet.
+    "total_equity": [
+        re.compile(r"^total\s+equity$", re.I),
+    ],
     "ebit": [
         re.compile(r"^operating\s+income", re.I),
         re.compile(r"^operating\s+loss", re.I),

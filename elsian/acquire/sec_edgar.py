@@ -340,20 +340,31 @@ class SecEdgarFetcher(Fetcher):
         out_path.mkdir(parents=True, exist_ok=True)
 
         # Cache: if filings already exist, skip
-        existing = list(out_path.glob("SRC_*"))
+        existing = [f for f in out_path.glob("SRC_*") if f.is_file()]
         if existing:
+            logical_filing_count = len(
+                {f.stem for f in existing if f.suffix in (".htm", ".txt")}
+            )
+            if logical_filing_count == 0:
+                logical_filing_count = len({f.stem for f in existing})
             return AcquisitionResult(
                 ticker=ticker,
                 source="sec_edgar",
-                filings_downloaded=len(existing),
+                filings_downloaded=logical_filing_count,
                 filings_coverage_pct=100.0,
                 notes="Using cached filings (directory not empty).",
             )
 
         client = SecClient()
 
-        # Resolve CIK
-        cik_result = resolve_cik(client, ticker)
+        # Resolve CIK — use pre-configured cik from case.json if available
+        if case.cik:
+            cik_int = int(case.cik)
+            cik10 = str(cik_int).zfill(10)
+            logger.info("Using pre-configured CIK %s for %s", cik10, ticker)
+            cik_result = (cik_int, cik10)
+        else:
+            cik_result = resolve_cik(client, ticker)
         if cik_result is None:
             return AcquisitionResult(
                 ticker=ticker,

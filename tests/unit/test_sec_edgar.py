@@ -94,3 +94,69 @@ class TestFormSets:
     def test_periodic_forms(self):
         assert "10-Q" in PERIODIC_FORMS
         assert "6-K" in PERIODIC_FORMS
+
+
+# ── CaseConfig.cik tests ────────────────────────────────────────────
+
+import json
+from elsian.models.case import CaseConfig
+
+
+class TestCaseConfigCik:
+    def test_cik_from_json(self, tmp_path):
+        case_json = tmp_path / "case.json"
+        case_json.write_text(json.dumps({
+            "ticker": "NVDA",
+            "cik": "1045810",
+            "source_hint": "sec",
+        }))
+        cfg = CaseConfig.from_file(tmp_path)
+        assert cfg.cik == "1045810"
+        assert cfg.ticker == "NVDA"
+
+    def test_cik_none_when_absent(self, tmp_path):
+        case_json = tmp_path / "case.json"
+        case_json.write_text(json.dumps({
+            "ticker": "TZOO",
+            "source_hint": "sec",
+        }))
+        cfg = CaseConfig.from_file(tmp_path)
+        assert cfg.cik is None
+
+
+# ── Cache logical filing count ───────────────────────────────────────
+
+from elsian.models.result import AcquisitionResult
+
+
+class TestCacheLogicalCount:
+    def test_three_files_one_logical_filing(self, tmp_path):
+        """SRC_001 with .htm, .txt, .clean.md should count as 1 logical filing."""
+        filings_dir = tmp_path / "filings"
+        filings_dir.mkdir()
+        (filings_dir / "SRC_001_annual_FY2025.htm").write_text("html")
+        (filings_dir / "SRC_001_annual_FY2025.txt").write_text("text")
+        (filings_dir / "SRC_001_annual_FY2025.clean.md").write_text("md")
+
+        case = CaseConfig(ticker="TEST", case_dir=str(tmp_path))
+        fetcher = SecEdgarFetcher()
+        result = fetcher.acquire(case)
+
+        assert result.filings_downloaded == 1
+        assert "cached" in (result.notes or "").lower()
+
+    def test_two_filings_multiple_files(self, tmp_path):
+        """Two distinct SRC_ filings with multiple formats each."""
+        filings_dir = tmp_path / "filings"
+        filings_dir.mkdir()
+        (filings_dir / "SRC_001_annual_FY2025.htm").write_text("html")
+        (filings_dir / "SRC_001_annual_FY2025.txt").write_text("text")
+        (filings_dir / "SRC_002_annual_FY2024.htm").write_text("html")
+        (filings_dir / "SRC_002_annual_FY2024.txt").write_text("text")
+        (filings_dir / "SRC_002_annual_FY2024.clean.md").write_text("md")
+
+        case = CaseConfig(ticker="TEST", case_dir=str(tmp_path))
+        fetcher = SecEdgarFetcher()
+        result = fetcher.acquire(case)
+
+        assert result.filings_downloaded == 2

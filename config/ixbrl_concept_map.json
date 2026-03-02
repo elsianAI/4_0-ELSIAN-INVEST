@@ -1,0 +1,105 @@
+{
+  "_version": "1.0",
+  "_description": "Maps US-GAAP iXBRL concept names to ELSIAN canonical field names. Discovered from TZOO and NVDA 10-K filings.",
+  "_fields_covered": 22,
+  "mapping": {
+    "us-gaap:Revenues": "ingresos",
+    "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax": "ingresos",
+    "us-gaap:RevenueFromContractWithCustomerIncludingAssessedTax": "ingresos",
+    "us-gaap:SalesRevenueNet": "ingresos",
+
+    "us-gaap:CostOfRevenue": "cost_of_revenue",
+    "us-gaap:CostOfGoodsAndServicesSold": "cost_of_revenue",
+    "us-gaap:CostOfGoodsSold": "cost_of_revenue",
+    "us-gaap:CostOfGoodsAndServiceExcludingDepreciationDepletionAndAmortization": "cost_of_revenue",
+
+    "us-gaap:GrossProfit": "gross_profit",
+
+    "us-gaap:OperatingIncomeLoss": "ebit",
+
+    "us-gaap:NetIncomeLoss": "net_income",
+    "us-gaap:NetIncomeLossAvailableToCommonStockholdersBasic": "net_income",
+    "us-gaap:ProfitLoss": "net_income",
+
+    "us-gaap:EarningsPerShareBasic": "eps_basic",
+    "us-gaap:IncomeLossFromContinuingOperationsPerBasicShare": "eps_basic",
+
+    "us-gaap:EarningsPerShareDiluted": "eps_diluted",
+    "us-gaap:IncomeLossFromContinuingOperationsPerDilutedShare": "eps_diluted",
+
+    "us-gaap:Assets": "total_assets",
+
+    "us-gaap:Liabilities": "total_liabilities",
+
+    "us-gaap:StockholdersEquity": "total_equity",
+    "us-gaap:StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "total_equity",
+
+    "us-gaap:CashAndCashEquivalentsAtCarryingValue": "cash_and_equivalents",
+
+    "us-gaap:LongTermDebt": "total_debt",
+    "us-gaap:LongTermDebtAndCapitalLeaseObligations": "total_debt",
+    "us-gaap:DebtInstrumentCarryingAmount": "total_debt",
+
+    "us-gaap:ResearchAndDevelopmentExpense": "research_and_development",
+
+    "us-gaap:SellingGeneralAndAdministrativeExpense": "sga",
+    "us-gaap:GeneralAndAdministrativeExpense": "sga",
+    "us-gaap:SellingAndMarketingExpense": "sga",
+
+    "us-gaap:DepreciationDepletionAndAmortization": "depreciation_amortization",
+    "us-gaap:DepreciationAndAmortization": "depreciation_amortization",
+    "us-gaap:Depreciation": "depreciation_amortization",
+
+    "us-gaap:InterestExpense": "interest_expense",
+    "us-gaap:InterestExpenseNonoperating": "interest_expense",
+    "us-gaap:InterestExpenseDebt": "interest_expense",
+
+    "us-gaap:IncomeTaxExpenseBenefit": "income_tax",
+
+    "us-gaap:WeightedAverageNumberOfSharesOutstandingBasic": "shares_outstanding",
+    "us-gaap:WeightedAverageNumberOfShareOutstandingBasicAndDiluted": "shares_outstanding",
+    "us-gaap:CommonStockSharesOutstanding": "shares_outstanding",
+
+    "us-gaap:NetCashProvidedByUsedInOperatingActivities": "cfo",
+
+    "us-gaap:PaymentsToAcquirePropertyPlantAndEquipment": "capex",
+    "us-gaap:PaymentsToAcquireProductiveAssets": "capex",
+
+    "us-gaap:CommonStockDividendsPerShareDeclared": "dividends_per_share",
+    "us-gaap:CommonStockDividendsPerShareCashPaid": "dividends_per_share",
+    "us-gaap:DividendsCommonStockCash": "dividends_per_share"
+  },
+  "sign_override": {
+    "_comment": "Fields where iXBRL value needs sign adjustment to match expected.json convention",
+    "capex": "negate"
+  },
+  "preferred_concepts": {
+    "_comment": "When multiple concepts map to the same field, prefer the first in the list (for dedup)",
+    "total_equity": [
+      "us-gaap:StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+      "us-gaap:StockholdersEquity"
+    ],
+    "net_income": [
+      "us-gaap:NetIncomeLoss",
+      "us-gaap:ProfitLoss",
+      "us-gaap:NetIncomeLossAvailableToCommonStockholdersBasic"
+    ],
+    "shares_outstanding": [
+      "us-gaap:WeightedAverageNumberOfSharesOutstandingBasic",
+      "us-gaap:CommonStockSharesOutstanding"
+    ],
+    "sga": [
+      "us-gaap:SellingGeneralAndAdministrativeExpense",
+      "us-gaap:GeneralAndAdministrativeExpense"
+    ],
+    "total_debt": [
+      "us-gaap:LongTermDebt",
+      "us-gaap:DebtInstrumentCarryingAmount"
+    ],
+    "depreciation_amortization": [
+      "us-gaap:DepreciationDepletionAndAmortization",
+      "us-gaap:DepreciationAndAmortization",
+      "us-gaap:Depreciation"
+    ]
+  }
+}

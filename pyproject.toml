@@ -27,6 +27,10 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = [
+    "slow: marks tests as slow (>5s) — deselect with '-m \"not slow\"'",
+    "network: marks tests that require network access",
+]
 
 [tool.ruff]
 target-version = "py311"

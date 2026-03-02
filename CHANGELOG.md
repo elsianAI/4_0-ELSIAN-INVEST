@@ -25,6 +25,8 @@
 - `elsian/models/case.py`: campo `cik: str | None` en CaseConfig.
 - `elsian/acquire/sec_edgar.py`: cache cuenta filings lógicos (stems), usa case.cik.
 - `tests/unit/test_sec_edgar.py`: +4 tests (cik loading, cache lógico).
+- Suite tras WP-2+WP-3+WP-5: 427 passed, 2 skipped, 0 failed.
+- `tests/unit/test_sec_edgar.py`: +4 tests (cik loading, cache lógico).
 
 ### [4.0] WP-1: Scope Governance (BL-027)
 - `cases/NVDA/case.json`: añadido `period_scope: "FULL"`.

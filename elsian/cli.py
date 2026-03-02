@@ -228,6 +228,143 @@ def cmd_eval(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def cmd_curate(args: argparse.Namespace) -> None:
+    """Generate expected_draft.json from iXBRL data in .htm filings."""
+    from elsian.extract.ixbrl import (
+        parse_ixbrl_filing,
+        deduplicate_facts,
+        generate_expected_draft,
+        run_sanity_checks,
+    )
+
+    case_dir = _find_case_dir(args.ticker)
+    if not case_dir:
+        print(f"Case not found: {args.ticker}")
+        sys.exit(1)
+
+    case = CaseConfig.from_file(case_dir)
+    filings_dir = case_dir / "filings"
+
+    # Find .htm files
+    htm_files = sorted(filings_dir.glob("*.htm")) if filings_dir.exists() else []
+    if not htm_files:
+        # Generate skeleton for tickers without iXBRL files
+        print(f"{args.ticker}: No iXBRL (.htm) files found. Generating skeleton.")
+        skeleton = {
+            "version": "1.0",
+            "ticker": case.ticker or args.ticker,
+            "currency": case.currency,
+            "scale": "mixed",
+            "scale_notes": "SKELETON — no iXBRL files available. Curate manually from PDF/other sources.",
+            "_generated_by": "elsian curate (skeleton)",
+            "periods": {},
+        }
+        out_path = case_dir / "expected_draft.json"
+        out_path.write_text(
+            json.dumps(skeleton, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        print(f"  Saved skeleton to {out_path}")
+        return
+
+    # Parse all .htm files
+    all_facts = []
+    for htm in htm_files:
+        facts = parse_ixbrl_filing(
+            htm,
+            fiscal_year_end_month=case.fiscal_year_end_month,
+        )
+        all_facts.extend(facts)
+
+    print(f"{args.ticker}: Parsed {len(all_facts)} iXBRL facts from {len(htm_files)} files")
+    mapped_count = sum(1 for f in all_facts if f.field is not None)
+    print(f"  Mapped to canonical fields: {mapped_count}")
+
+    # Deduplicate: prefer annual filing values
+    deduped = deduplicate_facts(all_facts)
+
+    # Generate draft
+    draft = generate_expected_draft(
+        deduped,
+        ticker=case.ticker or args.ticker,
+        currency=case.currency,
+    )
+
+    # Run sanity checks
+    warnings = run_sanity_checks(draft)
+
+    # Save
+    out_path = case_dir / "expected_draft.json"
+    out_path.write_text(
+        json.dumps(draft, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    # Print summary
+    periods = draft.get("periods", {})
+    print(f"  Periods: {len(periods)}")
+    for plabel in sorted(periods.keys()):
+        n_fields = len(periods[plabel].get("fields", {}))
+        field_names = sorted(periods[plabel].get("fields", {}).keys())
+        print(f"    {plabel}: {n_fields} fields — {', '.join(field_names)}")
+
+    if warnings:
+        print(f"  Sanity checks: {len(warnings)} warning(s)")
+        for w in warnings:
+            print(f"    ⚠ {w}")
+    else:
+        print("  Sanity checks: all passed")
+
+    # Compare with existing expected.json if available
+    expected_path = case_dir / "expected.json"
+    if expected_path.exists():
+        expected = json.loads(expected_path.read_text(encoding="utf-8"))
+        _compare_draft_vs_expected(draft, expected)
+
+    print(f"  Saved to {out_path}")
+
+
+def _compare_draft_vs_expected(
+    draft: dict,
+    expected: dict,
+) -> None:
+    """Print comparison of draft vs existing expected.json."""
+    exp_periods = expected.get("periods", {})
+    draft_periods = draft.get("periods", {})
+
+    common_periods = set(exp_periods.keys()) & set(draft_periods.keys())
+    if not common_periods:
+        print("  Coverage: no overlapping periods with expected.json")
+        return
+
+    total_exp = 0
+    covered = 0
+    matched = 0
+    for plabel in sorted(common_periods):
+        exp_fields = exp_periods[plabel].get("fields", {})
+        draft_fields = draft_periods[plabel].get("fields", {})
+        for fname, fdata in exp_fields.items():
+            total_exp += 1
+            if fname in draft_fields:
+                covered += 1
+                exp_val = fdata.get("value")
+                draft_val = draft_fields[fname].get("value")
+                if exp_val is not None and draft_val is not None:
+                    if exp_val == 0:
+                        if draft_val == 0:
+                            matched += 1
+                    elif abs(exp_val - draft_val) / abs(exp_val) <= 0.01:
+                        matched += 1
+
+    cov_pct = (covered / total_exp * 100) if total_exp else 0
+    match_pct = (matched / total_exp * 100) if total_exp else 0
+    print(
+        f"  vs expected.json ({len(common_periods)} common periods): "
+        f"coverage={covered}/{total_exp} ({cov_pct:.0f}%), "
+        f"value_match={matched}/{total_exp} ({match_pct:.0f}%)"
+    )
+
+
 def cmd_dashboard(args: argparse.Namespace) -> None:
     """Show dashboard summary."""
     rows: list[DashboardRow] = []
@@ -274,6 +411,10 @@ def main() -> None:
     p_eval.add_argument("ticker", nargs="?", default="")
     p_eval.add_argument("--all", action="store_true")
     p_eval.set_defaults(func=cmd_eval)
+
+    p_curate = sub.add_parser("curate", help="Generate expected_draft.json from iXBRL")
+    p_curate.add_argument("ticker")
+    p_curate.set_defaults(func=cmd_curate)
 
     p_dash = sub.add_parser("dashboard", help="Summary table of all cases")
     p_dash.set_defaults(func=cmd_dashboard)

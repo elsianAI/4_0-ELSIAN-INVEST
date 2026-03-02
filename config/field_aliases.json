@@ -22,7 +22,10 @@
       "net turnover",
       "total turnover",
       "product revenue",
-      "service revenue"
+      "service revenue",
+      "oil and gas sales",
+      "oil and gas revenues",
+      "oil, ngls and natural gas sales"
     ],
     "multiplier": null
   },
