@@ -63,20 +63,60 @@
 - **Depende de:** —
 - **Resultado:** Implementado. Todas las fases heredan PipelinePhase con run(context). Pipeline orquesta correctamente. cmd_run usa Pipeline([ExtractPhase(), EvaluatePhase()]). +6 tests nuevos. 346 tests pasando.
 
-### BL-004 — Portar IxbrlExtractor desde 3.0
+### BL-004 — Parser iXBRL determinístico (módulo reutilizable)
+- **Prioridad:** CRÍTICA
+- **Estado:** DONE ✅ (2026-03-06)
+- **Asignado a:** elsian-4
+- **Depende de:** BL-027 (governance limpio primero)
+- **Descripción:** Construir `elsian/extract/ixbrl.py` — un parser determinístico que extrae datos financieros estructurados de ficheros iXBRL (los mismos .htm que ya descargamos de SEC/ESEF). El parser: (1) localiza tags `ix:nonFraction` / `ix:nonNumeric`, (2) extrae concepto, periodo, valor, unidad, escala (`decimals`), contexto, (3) mapea conceptos GAAP/IFRS a nuestros 23 campos canónicos vía `config/ixbrl_concept_map.json` (nuevo) + `field_aliases.json`, (4) normaliza escala y signos a nuestra convención (DEC-004). **Este módulo es reutilizable:** será consumido por `elsian curate` (BL-025) para generar expected.json, y en el futuro por `IxbrlExtractor(Extractor)` dentro del pipeline de producción. Un parser, dos consumidores (DEC-010). **Portado desde 3.0** `ixbrl_extractor.py` si existe, sino implementar con BeautifulSoup (ya es dependencia). **Plan detallado: WP-3 en `docs/project/PLAN_DEC010_WP1-WP6.md`.**
+- **Criterio de aceptación:** Parser extrae correctamente todos los campos canónicos disponibles de al menos 2 tickers SEC (TZOO, NVDA). Tests unitarios con fixtures iXBRL reales. Output es una lista de FieldResult con provenance (concepto iXBRL, contexto, periodo). Sin dependencias nuevas (bs4 ya está).
+
+### BL-025 — Comando `elsian curate` (generador de expected.json)
+- **Prioridad:** CRÍTICA
+- **Estado:** DONE ✅ (2026-03-06)
+- **Asignado a:** elsian-4
+- **Depende de:** BL-004 (parser iXBRL)
+- **Descripción:** Crear comando `python3 -m elsian.cli curate {TICKER}` que genera `expected_draft.json` de forma automática. Para tickers con iXBRL (SEC, ESEF): usa el parser de BL-004 para extraer todos los campos canónicos de todos los periodos disponibles, filtrando solo campos con representación tabular en IS/BS/CF. Para tickers sin iXBRL (ASX, emergentes): genera un esqueleto vacío con los periodos detectados. El draft incluye metadata de origen (concepto iXBRL, filing fuente, escala original). El draft se depura después manualmente o con LLM para producir el expected.json final. **No forma parte del pipeline de producción** — es herramienta de desarrollo/QA. **Plan detallado: WP-3 en `docs/project/PLAN_DEC010_WP1-WP6.md`.**
+- **Criterio de aceptación:** `elsian curate TZOO` genera un expected_draft.json con ≥90% de los campos del expected.json actual. `elsian curate NVDA` genera draft con periodos anuales Y trimestrales. El draft pasa sanity checks automáticos (revenue>0, assets=liabilities+equity ±1%). Tests del comando.
+
+### BL-026 — Promover tickers SEC a FULL vía curate
 - **Prioridad:** ALTA
 - **Estado:** TODO
 - **Asignado a:** sin asignar
-- **Depende de:** — (BL-003 ya completado)
-- **Descripción:** Portar ixbrl_extractor.py de 3.0 y envolver en IxbrlExtractor(Extractor). iXBRL es fuente primaria donde exista (SEC). Cross-validation con HTML. Provenance nativa (concepto, periodo, contexto).
-- **Criterio de aceptación:** IxbrlExtractor pasa tests unitarios. Al menos 1 ticker SEC extraído vía iXBRL con score ≥ resultado HTML. Sin regresiones.
+- **Depende de:** BL-025 (comando curate funcional)
+- **Descripción:** Usar `elsian curate` para generar expected.json con periodos anuales + trimestrales para los tickers SEC. Para IOSP, SONO, GCT, NEXN, TALO: generar draft con curate, depurar con LLM, cambiar period_scope a FULL, iterar hasta 100%. Oleada 1 (IOSP, SONO, GCT) primero, oleada 2 (NEXN, TALO) después. NVDA y TZOO ya están en FULL.
+- **Criterio de aceptación:** ≥5 tickers en FULL al 100% (incluyendo TZOO y NVDA). Sin regresiones en tickers que no cambian de scope.
+
+### BL-027 — Scope Governance: coherencia case.json vs expected.json
+- **Prioridad:** CRÍTICA
+- **Estado:** DONE ✅ (2026-03-06)
+- **Asignado a:** elsian-4
+- **Depende de:** —
+- **Descripción:** Corregir inconsistencias de scope detectadas en auditoría: (1) Añadir `period_scope: "FULL"` a NVDA case.json (tiene 18 periodos con Q pero scope implícito ANNUAL_ONLY). (2) Auditar todos los case.json: si expected.json tiene periodos Q*/H* → case.json debe tener period_scope FULL. (3) Corregir referencia a "23 campos canónicos" en docs → son 23. (4) Alinear test count en PROJECT_STATE con la realidad. (5) Crear test automático `tests/integration/test_scope_consistency.py` que verifique coherencia scope↔expected para todos los tickers validados. **Plan detallado: WP-1 en `docs/project/PLAN_DEC010_WP1-WP6.md`.**
+- **Criterio de aceptación:** Todos los case.json coherentes con sus expected.json. Test de consistencia pasa. Docs alineados con realidad. Regresión verde.
+
+### BL-028 — SEC Hardening: cache lógico + CIK preconfigurado
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-06)
+- **Asignado a:** elsian-4
+- **Depende de:** — (paralelo a WP-3)
+- **Descripción:** (1) Cache en sec_edgar.py debe contar filings lógicos (stems únicos) no ficheros físicos. (2) Añadir campo `cik: str | None = None` a CaseConfig. (3) SecEdgarFetcher usa case.cik si existe, fallback a API si no. (4) Verificar que eliminación de Pass 2 exhibit_99 no pierde filings. **Plan detallado: WP-2 en `docs/project/PLAN_DEC010_WP1-WP6.md`.**
+- **Criterio de aceptación:** Cache cuenta filings lógicos (test). CaseConfig acepta cik. NVDA usa CIK sin resolución API. Regresión verde.
+
+### BL-029 — Corregir contrato Python: >=3.11 vs entorno local 3.9.6
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-06) — Verificado: codebase usa X|Y unions (3.10+), pyproject.toml >=3.11 es correcto. CI workflow creado.
+- **Asignado a:** elsian-4
+- **Depende de:** —
+- **Descripción:** pyproject.toml declara `requires-python = ">=3.11"` pero el entorno local actual es Python 3.9.6. Decidir: (a) bajar el requisito a >=3.9 si no usamos features de 3.10+, o (b) actualizar el entorno local a 3.11+. Verificar uso real de features post-3.9 (`match/case`, `X | Y` type unions, `tomllib`, etc.).
+- **Criterio de aceptación:** El contrato en pyproject.toml coincide con el entorno mínimo real donde el pipeline funciona correctamente.
 
 ### BL-005 — Expandir a 15 tickers validados
 - **Prioridad:** MEDIA
 - **Estado:** TODO
 - **Asignado a:** sin asignar
-- **Depende de:** BL-001, BL-002 (los primeros nuevos tickers)
-- **Descripción:** Objetivo Fase 1: 15-20 tickers validados. Candidatos: large-cap US (AAPL, MSFT), sector financiero (JPM), micro-cap, Europa continental (SAP.DE, SAN.MC), Asia (Toyota). Cada uno valida un gap diferente en las reglas de extracción.
+- **Depende de:** BL-025 (curate acelera la curación)
+- **Descripción:** Objetivo Fase 1: 15-20 tickers validados. Con `elsian curate` disponible, añadir tickers es mucho más rápido para SEC/ESEF. Candidatos: large-cap US (AAPL, MSFT), sector financiero (JPM), micro-cap, Europa continental (SAP.DE, SAN.MC), Asia (Toyota). Cada uno valida un gap diferente en las reglas de extracción.
 - **Criterio de aceptación:** ≥15 tickers en VALIDATED_TICKERS. Cada ticker cubre un gap diferente (documentado en regression_suite).
 
 ### BL-006 — Provenance Level 2 completa en todos los extractores
@@ -156,11 +196,11 @@
 
 ### BL-014 — Integrar preflight en el pipeline de extracción
 - **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE
+- **Asignado a:** Claude (Copilot)
 - **Depende de:** BL-009 (DONE)
-- **Descripción:** `elsian/analyze/preflight.py` está portado pero no se ejecuta automáticamente. Debe integrarse en ExtractPhase para que cada filing pase por preflight antes de la extracción. Los resultados de preflight (currency, standard, units_by_section) deben alimentar ScaleCascade y AliasResolver.
-- **Criterio de aceptación:** Cada filing en extraction_result.json incluye metadata de preflight. ScaleCascade usa units_by_section del preflight. Sin regresiones.
+- **Descripción:** `elsian/analyze/preflight.py` integrado en `ExtractPhase.extract()`. Preflight se ejecuta por filing (non-blocking). Units_by_section alimenta ScaleCascade via `_FIELD_SECTION_MAP`. Provenance incluye `preflight_currency`, `preflight_standard`, `preflight_units_hint`.
+- **Completado:** 2026-03-02. 18 tests nuevos. 445 passed, 0 failed. 9/9 tickers al 100%.
 
 ### BL-015 — Portar calculadora de métricas derivadas (tp_calculator.py)
 - **Prioridad:** ALTA
@@ -253,8 +293,35 @@
 
 ---
 
+### BL-030 — Test para Exhibit 99 fallback en SecEdgarFetcher
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** `_find_exhibit_99` en `sec_edgar.py` solo tiene Pass 1 (búsqueda en index.json). No hay test que cubra esta función ni validación de que funciona para 8-Ks con estructura irregular. WP-2 planificaba "validar eliminación de Pass 2" pero no se hizo. Añadir test unitario que verifique el comportamiento actual y un test de integración que confirme que earnings filings de TZOO se adquieren correctamente.
+- **Criterio de aceptación:** ≥2 tests unitarios para `_find_exhibit_99`. Test de integración que valide que TZOO earnings filings se localizan vía index.json. Documentar si Pass 2 (HTML fallback) sería necesario para algún caso real.
+
+### BL-031 — Tests de integración para el comando `elsian curate`
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-02)
+- **Asignado a:** elsian-4
+- **Depende de:** BL-025 (DONE)
+- **Descripción:** 18 tests de integración en `tests/integration/test_curate.py`. E2E TZOO (6 tests), skeleton TEP (4 tests), cobertura vs expected.json (2 tests, 100% real), sanity checks (6 tests). Fixtures scope=module con cleanup automático de expected_draft.json.
+- **Criterio de aceptación:** ✓ 18 tests pasando. ✓ Cobertura TZOO 100% (102/102 campos). ✓ 463 total passed, 0 failed.
+
+### BL-032 — Documentar o limpiar cases/PR
+- **Prioridad:** BAJA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** El directorio `cases/PR/` (Permian Resources Corp, NYSE, CIK 0001658566, period_scope: FULL) fue creado durante el trabajo de WP-3 pero no está documentado en ningún sitio: ni en VALIDATED_TICKERS del test de regresión, ni en PROJECT_STATE. Decidir: si es un caso válido, añadirlo al pipeline y validar; si fue un artefacto de prueba, eliminar.
+- **Criterio de aceptación:** cases/PR documentado en PROJECT_STATE y añadido a test_regression.py, O eliminado del repositorio.
+
+---
+
 ## Notas
 
 - Las prioridades las establece el director según el estado del proyecto y el ROADMAP.
 - Si un agente técnico descubre una tarea nueva durante su trabajo, la añade al final con prioridad MEDIA y estado TODO. El director la reordenará en la siguiente sesión.
-- Las dependencias son orientativas. Si un agente puede resolver una tarea sin que su dependencia esté completada, puede hacerlo.
+
+

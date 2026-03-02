@@ -2,6 +2,7 @@
 name: ELSIAN 4.0
 description: Architect and build the ELSIAN-INVEST 4.0 financial data platform from scratch
 argument-hint: Describe what you want to design, build, or discuss about the 4.0 system
+model: Claude Sonnet 4.6
 target: vscode
 tools: [vscode/extensions, vscode/getProjectSetupInfo, vscode/installExtension, vscode/memory, vscode/newWorkspace, vscode/openIntegratedBrowser, vscode/runCommand, vscode/vscodeAPI, vscode/askQuestions, execute/getTerminalOutput, execute/runInTerminal, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/problems, read/readFile, agent/runSubagent, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/searchSubagent, search/usages, web/fetch, vscode.mermaid-chat-features/renderMermaidDiagram, todo]
 agents: []

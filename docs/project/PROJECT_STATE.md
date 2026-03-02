@@ -1,6 +1,6 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
-> Última actualización: 2026-03-05
+> Última actualización: 2026-03-06
 > Actualizado por: Copilot (Project Director)
 
 ---
@@ -13,11 +13,11 @@ Ver ROADMAP.md para descripción completa de fases.
 
 | Métrica | Valor | Fecha |
 |---|---|---|
-| Tickers validados (100%) | 9 | 2026-03-05 |
-| Tickers WIP | 0 | 2026-03-05 |
-| Total campos validados | 892 (9 tickers @100%) | 2026-03-05 |
-| Tests pasando | 346 passed, 0 failed, 2 skipped | 2026-03-05 |
-| Líneas de código (aprox.) | ~6,700 + ~1,500 tests | 2026-03-05 |
+| Tickers validados (100%) | 9 | 2026-03-06 |
+| Tickers WIP | 0 | 2026-03-06 |
+| Total campos validados | ~1210 (9 tickers @100%, NVDA expandido a 318) | 2026-03-06 |
+| Tests pasando | 463 passed, 0 failed, 2 skipped | 2026-03-02 |
+| Líneas de código (aprox.) | ~7,400 + ~2,100 tests | 2026-03-06 |
 
 ## Tickers validados
 
@@ -30,7 +30,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | SONO | 116 | SEC (US) | 10-K HTML | ✅ VALIDATED |
 | TEP | 55 | Euronext (FR) | PDF (IFRS, EUR) | ✅ VALIDATED |
 | TALO | 85 | SEC (US) | 10-K HTML | ✅ VALIDATED |
-| NVDA | 38 | SEC (US) | 10-K HTML | ✅ VALIDATED |
+| NVDA | 318 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (period_scope: FULL) |
 | KAR | 49 | ASX (AU) | PDF (IFRS, USD) | ✅ VALIDATED |
 
 ## Componentes implementados
@@ -44,30 +44,37 @@ Ver ROADMAP.md para descripción completa de fases.
 | NormalizePhase | ✅ Implementado | Alias, Scale, Sign, Audit |
 | MergePhase | ✅ Implementado | Multi-filing merger |
 | EvaluatePhase | ✅ Implementado | evaluator.py + dashboard |
-| IxbrlExtractor | ❌ Pendiente | Existe en 3.0, hay que portar (BL-004) |
+| IxbrlExtractor | ⚠️ Parser listo, Extractor pendiente | Parser iXBRL implementado (BL-004 DONE). Comando `elsian curate` operativo (BL-025 DONE). IxbrlExtractor para producción pendiente (WP-6). |
 | PdfTableExtractor | ❌ Pendiente | pdfplumber ready, extractor no creado (BL-007) |
-| Filing Preflight (idioma/estándar/moneda/unidades/restatement) | ✅ Implementado | Portado de 3.0. EN/FR/ES/DE, IFRS/US-GAAP, 9 monedas, unidades por sección, restatement. BL-009 DONE. Falta integrar en ExtractPhase (BL-014) |
+| Filing Preflight (idioma/estándar/moneda/unidades/restatement) | ✅ Implementado + Integrado | Portado de 3.0. EN/FR/ES/DE, IFRS/US-GAAP, 9 monedas, unidades por sección, restatement. BL-009 DONE. Integrado en ExtractPhase con units_by_section → ScaleCascade. BL-014/WP-4 DONE. |
 | Deduplicación por contenido | ✅ Implementado | SHA-256 content hash portado. Integrado en AsxFetcher. BL-010 DONE |
 | Exchange/Country awareness | ✅ Implementado | markets.py unificado: normalize_country/exchange, is_non_us, infer_regulator_code. BL-011 DONE |
 | Filing Classification automática | ✅ Implementado | classify_filing_type() con 5 tipos. BL-012 DONE |
 | IR Website Crawling | ✅ Implementado | ir_crawler.py portado completo (~600 líneas). Falta integrar en EuRegulatorsFetcher (BL-013) |
 | Provenance Level 2 | ⚠️ Parcial | Modelo existe, campos no siempre poblados (BL-006) |
 | Provenance Level 3 | ❌ Pendiente | source_map.json no implementado |
+| CI GitHub Actions | ✅ Implementado | Workflow ci.yml en .github/workflows/. pytest en Python 3.11. WP-5 DONE |
 
 ## Bloqueantes actuales
 
 No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para los 9 tickers.
 
 **Gaps pendientes (no bloqueantes):**
-1. **Preflight no integrado en ExtractPhase** — preflight.py funciona standalone pero sus resultados (currency, units_by_section) no alimentan ScaleCascade durante la extracción. BL-014.
-2. **IR Crawler no integrado en EuRegulatorsFetcher** — ir_crawler.py portado pero TEP sigue dependiendo de filings_sources manuales. BL-013.
-3. **IxbrlExtractor pendiente** — fuente primaria para SEC según DEC-005. BL-004.
+1. **IR Crawler no integrado en EuRegulatorsFetcher** — ir_crawler.py portado pero TEP sigue dependiendo de filings_sources manuales. BL-013.
+2. **IxbrlExtractor para producción pendiente** — Parser listo y curate funcional, falta integrar como Extractor en pipeline (WP-6, futuro).
 
 ## Hitos recientes
 
 - ✅ **BL-008 DONE** — AsxFetcher reescrito con escaneo 1-day backward. PDFs byte-idénticos. KAR autónomo.
 - ✅ **BL-001 DONE** — KAR rehecho desde cero con AsxFetcher autónomo. 49 campos, 3 periodos, 100%.
-- ✅ **BL-002 DONE** — NVDA completado. 38 campos, 2 periodos, 100%.
+- ✅ **BL-002 DONE** — NVDA completado y expandido. 318 campos (6A+12Q), 18 periodos, 100%. Scope corregido.
+- ✅ **BL-027 DONE** — Scope Governance (WP-1). NVDA period_scope:FULL. Test de consistencia scope creado (9 tickers). 360 tests pasando.
+- ✅ **BL-028 DONE** — SEC Hardening (WP-2). Cache lógico en sec_edgar.py. CaseConfig acepta `cik`. SecEdgarFetcher usa cik preconfigurado. 364 tests.
+- ✅ **BL-004 DONE** — Parser iXBRL determinista (WP-3). 594 líneas, 45 concept mappings, 21/23 campos cubiertos. 63 tests nuevos.
+- ✅ **BL-025 DONE** — Comando `elsian curate` (WP-3). TZOO: 100% field coverage, 93% value match. NVDA: 93% field coverage. KAR: skeleton OK.
+- ✅ **WP-5 DONE** — CI GitHub Actions + verificación Python 3.11. Workflow ci.yml creado. Markers `slow`/`network` registrados.
+- ✅ **BL-014/WP-4 DONE** — Preflight integrado en ExtractPhase. units_by_section → ScaleCascade por sección (IS/BS/CF). Provenance extendido con preflight_currency/standard/units_hint. 18 tests nuevos. 445 total.
+- ✅ **BL-031 DONE** — Tests de integración para `elsian curate`. 18 tests: E2E TZOO (6), skeleton TEP (4), cobertura vs expected.json (2, guardrail ≥90%, medido 100%), sanity checks (6). 463 tests total.
 - ✅ **BL-003 DONE** — Pipeline wiring completo. Todas las fases heredan PipelinePhase.
 - ✅ **BL-009 DONE** — Filing Preflight portado de 3.0 (idioma, estándar, moneda, unidades, restatement).
 - ✅ **BL-010 DONE** — Deduplicación por contenido SHA-256 portada e integrada.
@@ -78,11 +85,19 @@ No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para l
 
 ## Próximas prioridades
 
-Ver BACKLOG.md para la cola completa. Las 3 más urgentes:
+Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC010_WP1-WP6.md` (DEC-011).
 
-1. **BL-004** — Portar IxbrlExtractor desde 3.0. Fuente primaria SEC según DEC-005.
-2. **BL-005** — Expandir a 15 tickers validados. 9/15 conseguidos.
-3. **BL-014** — Integrar Preflight en ExtractPhase para que units_by_section alimente ScaleCascade.
+**DEC-011 WPs completados (5/6):**
+- ~~WP-1 (BL-027)~~ — DONE. Scope Governance.
+- ~~WP-2 (BL-028)~~ — DONE. SEC Hardening.
+- ~~WP-3 (BL-004, BL-025)~~ — DONE. iXBRL Parser + Curate.
+- ~~WP-4 (BL-014)~~ — DONE. Preflight en ExtractPhase.
+- ~~WP-5~~ — DONE. CI + Python 3.11.
+- **WP-6** — IxbrlExtractor en producción. **DIFERIDO.**
+
+**Siguiente fase:**
+- **BL-026** — Promover tickers SEC a FULL vía curate. **SIGUIENTE.**
+- **WP-6** — IxbrlExtractor en producción (diferido, post-BL-026).
 
 ---
 

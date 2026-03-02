@@ -4,7 +4,7 @@ description: Strategic director for the ELSIAN-INVEST 4.0 project. Reads state, 
 argument-hint: Ask about project status, next priorities, strategic decisions, or what to tell the technical agent
 target: vscode
 tools: [vscode/getProjectSetupInfo, vscode/installExtension, vscode/newWorkspace, vscode/openSimpleBrowser, vscode/runCommand, vscode/askQuestions, vscode/vscodeAPI, vscode/extensions, read/readFile, agent/runSubagent, edit/createDirectory, edit/createFile, edit/createJupyterNotebook, edit/editFiles, edit/editNotebook, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, web/fetch, todo]
-agents: []
+agents: ['*']
 handoffs: []
 ---
 

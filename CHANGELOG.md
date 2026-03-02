@@ -8,6 +8,7 @@
 - BACKLOG: BL-030/031/032 creados como deuda técnica. BL-031 ya DONE.
 - DECISIONS: DEC-012 documenta hallazgos de auditoría Codex post-WP.
 - Agent configs: `agents: ['*']` en project-director, model tag en elsian-4.
+- Suite final sesión: 463 passed, 2 skipped, 0 failed. 9/9 tickers al 100%.
 
 ### [4.0] WP-5: CI GitHub Actions + pytest markers
 - `.github/workflows/ci.yml` (nuevo): pytest en Python 3.11, excluye slow/network.

@@ -42,7 +42,7 @@
 - **Contexto:** Los datos iXBRL están ya etiquetados por las propias empresas. Para SEC es obligatorio.
 - **Decisión:** iXBRL será fuente primaria para cualquier empresa que lo tenga. HTML/PDF es fallback.
 - **Razón:** iXBRL elimina la mayoría de bugs de escala, alias y confusión segmento/consolidado. El extractor existe en 3.0. Cross-validation iXBRL vs HTML sube la confianza.
-- **Estado:** Pendiente de implementación (Fase 1.3 del roadmap).
+- **Estado:** **SUPERSEDED por DEC-010.** La estrategia iXBRL se refina: un único parser con dos consumidores (curación y producción), con el pipeline HTML/PDF como motor principal que debe funcionar "casi perfecto" sin iXBRL.
 
 ## DEC-006 — Pipeline autónomo: manual = bug
 - **Fecha:** 2026-03-01
@@ -75,3 +75,37 @@
   - `deterministic/src/acquire/sec_edgar.py` — SecClient rate-limited (ya portado parcialmente)
   - `deterministic/src/extract/` — tables.py, narrative.py, detect.py (ya portados)
   - `deterministic/src/normalize/` — aliases.py, scale.py (ya portados)
+
+## DEC-010 — Estrategia iXBRL: un parser, dos mundos
+- **Fecha:** 2026-03-02
+- **Contexto:** Al discutir la promoción de tickers a FULL y la expansión a 15+ tickers, surgió el cuello de botella real: la curación manual de expected.json es lenta, cara (usa LLM leyendo HTML), y no escala. iXBRL/XBRL está disponible en la mayoría de mercados desarrollados (SEC desde 2018, ESEF/Europa desde 2021, EDINET/Japón). La pregunta: ¿cómo encaja iXBRL en el proyecto sin contaminar la filosofía de "pipeline determinístico sin LLM"?
+- **Decisión:** Se construye **un único módulo parser iXBRL** (`elsian/extract/ixbrl.py`) que parsea tags `ix:nonFraction` / `ix:nonNumeric`, mapea conceptos GAAP/IFRS a los 23 campos canónicos, y normaliza escala/signos. Este módulo tiene **dos consumidores**:
+  1. **Curación (desarrollo):** Comando `elsian curate {TICKER}` — el parser genera un expected_draft.json, que un LLM depura y valida contra el texto visible del filing. Resultado: expected.json de alta calidad en minutos, no horas. Para mercados sin iXBRL (ASX, emergentes), el LLM genera el draft directamente desde los filings.
+  2. **Producción (futuro):** `IxbrlExtractor(Extractor)` dentro de Layer 1 — iXBRL es una fuente más del pipeline, la más fiable donde exista, pero el pipeline HTML/PDF debe funcionar "casi perfecto" sin ella. Cross-validation iXBRL vs HTML sube la confianza.
+- **Principio fundacional:** La métrica de calidad se define contra iXBRL (ground truth oficial reportado por la empresa a su regulador), pero el producto no depende de él. Si un mercado no tiene iXBRL, el pipeline HTML/PDF funciona igual porque fue validado exhaustivamente contra ground truth de calidad iXBRL.
+- **Razón:** 
+  - No duplica trabajo: el mismo parser sirve para curación y para producción.
+  - Desbloquea la expansión: curar un ticker SEC pasa de horas a minutos. Promover a FULL es automático (iXBRL tiene todos los trimestres).
+  - Flujo unificado global: con iXBRL → draft determinístico (gratis, segundos). Sin iXBRL → draft LLM (más caro, minutos). Depuración LLM idéntica en ambos casos.
+  - No contamina el pipeline: iXBRL en desarrollo es herramienta de QA. En producción es una fuente más. El extractor HTML/PDF siempre debe poder funcionar solo.
+- **Supersede:** DEC-005 (iXBRL como fuente primaria). La nueva decisión refina la estrategia: iXBRL es fuente primaria en producción Y oráculo de curación en desarrollo, usando el mismo parser.
+- **Secuencia de implementación:**
+  1. Parser iXBRL determinístico (módulo reutilizable)
+  2. Comando `elsian curate` (consumidor de desarrollo)
+  3. Recurar tickers SEC existentes con el nuevo flujo + promover a FULL
+  4. IxbrlExtractor en pipeline de producción (consumidor futuro)
+
+## DEC-011 — Plan de ejecución DEC-010: WP-1 a WP-6
+- **Fecha:** 2026-03-02
+- **Contexto:** Dos auditorías independientes (Codex y Claude) revisaron el repositorio e identificaron: (1) inconsistencia NVDA — 18 periodos (6A+12Q) en expected.json pero sin period_scope en case.json, (2) 23 campos canónicos reales vs 22 documentados, (3) CaseConfig no lee `cik` de case.json, (4) test count desalineado en docs. Ambos auditores propusieron planes de ejecución. Claude preparó un plan detallado con 6 Work Packages (WP-1 a WP-6) documentado en `docs/project/PLAN_DEC010_WP1-WP6.md`.
+- **Decisión:** Se adopta el plan de Claude con una modificación al orden de ejecución. Camino crítico: **WP-1 (governance) → WP-3 (parser iXBRL + curate) → WP-4 (preflight)**. En paralelo: WP-2 (SEC hardening) y WP-5 (CI). WP-6 (iXBRL producción) queda diferido. WP-2 NO bloquea WP-3 — el parser lee los .htm ya existentes y no necesita que el acquire esté optimizado.
+- **Razón:** WP-3 es el entregable principal (desbloquea curación rápida y promoción a FULL). WP-1 es prerequisito legítimo (coherencia de scope). WP-2 son mejoras que no bloquean nada y pueden ir en paralelo. Meter WP-2 como prerequisito de WP-3 retrasaría el camino crítico sin beneficio.
+- **Nota:** La auditoría de Codex identificó correctamente el drift de NVDA; el director lo descartó erróneamente en primera evaluación. Error reconocido y corregido.
+- **Referencia:** `docs/project/PLAN_DEC010_WP1-WP6.md` — plan completo con specs por WP.
+- **Nota adicional (2026-03-02):** Se configuró `agents: ['*']` en `project-director.agent.md` para permitir al director invocar cualquier agente disponible (Explore, ELSIAN 4.0, etc.) durante sesiones de evaluación. Cambio intencional, alineado con DEC-007 (sistema multi-agente).
+
+## DEC-012 — Auditoría post-WP: hallazgos Codex y deuda técnica
+- **Fecha:** 2026-03-02
+- **Contexto:** Tras completar WP-1, WP-2, WP-3 y WP-5, se ejecutó una auditoría independiente (Codex) que identificó 6 hallazgos: 2 P1 (ixbrl.py líneas mal reportadas, Exhibit 99 sin test) y 4 P2 (curate sin tests CLI, BL-026 texto stale, PROJECT_STATE contradictorio, cases/PR no documentado). El director verificó cada hallazgo.
+- **Decisión:** Corregir inmediatamente los 3 errores documentales (ixbrl.py 354→594, BL-026 texto, PROJECT_STATE contradicción). Crear 3 nuevas tareas en BACKLOG: BL-030 (Exhibit 99 tests), BL-031 (curate CLI tests), BL-032 (cases/PR documentación). Estos son deuda técnica aceptable — no bloquean la ejecución de WP-4 ni BL-026.
+- **Razón:** Los errores documentales son quick fixes del director. Los gaps de testing son deuda técnica que se resuelve en paralelo o en la siguiente fase, no bloquean el camino crítico (WP-4 preflight → BL-026 promoción FULL). El caso PR necesita investigarse antes de decidir si se queda o se elimina.

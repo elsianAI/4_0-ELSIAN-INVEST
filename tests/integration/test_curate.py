@@ -164,8 +164,8 @@ class TestTZOODraftCoverage:
             "Check that the corresponding .htm filings exist in cases/TZOO/filings/."
         )
 
-    def test_fy_field_coverage_at_least_80pct(self, tzoo_draft: dict) -> None:
-        """≥80% of canonical fields per FY period must appear in the draft.
+    def test_fy_field_coverage_at_least_90pct(self, tzoo_draft: dict) -> None:
+        """≥90% of canonical fields per FY period must appear in the draft.
 
         Computed across all FY periods in expected.json:
             coverage = total matched fields / total expected fields
@@ -189,11 +189,11 @@ class TestTZOODraftCoverage:
 
         assert total_expected_fields > 0
         coverage = total_matched / total_expected_fields
-        assert coverage >= 0.80, (
+        assert coverage >= 0.90, (
             f"iXBRL parser field coverage is {coverage:.1%} "
             f"({total_matched}/{total_expected_fields} fields across "
             f"{len(fy_periods)} FY periods from expected.json). "
-            "Expected ≥80%. The parser or ixbrl_concept_map.json may be broken."
+            "Expected ≥90%. The parser or ixbrl_concept_map.json may be broken."
         )
 
 
