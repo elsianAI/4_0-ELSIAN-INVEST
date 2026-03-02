@@ -24,6 +24,10 @@ class Provenance:
     row: int | None = None
     col: int | None = None
     raw_text: str = ""
+    # Preflight metadata (optional — populated when preflight analysis runs)
+    preflight_currency: str = ""
+    preflight_standard: str = ""
+    preflight_units_hint: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {"source_filing": self.source_filing}
@@ -43,6 +47,12 @@ class Provenance:
             d["col"] = self.col
         if self.raw_text:
             d["raw_text"] = self.raw_text
+        if self.preflight_currency:
+            d["preflight_currency"] = self.preflight_currency
+        if self.preflight_standard:
+            d["preflight_standard"] = self.preflight_standard
+        if self.preflight_units_hint:
+            d["preflight_units_hint"] = self.preflight_units_hint
         return d
 
 

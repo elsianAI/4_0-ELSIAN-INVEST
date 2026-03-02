@@ -2,6 +2,12 @@
 
 ## 2026-03-02
 
+### [4.0] WP-4: Preflight integrado en ExtractPhase (BL-014)
+- **What:** `preflight()` se ejecuta ahora por filing en `ExtractPhase.extract()` (non-blocking, errors silenciosos). `ScaleCascade` recibe `preflight_scale` derivado de `units_by_section` del preflight (sección específica: income_statement / balance_sheet / cash_flow), con fallback a `metadata.scale`. Añadidos `preflight_currency`, `preflight_standard`, `preflight_units_hint` opcionales a `Provenance` y su `to_dict()`.
+- **Files:** `elsian/extract/phase.py`, `elsian/models/field.py`, `tests/unit/test_preflight_integration.py` (new)
+- **Tests:** 445 passed, 2 skipped, 0 failed (+18 nuevos en `test_preflight_integration.py`)
+- **Regression:** 9/9 tickers al 100%: TZOO 270/270, IOSP 95/95, SONO 116/116, TALO 85/85, TEP 55/55, KAR 49/49, NVDA 318/318, GCT 108/108, NEXN 76/76
+
 ### [Acquire] BL-008 hardening: ASX scan accuracy + cache/metric fixes
 - **What:** Hardened `AsxFetcher` logic after BL-008 with targeted correctness fixes:
   - `_find_filings_in_month()` now scans from real month end (`calendar.monthrange`) and returns detected filing types for the matched day.

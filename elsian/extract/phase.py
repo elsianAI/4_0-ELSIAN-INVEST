@@ -18,6 +18,7 @@ from typing import Dict, List, Optional, Tuple
 from elsian.models.field import FieldResult, Provenance
 from elsian.models.result import ExtractionResult, PeriodResult, AuditRecord, PhaseResult
 from elsian.extract.detect import analyze_filing
+from elsian.analyze.preflight import preflight as _run_preflight, PreflightResult
 from elsian.extract.html_tables import (
     extract_tables_from_clean_md,
     extract_tables_from_text,
@@ -46,6 +47,52 @@ _ALWAYS_POSITIVE_FIELDS = frozenset({
 _BENEFIT_RE = re.compile(r"\bbenefit\b", re.IGNORECASE)
 
 
+# ── Field → financial statement section mapping ────────────────────────
+# Used to select the correct preflight units_by_section scale per field.
+_FIELD_SECTION_MAP: dict[str, str] = {
+    # Income Statement
+    "ingresos": "income_statement",
+    "cost_of_revenue": "income_statement",
+    "gross_profit": "income_statement",
+    "ebitda": "income_statement",
+    "ebit": "income_statement",
+    "net_income": "income_statement",
+    "eps_basic": "income_statement",
+    "eps_diluted": "income_statement",
+    "research_and_development": "income_statement",
+    "sga": "income_statement",
+    "depreciation_amortization": "income_statement",
+    "interest_expense": "income_statement",
+    "income_tax": "income_statement",
+    # Balance Sheet
+    "total_assets": "balance_sheet",
+    "total_liabilities": "balance_sheet",
+    "total_equity": "balance_sheet",
+    "cash_and_equivalents": "balance_sheet",
+    "total_debt": "balance_sheet",
+    # Cash Flow
+    "cfo": "cash_flow",
+    "capex": "cash_flow",
+    "fcf": "cash_flow",
+    "dividends_per_share": "cash_flow",
+    "shares_outstanding": "cash_flow",
+}
+
+# Maps preflight unit_name keys → SCALE_FACTORS keys
+_PREFLIGHT_UNIT_TO_SCALE: dict[str, str] = {
+    "billions": "billions",
+    "milliards": "billions",
+    "millions": "millions",
+    "millions_fr": "millions",
+    "millions_sym": "millions",
+    "eur_millions": "millions",
+    "thousands": "thousands",
+    "milliers": "thousands",
+    "k_dollars": "thousands",
+    "units": "raw",
+}
+
+
 def _normalize_sign(canonical: str, raw_label: str, value: float) -> float:
     """Ensure expense fields use the correct sign convention."""
     if canonical in _ALWAYS_POSITIVE_FIELDS:
@@ -54,6 +101,34 @@ def _normalize_sign(canonical: str, raw_label: str, value: float) -> float:
         if not _BENEFIT_RE.search(raw_label):
             return abs(value)
     return value
+
+
+def _preflight_scale_for_field(
+    canonical: str,
+    pf: Optional["PreflightResult"],
+    fallback: str,
+) -> str:
+    """Return the scale for *canonical* using preflight units_by_section.
+
+    Priority:
+    1. Section-specific scale (income_statement / balance_sheet / cash_flow)
+    2. Global scale from preflight
+    3. *fallback* (detect.py result)
+    """
+    if pf is None:
+        return fallback
+    section = _FIELD_SECTION_MAP.get(canonical)
+    if section and section in pf.units_by_section:
+        unit_name = pf.units_by_section[section].get("unit", "")
+        mapped = _PREFLIGHT_UNIT_TO_SCALE.get(unit_name, "")
+        if mapped:
+            return mapped
+    if pf.units_global:
+        unit_name = pf.units_global.get("unit", "")
+        mapped = _PREFLIGHT_UNIT_TO_SCALE.get(unit_name, "")
+        if mapped:
+            return mapped
+    return fallback
 
 
 # ── Dividend per share from equity statement ─────────────────────────
@@ -389,6 +464,12 @@ class ExtractPhase(PipelinePhase):
             filing_scale = metadata.scale
             filing_scale_confidence = metadata.scale_confidence
 
+            # Run preflight analysis — non-blocking, errors are silent.
+            try:
+                pf_result: Optional[PreflightResult] = _run_preflight(text)
+            except Exception:
+                pf_result = None
+
             period_fields: Dict[str, Dict[str, FieldResult]] = {}
             additive_labels: Dict[str, Dict[str, set]] = {}
             _raw_table_fields: list = []
@@ -398,12 +479,14 @@ class ExtractPhase(PipelinePhase):
                     text, filing_path, metadata, filing_scale,
                     filing_scale_confidence, rules, audit,
                     period_fields, additive_labels, _raw_table_fields,
+                    preflight_result=pf_result,
                 )
             else:
                 self._extract_from_txt(
                     text, filing_path, metadata, filing_scale,
                     filing_scale_confidence, rules, audit,
                     period_fields, additive_labels, _raw_table_fields,
+                    preflight_result=pf_result,
                 )
 
             # Post-process: recover total_liabilities from sub-totals
@@ -469,6 +552,7 @@ class ExtractPhase(PipelinePhase):
         period_fields: Dict[str, Dict[str, FieldResult]],
         additive_labels: Dict[str, Dict[str, set]],
         raw_table_fields: list,
+        preflight_result: Optional[PreflightResult] = None,
     ) -> None:
         """Extract from .clean.md files (markdown tables)."""
         table_fields = extract_tables_from_clean_md(
@@ -484,6 +568,7 @@ class ExtractPhase(PipelinePhase):
                 period_fields, additive_labels,
                 source_type="table",
                 use_section_bonus=True,
+                preflight_result=preflight_result,
             )
 
         # Dividend per share from equity statement
@@ -520,6 +605,7 @@ class ExtractPhase(PipelinePhase):
         period_fields: Dict[str, Dict[str, FieldResult]],
         additive_labels: Dict[str, Dict[str, set]],
         raw_table_fields: list,
+        preflight_result: Optional[PreflightResult] = None,
     ) -> None:
         """Extract from .txt files (space-aligned tables + narrative)."""
         txt_table_fields = extract_tables_from_text(
@@ -534,6 +620,7 @@ class ExtractPhase(PipelinePhase):
                 period_fields, additive_labels,
                 source_type="table",
                 use_section_bonus=False,
+                preflight_result=preflight_result,
             )
 
         # ── Dedicated shares_outstanding extraction ──────
@@ -549,6 +636,7 @@ class ExtractPhase(PipelinePhase):
                 period_fields, additive_labels,
                 source_type="table",
                 use_section_bonus=False,
+                preflight_result=preflight_result,
             )
 
         # ── Vertical-format consolidated BS extraction ───
@@ -582,8 +670,9 @@ class ExtractPhase(PipelinePhase):
                 continue
 
             field_mult = self._alias_resolver.get_multiplier(canonical)
+            pf_scale = _preflight_scale_for_field(canonical, preflight_result, metadata.scale)
             scale, confidence = infer_scale_cascade(
-                filing_scale, "", metadata.scale, field_mult
+                filing_scale, "", pf_scale, field_mult
             )
 
             if not validate_scale_sanity(tf.value, canonical, scale):
@@ -735,6 +824,7 @@ class ExtractPhase(PipelinePhase):
         additive_labels: Dict[str, Dict[str, set]],
         source_type: str = "table",
         use_section_bonus: bool = True,
+        preflight_result: Optional[PreflightResult] = None,
     ) -> None:
         """Process a single TableField through alias resolution, scale, and collision handling."""
         canonical = self._alias_resolver.resolve(tf.label)
@@ -748,8 +838,9 @@ class ExtractPhase(PipelinePhase):
             return
 
         field_mult = self._alias_resolver.get_multiplier(canonical)
+        pf_scale = _preflight_scale_for_field(canonical, preflight_result, metadata.scale)
         scale, confidence = infer_scale_cascade(
-            filing_scale, "", metadata.scale, field_mult
+            filing_scale, "", pf_scale, field_mult
         )
 
         if not validate_scale_sanity(tf.value, canonical, scale):
@@ -870,6 +961,21 @@ class ExtractPhase(PipelinePhase):
             scale, filing_path.name, tf.source_location, confidence,
         )
         fr._sort_key = new_sk  # type: ignore[attr-defined]
+
+        # Populate preflight metadata on provenance
+        if preflight_result is not None:
+            fr.provenance.preflight_currency = preflight_result.currency or ""
+            fr.provenance.preflight_standard = preflight_result.accounting_standard or ""
+            section = _FIELD_SECTION_MAP.get(canonical)
+            if section and section in preflight_result.units_by_section:
+                fr.provenance.preflight_units_hint = (
+                    preflight_result.units_by_section[section].get("unit", "")
+                )
+            elif preflight_result.units_global:
+                fr.provenance.preflight_units_hint = (
+                    preflight_result.units_global.get("unit", "")
+                )
+
         period_fields[period_key][canonical] = fr
 
         if self._alias_resolver.is_additive(canonical):
