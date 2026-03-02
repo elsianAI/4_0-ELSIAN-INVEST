@@ -2,6 +2,34 @@
 
 ## 2026-03-02
 
+### [4.0] DEC-012: Audit fixes + guardrail curate 90%
+- Curate coverage test guardrail subido de ≥80% a ≥90% (test_curate.py).
+- PROJECT_STATE: ixbrl.py 354→594, contradicciones en prioridades, BL-026 stale.
+- BACKLOG: BL-030/031/032 creados como deuda técnica. BL-031 ya DONE.
+- DECISIONS: DEC-012 documenta hallazgos de auditoría Codex post-WP.
+- Agent configs: `agents: ['*']` en project-director, model tag en elsian-4.
+
+### [4.0] WP-5: CI GitHub Actions + pytest markers
+- `.github/workflows/ci.yml` (nuevo): pytest en Python 3.11, excluye slow/network.
+- `pyproject.toml`: markers `slow` y `network` registrados. Python ≥3.11 confirmado.
+
+### [4.0] WP-3: Parser iXBRL + comando curate (BL-004, BL-025)
+- `elsian/extract/ixbrl.py` (nuevo, 594 líneas): parser iXBRL determinista.
+- `config/ixbrl_concept_map.json` (nuevo): 45 concept mappings GAAP→23 campos.
+- `elsian/cli.py`: subcomando `elsian curate {TICKER}` genera expected_draft.json.
+- `config/field_aliases.json`: +3 aliases oil&gas para ingresos.
+- `elsian/normalize/aliases.py`: reject patterns mejorados (Class A/B shares, accumulated D&A).
+- `tests/unit/test_ixbrl.py` (nuevo, 63 tests).
+
+### [4.0] WP-2: SEC Hardening — cache lógico + CIK preconfigurado (BL-028)
+- `elsian/models/case.py`: campo `cik: str | None` en CaseConfig.
+- `elsian/acquire/sec_edgar.py`: cache cuenta filings lógicos (stems), usa case.cik.
+- `tests/unit/test_sec_edgar.py`: +4 tests (cik loading, cache lógico).
+
+### [4.0] WP-1: Scope Governance (BL-027)
+- `cases/NVDA/case.json`: añadido `period_scope: "FULL"`.
+- `tests/integration/test_scope_consistency.py` (nuevo): coherencia scope↔expected.
+
 ### [4.0] BL-031: Tests de integración para `elsian curate`
 - **What:** `tests/integration/test_curate.py` (nuevo, 18 tests) — validación E2E del flujo `cmd_curate`.
   - `TestCurateTZOO` (6 tests, `@slow`): verifica que `expected_draft.json` se crea, tiene ≥1 periodo con ≥5 campos, cada campo lleva `_concept` y `_filing`, top-level keys completas.

@@ -7,5 +7,6 @@
   "source_hint": "sec",
   "filings_expected_count": null,
   "fiscal_year_end_month": 1,
+  "period_scope": "FULL",
   "notes": "Nvidia Corporation, NVIDIA is the world's leading AI computing company. Fiscal year ends January 31. 10-K/10-Q filer with strong iXBRL support."
 }
