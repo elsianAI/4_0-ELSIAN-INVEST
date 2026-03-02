@@ -543,6 +543,19 @@ def extract_from_markdown_table(
             )
             label = f"{prefix}\u2014{label}"
 
+        # Parent-label concatenation for weighted-average share rows.
+        # When a bare "Basic" or "Diluted" label appears below a heading
+        # containing "shares outstanding", concatenate them so the
+        # resulting label resolves to shares_outstanding.  Example:
+        #   heading: "Weighted average common shares outstanding:"
+        #   sub-label: "Basic"  →  "Weighted average common shares outstanding:—Basic"
+        elif (
+            last_heading
+            and re.search(r"shares?\s+outstanding", last_heading, re.IGNORECASE)
+            and label.lower() in {"basic", "diluted", "basic and diluted"}
+        ):
+            label = f"{last_heading}\u2014{label}"
+
         # Skip percentage rows: if any data cell contains "%", skip entire row.
         # This avoids extracting margin/ratio tables as monetary values.
         data_cells = row[1:]
@@ -842,10 +855,11 @@ def _guided_anchors_from_headers(
 # ── Dedicated shares_outstanding extractor ─────────────────────────
 _SHARES_LABEL_RE = re.compile(
     r"weighted\s+average\s+(?:number\s+of\s+)?(?:ordinary\s+)?shares"
-    r"(?:\s+(?:on\s+issue|outstanding|used))",
+    r"(?:\s+(?:of\s+\S+(?:\s+\S+){0,4}\s+)?(?:on\s+issue|outstanding|used))",
     re.IGNORECASE,
 )
 _LARGE_INT_RE = re.compile(r"[\d,]{7,}")  # 7+ chars to catch 1,000,000+
+_QUARTER_FROM_FILENAME = re.compile(r"Q([123])-(\d{4})", re.IGNORECASE)
 
 
 def extract_shares_outstanding_from_text(
@@ -888,17 +902,29 @@ def extract_shares_outstanding_from_text(
         if not values:
             continue
 
-        # Find year context from nearby lines (look back up to 30 lines)
-        periods: List[str] = []
-        for j in range(max(0, i - 30), i + 2):
-            yr_matches = list(_YEAR_RE.finditer(lines[j]))
-            if len(yr_matches) >= 2:
-                for ym in yr_matches:
-                    pk = f"FY{ym.group(1)}"
-                    if pk not in periods:
-                        periods.append(pk)
-                if len(periods) >= 2:
-                    break
+        # For quarterly filings (10-Q), derive the period from the source
+        # filename (e.g. "SRC_007_10-Q_Q3-2025") so we get Q3-2025 / Q3-2024
+        # instead of FY2025 / FY2024 from the year-context heuristic.
+        qm = _QUARTER_FROM_FILENAME.search(source_filename)
+        if qm:
+            q_num = int(qm.group(1))
+            q_year = int(qm.group(2))
+            # First value = current quarter; second = same quarter prior year.
+            # Remaining values are typically YTD (9M/6M) — skip those.
+            periods: List[str] = [f"Q{q_num}-{q_year}", f"Q{q_num}-{q_year - 1}"]
+        else:
+            # Find year context by scanning BACKWARD from the shares line
+            # (closest header wins, avoids stale predecessor-note headers).
+            periods = []
+            for j in range(i - 1, max(0, i - 30) - 1, -1):
+                yr_matches = list(_YEAR_RE.finditer(lines[j]))
+                if len(yr_matches) >= 2:
+                    for ym in yr_matches:
+                        pk = f"FY{ym.group(1)}"
+                        if pk not in periods:
+                            periods.append(pk)
+                    if len(periods) >= 2:
+                        break
 
         if not periods:
             continue

@@ -7,5 +7,12 @@
   "source_hint": "sec",
   "period_scope": "FULL",
   "filings_expected_count": null,
-  "notes": "Permian Resources Corp (formerly Centennial Resource Development through 2022-08-30). Permian Basin E&P. SIC 1311. FULL scope: annual + quarterly. Ticker PR on NYSE since Sep 2022 merger with Colgate Energy."
+  "notes": "Permian Resources Corp (formerly Centennial Resource Development through 2022-08-30). Permian Basin E&P. SIC 1311. FULL scope: annual + quarterly. Ticker PR on NYSE since Sep 2022 merger with Colgate Energy.",
+  "selection_overrides": {
+    "stable_tiebreaker": {
+      "tbl_order": "ascending_table_number",
+      "row_order": "descending_row_number",
+      "col_order": "ascending_col_number"
+    }
+  }
 }

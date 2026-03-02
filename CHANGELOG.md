@@ -1,6 +1,31 @@
 # Changelog
 
-## 2026-03-03
+## 2026-05-27
+
+### [DATA+CODE] BL-??? — PR promoted to VALIDATED (141/141, 100%, FULL scope)
+- `cases/PR/case.json`: Added `selection_overrides.stable_tiebreaker.tbl_order=ascending_table_number`
+  to fix FY2023/net_income table conflict (tbl4=879703 correct vs tbl9=896900 wrong).
+- `cases/PR/expected.json`: Q3-2024/interest_expense corrected 74824→79934.
+- `config/field_aliases.json`: Restored `total_debt.additive=true` (reverted global change);
+  added Class A shares aliases (weighted average basic/common shares of Class A).
+- `config/selection_rules.json`: Restored `tbl_order=descending_table_number` (global default).
+- `elsian/normalize/aliases.py`:
+  - Merged duplicate `_REJECT_PATTERNS["total_debt"]` key (Python was silently dropping first block).
+  - Added rejection pattern for "current portion of long-term debt" (prevents double-count of current
+    maturity slice already embedded in the net long-term debt total).
+  - Added `_PRIORITY_PATTERNS["ingresos"]` for `oil and gas (sales|revenues)` (E&P revenue label).
+  - Added `_PRIORITY_PATTERNS["eps_basic"]` for `income per share` (alternative label for EPS-basic).
+- `elsian/extract/html_tables.py`:
+  - `_SHARES_LABEL_RE`: Allow non-adjacent "shares ... outstanding" (matches "shares of Class A
+    Common Stock outstanding").
+  - `_QUARTER_FROM_FILENAME`: Detect quarterly periods from filename for 10-Q share extraction.
+  - `extract_shares_outstanding_from_text`: Backward year-context scan (closest header wins).
+- `elsian/extract/phase.py`: Added `extract_shares_outstanding_from_text` call in
+  `_extract_from_clean_md` — the dedicated narrative shares extractor now runs on clean.md files
+  (not just .txt), capturing shares from EPS-note tables where column headers are non-standard.
+- `tests/integration/test_regression.py`: PR moved WIP_TICKERS → VALIDATED_TICKERS.
+- Regression: 10/10 tickers at 100%. 464 passed, 1 skipped.
+
 
 ### [DATA] BL-026 — IOSP CIK corrected + ANNUAL_ONLY confirmed
 - `cases/IOSP/case.json`: CIK corrected 879354→1054905 (was pointing to EPIGEN INC, not Innospec).

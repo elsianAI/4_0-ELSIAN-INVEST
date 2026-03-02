@@ -321,7 +321,10 @@
       "weighted-average shares of common stock—basic",
       "weighted-average shares used in computing loss per share - basic and diluted",
       "weighted-average shares used in computing net income per share",
-      "weighted-average shares used in computing loss per share"
+      "weighted-average shares used in computing loss per share",
+      "basic weighted average shares of class a common stock outstanding",
+      "weighted average shares of class a common stock outstanding",
+      "weighted average shares of class a common stock"
     ],
     "multiplier": null
   },

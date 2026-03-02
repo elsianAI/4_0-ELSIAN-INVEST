@@ -119,6 +119,13 @@ _REJECT_PATTERNS: Dict[str, List[re.Pattern]] = {
         re.compile(r"taxes\s+other\s+than\s+income", re.I),
         re.compile(r"current\s+income\s+tax\b(?!\s+expense)", re.I),
         re.compile(r"income\s+tax\s+receivable", re.I),
+        # Reject "Income tax benefit (expense)" labels where benefit is the primary
+        # term followed by "(expense)" in parentheses.  These labels use an inverted
+        # sign convention (positive=benefit, negative/parens=expense) that conflicts
+        # with our storage convention (positive=expense, negative=benefit).
+        # The note-section twin label "Income tax (benefit) expense" has correct sign
+        # and should be preferred instead.
+        re.compile(r"\bbenefit\b\s*\(expense\)", re.I),
     ],
     "shares_outstanding": [
         re.compile(r"par\s+value", re.I),
@@ -152,6 +159,16 @@ _REJECT_PATTERNS: Dict[str, List[re.Pattern]] = {
         re.compile(r"\bproceeds\b", re.I),
         re.compile(r"\bsecurities\b", re.I),
         re.compile(r"fair\s+value\s+adjust", re.I),
+        # Reject supplemental non-cash M&A disclosures like "Equity issued
+        # and long-term debt assumed to acquire oil and gas properties" —
+        # these are non-cash financing activities, not balance-sheet debt.
+        re.compile(r"assumed\s+to\s+acquire", re.I),
+        re.compile(r"assumed\s+in\s+(?:merger|acquisition)", re.I),
+        # Reject "Current portion of long-term debt" — this is a re-classification
+        # of part of the net debt for balance-sheet presentation (the current-
+        # maturity slice is already included in the net long-term debt total).
+        # Summing it would double-count the near-term maturities.
+        re.compile(r"current\s+portion\s+of\s+(?:long.term|lt)\s+debt", re.I),
     ],
     "interest_expense": [
         re.compile(r"^add:", re.I),
@@ -213,6 +230,19 @@ _PRIORITY_PATTERNS: Dict[str, List[re.Pattern]] = {
         re.compile(r"weighted\s+average\s+common\s+shares", re.I),
         re.compile(r"\bbasic\b", re.I),
     ],
+    # E&P companies report primary revenue as "Oil and gas sales" or
+    # "Oil and gas revenues" — these should beat generic "Total Revenue"
+    # or "Total revenues" appearing in secondary note tables.
+    "ingresos": [
+        re.compile(r"oil\s+and\s+gas\s+(?:sales|revenues?)\b", re.I),
+    ],
+    # PR filings use "Income per share—Basic" in the primary IS instead
+    # of the more common "Earnings per share—Basic".  Giving it priority
+    # ensures it beats secondary-note EPS tables (e.g. predecessor entity
+    # combined metrics) that reference a different share-count universe.
+    "eps_basic": [
+        re.compile(r"\bincome\s+per\s+share\b", re.I),
+    ],
 }
 
 
@@ -265,7 +295,9 @@ class AliasResolver:
         )
         # Replace common punctuation with space (not just remove) so that
         # "share—basic" becomes "share basic" not "sharebasic".
-        text = re.sub(r"['\u2018\u2019\u201C\u201D\",():/\u2014\u2013]", " ", text)
+        # Also normalise U+02BC (modifier letter apostrophe, used in SEC filings
+        # as in "stockholdersʼ equity") alongside regular apostrophes.
+        text = re.sub(r"['\'\u02BC\u2018\u2019\u201C\u201D\",():/\u2014\u2013]", " ", text)
         # Collapse whitespace
         text = re.sub(r"\s+", " ", text).strip()
         return text

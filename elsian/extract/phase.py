@@ -199,7 +199,10 @@ _STRONGLY_DEPRIORITIZED_SECTION = re.compile(
     r"|:statements_of_cash_flows:"
     r"|the_following_table_presents.*balance_sheet"
     r"|unremitted_earnings"
-    r"|undistributed_earnings",
+    r"|undistributed_earnings"
+    # Equity-method investee sub-schedules — balance-sheet and income data
+    # from the investee's financial statements are NOT parent company data.
+    r"|:equity_method_investment",
     re.I,
 )
 
@@ -568,6 +571,23 @@ class ExtractPhase(PipelinePhase):
                 period_fields, additive_labels,
                 source_type="table",
                 use_section_bonus=True,
+                preflight_result=preflight_result,
+            )
+
+        # Dedicated shares_outstanding extraction — the main table extractor
+        # often assigns col='unknown' to shares rows in EPS-note tables
+        # (column headers are non-standard). The dedicated regex extractor
+        # scans the full text and uses year-context headers to assign the
+        # correct period, picking up values the table extractor misses.
+        for tf in extract_shares_outstanding_from_text(
+            text, source_filename=filing_path.name,
+        ):
+            self._process_table_field(
+                tf, filing_path, metadata, filing_scale,
+                filing_scale_confidence, rules, audit,
+                period_fields, additive_labels,
+                source_type="table",
+                use_section_bonus=False,
                 preflight_result=preflight_result,
             )
 
