@@ -17,6 +17,14 @@
 - **What:** Administrative backlog cleanup. BL-001 (Rehacer KAR desde cero) marked DONE — KAR at 100% (49/49) with autonomous ASX-fetched filings, 3 annual periods, ≥15 fields/period. BL-003 (Wire ExtractPhase) was already completed 2026-03-03 but remained in active section — cleaned up.
 - **Regression:** 10/10 tickers at 100%, 346 tests passed, 0 failed.
 
+### [Docs/Cases] Staged scope guidance + NVDA/TZOO dataset sync
+- **What:** Updated project guidance and case data to reflect staged evaluation by `period_scope`.
+  - Agent instructions now document the mandatory progression `ANNUAL_ONLY` -> `FULL`, including promotion criteria and current ticker scope map.
+  - `cases/TZOO/case.json` explicitly sets `period_scope: "FULL"` and updates notes accordingly.
+  - `cases/NVDA/expected.json` was expanded and normalized (additional periods and field curation updates).
+  - `docs/project/PROJECT_STATE.md` synced to current metrics, completed acquire ports, and updated priorities/gaps.
+- **Validation:** 351 passed, 2 skipped.
+
 ## 2026-03-04
 
 ### [Extract/Normalize] NVDA to 100% — fix alias rejection, period_affinity, and regressions

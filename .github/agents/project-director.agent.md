@@ -203,7 +203,8 @@ El ROADMAP define 5 fases. Tú decides cuándo se pasa de una a otra.
 
 ### Fase 1 → Fase 2 (Consolidar Layer 1 → Infraestructura)
 Se pasa cuando:
-- ≥15 tickers validados al 100%
+- ≥15 tickers validados al 100% en ANNUAL_ONLY
+- ≥5 tickers promovidos a FULL (annual + quarterly) al 100%
 - IxbrlExtractor implementado y funcionando para tickers SEC
 - ExtractPhase correctamente wired a PipelinePhase
 - Provenance Level 2 completa en todos los extractores
@@ -263,6 +264,45 @@ Cada agente tiene ficheros de ENTRADA (lee) y ficheros de SALIDA (escribe). Ning
 
 Esta tabla es la "constitución" del sistema multi-agente. Respétala siempre.
 </scalability>
+
+<staged_evaluation>
+## Estrategia de evaluación por etapas (period_scope)
+
+Cada ticker sigue una progresión obligatoria de dos etapas:
+
+### Etapa 1: ANNUAL_ONLY (default)
+- Solo se evalúan periodos FY* (anuales)
+- expected.json solo contiene periodos anuales
+- El acquire descarga TODOS los tipos de filing (annual + quarterly + earnings) — `period_scope` solo controla evaluación, NO adquisición
+- Objetivo: llegar al 100% en anuales
+
+### Etapa 2: FULL
+- Se evalúan todos los periodos: FY* + Q* + H*
+- Se amplía expected.json con periodos trimestrales
+- Un ticker se promueve a FULL **solo cuando está al 100% en ANNUAL_ONLY**
+
+### Estado actual (marzo 2026)
+| Ticker | Scope | Estado |
+|--------|-------|--------|
+| TZOO | FULL | Referencia (6A + 12Q) |
+| GCT, IOSP, NEXN, SONO, TEP, TALO | ANNUAL_ONLY | Validados |
+| KAR | ANNUAL_ONLY | PENDING_RECERT |
+| NVDA | ANNUAL_ONLY | En evaluación |
+
+### Criterio de promoción a FULL
+Para promover un ticker de ANNUAL_ONLY → FULL, el agente técnico debe:
+1. Confirmar score 100% en ANNUAL_ONLY
+2. Curar expected.json con periodos trimestrales
+3. Cambiar `period_scope` a `FULL` en case.json
+4. Establecer nuevo baseline (el score bajará inicialmente)
+5. Iterar hasta 100% en FULL
+
+### Decisión sobre prioridad de promoción
+Priorizar tickers para FULL en este orden:
+1. Tickers SEC con clean quarterly filings (10-Q bien formateados)
+2. Tickers con mayor número de periodos anuales ya validados
+3. Tickers que representen mercados diversos (EU, ASX)
+</staged_evaluation>
 
 <anti_patterns>
 ## Lo que NUNCA debes hacer

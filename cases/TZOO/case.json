@@ -5,6 +5,7 @@
   "currency": "USD",
   "cik": null,
   "source_hint": "sec",
+  "period_scope": "FULL",
   "filings_expected_count": null,
-  "notes": "Small cap US, 10-K with clean tables. First case for deterministic extraction."
+  "notes": "Small cap US, 10-K with clean tables. First case for deterministic extraction. FULL scope: 6 annual + 12 quarterly periods."
 }

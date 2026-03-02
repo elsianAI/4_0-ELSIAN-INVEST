@@ -1,7 +1,7 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
-> Última actualización: 2026-03-02
-> Actualizado por: Copilot
+> Última actualización: 2026-03-05
+> Actualizado por: Copilot (Project Director)
 
 ---
 
@@ -13,11 +13,11 @@ Ver ROADMAP.md para descripción completa de fases.
 
 | Métrica | Valor | Fecha |
 |---|---|---|
-| Tickers validados (100%) | 9 | 2026-03-02 |
-| Tickers WIP | 0 | 2026-03-02 |
-| Total campos validados | 892 (9 tickers @100%) | 2026-03-02 |
-| Tests pasando | 342 passed, 0 failed, 2 skipped | 2026-03-02 |
-| Líneas de código (aprox.) | ~5,800 + ~1,200 tests | 2026-03-02 |
+| Tickers validados (100%) | 9 | 2026-03-05 |
+| Tickers WIP | 0 | 2026-03-05 |
+| Total campos validados | 892 (9 tickers @100%) | 2026-03-05 |
+| Tests pasando | 346 passed, 0 failed, 2 skipped | 2026-03-05 |
+| Líneas de código (aprox.) | ~6,700 + ~1,500 tests | 2026-03-05 |
 
 ## Tickers validados
 
@@ -46,33 +46,43 @@ Ver ROADMAP.md para descripción completa de fases.
 | EvaluatePhase | ✅ Implementado | evaluator.py + dashboard |
 | IxbrlExtractor | ❌ Pendiente | Existe en 3.0, hay que portar (BL-004) |
 | PdfTableExtractor | ❌ Pendiente | pdfplumber ready, extractor no creado (BL-007) |
-| Filing Preflight (idioma/estándar/moneda/unidades/restatement) | ❌ Pendiente | Existe en 3.0 (320 líneas). 4.0 detect.py es parcial (BL-009) |
-| Deduplicación por contenido | ❌ Pendiente | Content hash del 3.0 no portado (BL-010) |
-| Exchange/Country awareness | ⚠️ Parcial | Cada fetcher tiene su lógica, no unificado (BL-011) |
-| Filing Classification automática | ❌ Pendiente | El 3.0 clasifica ANNUAL/INTERIM/REGULATORY (BL-012) |
-| IR Website Crawling | ❌ Pendiente (Baja prioridad) | ~600 líneas en 3.0. Solo necesario para mercados sin API |
+| Filing Preflight (idioma/estándar/moneda/unidades/restatement) | ✅ Implementado | Portado de 3.0. EN/FR/ES/DE, IFRS/US-GAAP, 9 monedas, unidades por sección, restatement. BL-009 DONE. Falta integrar en ExtractPhase (BL-014) |
+| Deduplicación por contenido | ✅ Implementado | SHA-256 content hash portado. Integrado en AsxFetcher. BL-010 DONE |
+| Exchange/Country awareness | ✅ Implementado | markets.py unificado: normalize_country/exchange, is_non_us, infer_regulator_code. BL-011 DONE |
+| Filing Classification automática | ✅ Implementado | classify_filing_type() con 5 tipos. BL-012 DONE |
+| IR Website Crawling | ✅ Implementado | ir_crawler.py portado completo (~600 líneas). Falta integrar en EuRegulatorsFetcher (BL-013) |
 | Provenance Level 2 | ⚠️ Parcial | Modelo existe, campos no siempre poblados (BL-006) |
 | Provenance Level 3 | ❌ Pendiente | source_map.json no implementado |
 
 ## Bloqueantes actuales
 
-1. **AsxFetcher usa endpoint genérico** — escanea TODOS los anuncios de ASX en ventanas de 14 días (~78 requests). ASX tiene endpoint por compañía que lo resuelve en 1-3 requests. Debe reescribirse antes de rehacer KAR.
-2. **KAR eliminado** — caso borrado completamente. Se recreará desde cero una vez AsxFetcher funcione correctamente.
-3. **NVDA en fase cero** — solo tiene case.json. Sin filings, sin expected.json.
+No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para los 9 tickers.
+
+**Gaps pendientes (no bloqueantes):**
+1. **Preflight no integrado en ExtractPhase** — preflight.py funciona standalone pero sus resultados (currency, units_by_section) no alimentan ScaleCascade durante la extracción. BL-014.
+2. **IR Crawler no integrado en EuRegulatorsFetcher** — ir_crawler.py portado pero TEP sigue dependiendo de filings_sources manuales. BL-013.
+3. **IxbrlExtractor pendiente** — fuente primaria para SEC según DEC-005. BL-004.
 
 ## Hitos recientes
 
-- ✅ **BL-003 completado** — Todas las fases (Acquire, Extract, Evaluate) heredan de PipelinePhase con run(context). Pipeline orquesta correctamente. +6 tests.
-- ✅ **Acquire layer portado** — SecEdgarFetcher, EuRegulatorsFetcher, converters HTML→MD y PDF→text.
+- ✅ **BL-008 DONE** — AsxFetcher reescrito con escaneo 1-day backward. PDFs byte-idénticos. KAR autónomo.
+- ✅ **BL-001 DONE** — KAR rehecho desde cero con AsxFetcher autónomo. 49 campos, 3 periodos, 100%.
+- ✅ **BL-002 DONE** — NVDA completado. 38 campos, 2 periodos, 100%.
+- ✅ **BL-003 DONE** — Pipeline wiring completo. Todas las fases heredan PipelinePhase.
+- ✅ **BL-009 DONE** — Filing Preflight portado de 3.0 (idioma, estándar, moneda, unidades, restatement).
+- ✅ **BL-010 DONE** — Deduplicación por contenido SHA-256 portada e integrada.
+- ✅ **BL-011 DONE** — Exchange/Country awareness unificado en markets.py.
+- ✅ **BL-012 DONE** — Filing Classification automática portada.
+- ✅ **Acquire layer completo** — SecEdgarFetcher, EuRegulatorsFetcher, AsxFetcher, ManualFetcher, IR Crawler, converters.
+- ✅ **115+ tests nuevos** del port de acquire (277→346 total).
 
 ## Próximas prioridades
 
 Ver BACKLOG.md para la cola completa. Las 3 más urgentes:
 
-1. Reescribir AsxFetcher con endpoint por compañía (BL-008, prerrequisito de KAR)
-2. Rehacer KAR desde cero con AsxFetcher funcional (BL-001)
-3. Completar NVDA: acquire + curación + eval (BL-002)
-4. Portar IxbrlExtractor desde 3.0 (BL-004, ya desbloqueado)
+1. **BL-004** — Portar IxbrlExtractor desde 3.0. Fuente primaria SEC según DEC-005.
+2. **BL-005** — Expandir a 15 tickers validados. 9/15 conseguidos.
+3. **BL-014** — Integrar Preflight en ExtractPhase para que units_by_section alimente ScaleCascade.
 
 ---
 

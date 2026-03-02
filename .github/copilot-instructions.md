@@ -307,11 +307,13 @@ Los valores en expected.json son **ground truth curado manualmente**. Solo modif
 
 ---
 
-## 12. Prioridades actuales (febrero 2026)
+## 12. Prioridades actuales (marzo 2026)
 
-1. **Subir score de TZOO** de 52.9% a ≥85%. Foco: label collisions (net_income vs EPS), liability/equity ambiguity, tax line disambiguation.
-2. **Evaluar GCT** — ya tiene filings, necesita expected.json y primer eval.
-3. **TEP** — necesita implementar bootstrap EU manual y descargar filings.
+> **NOTA:** El desarrollo activo ha migrado a `4_0-ELSIAN-INVEST/`. Este fichero aplica al módulo `deterministic/` de 3.0, que está congelado como referencia.
+
+1. **3.0 está congelado** — no se hacen cambios excepto correcciones críticas.
+2. **4.0 es el foco** — ver `.github/agents/elsian-4.agent.md` para instrucciones completas.
+3. **Estrategia staged:** todos los tickers empiezan en `ANNUAL_ONLY` y progresan a `FULL` al alcanzar 100%.
 4. **No tocar** el pipeline LLM (engine/, scripts/) salvo petición explícita.
 
 ---

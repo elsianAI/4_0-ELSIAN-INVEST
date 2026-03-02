@@ -285,10 +285,29 @@ expected.json is the curated source of truth per ticker. It is NEVER auto-genera
 - Semi-annual: `H1-2024`, `H2-2024`
 - NO other formats (not `2024`, not `Q3 2024` with space, not `FY 2024` with space).
 
-### Period Scope
-- `ANNUAL_ONLY` (default) — only FY* periods. Recommended for fast iteration.
-- `FULL` — all detectable periods: FY* + Q* + H*. More complete but slower to curate.
-- **In both cases:** better 2 perfect periods than 6 with errors.
+### Period Scope — Staged Evaluation Strategy
+Every ticker follows a staged progression. This is MANDATORY — no exceptions.
+
+**Stage 1: `ANNUAL_ONLY` (default)**
+- Only FY* periods are evaluated
+- expected.json only contains annual periods
+- The acquire downloads ALL filing types (annual + quarterly + earnings) regardless — `period_scope` only controls evaluation, NOT acquisition
+- Goal: reach 100% score on annual periods
+- This is the starting point for ALL new tickers
+
+**Stage 2: `FULL`**
+- All detectable periods: FY* + Q* + H*
+- expected.json is expanded to include quarterly periods
+- A ticker is promoted to FULL **only when it is at 100% in ANNUAL_ONLY**
+- Promotion requires: (1) adding quarterly periods to expected.json, (2) changing `period_scope` to `FULL` in case.json, (3) re-running eval to establish the new baseline
+
+**Current reference:** TZOO is the only ticker at `FULL` scope (6 annual + 12 quarterly = 18 periods). All other tickers are at `ANNUAL_ONLY`.
+
+**In both cases:** better 2 perfect periods than 6 with errors.
+
+**How it works technically:** The evaluator evaluates ALL periods present in expected.json. The filtering is implicit — if expected.json only contains FY* periods, only annuals are evaluated. The `period_scope` field in case.json documents the intent and guides agents on what periods should exist in expected.json. The acquire phase always downloads everything available regardless of scope.
+
+**Consistency rule:** `period_scope` in case.json MUST match what's in expected.json. If `period_scope` is `ANNUAL_ONLY`, expected.json should only have FY* periods. If `FULL`, it should include Q* periods too. If they're out of sync, the agent must fix the inconsistency before proceeding.
 
 ### Scale and scale_notes
 - Store values in the SAME unit the filing shows (if "in thousands", the value is in thousands).
@@ -654,10 +673,12 @@ This is the one step that is intentionally manual. You read the original filings
 - If your expected value is correct and the pipeline doesn't extract the field at all → that's a "missed" field. The pipeline needs improvement, but this is acceptable as a known gap.
 - **NEVER remove a field from expected.json just because the pipeline can't extract it.** The expected.json represents truth. The pipeline's score represents its current capability. A score of 85% that reflects reality is infinitely more valuable than a score of 100% that hides gaps.
 
-### Step 5 — Run evaluation
+### Step 5 — Run evaluation (ANNUAL_ONLY first)
 Run `python3 -m elsian eval {TICKER}`.
 
-**If score is 100%:** Add ticker to `VALIDATED_TICKERS` in test_regression.py. Run full regression (`eval --all`) to confirm no regressions.
+The ticker starts with `period_scope: "ANNUAL_ONLY"` in case.json. This means only FY* periods are evaluated.
+
+**If score is 100% (ANNUAL_ONLY):** Add ticker to `VALIDATED_TICKERS` in test_regression.py. Run full regression (`eval --all`) to confirm no regressions.
 
 **If score is < 100%:**
 - Analyze each missed/wrong field
@@ -667,6 +688,17 @@ Run `python3 -m elsian eval {TICKER}`.
 
 ### Step 6 — Regression check
 Run `python3 -m elsian eval --all`. ALL previously validated tickers must still pass at 100%. If not, fix the regression before committing.
+
+### Step 7 — Promote to FULL (when ANNUAL_ONLY is at 100%)
+Once a ticker is at 100% in ANNUAL_ONLY, it can be promoted to FULL scope:
+
+1. **Add quarterly periods to expected.json** — curate Q1-Q4 periods from 10-Q/6-K filings following the same ground truth rules as annual periods.
+2. **Change `period_scope` to `FULL`** in case.json.
+3. **Run eval** — this now evaluates all periods (FY* + Q*). The score will likely drop because quarterly extraction is being evaluated for the first time.
+4. **Iterate** until the ticker reaches 100% at FULL scope.
+5. **Run full regression** to confirm no regressions on other tickers.
+
+**Important:** A ticker at FULL scope that drops below 100% does NOT get demoted back to ANNUAL_ONLY. Fix the quarterly extraction instead. The regression suite always evaluates at whatever scope is set in case.json.
 </new_ticker_protocol>
 
 <anti_patterns>
@@ -749,18 +781,24 @@ When you need to understand how something was solved:
 <regression_suite>
 ## Regression Suite
 
-The 4.0 MUST pass all ticker cases at 100% before any release. The tickers and what they test:
+The 4.0 MUST pass all ticker cases at 100% before any release. Each ticker is evaluated at its configured `period_scope`.
 
-| Ticker | What it tests |
-|--------|---------------|
-| **TZOO** | US small-cap, services, 10-K/10-Q, Dec FY. Reference implementation. |
-| **GCT** | Foreign issuer 20-F→10-K transition, sign convention edge cases. |
-| **IOSP** | US specialty chemicals, segment vs consolidated reporting. |
-| **NEXN** | Israeli IFRS, 20-F/6-K, tax benefit negative income_tax. |
-| **SONO** | Non-standard fiscal year (October), US 10-K/10-Q. |
-| **TEP** | European/France, Euronext, EUR, IFRS, PDF-based filings, pdfplumber. |
-| **TALO** | Oil & gas E&P, sector-specific terminology (DD&A, depletion). |
-| **KAR** | Australian ASX, AUD currency, PDF annual reports, June FY. |
+| Ticker | What it tests | Scope | Periods |
+|--------|---------------|-------|---------|
+| **TZOO** | US small-cap, services, 10-K/10-Q, Dec FY. Reference implementation. | FULL | 6A + 12Q |
+| **GCT** | Foreign issuer 20-F→10-K transition, sign convention edge cases. | ANNUAL_ONLY | 6A |
+| **IOSP** | US specialty chemicals, segment vs consolidated reporting. | ANNUAL_ONLY | 5A |
+| **NEXN** | Israeli IFRS, 20-F/6-K, tax benefit negative income_tax. | ANNUAL_ONLY | 4A |
+| **SONO** | Non-standard fiscal year (October), US 10-K/10-Q. | ANNUAL_ONLY | 6A |
+| **TEP** | European/France, Euronext, EUR, IFRS, PDF-based filings, pdfplumber. | ANNUAL_ONLY | 6A |
+| **TALO** | Oil & gas E&P, sector-specific terminology (DD&A, depletion). | ANNUAL_ONLY | 5A |
+| **KAR** | Australian ASX, AUD currency, PDF annual reports, June FY. | ANNUAL_ONLY (PENDING_RECERT) | 3A |
+
+### Progression path
+1. All tickers start at `ANNUAL_ONLY`
+2. Reach 100% on annual periods → validate
+3. Promote to `FULL` → add quarterly expected.json → iterate to 100%
+4. TZOO is the reference for FULL scope (only ticker that has completed both stages)
 
 These expected.json files are the **source of truth**. If the 4.0 pipeline produces different results, the pipeline is wrong — not the expected.json.
 </regression_suite>
