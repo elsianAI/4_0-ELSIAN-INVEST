@@ -1,6 +1,6 @@
 # Changelog
 
-## 2026-05-28
+## 2026-03-02
 
 ### [DATA] BL-026 — TALO promoted to FULL scope (183/183, 100%)
 - `cases/TALO/case.json`: Set `period_scope` to `FULL`.
@@ -14,9 +14,7 @@
 - Regression: 10/10 tickers PASS 100% (GCT 202, IOSP 95, KAR 49, NEXN 76, NVDA 318, PR 141,
   SONO 311, TALO 183, TEP 55, TZOO 270).
 
-## 2026-05-27
-
-### [DATA+CODE] BL-??? — PR promoted to VALIDATED (141/141, 100%, FULL scope)
+### [DATA+CODE] BL-033 — PR promoted to VALIDATED (141/141, 100%, FULL scope)
 - `cases/PR/case.json`: Added `selection_overrides.stable_tiebreaker.tbl_order=ascending_table_number`
   to fix FY2023/net_income table conflict (tbl4=879703 correct vs tbl9=896900 wrong).
 - `cases/PR/expected.json`: Q3-2024/interest_expense corrected 74824→79934.

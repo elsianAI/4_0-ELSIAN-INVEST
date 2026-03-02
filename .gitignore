@@ -29,6 +29,9 @@ cases/*/filings/*.source_map.json
 .DS_Store
 Thumbs.db
 
+# Temporary debug/scratch scripts
+_debug_*.py
+
 # IDE
 .idea/
 .vscode/

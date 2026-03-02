@@ -14,9 +14,9 @@ Ver ROADMAP.md para descripción completa de fases.
 | Métrica | Valor | Fecha |
 |---|---|---|
 | Tickers validados (100%) | 10 | 2026-03-02 |
-| Tickers FULL (A+Q) | 5 (TZOO, NVDA, SONO, GCT, TALO) | 2026-03-02 |
+| Tickers FULL (A+Q) | 6 (TZOO, NVDA, SONO, GCT, TALO, PR) | 2026-03-02 |
 | Tickers WIP | 0 | 2026-03-02 |
-| Total campos validados | ~1,785 (TALO 85→183, PR 125→141) | 2026-03-02 |
+| Total campos validados | 1,700 | 2026-03-02 |
 | Tests pasando | 465 passed, 0 failed, 2 skipped | 2026-03-02 |
 | Líneas de código (aprox.) | ~7,400 + ~2,100 tests | 2026-03-02 |
 
@@ -24,7 +24,7 @@ Ver ROADMAP.md para descripción completa de fases.
 
 | Ticker | Campos | Mercado | Formato | Estado |
 |---|---|---|---|---|
-| TZOO | 270 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED |
+| TZOO | 270 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
 | GCT | 202 | SEC (US) | 20-F→10-K HTML | ✅ VALIDATED (FULL: 6A+6Q) |
 | IOSP | 95 | SEC (US) | 10-K HTML | ✅ VALIDATED (ANNUAL_ONLY — Q blocked by BL-038) |
 | NEXN | 76 | SEC (US) | 20-F/6-K HTML | ✅ VALIDATED |
@@ -77,7 +77,7 @@ No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para l
 - ✅ **WP-5 DONE** — CI GitHub Actions + verificación Python 3.11. Workflow ci.yml creado. Markers `slow`/`network` registrados.
 - ✅ **BL-014/WP-4 DONE** — Preflight integrado en ExtractPhase. units_by_section → ScaleCascade por sección (IS/BS/CF). Provenance extendido con preflight_currency/standard/units_hint. 18 tests nuevos. 445 total.
 - ✅ **BL-031 DONE** — Tests de integración para `elsian curate`. 18 tests: E2E TZOO (6), skeleton TEP (4), cobertura vs expected.json (2, guardrail ≥90%, medido 100%), sanity checks (6). 463 tests total.
-- ✅ **BL-026 DONE** — FULL promotions: SONO 311/311 (6A+12Q), GCT 202/202 (6A+6Q), TALO 183/183 (5A+7Q). IOSP bloqueado por BL-038. 5 tickers FULL total.
+- ✅ **BL-026 DONE** — FULL promotions: SONO 311/311 (6A+12Q), GCT 202/202 (6A+6Q), TALO 183/183 (5A+7Q). IOSP bloqueado por BL-038. 6 tickers FULL total (TZOO, NVDA, SONO, GCT, TALO, PR).
 - ✅ **BL-033 DONE** — PR promovido de WIP a VALIDATED: 141/141 (100%, FULL scope, 3A+6Q). Fixes: shares_outstanding regex, total_debt reject patterns, eps_basic/net_income priority patterns, ascending_table_number override.
 - ✅ **BL-003 DONE** — Pipeline wiring completo. Todas las fases heredan PipelinePhase.
 - ✅ **BL-009 DONE** — Filing Preflight portado de 3.0 (idioma, estándar, moneda, unidades, restatement).
