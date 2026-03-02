@@ -1,6 +1,6 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
-> Última actualización: 2026-03-03
+> Última actualización: 2026-03-02
 > Actualizado por: Copilot (Project Director)
 
 ---
@@ -13,12 +13,12 @@ Ver ROADMAP.md para descripción completa de fases.
 
 | Métrica | Valor | Fecha |
 |---|---|---|
-| Tickers validados (100%) | 9 | 2026-03-03 |
-| Tickers FULL (A+Q) | 4 (TZOO, NVDA, SONO, GCT) | 2026-03-03 |
-| Tickers WIP | 1 (PR 88.65%) | 2026-03-02 |
-| Total campos validados | ~1,523 (SONO 116→311, GCT 108→202) | 2026-03-03 |
-| Tests pasando | 464 passed, 0 failed, 1 skipped | 2026-03-03 |
-| Líneas de código (aprox.) | ~7,400 + ~2,100 tests | 2026-03-03 |
+| Tickers validados (100%) | 10 | 2026-03-02 |
+| Tickers FULL (A+Q) | 5 (TZOO, NVDA, SONO, GCT, TALO) | 2026-03-02 |
+| Tickers WIP | 0 | 2026-03-02 |
+| Total campos validados | ~1,785 (TALO 85→183, PR 125→141) | 2026-03-02 |
+| Tests pasando | 465 passed, 0 failed, 2 skipped | 2026-03-02 |
+| Líneas de código (aprox.) | ~7,400 + ~2,100 tests | 2026-03-02 |
 
 ## Tickers validados
 
@@ -30,10 +30,10 @@ Ver ROADMAP.md para descripción completa de fases.
 | NEXN | 76 | SEC (US) | 20-F/6-K HTML | ✅ VALIDATED |
 | SONO | 311 | SEC (US) | 10-K HTML | ✅ VALIDATED (FULL: 6A+12Q) |
 | TEP | 55 | Euronext (FR) | PDF (IFRS, EUR) | ✅ VALIDATED |
-| TALO | 85 | SEC (US) | 10-K HTML | ✅ VALIDATED |
-| NVDA | 318 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (period_scope: FULL) |
+| TALO | 183 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 5A+7Q) |
+| NVDA | 318 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
 | KAR | 49 | ASX (AU) | PDF (IFRS, USD) | ✅ VALIDATED |
-| PR | 125/141 | SEC (US) | 10-K/10-Q HTML (FULL) | ⚠️ WIP 88.65% — shares_outstanding missing (9), total_debt deviation (5) |
+| PR | 141 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 3A+6Q) |
 
 ## Componentes implementados
 
@@ -77,7 +77,8 @@ No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para l
 - ✅ **WP-5 DONE** — CI GitHub Actions + verificación Python 3.11. Workflow ci.yml creado. Markers `slow`/`network` registrados.
 - ✅ **BL-014/WP-4 DONE** — Preflight integrado en ExtractPhase. units_by_section → ScaleCascade por sección (IS/BS/CF). Provenance extendido con preflight_currency/standard/units_hint. 18 tests nuevos. 445 total.
 - ✅ **BL-031 DONE** — Tests de integración para `elsian curate`. 18 tests: E2E TZOO (6), skeleton TEP (4), cobertura vs expected.json (2, guardrail ≥90%, medido 100%), sanity checks (6). 463 tests total.
-- ✅ **BL-026 DONE** — Oleada 1 FULL: SONO 311/311 (6A+12Q), GCT 202/202 (6A+6Q). IOSP bloqueado por BL-038. CIK IOSP corregido. 4 tickers FULL total. 464 tests.
+- ✅ **BL-026 DONE** — FULL promotions: SONO 311/311 (6A+12Q), GCT 202/202 (6A+6Q), TALO 183/183 (5A+7Q). IOSP bloqueado por BL-038. 5 tickers FULL total.
+- ✅ **BL-033 DONE** — PR promovido de WIP a VALIDATED: 141/141 (100%, FULL scope, 3A+6Q). Fixes: shares_outstanding regex, total_debt reject patterns, eps_basic/net_income priority patterns, ascending_table_number override.
 - ✅ **BL-003 DONE** — Pipeline wiring completo. Todas las fases heredan PipelinePhase.
 - ✅ **BL-009 DONE** — Filing Preflight portado de 3.0 (idioma, estándar, moneda, unidades, restatement).
 - ✅ **BL-010 DONE** — Deduplicación por contenido SHA-256 portada e integrada.
@@ -100,8 +101,7 @@ Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC
 
 **Siguiente fase:**
 - **BL-038** — Pipeline bug: IS no extraído en 10-Q con columna desalineada. Bloquea IOSP FULL y GCT Q1-Q3 2024. **ALTA PRIORIDAD.**
-- **BL-026 oleada 2** — Promover NEXN y TALO a FULL. Depende de curate.
-- **BL-033** — PR de WIP a VALIDATED (88.65%→100%).
+- **BL-026 oleada 3** — Promover NEXN e IOSP a FULL (IOSP depende de BL-038).
 - **WP-6** — IxbrlExtractor en producción (diferido).
 
 ---

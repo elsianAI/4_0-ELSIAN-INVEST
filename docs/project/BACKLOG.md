@@ -85,7 +85,7 @@
 - **Asignado a:** elsian-4
 - **Depende de:** BL-025 (comando curate funcional)
 - **Descripción:** Oleada 1 (IOSP, SONO, GCT) completada. SONO→FULL 100% (311/311, 18p). GCT→FULL 100% (202/202, 12p). IOSP permanece ANNUAL_ONLY (pipeline bug en IS trimestral, ver BL-038). NVDA y TZOO ya estaban en FULL.
-- **Criterio de aceptación:** ≥5 tickers en FULL al 100% (incluyendo TZOO y NVDA). Sin regresiones en tickers que no cambian de scope. ⚠️ Parcial (4/5 FULL): TZOO, NVDA, SONO, GCT al 100%. Falta 1 ticker más. Oleada 2 (TALO prioritario) pendiente.
+- **Criterio de aceptación:** ≥5 tickers en FULL al 100% (incluyendo TZOO y NVDA). Sin regresiones en tickers que no cambian de scope. ✅ Cumplido: TZOO, NVDA, SONO, GCT, TALO en FULL al 100% (5/5). Oleada 3 pendiente (NEXN, IOSP — IOSP depende de BL-038).
 
 ### BL-027 — Scope Governance: coherencia case.json vs expected.json
 - **Prioridad:** CRÍTICA
