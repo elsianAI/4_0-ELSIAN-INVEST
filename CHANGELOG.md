@@ -2,6 +2,16 @@
 
 ## 2026-03-02
 
+### [DATA] BL-026 — IOSP promoted to FULL scope (338/338, 100%)
+- `cases/IOSP/case.json`: Set `period_scope` to `FULL`.
+- `cases/IOSP/expected.json`: Added 17 quarterly periods (Q1-Q3 2021-2025, Q4-2023, Q4-2024).
+  Income statement fields from 10-Q filings (comparative columns for 2021/2022, current for 2023+).
+  Q4-2023 and Q4-2024 from 8-K earnings releases. Q4-2021 skipped (no data). Q4-2022 skipped
+  (corrupted — 8-K shows cumulative annual totals in the cost_of_revenue/SGA columns).
+  Field exclusions: interest_expense, ebitda per existing scale_notes policy.
+  Math cross-check: FY2023 = Q1+Q2+Q3+Q4 = 1948.8 ✓; FY2024 = 1845.4 ✓.
+- Regression before: 100% (95/95, ANNUAL_ONLY). After: 338/338 (22 periods, 9/9 tickers PASS).
+
 ### [CODE] BL-038 part 2 — Currency prefix columns + subheader scale-note detection
 
 **Bug A — Grouped year assignment for colspan subheaders:**

@@ -5,7 +5,7 @@
   "currency": "USD",
   "cik": "1054905",
   "source_hint": "sec",
-  "period_scope": "ANNUAL_ONLY",
+  "period_scope": "FULL",
   "filings_expected_count": null,
   "notes": "US specialty chemicals, 10-K/10-Q standard. Third test case for pipeline generalization."
 }
