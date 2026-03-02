@@ -22,7 +22,7 @@
 - `cases/GCT/expected.json`: 6 quarterly periods added (Q1/Q2/Q3-2023 and Q1/Q2/Q3-2025).
   Total: 12 periods, 202 fields.
 - Strategy: Hybrid — 2023/2025 quarters from pipeline (14-19 fields each); 2024 quarters
-  excluded due to pipeline column-misalignment bug in GCT 10-Q markdown tables (tracked as BL-027).
+  excluded due to pipeline column-misalignment bug in GCT 10-Q markdown tables (tracked as BL-038).
 - Score: 100% (202/202). eval --all: all 9 validated tickers at 100%.
 <!-- commit: GCT promoted to FULL -->
 
