@@ -3,7 +3,7 @@
   "ticker": "IOSP",
   "currency": "USD",
   "scale": "mixed",
-  "scale_notes": "Monetary in millions. EPS raw. Shares thousands. No total_debt. Interest net. No EBITDA/FCF. SRC_005=FY2021. SRC_006=FY2020. FY2022 from SRC_003.",
+  "scale_notes": "Monetary in millions. EPS raw. Shares thousands. No total_debt. Interest net. No EBITDA/FCF.",
   "periods": {
     "FY2025": {
       "fecha_fin": "2025-12-31",

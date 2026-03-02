@@ -6,7 +6,7 @@
 - `cases/IOSP/case.json`: CIK corrected 879354→1054905 (was pointing to EPIGEN INC, not Innospec).
 - Re-acquired 28 filings with .htm files. Score confirmed 100% (95/95).
 - Quarterly promotion blocked: pipeline fails IS extraction from 10-Q quarterly tables (parenthetical
-  `( value | )` format breaks column alignment). Tracked as BL-027.
+  `( value | )` format breaks column alignment). Tracked as BL-038.
 
 ### [DATA] BL-026 — SONO promoted to FULL (311/311, 100%)
 - `cases/SONO/case.json`: CIK added (1314727), period_scope changed ANNUAL_ONLY→FULL.
