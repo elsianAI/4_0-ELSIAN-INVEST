@@ -11,13 +11,13 @@ Ver ROADMAP.md para descripción completa de fases.
 
 ## Métricas clave
 
-| Métrica | Valor | Fecha |
-|---|---|---|
-| Tickers validados (100%) | 10 | 2026-03-02 |
-| Tickers FULL (A+Q) | 6 (TZOO, NVDA, SONO, GCT, TALO, PR) | 2026-03-02 |
-| Tickers WIP | 0 | 2026-03-02 |
-| Total campos validados | 1,700 | 2026-03-02 |
-| Tests pasando | 473 passed, 0 failed, 2 skipped | 2026-03-02 |
+| Métrica | Valor | Target Fase 1→2 | Fecha |
+|---|---|---|---|
+| Tickers FULL 100% (DEC-015) | 6 (TZOO, NVDA, SONO, GCT, TALO, PR) | ≥15 | 2026-03-02 |
+| Tickers validados (ANNUAL_ONLY) | 4 (IOSP, KAR, NEXN, TEP) | Promover a FULL o documentar excepción | 2026-03-02 |
+| Tickers WIP | 0 | 0 | 2026-03-02 |
+| Total campos validados | 1,700 | — | 2026-03-02 |
+| Tests pasando | 473 passed, 0 failed, 2 skipped | — | 2026-03-02 |
 | Líneas de código (aprox.) | ~7,400 + ~2,100 tests | 2026-03-02 |
 
 ## Tickers validados

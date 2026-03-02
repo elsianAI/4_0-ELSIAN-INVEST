@@ -83,9 +83,9 @@ ExtractPhase tiene 914 líneas con su propio método `extract()` pero no impleme
 - **`cmd_run`** debe usar `Pipeline([AcquirePhase(), ExtractPhase(), EvaluatePhase()]).run(context)`
 - **Mantener compatibilidad** — los comandos individuales siguen funcionando
 
-#### 1.2 Expandir la regresión a 15-20 tickers
+#### 1.2 Expandir a ≥15 tickers FULL 100% (DEC-015)
 
-8 tickers no son suficientes para validar que el sistema es robusto. Necesitamos cobertura de:
+10 tickers no son suficientes para validar que el sistema es robusto. El criterio unificado (DEC-015) exige ≥15 tickers en FULL scope (annual + quarterly) al 100%. Necesitamos cobertura de:
 
 | Gap actual | Tickers candidatos | Qué valida |
 |---|---|---|
@@ -220,7 +220,7 @@ ELSIAN-INVEST 4.0 está en un punto de inflexión. El laboratorio ha terminado �
 
 | Fase | Foco | Entregable | Plazo |
 |:---:|---|---|:---:|
-| **1** | Consolidar Layer 1: arquitectura, iXBRL, 15-20 tickers | Extracción irrefutable | 4-6 sem |
+| **1** | Consolidar Layer 1: arquitectura, iXBRL, ≥15 tickers FULL 100% (DEC-015) | Extracción irrefutable | 4-6 sem |
 | **2** | Infraestructura: BD, API, scheduler, provenance L3 | Plataforma de datos | 6-10 sem |
 | **3** | Capa 2: extracción cualitativa con LLM | Señales de texto | 10-16 sem |
 | **4** | Capas 3-4: LLM fallback + análisis | Sistema completo | 16-24 sem |
