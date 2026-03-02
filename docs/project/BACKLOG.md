@@ -319,7 +319,7 @@
 
 ### BL-033 — Promover PR de WIP a VALIDATED (100%)
 - **Prioridad:** MEDIA
-- **Estado:** DONE ✅ (2026-05-27) — PR al 100% (141/141, FULL scope). Commit ede5a4e.
+- **Estado:** DONE ✅ (2026-03-02) — PR al 100% (141/141, FULL scope). Commit ede5a4e.
 - **Asignado a:** Claude (elsian-4)
 - **Depende de:** DEC-013
 - **Descripción:** PR (Permian Resources, NYSE) está al 88.65% (125/141). Problemas: (1) shares_outstanding no extraído en 9 periodos (FY2025-FY2023, Q3-Q1 2025, Q3-Q1 2024), (2) total_debt con desviación ~5-15% en 5 periodos, (3) net_income y eps_basic wrong en FY2023. El agente técnico debe: añadir PR a WIP_TICKERS en test_regression.py, diagnosticar los 3 problemas, iterar hasta 100%.

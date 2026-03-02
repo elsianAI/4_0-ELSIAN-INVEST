@@ -26,7 +26,7 @@ Ver ROADMAP.md para descripción completa de fases.
 |---|---|---|---|---|
 | TZOO | 270 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
 | GCT | 202 | SEC (US) | 20-F→10-K HTML | ✅ VALIDATED (FULL: 6A+6Q) |
-| IOSP | 95 | SEC (US) | 10-K HTML | ✅ VALIDATED (ANNUAL_ONLY — Q blocked by BL-038) |
+| IOSP | 95 | SEC (US) | 10-K HTML | ✅ VALIDATED (ANNUAL_ONLY — ready for FULL, BL-038 DONE) |
 | NEXN | 76 | SEC (US) | 20-F/6-K HTML | ✅ VALIDATED |
 | SONO | 311 | SEC (US) | 10-K HTML | ✅ VALIDATED (FULL: 6A+12Q) |
 | TEP | 55 | Euronext (FR) | PDF (IFRS, EUR) | ✅ VALIDATED |
@@ -59,7 +59,7 @@ Ver ROADMAP.md para descripción completa de fases.
 
 ## Bloqueantes actuales
 
-No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para los 9 tickers.
+No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para los 10 tickers.
 
 **Gaps pendientes (no bloqueantes):**
 1. **IR Crawler no integrado en EuRegulatorsFetcher** — ir_crawler.py portado pero TEP sigue dependiendo de filings_sources manuales. BL-013.
