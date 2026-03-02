@@ -7,6 +7,7 @@ from elsian.extract.html_tables import (
     extract_tables_from_text,
     _identify_period_columns,
     _parse_markdown_table,
+    _collapse_split_parentheticals,
 )
 
 
@@ -91,6 +92,66 @@ def test_extract_with_parenthetical_negatives():
     fields = extract_from_markdown_table(table)
     assert len(fields) == 2
     for f in fields:
+        assert f.value < 0
+
+
+# ── _collapse_split_parentheticals ──────────────────────────────────
+
+def test_collapse_split_parens_basic():
+    """Adjacent '( value' + ')' cells are collapsed into a single '(value)' cell."""
+    cells = ["Cost of goods sold", "", "", "( 325.2", ")", "", "", "( 319.3", ")"]
+    result = _collapse_split_parentheticals(cells)
+    assert result == ["Cost of goods sold", "", "", "(325.2)", "", "", "(319.3)"]
+
+
+def test_collapse_split_parens_multiple_pairs():
+    """All four parenthetical pairs in an IOSP-style row are collapsed."""
+    # Simulates: | CoGS |  |  | ( 325.2 | ) |  |  | ( 319.3 | ) |  |  | ( 957.4 | ) |  |  | ( 971.9 | ) |
+    cells = [
+        "CoGS", "", "",
+        "( 325.2", ")", "", "",
+        "( 319.3", ")", "", "",
+        "( 957.4", ")", "", "",
+        "( 971.9", ")",
+    ]
+    result = _collapse_split_parentheticals(cells)
+    # 17 cells - 4 removed ')' = 13 cells
+    assert len(result) == 13
+    assert result[3] == "(325.2)"
+    assert result[6] == "(319.3)"
+    assert result[9] == "(957.4)"
+    assert result[12] == "(971.9)"
+
+
+def test_collapse_split_parens_no_collapse_when_already_closed():
+    """Cells that already have closing paren are NOT collapsed."""
+    cells = ["Item", "(500)", "(300)"]
+    result = _collapse_split_parentheticals(cells)
+    assert result == ["Item", "(500)", "(300)"]
+
+
+def test_collapse_split_parens_lone_paren_not_collapsed():
+    """A '(' cell with no adjacent ')' is left unchanged."""
+    cells = ["Item", "( 100", "200"]  # next cell is not ')'
+    result = _collapse_split_parentheticals(cells)
+    assert result == ["Item", "( 100", "200"]
+
+
+def test_split_paren_roundtrip_extraction():
+    """End-to-end: split-cell parenthetical negatives extract as negative values."""
+    # Mimics IOSP 10-Q IS table structure (2 periods for simplicity)
+    table = (
+        "| | 2025 | | 2024 |\n"
+        "| --- | --- | --- | --- | --- |\n"
+        "| Net sales | $ | 441.9 | $ | 443.4 |\n"
+        "| Cost of goods sold |  | ( 325.2 | ) | ( 319.3 | ) |\n"
+        "| Gross profit |  | 116.7 |  | 124.1 |\n"
+    )
+    fields = extract_from_markdown_table(table)
+    cogs_fields = [f for f in fields if "cost" in f.label.lower()]
+    # Both periods should have extracted a negative COGS
+    assert len(cogs_fields) >= 1
+    for f in cogs_fields:
         assert f.value < 0
 
 

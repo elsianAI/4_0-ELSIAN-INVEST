@@ -111,6 +111,51 @@ def _is_subheader_row(cells: List[str]) -> bool:
     return has_year or has_scale or has_date_fragment or has_period_indicator
 
 
+# Pre-compiled regex: cell that starts with '(' followed by a numeric value
+# (digits, commas, dots, spaces) but has NO closing ')' — the first half of a
+# split-cell parenthetical negative like | ( 325.2 | ) |.
+_SPLIT_PAREN_CELL_RE = re.compile(r"^\(\s*[\d,. ]+\s*$")
+
+
+def _collapse_split_parentheticals(cells: List[str]) -> List[str]:
+    """Collapse split-cell parenthetical negatives into a single cell.
+
+    Some SEC filings render negative values across two *adjacent* cells:
+
+        | ( 325.2 | ) |
+
+    After ``line.strip("|").split("|")`` + strip this becomes
+    ``["( 325.2", ")"]``.  This function merges such adjacent pairs into
+    a single proper parenthetical cell:
+
+        ["( 325.2", ")"]  →  ["(325.2)"]
+
+    The resulting cell is then handled by :func:`parse_number` as a
+    standard ``(VALUE)`` negative.  Collapsing also restores column
+    alignment so that the data row has the same number of columns as the
+    header row.
+    """
+    result: List[str] = []
+    i = 0
+    while i < len(cells):
+        cell = cells[i]
+        # Match: starts with '(' + numeric content, no closing ')'
+        if (
+            cell.startswith("(")
+            and not cell.endswith(")")
+            and _SPLIT_PAREN_CELL_RE.match(cell)
+            and i + 1 < len(cells)
+            and cells[i + 1] == ")"
+        ):
+            inner = cell[1:].strip()  # remove leading '('
+            result.append(f"({inner})")
+            i += 2  # consume both the open-value cell and the close-paren cell
+        else:
+            result.append(cell)
+            i += 1
+    return result
+
+
 def _parse_markdown_table(table_text: str) -> Tuple[List[str], List[List[str]]]:
     """Parse a markdown table into headers and rows.
 
@@ -140,6 +185,32 @@ def _parse_markdown_table(table_text: str) -> Tuple[List[str], List[List[str]]]:
     for line in lines[2:]:
         if line.startswith("|"):
             cells = [cell.strip() for cell in line.strip("|").split("|")]
+            # Collapse split-cell parentheticals ONLY when the row is wider
+            # than the header by exactly the number of paren pairs.  This
+            # handles tables where the HTML→markdown converter created a
+            # header with fewer cells than the data rows (e.g. due to
+            # colspan), and negative values in the data take 2 cells
+            # ("( value" | ")") instead of 1, making the row even wider.
+            # Collapsing ONLY in that exact-width-match case avoids
+            # shifting correctly-aligned values in tables where the paren
+            # cells are already at the right period columns (parse_number
+            # handles those via the split-paren branch).
+            n_pairs = sum(
+                1 for i, c in enumerate(cells)
+                if (
+                    c.startswith("(")
+                    and not c.endswith(")")
+                    and _SPLIT_PAREN_CELL_RE.match(c)
+                    and i + 1 < len(cells)
+                    and cells[i + 1] == ")"
+                )
+            )
+            if (
+                n_pairs > 0
+                and len(cells) > len(headers)
+                and len(cells) - n_pairs == len(headers)
+            ):
+                cells = _collapse_split_parentheticals(cells)
             raw_rows.append(cells)
 
     # Double-header support: consume consecutive sub-header rows and merge

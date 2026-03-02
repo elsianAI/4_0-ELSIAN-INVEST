@@ -2,6 +2,11 @@
 
 ## 2026-03-02
 
+### [CODE] BL-038 part 1 — Parenthetical column normalization
+- `elsian/extract/html_tables.py`: Added `_collapse_split_parentheticals()` and `_SPLIT_PAREN_CELL_RE`. Collapses `( value | )` split-cell patterns in markdown tables into single `(value)` cells. Applied conditionally: only when the row is wider than the header by exactly the number of paren pairs — this prevents shifting correctly-aligned values in tables (TALO, SONO) where `parse_number` already handles split-paren cells at the right period columns.
+- `tests/unit/test_html_tables.py`: Added 5 unit tests (`test_collapse_split_parens_*`, `test_split_paren_roundtrip_extraction`).
+- Regression: 11/11 tickers PASS 100% (GCT 202, IOSP 95, KAR 49, NEXN 76, NVDA 318, PR 141, SONO 311, TALO 183, TEP 55, TZOO 270, TZOO_backup 270).
+
 ### [DATA] BL-026 — TALO promoted to FULL scope (183/183, 100%)
 - `cases/TALO/case.json`: Set `period_scope` to `FULL`.
 - `cases/TALO/expected.json`: Added 7 quarterly periods (Q3-2025, Q2-2025, Q1-2025, Q3-2024,
