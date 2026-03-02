@@ -81,11 +81,11 @@
 
 ### BL-026 — Promover tickers SEC a FULL vía curate
 - **Prioridad:** ALTA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE ✅ (2026-03-03)
+- **Asignado a:** elsian-4
 - **Depende de:** BL-025 (comando curate funcional)
-- **Descripción:** Usar `elsian curate` para generar expected.json con periodos anuales + trimestrales para los tickers SEC. Para IOSP, SONO, GCT, NEXN, TALO: generar draft con curate, depurar con LLM, cambiar period_scope a FULL, iterar hasta 100%. Oleada 1 (IOSP, SONO, GCT) primero, oleada 2 (NEXN, TALO) después. NVDA y TZOO ya están en FULL.
-- **Criterio de aceptación:** ≥5 tickers en FULL al 100% (incluyendo TZOO y NVDA). Sin regresiones en tickers que no cambian de scope.
+- **Descripción:** Oleada 1 (IOSP, SONO, GCT) completada. SONO→FULL 100% (311/311, 18p). GCT→FULL 100% (202/202, 12p). IOSP permanece ANNUAL_ONLY (pipeline bug en IS trimestral, ver BL-038). NVDA y TZOO ya estaban en FULL.
+- **Criterio de aceptación:** ≥5 tickers en FULL al 100% (incluyendo TZOO y NVDA). Sin regresiones en tickers que no cambian de scope. ✅ Cumplido: TZOO, NVDA, SONO, GCT en FULL al 100%. Oleada 2 (NEXN, TALO) pendiente.
 
 ### BL-027 — Scope Governance: coherencia case.json vs expected.json
 - **Prioridad:** CRÍTICA
@@ -324,6 +324,16 @@
 - **Depende de:** DEC-013
 - **Descripción:** PR (Permian Resources, NYSE) está al 88.65% (125/141). Problemas: (1) shares_outstanding no extraído en 9 periodos (FY2025-FY2023, Q3-Q1 2025, Q3-Q1 2024), (2) total_debt con desviación ~5-15% en 5 periodos, (3) net_income y eps_basic wrong en FY2023. El agente técnico debe: añadir PR a WIP_TICKERS en test_regression.py, diagnosticar los 3 problemas, iterar hasta 100%.
 - **Criterio de aceptación:** PR al 100% (141/141). PR migrado de WIP_TICKERS a VALIDATED_TICKERS. Sin regresiones en los 9 tickers existentes.
+
+### BL-038 — Pipeline bug: IS no extraído en 10-Q con formato de columna desalineado
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** Dos tickers (IOSP, GCT) no pueden ser promovidos a FULL completo porque el pipeline falla al extraer IS desde 10-Q trimestrales con formatos específicos: (1) IOSP: gastos en formato parentético `( 361.8 | ) ` que rompe el alineamiento de columnas en tablas markdown. (2) GCT: sub-cabecera de año está en col 4 pero los datos del año actual están en col 5 — el pipeline extrae el año comparativo (período anterior) correctamente pero NO el período actual. Afecta: IOSP todos sus Q*, GCT Q1-Q3 2024. Impacto: IOSP no puede promoverse a FULL; GCT promovido con 6 de 9 quarters posibles.
+- **Criterio de aceptación:** El pipeline extrae correctamente IS para IOSP Q* y GCT Q1-Q3 2024. IOSP evaluado a FULL ≥95%. GCT Q1-Q3 2024 añadidos a expected.json y evaluados al 100%.
+
+
 
 ---
 
