@@ -311,11 +311,19 @@
 
 ### BL-032 — Documentar o limpiar cases/PR
 - **Prioridad:** BAJA
+- **Estado:** DONE ✅ (2026-03-02) — DEC-013: PR trackeado como WIP.
+- **Asignado a:** Director
+- **Depende de:** —
+- **Descripción:** El directorio `cases/PR/` (Permian Resources Corp, NYSE, CIK 0001658566, period_scope: FULL) fue creado durante WP-3. Decisión tomada en DEC-013: PR se trackea como WIP (88.65%, 125/141). case.json + expected.json añadidos al repo. Falta añadir a WIP_TICKERS en test_regression.py (BL-033).
+- **Criterio de aceptación:** ✓ cases/PR documentado en PROJECT_STATE. ✓ DEC-013 registrada.
+
+### BL-033 — Promover PR de WIP a VALIDATED (100%)
+- **Prioridad:** MEDIA
 - **Estado:** TODO
 - **Asignado a:** sin asignar
-- **Depende de:** —
-- **Descripción:** El directorio `cases/PR/` (Permian Resources Corp, NYSE, CIK 0001658566, period_scope: FULL) fue creado durante el trabajo de WP-3 pero no está documentado en ningún sitio: ni en VALIDATED_TICKERS del test de regresión, ni en PROJECT_STATE. Decidir: si es un caso válido, añadirlo al pipeline y validar; si fue un artefacto de prueba, eliminar.
-- **Criterio de aceptación:** cases/PR documentado en PROJECT_STATE y añadido a test_regression.py, O eliminado del repositorio.
+- **Depende de:** DEC-013
+- **Descripción:** PR (Permian Resources, NYSE) está al 88.65% (125/141). Problemas: (1) shares_outstanding no extraído en 9 periodos (FY2025-FY2023, Q3-Q1 2025, Q3-Q1 2024), (2) total_debt con desviación ~5-15% en 5 periodos, (3) net_income y eps_basic wrong en FY2023. El agente técnico debe: añadir PR a WIP_TICKERS en test_regression.py, diagnosticar los 3 problemas, iterar hasta 100%.
+- **Criterio de aceptación:** PR al 100% (141/141). PR migrado de WIP_TICKERS a VALIDATED_TICKERS. Sin regresiones en los 9 tickers existentes.
 
 ---
 

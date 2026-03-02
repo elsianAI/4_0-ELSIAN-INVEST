@@ -1,6 +1,6 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
-> Última actualización: 2026-03-06
+> Última actualización: 2026-03-02
 > Actualizado por: Copilot (Project Director)
 
 ---
@@ -13,11 +13,11 @@ Ver ROADMAP.md para descripción completa de fases.
 
 | Métrica | Valor | Fecha |
 |---|---|---|
-| Tickers validados (100%) | 9 | 2026-03-06 |
-| Tickers WIP | 0 | 2026-03-06 |
-| Total campos validados | ~1210 (9 tickers @100%, NVDA expandido a 318) | 2026-03-06 |
+| Tickers validados (100%) | 9 | 2026-03-02 |
+| Tickers WIP | 1 (PR 88.65%) | 2026-03-02 |
+| Total campos validados | ~1210 (9 tickers @100%, NVDA expandido a 318) | 2026-03-02 |
 | Tests pasando | 463 passed, 0 failed, 2 skipped | 2026-03-02 |
-| Líneas de código (aprox.) | ~7,400 + ~2,100 tests | 2026-03-06 |
+| Líneas de código (aprox.) | ~7,400 + ~2,100 tests | 2026-03-02 |
 
 ## Tickers validados
 
@@ -32,6 +32,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | TALO | 85 | SEC (US) | 10-K HTML | ✅ VALIDATED |
 | NVDA | 318 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (period_scope: FULL) |
 | KAR | 49 | ASX (AU) | PDF (IFRS, USD) | ✅ VALIDATED |
+| PR | 125/141 | SEC (US) | 10-K/10-Q HTML (FULL) | ⚠️ WIP 88.65% — shares_outstanding missing (9), total_debt deviation (5) |
 
 ## Componentes implementados
 

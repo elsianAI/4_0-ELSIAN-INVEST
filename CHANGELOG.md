@@ -2,6 +2,10 @@
 
 ## 2026-03-02
 
+### [4.0] DEC-013: PR (Permian Resources) tracked as WIP
+- `cases/PR/case.json` + `expected.json` added to repo (88.65%, 125/141 fields).
+- PROJECT_STATE: PR as WIP ticker. BACKLOG: BL-032 closed, BL-033 created.
+
 ### [4.0] DEC-012: Audit fixes + guardrail curate 90%
 - Curate coverage test guardrail subido de ≥80% a ≥90% (test_curate.py).
 - PROJECT_STATE: ixbrl.py 354→594, contradicciones en prioridades, BL-026 stale.
