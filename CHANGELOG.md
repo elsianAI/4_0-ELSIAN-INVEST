@@ -15,6 +15,7 @@
 - Strategy: iXBRL draft unreliable for SONO (SGA underreported, BS period shift); quarterly
   expected.json built from pipeline extraction_result.json (spot-checked correct).
 - Score: 100% (311/311). 464 passed, 1 skipped.
+<!-- commit: SONO promoted to FULL -->
 
 ### [DATA] BL-026 — GCT promoted to FULL (202/202, 100%)
 - `cases/GCT/case.json`: period_scope changed ANNUAL_ONLY→FULL. Notes updated.

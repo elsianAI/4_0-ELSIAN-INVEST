@@ -1,7 +1,9 @@
 {
   "ticker": "SONO",
   "company_name": "Sonos Inc.",
+  "cik": "1314727",
   "source_hint": "sec",
+  "period_scope": "FULL",
   "currency": "USD",
   "exchange": "NASDAQ",
   "sector": "Consumer Electronics",
