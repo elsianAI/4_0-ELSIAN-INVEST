@@ -42,11 +42,11 @@
 
 ### BL-001 — Rehacer KAR desde cero
 - **Prioridad:** CRÍTICA
-- **Estado:** TODO
+- **Estado:** DONE ✅ (2026-03-02)
 - **Asignado a:** elsian-4
-- **Depende de:** BL-008 (AsxFetcher funcional)
-- **Descripción:** El caso KAR fue eliminado completamente por el usuario (intento anterior violaba DEC-006). Debe rehacerse **desde cero**: 1) crear case.json (ticker, source_hint=asx, currency=USD, fiscal_year_end_month=12), 2) ejecutar acquire con el nuevo AsxFetcher, 3) curar expected.json desde los filings descargados (≥15 campos/periodo cubriendo IS+BS+CF), 4) extraer con pipeline, 5) evaluar honestamente. **Atención:** NO usar filings_sources (DEC-008). NO truncar expected.json.
-- **Criterio de aceptación:** KAR en VALIDATED_TICKERS con score real ≥80%. filings/ tiene PDFs + .txt generados automáticamente por acquire. expected.json tiene ≥15 campos por periodo. Regresión 7/7 al 100%.
+- **Depende de:** BL-008 (AsxFetcher funcional) — DONE
+- **Descripción:** KAR rehecho desde cero con AsxFetcher autónomo. case.json (source_hint=asx, currency=USD, fiscal_year_end_month=12), filings adquiridos automáticamente vía ASX API (6 PDFs + 6 TXTs), expected.json curado manualmente (49 campos, 3 periodos FY2023-FY2025, ≥15 campos/periodo cubriendo IS+BS+CF). Score: 100% (49/49).
+- **Criterio de aceptación:** ✓ KAR en VALIDATED_TICKERS con 100%. ✓ filings/ tiene PDFs + .txt generados por acquire. ✓ expected.json tiene ≥15 campos por periodo. ✓ Regresión 10/10 al 100%.
 
 ### BL-002 — Nuevo ticker NVDA
 - **Prioridad:** ALTA
@@ -58,11 +58,10 @@
 
 ### BL-003 — Wire ExtractPhase a PipelinePhase.run(context)
 - **Prioridad:** ALTA
-- **Estado:** TODO
+- **Estado:** DONE ✅ (2026-03-03) — ver sección "Tareas completadas"
 - **Asignado a:** elsian-4
 - **Depende de:** —
-- **Descripción:** ExtractPhase tiene 914 líneas con su propio extract() pero no implementa PipelinePhase.run(context). Esto impide que Pipeline encadene fases correctamente. Debe implementar run(context) delegando a extract() internamente.
-- **Criterio de aceptación:** `Pipeline([AcquirePhase(), ExtractPhase(), EvaluatePhase()]).run(context)` funciona end-to-end. cmd_run lo usa. 150 tests siguen pasando.
+- **Resultado:** Implementado. Todas las fases heredan PipelinePhase con run(context). Pipeline orquesta correctamente. cmd_run usa Pipeline([ExtractPhase(), EvaluatePhase()]). +6 tests nuevos. 346 tests pasando.
 
 ### BL-004 — Portar IxbrlExtractor desde 3.0
 - **Prioridad:** ALTA

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-03-05
+
+### [Backlog] Close BL-001 (KAR) and BL-003 (Pipeline wiring)
+- **What:** Administrative backlog cleanup. BL-001 (Rehacer KAR desde cero) marked DONE — KAR at 100% (49/49) with autonomous ASX-fetched filings, 3 annual periods, ≥15 fields/period. BL-003 (Wire ExtractPhase) was already completed 2026-03-03 but remained in active section — cleaned up.
+- **Regression:** 10/10 tickers at 100%, 346 tests passed, 0 failed.
+
 ## 2026-03-04
 
 ### [Extract/Normalize] NVDA to 100% — fix alias rejection, period_affinity, and regressions
