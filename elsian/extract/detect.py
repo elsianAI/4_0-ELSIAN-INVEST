@@ -256,6 +256,17 @@ def detect_periods(text: str) -> List[str]:
             half = 1 if month_num <= 6 else 2
             periods.add(f"H{half}-{year}")
 
+    # "1st half-year 2025", "2nd half-year 2024" (Euronext / European format)
+    for m in re.finditer(
+        r"(\d+)(?:st|nd|rd|th)\s+half[-\s]?year\s+(20\d{2})",
+        sample,
+        re.IGNORECASE,
+    ):
+        ordinal = int(m.group(1))
+        year = m.group(2)
+        if ordinal in (1, 2):
+            periods.add(f"H{ordinal}-{year}")
+
     return sorted(periods)
 
 

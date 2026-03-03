@@ -383,11 +383,12 @@
 
 ### BL-044 — Promover TEP a FULL (investigar semestrales Euronext)
 - **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE
+- **Asignado a:** Claude (elsian-4)
 - **Depende de:** —
 - **Descripción:** TEP (Teleperformance, Euronext Paris) está en ANNUAL_ONLY con 55 campos y 100%. La EU Transparency Directive obliga a publicar reportes semestrales (H1). Investigar: (1) ¿Teleperformance publica H1 financial statements completos? (2) Si sí → descargar, curar con H1, cambiar period_scope a FULL. (3) Si no → documentar excepción bajo DEC-015.
 - **Criterio de aceptación:** Si H1 existe → TEP al 100% con period_scope FULL. Si no → excepción DEC-015 documentada.
+- **Resultado:** H1 confirmado (SRC_011 = HALF-YEAR FINANCIAL REPORT AT 30 JUNE 2025). TEP FULL 100% (80/80). H1-2025: 15 campos, H1-2024: 10 campos. Pipeline actualizado para "1st half-year YYYY" (Euronext), "6/30/YYYY" en contexto H1, y filtro de notas decimales restringido a `is_half_year_doc=True`. KAR no regresó (49/49 100%). 3 nuevos tests.
 
 ### BL-034 — Field Dependency Matrix: análisis de dependencias 3.0→4.0
 - **Prioridad:** MEDIA
@@ -404,6 +405,16 @@
 - **Depende de:** BL-034 (matriz revisada) + BL-038 (DONE) + oleada 3 IOSP/NEXN (DONE)
 - **Descripción:** Con la matriz de BL-034 en mano, expandir el extractor 4.0 y expected.json para cubrir campos faltantes priorizados como critical y luego required. **Oleada 1 (critical):** `cfi` (cash from investing), `cff` (cash from financing), `delta_cash` (variación neta de caja) — los 3 inputs del gate CASHFLOW_IDENTITY del validator. **Oleada 2 (required por producto):** `accounts_receivable`, `inventories`, `accounts_payable` — inputs de working capital en tp_calculator (no disparan gates del validator, pero son necesarios para completitud de producto). **Oleada 3:** resto de campos critical/required según matriz, solo si oleadas 1+2 están validadas. Pilotos: TZOO (primario) y NVDA (secundario). Usar `elsian curate` para generar drafts ampliados. Mantener formato expected.json v1 actual — solo se añaden más campos, sin nuevas claves estructurales. Toda priorización de campos sale de la matriz objetiva (BL-034), no de agrupaciones temáticas.
 - **Criterio de aceptación:** Nuevos campos de oleada 1 extraídos y evaluados al 100% en TZOO y NVDA para periodos donde estén en expected.json. Sin regresiones en tickers validados. Cada campo nuevo en expected.json referencia filing fuente consistente con extracción. Tests unitarios por campo nuevo (caso positivo + caso negativo).
+
+---
+
+### BL-045 — Limpieza post-auditoría: scope, gitignore, ficheros basura, pyproject
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-03)
+- **Asignado a:** elsian-4
+- **Depende de:** —
+- **Descripción:** Auditoría del director (2026-03-03) detectó 6 issues de governance/higiene. Ver instrucción completa más abajo. Resumen: (1) KAR y TEP sin period_scope explícito, (2) ficheros basura en NVDA, (3) _run_acquire.py trackeado, (4) expected_draft.json sin ignorar, (5) pyproject.toml requires-python incorrecto. Ninguno afecta datos ni scores — son deuda de governance.
+- **Criterio de aceptación:** (1) KAR y TEP case.json con `"period_scope": "ANNUAL_ONLY"`. (2) `cases/NVDA/simple.txt`, `test.json`, `test.txt` eliminados del repo. (3) `_run_acquire.py` eliminado del repo. (4) `.gitignore` incluye `expected_draft.json` y `_run_*.py`. (5) `pyproject.toml` cambia `requires-python` a `">=3.9"`. (6) Tests 489 pass, eval --all 12/12 100%. Un solo commit.
 
 ---
 

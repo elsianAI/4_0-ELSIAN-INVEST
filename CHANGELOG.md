@@ -1,6 +1,12 @@
 # Changelog
 
-## 2026-03-04
+## 2026-03-05
+
+### [4.0] BL-044 TEP promoted to FULL — H1-2025 and H1-2024 via Euronext half-year report (80/80, 100%)
+- **What:** Promoted TEP (Teleperformance SE) from ANNUAL_ONLY to FULL scope. Added H1-2025 (15 fields) and H1-2024 (10 fields) from SRC_011_REGULATORY_FILING_2025-07-31 (official HALF-YEAR FINANCIAL REPORT AT 30 JUNE 2025). Fixed pipeline to recognise Euronext-specific "1st half-year YYYY" column header format, "6/30/YYYY" date mapping in half-year context, and "Notes" column interference (decimal note-ref filter "3.1"/"6.3" guarded to `is_half_year_doc=True` to avoid filtering KAR's 6.8 non-current liabilities value). 3 new unit tests.
+- **Files changed:** elsian/extract/detect.py, elsian/extract/html_tables.py, tests/unit/test_html_tables.py (3 new tests), cases/TEP/expected.json (H1-2025 + H1-2024), cases/TEP/case.json (period_scope FULL)
+- **Tests:** 492 passed, 2 skipped.
+- **Regression:** eval --all: 13/13 tickers PASS 100% (KAR 49/49, TEP 80/80).
 
 ### [4.0] INMD promoted to FULL — 6 quarterly periods via 6-K Exhibit 99.1 (210/210, 100%)
 - **What:** Promoted INMD from ANNUAL_ONLY to FULL scope. Added Q3-2024 through Q4-2025 (6 quarterly periods, 102 new fields) to expected.json. Fixed 3 extraction bugs: (1) "operations income" alias missing for ebit — added to field_aliases.json; (2) Non-GAAP reconciliation table corrupting GAAP IS values for Q3/Q4-2024 — added Non-GAAP section filter in html_tables.py; (3) "INCOME TAXES BENEFIT (EXPENSES)" label rejected by aliases.py — removed rejection, added _BENEFIT_FIRST_RE sign-flip in extract/phase.py.

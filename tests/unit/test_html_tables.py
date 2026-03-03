@@ -594,3 +594,105 @@ def test_income_tax_provision_label_priority():
         f"'Income tax provision' priority ({lp_provision}) should beat "
         f"'Income taxes' priority ({lp_taxes})"
     )
+
+
+# ── BL-044: TEP / Euronext "1st half-year YYYY" header format ────────────────
+
+def test_first_half_year_header_in_markdown_table():
+    """'1st half-year 2025' / '2nd half-year 2024' headers in markdown tables
+    must be identified as H1-2025 / H2-2024 respectively.
+
+    Euronext-listed companies (e.g. Teleperformance) use this ordinal format
+    in their HALF-YEAR FINANCIAL REPORT PDFs → clean.md pipe tables.
+    """
+    table = (
+        "|  | 1st half-year 2025 | 1st half-year 2024 |\n"
+        "| --- | --- | --- |\n"
+        "| Revenues | 5,116 | 5,076 |\n"
+        "| Operating profit | 530 | 503 |\n"
+        "| Net profit | 249 | 291 |\n"
+    )
+    fields = extract_from_markdown_table(table, filing_type="interim_report")
+    by_period = {(f.label, f.column_header): f.value for f in fields}
+    assert by_period.get(("Revenues", "H1-2025")) == 5116.0, (
+        f"Expected Revenues H1-2025=5116, got {by_period}"
+    )
+    assert by_period.get(("Revenues", "H1-2024")) == 5076.0
+    assert by_period.get(("Operating profit", "H1-2025")) == 530.0
+    assert by_period.get(("Net profit", "H1-2025")) == 249.0
+    # Must not create FY2025 or Q2-2025 periods
+    assert not any(
+        h in {"FY2025", "FY2024", "Q2-2025", "Q2-2024"}
+        for _, h in by_period
+    ), f"Unexpected period labels: {set(h for _, h in by_period)}"
+
+
+def test_first_half_year_header_in_text_extractor():
+    """'1st half-year YYYY' headers in space-aligned text (PDF output) map to H1.
+
+    TEP SRC_011 (HALF-YEAR FINANCIAL REPORT AT 30 JUNE 2025) contains
+    income statement tables with columns labelled '1st half-year 2025'
+    and '1st half-year 2024' in the converted .txt file.
+    The 'Notes' column before the data columns (containing references like
+    '3.1', '5', '6.3') must be filtered out.
+    """
+    from elsian.extract.html_tables import extract_tables_from_text
+
+    # Minimal replica of TEP's half-year IS in space-aligned text format.
+    txt = (
+        "HALF-YEAR FINANCIAL REPORT\n"
+        "\n"
+        "CONDENSED CONSOLIDATED STATEMENT OF INCOME\n"
+        "(in millions of euros)         Notes 1st half-year 2025 1st half-year 2024\n"
+        "Revenues                       3.1   5,116            5,076\n"
+        "Operating profit                     530              503\n"
+        "Income tax                     5     -123             -113\n"
+        "Net profit                           249              291\n"
+        "Earnings per share (in euros)  6.3   4.21             4.85\n"
+    )
+    fields = extract_tables_from_text(txt, source_filename="TEP_H1_2025.txt")
+    by_period = {(f.label, f.column_header): f.value for f in fields}
+    # Revenue: 5,116 (H1-2025) and 5,076 (H1-2024) — note "3.1" must be filtered
+    assert by_period.get(("Revenues", "H1-2025")) == 5116.0, (
+        f"Revenues H1-2025 expected 5116, got {by_period}"
+    )
+    assert by_period.get(("Revenues", "H1-2024")) == 5076.0
+    assert by_period.get(("Operating profit", "H1-2025")) == 530.0
+    assert by_period.get(("Operating profit", "H1-2024")) == 503.0
+    # Income tax: note "5" must be filtered, leaving -123 (H1-2025) and -113 (H1-2024)
+    assert by_period.get(("Income tax", "H1-2025")) == -123.0
+    assert by_period.get(("Income tax", "H1-2024")) == -113.0
+    # Earnings per share: note "6.3" must be filtered, leaving 4.21 and 4.85
+    eps_h1_25 = by_period.get(("Earnings per share (in euros)", "H1-2025"))
+    assert eps_h1_25 == 4.21, f"EPS H1-2025 expected 4.21 (not 6.3), got {eps_h1_25}"
+    assert by_period.get(("Earnings per share (in euros)", "H1-2024")) == 4.85
+    # Must NOT produce FY2025 from the ordinal year embedded in the header
+    assert ("Revenues", "FY2025") not in by_period
+
+
+def test_half_year_date_header_in_text_extractor():
+    """'6/30/2025' date headers in a half-year financial report map to H1-2025
+    (not Q2-2025) when the file is identified as a half-year document.
+    """
+    from elsian.extract.html_tables import extract_tables_from_text
+
+    txt = (
+        "HALF-YEAR FINANCIAL REPORT\n"
+        "\n"
+        "CONDENSED CONSOLIDATED STATEMENT OF FINANCIAL POSITION\n"
+        "(in millions of euros)         Notes  6/30/2025  12/31/2024\n"
+        "Total assets                          12,095     12,074\n"
+        "Total equity                          3,951      4,556\n"
+        "Cash and cash equivalents             1,227      1,058\n"
+    )
+    fields = extract_tables_from_text(txt, source_filename="TEP_H1_2025.txt")
+    by_period = {(f.label, f.column_header): f.value for f in fields}
+    # June 30 date in a half-year report means H1 balance sheet
+    assert by_period.get(("Total assets", "H1-2025")) == 12095.0, (
+        f"Expected Total assets H1-2025=12095, got {by_period}"
+    )
+    assert by_period.get(("Total equity", "H1-2025")) == 3951.0
+    # December 31 stays as FY
+    assert by_period.get(("Total assets", "FY2024")) == 12074.0
+    # Must NOT produce Q2-2025
+    assert ("Total assets", "Q2-2025") not in by_period

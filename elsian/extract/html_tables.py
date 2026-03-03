@@ -463,6 +463,19 @@ def _identify_period_columns(
                 period_map[idx] = f"H{half}-{m.group(2)}"
                 continue
 
+        # "1st half-year 2025", "2nd half-year 2024" (Euronext/European format)
+        m = re.search(
+            r"(\d+)(?:st|nd|rd|th)\s+half[-\s]?year\s+(20\d{2})",
+            header_clean,
+            re.IGNORECASE,
+        )
+        if m:
+            ordinal = int(m.group(1))
+            year = m.group(2)
+            if ordinal in (1, 2):
+                period_map[idx] = f"H{ordinal}-{year}"
+            continue
+
         # "Quarters Ended Dec. 31, 2019" -> Q4-2019
         m = re.search(
             r"quarters?\s+ended\s+([A-Za-z]+\.?).*?(\d{4})",
@@ -1026,6 +1039,12 @@ _YEAR_FOOTNOTE_RE = re.compile(r"\b(20\d{2})\d\b")
 # Regex matching a date-headed column like 12/31/2025
 _DATE_COL_RE = re.compile(r"\b(\d{1,2}/\d{1,2}/(20\d{2}))\b")
 
+# Regex matching European half-year ordinal headers like "1st half-year 2025"
+_HALF_YEAR_COL_RE = re.compile(
+    r"(\d+)(?:st|nd|rd|th)\s+half[-\s]?year\s+(20\d{2})",
+    re.IGNORECASE,
+)
+
 # Header patterns for financial statement sections
 _SECTION_HEADER_RE = re.compile(
     r"(?:CONSOLIDATED\s+)?(?:INCOME\s+STATEMENTS?|BALANCE\s+SHEETS?|"
@@ -1257,6 +1276,7 @@ def extract_shares_outstanding_from_text(
 def _extract_value_at_column(
     line: str, col_anchor: int, all_anchors: List[int],
     note_col_end: int = -1,
+    is_half_year_doc: bool = False,
 ) -> Optional[float]:
     """Extract the numeric value from a line closest to a column anchor.
 
@@ -1287,6 +1307,15 @@ def _extract_value_at_column(
                 continue
             if 1 <= val <= 30 and val == int(val) and m.end() <= note_col_end:
                 continue  # skip note reference
+            # Decimal sub-section refs like "3.1", "6.3" (single digit each
+            # side of decimal) — but NOT EPS values like "16.94" or "4.85".
+            # Only active for Euronext half-year reports where this format
+            # actually appears (protects KAR's "6.8" from being filtered).
+            if (is_half_year_doc
+                    and re.match(r"^\d\.\d$", raw)
+                    and val < 20
+                    and m.end() <= note_col_end):
+                continue  # skip decimal sub-section note reference
             filtered.append(m)
         matches = filtered
         if not matches:
@@ -1318,6 +1347,7 @@ def _extract_space_aligned_table(
     col_anchors: List[int],
     source_filename: str,
     note_col_end: int = -1,
+    is_half_year_doc: bool = False,
 ) -> List[TableField]:
     """Extract fields from a block of space-aligned table lines."""
     results: List[TableField] = []
@@ -1342,8 +1372,20 @@ def _extract_space_aligned_table(
                 except ValueError:
                     filtered.append(m)
                     continue
-                if 1 <= val <= 30 and val == int(val) and m.end() <= note_col_end:
-                    continue  # skip note reference
+                if m.end() <= note_col_end:
+                    # Filter small integers 1-30 (note references like "5", "6")
+                    if 1 <= val <= 30 and val == int(val):
+                        continue
+                    # Decimal sub-section refs like "3.1", "6.3" (single
+                    # digit on each side of decimal point) — but NOT EPS
+                    # values like "16.94" or "4.85" (two decimal digits).
+                    # Guard: only in Euronext half-year report format where
+                    # this notation appears; regular annual filings (e.g. KAR)
+                    # use plain integers for note references, not "X.Y".
+                    if (is_half_year_doc
+                            and re.match(r"^\d\.\d$", raw)
+                            and val < 20):
+                        continue  # skip sub-section note reference
                 filtered.append(m)
             num_matches = filtered
 
@@ -1374,9 +1416,14 @@ def _extract_space_aligned_table(
         # Strip trailing note references from the label:
         # - "label 6(a)" or "label 5(a)(ii)"
         # - "label 6"  (standalone note integer when note zone is active)
+        # - "label 3.1" or "label 6.3" (decimal sub-section refs, Euronext format)
         label = re.sub(r'\s+\d{1,2}\s*\([a-z]+\)(\s*\([ivx]+\))?\s*$', '', label)
         if note_col_end > 0:
             label = re.sub(r'\s+\d{1,2}\s*$', '', label)
+            # Strip decimal sub-section references like " 3.1" or " 6.3"
+            # only for half-year docs (Euronext format) — single digit each side.
+            if is_half_year_doc:
+                label = re.sub(r'\s+\d\.\d\s*$', '', label)
         # Strip footnote digits attached directly to words: "amortisation4" → "amortisation"
         label = re.sub(r'([a-zA-Z])\d{1,2}$', r'\1', label)
 
@@ -1402,6 +1449,7 @@ def _extract_space_aligned_table(
                 continue
             extracted[col_idx] = _extract_value_at_column(
                 line, anchor, col_anchors, note_col_end=note_col_end,
+                is_half_year_doc=is_half_year_doc,
             )
 
         # Fallback: when position-based assignment leaves columns empty
@@ -1568,6 +1616,13 @@ def extract_tables_from_text(
     if not sections:
         return []
 
+    # Detect half-year financial reports (Euronext / European format).
+    # When True, M/D/YYYY date headers like "6/30/2025" are mapped to
+    # H1-YYYY instead of Q2-YYYY, since June 30 is the half-year end date.
+    _is_half_year_doc = bool(
+        re.search(r"half.year\s+financial\s+report", text[:10_000], re.IGNORECASE)
+    )
+
     global_tbl_idx = 0
 
     for sec_idx, (start_line, header_text, section_type) in enumerate(sections):
@@ -1604,6 +1659,29 @@ def extract_tables_from_text(
         header_end_positions: List[int] = []  # end positions of year/date headers
 
         for j, sline in enumerate(section_lines[:15]):  # Look in first 15 lines
+            # Try "1st half-year 2025" / "2nd half-year 2024" (Euronext/EU format)
+            # MUST come before date/year detection to prevent "2025" in the header
+            # from being assigned as FY2025 via the simple year pattern.
+            half_year_col_matches = list(_HALF_YEAR_COL_RE.finditer(sline))
+            if len(half_year_col_matches) >= 2:
+                label_area_end = len(sline) // 3
+                data_hy = [
+                    m for m in half_year_col_matches
+                    if m.start() > label_area_end
+                ]
+                if len(data_hy) >= 2:
+                    header_end_positions = []
+                    for hy_idx, hy in enumerate(data_hy):
+                        ordinal = int(hy.group(1))
+                        year = hy.group(2)
+                        period_headers[hy_idx] = f"H{ordinal if ordinal in (1, 2) else 1}-{year}"
+                        # Use match start (phrase beginning) not end, because the
+                        # data column is left-aligned with the start of the phrase
+                        # "1st half-year 2025" — not with the trailing "2025".
+                        header_end_positions.append(hy.start())
+                    header_line_idx = j
+                    break
+
             # Try date columns first: 12/31/2025  12/31/2024
             date_matches = list(_DATE_COL_RE.finditer(sline))
             if len(date_matches) >= 2:
@@ -1614,6 +1692,10 @@ def extract_tables_from_text(
                     month = int(month_day[0])
                     if month == 12:
                         period_headers[dm_idx] = f"FY{year}"
+                    elif _is_half_year_doc and month == 6:
+                        # June 30 date in a half-year financial report means
+                        # H1 balance sheet (not Q2).
+                        period_headers[dm_idx] = f"H1-{year}"
                     else:
                         q = (month - 1) // 3 + 1
                         period_headers[dm_idx] = f"Q{q}-{year}"
@@ -1679,8 +1761,27 @@ def extract_tables_from_text(
         # Data lines start after the header line
         data_lines = section_lines[header_line_idx + 1:]
 
+        # Detect note-zone early: if "Notes" keyword precedes the first data
+        # column in the header line (Euronext format), exclude anchors in that
+        # zone from col_anchors so they don't win the proximity match.
+        _preliminary_note_zone_end = -1
+        if header_end_positions and header_line_idx >= 0:
+            _hdr_txt = section_lines[header_line_idx]
+            _before_data = _hdr_txt[: header_end_positions[0]]
+            if re.search(r"\bNotes?\b", _before_data, re.IGNORECASE):
+                _preliminary_note_zone_end = header_end_positions[0]
+
         # Find column positions from number alignment
         col_anchors = _find_number_columns(data_lines[:50])
+
+        # Exclude anchors that fall within the note-reference zone: these are
+        # positions of small note-reference numbers (e.g. "3.1", "5") that
+        # appear between the row label and the first real data column.
+        if _preliminary_note_zone_end > 0:
+            col_anchors = [
+                a for a in col_anchors if a > _preliminary_note_zone_end
+            ]
+
         if len(col_anchors) < len(period_headers):
             # Fallback: use header positions to derive data-aligned anchors
             if (
@@ -1741,6 +1842,17 @@ def extract_tables_from_text(
                 note_col_end = m_note.end() + 12
                 break
 
+        # Additional note-column detection for European reports (Euronext format):
+        # header line has "... Notes 1st half-year 2025 1st half-year 2024"
+        # where "Notes" precedes the data columns.  Set note_col_end to the
+        # start position of the first data column so that note sub-section
+        # references ("3.1", "6.3", "5", …) are filtered from data rows.
+        if note_col_end < 0 and header_end_positions and header_line_idx >= 0:
+            header_line_text = section_lines[header_line_idx]
+            before_first_col = header_line_text[: header_end_positions[0]]
+            if re.search(r"\bNotes?\b", before_first_col, re.IGNORECASE):
+                note_col_end = header_end_positions[0]
+
         fields = _extract_space_aligned_table(
             data_lines,
             section_type,
@@ -1749,6 +1861,7 @@ def extract_tables_from_text(
             col_anchors,
             source_filename,
             note_col_end=note_col_end,
+            is_half_year_doc=_is_half_year_doc,
         )
         global_tbl_idx += 1
         all_fields.extend(fields)

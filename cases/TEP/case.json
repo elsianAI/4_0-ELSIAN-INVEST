@@ -27,7 +27,7 @@
       "period_end": "2019-12-31"
     }
   ],
-  "period_scope": "ANNUAL_ONLY",
+  "period_scope": "FULL",
   "notes": "European company, Euronext Paris. Filings from pipeline 3.0 IR crawling. Annual reports are PDF-based, no SEC EDGAR. filings_sources URLs sourced from _sec_fetcher_output.json (pipeline 3.0).",
   "manual_overrides": {
     "FY2022": {
