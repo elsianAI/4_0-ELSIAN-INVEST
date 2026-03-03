@@ -1,0 +1,535 @@
+[
+  {
+    "field_name": "ingresos_usd",
+    "classification": "critical",
+    "source_file": "both",
+    "functions": {
+      "validator": [
+        "EXPECTED_FIELDS_BY_DOC_TYPE (L37,56,63,67,70,72)",
+        "_gate_unidades_sanity (L376)",
+        "_gate_ttm_sanity (L440-441)",
+        "_compute_completitud_ajustada (L635-645)"
+      ],
+      "calculator": [
+        "_FY0_KEY_FIELDS (L28)",
+        "_find_eligible_fy0 (L58) — mandatory",
+        "calculate (L96,103)",
+        "_ttm (L636)",
+        "_ttm_semestral (L518)",
+        "_build_synthetic_q4_quarters (L413)",
+        "_margins (L740)"
+      ]
+    },
+    "gates_impacted": ["UNIDADES_SANITY", "TTM_SANITY", "DATA_COMPLETENESS", "CORE_FILING_COVERAGE"],
+    "metrics_impacted": ["TTM", "gross_margin", "operating_margin", "net_margin", "fcf_margin", "FY0_eligibility"],
+    "justification": "Most referenced field. Mandatory for FY0 eligibility — without it, all derived metrics collapse to null.",
+    "canonical_4_0": "ingresos",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
+  },
+  {
+    "field_name": "activos_totales_usd",
+    "classification": "critical",
+    "source_file": "both",
+    "functions": {
+      "validator": [
+        "EXPECTED_FIELDS_BY_DOC_TYPE (L49,60,67)",
+        "_gate_balance_identity (L211)",
+        "_reconcile_cross_filing (L680)"
+      ],
+      "calculator": [
+        "calculate → _bs_val (L130)",
+        "_returns (L780) — ROA denominator"
+      ]
+    },
+    "gates_impacted": ["BALANCE_IDENTITY (critical)", "DATA_COMPLETENESS"],
+    "metrics_impacted": ["ROA", "reconciliation_threshold"],
+    "justification": "Pillar of BALANCE_IDENTITY critical gate. If missing with another component, gate FAIL → overall FAIL.",
+    "canonical_4_0": "total_assets",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
+  },
+  {
+    "field_name": "pasivos_totales_usd",
+    "classification": "critical",
+    "source_file": "both",
+    "functions": {
+      "validator": [
+        "EXPECTED_FIELDS_BY_DOC_TYPE (L50,61,68)",
+        "_gate_balance_identity (L212)"
+      ],
+      "calculator": [
+        "calculate → _bs_val (L131)"
+      ]
+    },
+    "gates_impacted": ["BALANCE_IDENTITY (critical)", "DATA_COMPLETENESS"],
+    "metrics_impacted": [],
+    "justification": "Direct component of BALANCE_IDENTITY critical gate. Missing → gate may impute or FAIL.",
+    "canonical_4_0": "total_liabilities",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
+  },
+  {
+    "field_name": "patrimonio_usd",
+    "classification": "critical",
+    "source_file": "both",
+    "functions": {
+      "validator": [
+        "EXPECTED_FIELDS_BY_DOC_TYPE (L51,62,69)",
+        "_gate_balance_identity (L213)"
+      ],
+      "calculator": [
+        "calculate → _bs_val (L132)",
+        "_returns (L773) — ROE",
+        "_per_share (L809) — BV/share",
+        "calculate (L154) — invested_capital = debt + equity"
+      ]
+    },
+    "gates_impacted": ["BALANCE_IDENTITY (critical)", "DATA_COMPLETENESS"],
+    "metrics_impacted": ["ROE", "BV_per_share", "ROIC"],
+    "justification": "Component of BALANCE_IDENTITY and 3 return metrics. Absence severely degrades validation and returns.",
+    "canonical_4_0": "total_equity",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
+  },
+  {
+    "field_name": "cfo_usd",
+    "classification": "critical",
+    "source_file": "both",
+    "functions": {
+      "validator": [
+        "EXPECTED_FIELDS_BY_DOC_TYPE (L40,57,65,68)",
+        "_find_best_cf_entry (L278)",
+        "_gate_cashflow_identity (L300)",
+        "_gate_unidades_sanity (L376)"
+      ],
+      "calculator": [
+        "_FY0_KEY_FIELDS (L28)",
+        "calculate (L96,103)",
+        "_ttm (L636)",
+        "_ttm_semestral (L518,535)",
+        "_fcf (L691)"
+      ]
+    },
+    "gates_impacted": ["CASHFLOW_IDENTITY (critical)", "UNIDADES_SANITY", "DATA_COMPLETENESS"],
+    "metrics_impacted": ["FCF", "FCF_margin", "FCF_yield", "P_FCF", "EV_FCF", "FCF_per_share", "TTM"],
+    "justification": "Without CFO, CASHFLOW_IDENTITY FAIL (overall FAIL) and FCF + 5 derived metrics are null.",
+    "canonical_4_0": "cfo",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
+  },
+  {
+    "field_name": "cfi_usd",
+    "classification": "critical",
+    "source_file": "both",
+    "functions": {
+      "validator": [
+        "EXPECTED_FIELDS_BY_DOC_TYPE (L40,57,65)",
+        "_find_best_cf_entry (L279)",
+        "_gate_cashflow_identity (L301)"
+      ],
+      "calculator": [
+        "_ttm_semestral (L519)"
+      ]
+    },
+    "gates_impacted": ["CASHFLOW_IDENTITY (critical)"],
+    "metrics_impacted": ["TTM_semestral"],
+    "justification": "Direct component of cash bridge. Without it, CASHFLOW_IDENTITY FAIL → overall FAIL. Needed for 4.0.",
+    "canonical_4_0": null,
+    "exists_in_4_0": false,
+    "suggested_canonical": "cfi"
+  },
+  {
+    "field_name": "cff_usd",
+    "classification": "critical",
+    "source_file": "both",
+    "functions": {
+      "validator": [
+        "EXPECTED_FIELDS_BY_DOC_TYPE (L40,57,65)",
+        "_find_best_cf_entry (L280)",
+        "_gate_cashflow_identity (L302)"
+      ],
+      "calculator": [
+        "_ttm_semestral (L519)"
+      ]
+    },
+    "gates_impacted": ["CASHFLOW_IDENTITY (critical)"],
+    "metrics_impacted": ["TTM_semestral"],
+    "justification": "Direct component of cash bridge. Without it, CASHFLOW_IDENTITY FAIL → overall FAIL. Needed for 4.0.",
+    "canonical_4_0": null,
+    "exists_in_4_0": false,
+    "suggested_canonical": "cff"
+  },
+  {
+    "field_name": "delta_cash_usd",
+    "classification": "critical",
+    "source_file": "both",
+    "functions": {
+      "validator": [
+        "EXPECTED_FIELDS_BY_DOC_TYPE (L43)",
+        "_gate_cashflow_identity (L319)"
+      ],
+      "calculator": [
+        "_ttm_semestral (L519)"
+      ]
+    },
+    "gates_impacted": ["CASHFLOW_IDENTITY (critical, SKIP→FAIL via _overall_status L734)"],
+    "metrics_impacted": ["TTM_semestral"],
+    "justification": "Without delta_cash, CASHFLOW_IDENTITY returns SKIP. As critical gate, SKIP → overall FAIL. Needed for 4.0.",
+    "canonical_4_0": null,
+    "exists_in_4_0": false,
+    "suggested_canonical": "delta_cash"
+  },
+  {
+    "field_name": "ebit_usd",
+    "classification": "required",
+    "source_file": "both",
+    "functions": {
+      "validator": [
+        "EXPECTED_FIELDS_BY_DOC_TYPE (L38,56,63)",
+        "_gate_unidades_sanity (L376)"
+      ],
+      "calculator": [
+        "_FY0_KEY_FIELDS (L28)",
+        "calculate (L97,105)",
+        "_ttm (L636)",
+        "_ttm_semestral (L518,535)",
+        "_margins (L751)",
+        "_returns (L767)",
+        "_multiples (L795)"
+      ]
+    },
+    "gates_impacted": ["UNIDADES_SANITY", "DATA_COMPLETENESS"],
+    "metrics_impacted": ["operating_margin", "ROIC", "EV_EBIT", "TTM"],
+    "justification": "Affects 3 key derived metrics. No critical gate FAIL, but absence nullifies ROIC, operating margin and EV/EBIT.",
+    "canonical_4_0": "ebit",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
+  },
+  {
+    "field_name": "net_income_usd",
+    "classification": "required",
+    "source_file": "both",
+    "functions": {
+      "validator": [
+        "EXPECTED_FIELDS_BY_DOC_TYPE (L39,57,64,68,72)",
+        "_gate_unidades_sanity (L376)"
+      ],
+      "calculator": [
+        "_FY0_KEY_FIELDS (L28)",
+        "calculate (L98,106)",
+        "_margins (L752)",
+        "_returns (L773,778)",
+        "_per_share (L806)"
+      ]
+    },
+    "gates_impacted": ["UNIDADES_SANITY", "DATA_COMPLETENESS"],
+    "metrics_impacted": ["net_margin", "ROE", "ROA", "EPS", "TTM"],
+    "justification": "Affects 4 derived metrics. Expected in nearly all doc types.",
+    "canonical_4_0": "net_income",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
+  },
+  {
+    "field_name": "capex_usd",
+    "classification": "required",
+    "source_file": "both",
+    "functions": {
+      "validator": [
+        "EXPECTED_FIELDS_BY_DOC_TYPE (L41,58)"
+      ],
+      "calculator": [
+        "_FY0_KEY_FIELDS (L29)",
+        "calculate (L100,108)",
+        "_fcf (L691)",
+        "_ttm (L636)"
+      ]
+    },
+    "gates_impacted": ["DATA_COMPLETENESS"],
+    "metrics_impacted": ["FCF", "FCF_margin", "FCF_yield", "P_FCF", "EV_FCF", "FCF_per_share"],
+    "justification": "Direct component of FCF. Without it, entire FCF→multiples→per_share chain nullified.",
+    "canonical_4_0": "capex",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
+  },
+  {
+    "field_name": "cogs_usd",
+    "classification": "required",
+    "source_file": "calculator",
+    "functions": {
+      "validator": [],
+      "calculator": [
+        "_FY0_KEY_FIELDS (L29)",
+        "calculate (L117-118)",
+        "_ttm (L637)",
+        "_margins (L746)"
+      ]
+    },
+    "gates_impacted": ["DATA_COMPLETENESS"],
+    "metrics_impacted": ["gross_margin (alternative)"],
+    "justification": "Backup for gross margin when gross_profit unavailable. FY0 key field.",
+    "canonical_4_0": "cost_of_revenue",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
+  },
+  {
+    "field_name": "gross_profit_usd",
+    "classification": "required",
+    "source_file": "both",
+    "functions": {
+      "validator": [
+        "EXPECTED_FIELDS_BY_DOC_TYPE (L38)"
+      ],
+      "calculator": [
+        "calculate (L119-120)",
+        "_ttm (L637)",
+        "_margins (L744)"
+      ]
+    },
+    "gates_impacted": ["DATA_COMPLETENESS"],
+    "metrics_impacted": ["gross_margin (preferred)"],
+    "justification": "Preferred path for gross margin. Alternative: cogs. One of the two is needed.",
+    "canonical_4_0": "gross_profit",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
+  },
+  {
+    "field_name": "deuda_total_usd",
+    "classification": "required",
+    "source_file": "calculator",
+    "functions": {
+      "validator": [],
+      "calculator": [
+        "calculate → _bs_val (L134)",
+        "_ev (L704)",
+        "calculate (L154) — invested_capital",
+        "calculate (L160) — deuda_neta"
+      ]
+    },
+    "gates_impacted": [],
+    "metrics_impacted": ["EV", "net_debt", "invested_capital_ROIC", "EV_EBIT", "EV_FCF"],
+    "justification": "Component of EV and net debt. Without it, EV and all EV-based metrics are null.",
+    "canonical_4_0": "total_debt",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
+  },
+  {
+    "field_name": "caja_usd",
+    "classification": "required",
+    "source_file": "both",
+    "functions": {
+      "validator": [
+        "EXPECTED_FIELDS_BY_DOC_TYPE (L52,62,69)"
+      ],
+      "calculator": [
+        "calculate → _bs_val (L136)",
+        "_ev (L704)",
+        "calculate (L160) — deuda_neta"
+      ]
+    },
+    "gates_impacted": ["DATA_COMPLETENESS"],
+    "metrics_impacted": ["EV", "net_debt"],
+    "justification": "Component of EV and net debt.",
+    "canonical_4_0": "cash_and_equivalents",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
+  },
+  {
+    "field_name": "depreciation_usd",
+    "classification": "required",
+    "source_file": "both",
+    "functions": {
+      "validator": [
+        "EXPECTED_FIELDS_BY_DOC_TYPE (L43)"
+      ],
+      "calculator": [
+        "_ttm_semestral (L519)"
+      ]
+    },
+    "gates_impacted": ["DATA_COMPLETENESS"],
+    "metrics_impacted": ["TTM_semestral"],
+    "justification": "Needed for complete semestral TTM in European companies.",
+    "canonical_4_0": "depreciation_amortization",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
+  },
+  {
+    "field_name": "income_tax_usd",
+    "classification": "required",
+    "source_file": "both",
+    "functions": {
+      "validator": [
+        "EXPECTED_FIELDS_BY_DOC_TYPE (L44)"
+      ],
+      "calculator": [
+        "_ttm_semestral (L519)"
+      ]
+    },
+    "gates_impacted": ["DATA_COMPLETENESS"],
+    "metrics_impacted": ["TTM_semestral"],
+    "justification": "Similar to depreciation — completeness and semestral TTM.",
+    "canonical_4_0": "income_tax",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
+  },
+  {
+    "field_name": "interest_expense_usd",
+    "classification": "required",
+    "source_file": "calculator",
+    "functions": {
+      "validator": [],
+      "calculator": [
+        "_ttm_semestral (L518)"
+      ]
+    },
+    "gates_impacted": [],
+    "metrics_impacted": ["TTM_semestral"],
+    "justification": "Needed for complete semestral TTM.",
+    "canonical_4_0": "interest_expense",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
+  },
+  {
+    "field_name": "market_cap_usd",
+    "classification": "required",
+    "source_file": "calculator",
+    "functions": {
+      "validator": [],
+      "calculator": [
+        "_extract_market_data (L220-259)",
+        "_ev (L703)",
+        "_multiples (L797)",
+        "calculate (L169) — FCF yield"
+      ]
+    },
+    "gates_impacted": ["EV_SANITY (indirect)"],
+    "metrics_impacted": ["EV", "P_FCF", "FCF_yield"],
+    "justification": "Without market_cap, EV and market multiples are null. Market data, not filing field.",
+    "canonical_4_0": null,
+    "exists_in_4_0": false,
+    "suggested_canonical": "market_cap"
+  },
+  {
+    "field_name": "shares_outstanding",
+    "classification": "required",
+    "source_file": "calculator",
+    "functions": {
+      "validator": [],
+      "calculator": [
+        "_extract_market_data (L246-248)",
+        "_per_share (L806-809)"
+      ]
+    },
+    "gates_impacted": [],
+    "metrics_impacted": ["EPS", "FCF_per_share", "BV_per_share"],
+    "justification": "Denominator for all per-share metrics. In 3.0 from market data; in 4.0 extracted from filings.",
+    "canonical_4_0": "shares_outstanding",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
+  },
+  {
+    "field_name": "fx_effect_cash_usd",
+    "classification": "optional",
+    "source_file": "both",
+    "functions": {
+      "validator": [
+        "_gate_cashflow_identity (L312) — default=0"
+      ],
+      "calculator": [
+        "_ttm_semestral (L519)"
+      ]
+    },
+    "gates_impacted": ["CASHFLOW_IDENTITY (improves precision, default=0)"],
+    "metrics_impacted": ["TTM_semestral"],
+    "justification": "Improves cash bridge precision. Treated as 0 when absent. Moderate deviation → WARNING (not FAIL).",
+    "canonical_4_0": null,
+    "exists_in_4_0": false,
+    "suggested_canonical": "fx_effect_cash"
+  },
+  {
+    "field_name": "otros_ajustes_caja_usd",
+    "classification": "optional",
+    "source_file": "validator",
+    "functions": {
+      "validator": [
+        "_gate_cashflow_identity (L313) — default=0"
+      ],
+      "calculator": []
+    },
+    "gates_impacted": ["CASHFLOW_IDENTITY (improves precision, default=0)"],
+    "metrics_impacted": [],
+    "justification": "Minor cash bridge adjustments. Treated as 0 when absent.",
+    "canonical_4_0": null,
+    "exists_in_4_0": false,
+    "suggested_canonical": "other_cash_adjustments"
+  },
+  {
+    "field_name": "cuentas_por_cobrar_usd",
+    "classification": "optional",
+    "source_file": "calculator",
+    "functions": {
+      "validator": [],
+      "calculator": [
+        "_working_capital (L718)"
+      ]
+    },
+    "gates_impacted": [],
+    "metrics_impacted": ["working_capital"],
+    "justification": "Only affects working capital, which has limited impact in 3.0 (feeds no gate or standard derived metric).",
+    "canonical_4_0": null,
+    "exists_in_4_0": false,
+    "suggested_canonical": "accounts_receivable"
+  },
+  {
+    "field_name": "inventarios_usd",
+    "classification": "optional",
+    "source_file": "calculator",
+    "functions": {
+      "validator": [],
+      "calculator": [
+        "_working_capital (L719)"
+      ]
+    },
+    "gates_impacted": [],
+    "metrics_impacted": ["working_capital"],
+    "justification": "Only affects working capital.",
+    "canonical_4_0": null,
+    "exists_in_4_0": false,
+    "suggested_canonical": "inventories"
+  },
+  {
+    "field_name": "cuentas_por_pagar_usd",
+    "classification": "optional",
+    "source_file": "calculator",
+    "functions": {
+      "validator": [],
+      "calculator": [
+        "_working_capital (L720)"
+      ]
+    },
+    "gates_impacted": [],
+    "metrics_impacted": ["working_capital"],
+    "justification": "Only affects working capital.",
+    "canonical_4_0": null,
+    "exists_in_4_0": false,
+    "suggested_canonical": "accounts_payable"
+  },
+  {
+    "field_name": "price",
+    "classification": "optional",
+    "source_file": "calculator",
+    "functions": {
+      "validator": [],
+      "calculator": [
+        "_extract_market_data (L240,254)",
+        "calculate (L196) — injected in mercado section"
+      ]
+    },
+    "gates_impacted": [],
+    "metrics_impacted": ["mercado_enrichment"],
+    "justification": "Informational. Feeds no calculation or gate. Pure enrichment.",
+    "canonical_4_0": null,
+    "exists_in_4_0": false,
+    "suggested_canonical": "price"
+  }
+]

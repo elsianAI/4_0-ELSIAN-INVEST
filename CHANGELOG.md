@@ -13,6 +13,9 @@
 - **What:** 14 unit tests (TestFindExhibit99) + 4 integration tests (fixtures TZOO/GCT 6-K) para `_find_exhibit_99`. Pass 2 HTML fallback determinado NO necesario — todos los tickers resuelven vía Pass 1 (index.json).
 - **Tests:** 544 passed, 2 skipped.
 
+### [4.0] BL-034 Field Dependency Matrix publicada
+- **What:** Análisis estático completo de `tp_validator.py`, `tp_calculator.py`, `tp_normalizer.py` del 3.0. 26 campos analizados (8 critical, 12 required, 6 optional). 16 ya en 4.0, 10 faltan (3 high-priority: cfi, cff, delta_cash). Publicado en `docs/project/FIELD_DEPENDENCY_MATRIX.md` + JSON.
+
 ## 2026-03-03 (revert)
 
 ### [4.0] Revert unauthorized iXBRL injection from production pipeline — fixes ACLS/SONO/TEP regressions
