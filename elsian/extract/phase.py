@@ -45,6 +45,9 @@ _ALWAYS_POSITIVE_FIELDS = frozenset({
 })
 
 _BENEFIT_RE = re.compile(r"\bbenefit\b|\(income\)", re.IGNORECASE)
+# Matches labels where "benefit" appears BEFORE "(expense)" — these labels use
+# an inverted sign convention (positive=benefit, parens=expense) so we negate.
+_BENEFIT_FIRST_RE = re.compile(r"\bbenefit\b.*\(expenses?\)", re.IGNORECASE)
 
 
 # ── Field → financial statement section mapping ────────────────────────
@@ -97,8 +100,12 @@ def _normalize_sign(canonical: str, raw_label: str, value: float) -> float:
     """Ensure expense fields use the correct sign convention."""
     if canonical in _ALWAYS_POSITIVE_FIELDS:
         return abs(value)
-    if canonical == "income_tax" and value < 0:
-        if not _BENEFIT_RE.search(raw_label):
+    if canonical == "income_tax":
+        # "BENEFIT (EXPENSES)" label: positive=benefit→store negative;
+        # parenthesized=expense→store positive.  Negate the parsed value.
+        if _BENEFIT_FIRST_RE.search(raw_label):
+            return -value
+        if value < 0 and not _BENEFIT_RE.search(raw_label):
             return abs(value)
     return value
 

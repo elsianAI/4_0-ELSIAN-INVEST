@@ -119,13 +119,10 @@ _REJECT_PATTERNS: Dict[str, List[re.Pattern]] = {
         re.compile(r"taxes\s+other\s+than\s+income", re.I),
         re.compile(r"current\s+income\s+tax\b(?!\s+expense)", re.I),
         re.compile(r"income\s+tax\s+receivable", re.I),
-        # Reject "Income tax benefit (expense)" labels where benefit is the primary
-        # term followed by "(expense)" in parentheses.  These labels use an inverted
-        # sign convention (positive=benefit, negative/parens=expense) that conflicts
-        # with our storage convention (positive=expense, negative=benefit).
-        # The note-section twin label "Income tax (benefit) expense" has correct sign
-        # and should be preferred instead.
-        re.compile(r"\bbenefit\b\s*\(expenses?\)", re.I),
+        # NOTE: "Income tax benefit (expenses)" labels (benefit-first) are now
+        # accepted and their sign is corrected in phase._normalize_sign via
+        # _BENEFIT_FIRST_RE — values are negated so positive=benefit→negative
+        # storage and parenthesized=expense→positive storage.
     ],
     "shares_outstanding": [
         re.compile(r"par\s+value", re.I),

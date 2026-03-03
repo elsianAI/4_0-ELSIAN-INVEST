@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-03-04
+
+### [4.0] INMD promoted to FULL — 6 quarterly periods via 6-K Exhibit 99.1 (210/210, 100%)
+- **What:** Promoted INMD from ANNUAL_ONLY to FULL scope. Added Q3-2024 through Q4-2025 (6 quarterly periods, 102 new fields) to expected.json. Fixed 3 extraction bugs: (1) "operations income" alias missing for ebit — added to field_aliases.json; (2) Non-GAAP reconciliation table corrupting GAAP IS values for Q3/Q4-2024 — added Non-GAAP section filter in html_tables.py; (3) "INCOME TAXES BENEFIT (EXPENSES)" label rejected by aliases.py — removed rejection, added _BENEFIT_FIRST_RE sign-flip in extract/phase.py.
+- **Files changed:** cases/INMD/expected.json, cases/INMD/case.json, config/field_aliases.json, elsian/normalize/aliases.py, elsian/extract/phase.py, elsian/extract/html_tables.py
+- **Tests:** 489 passed, 2 skipped.
+- **Regression:** eval --all: 13/13 tickers PASS 100%.
+
 ## 2026-03-03 (session 3)
 
 ### [4.0] BL-045 Hygiene — scope fields, gitignore, junk files, pyproject python version

@@ -985,6 +985,12 @@ def extract_tables_from_clean_md(
             )
 
             for table_text in table_blocks:
+                # Skip Non-GAAP reconciliation tables — they use derived/
+                # adjusted values that corrupt GAAP field extraction when
+                # multi-period/multi-scenario column alignment is off.
+                if "non-gaap" in section_label or "non_gaap" in section_label:
+                    global_tbl_idx += 1
+                    continue
                 fields = extract_from_markdown_table(
                     table_text, section_label,
                     table_idx=global_tbl_idx,
