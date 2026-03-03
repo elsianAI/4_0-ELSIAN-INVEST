@@ -14,10 +14,10 @@ Ver ROADMAP.md para descripción completa de fases.
 | Métrica | Valor | Target Fase 1→2 | Fecha |
 |---|---|---|---|
 | Tickers FULL 100% (DEC-015) | 10 (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, +KAR*) | ≥15 | 2026-03-03 |
-| Tickers ANNUAL_ONLY pendientes | 1 (TEP — sin quarterly publicados, excepción DEC-015) | Documentar excepción | 2026-03-03 |
+| Tickers ANNUAL_ONLY 100% | 2 (TEP, INMD) | Promover a FULL | 2026-03-03 |
 | Tickers WIP | 0 | 0 | 2026-03-03 |
-| Total campos validados | 2,445 | — | 2026-03-03 |
-| Tests pasando | 487 passed, 0 failed, 2 skipped | — | 2026-03-03 |
+| Total campos validados | 2,553 | — | 2026-03-03 |
+| Tests pasando | 489 passed, 0 failed, 2 skipped | — | 2026-03-03 |
 | Líneas de código (aprox.) | ~7,500 + ~2,200 tests | 2026-03-03 |
 
 *KAR (49 campos, 3A): ASX annual-only — no quarterly filings disponibles en ASX para este ticker. Cuenta como FULL bajo DEC-015 excepción.
@@ -37,6 +37,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | KAR | 49 | ASX (AU) | PDF (IFRS, USD) | ✅ VALIDATED (DEC-015 excepción: no quarterly en ASX) |
 | PR | 141 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 3A+6Q) |
 | ACLS | 375 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+15Q — BL-039 DONE) |
+| INMD | 108 | SEC (US) | 20-F/6-K HTML (IFRS) | ✅ VALIDATED (ANNUAL_ONLY: 6A — BL-040 DONE) |
 
 ## Componentes implementados
 
@@ -62,7 +63,7 @@ Ver ROADMAP.md para descripción completa de fases.
 
 ## Bloqueantes actuales
 
-No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para los 10 tickers.
+No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para los 12 tickers (10 FULL + 2 ANNUAL_ONLY).
 
 **Gaps pendientes (no bloqueantes):**
 1. **IR Crawler no integrado en EuRegulatorsFetcher** — ir_crawler.py portado pero TEP sigue dependiendo de filings_sources manuales. BL-013.
@@ -106,7 +107,7 @@ Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC
 
 **Siguiente fase — Oleada 4 (DEC-016):**
 - ✅ **BL-039 (ACLS)** — DONE. SEC semiconductor, iXBRL, FULL 375/375. Nota: source_filing vacío en 223 campos quarterly — pendiente corrección.
-- **BL-040 (INMD)** — SEC, 20-F/6-K, healthcare, iXBRL. TODO. Prioridad ALTA.
+- ✅ **BL-040 INMD** — DONE. SEC 20-F/6-K, healthcare (IFRS), ANNUAL_ONLY 108/108. Pendiente promover a FULL.
 - **BL-041 (BOBS)** — SEC, test robustez fetcher (Form 4 bug en 3.0). TODO. Prioridad ALTA.
 - **BL-042 (SOM)** — LSE, nuevo mercado, requiere fetcher LSE. TODO. Infraestructura pesada.
 - **BL-043 (0327)** — HKEX, nuevo mercado, requiere fetcher HKEX. TODO. Infraestructura pesada.
@@ -115,9 +116,9 @@ Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC
 
 **Ruta a 15 FULL (DEC-015):**
 - Actuales: 10 FULL (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, KAR*)
-- Pendientes promoción: TEP (BL-044)
-- Nuevos oleada 4: INMD, BOBS, SOM, 0327
-- Proyección: 10 + 1 promoción + 4 nuevos = **15 FULL** (exacto al target)
+- ANNUAL_ONLY pendientes de FULL: INMD (BL-040), TEP (BL-044)
+- Nuevos oleada 4 pendientes: BOBS, SOM, 0327
+- Proyección: 10 + 2 promociones + 3 nuevos = **15 FULL** (exacto al target)
 
 **WP-6** — IxbrlExtractor en producción (diferido).
 

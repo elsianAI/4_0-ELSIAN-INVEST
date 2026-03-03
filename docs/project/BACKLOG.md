@@ -351,11 +351,11 @@
 
 ### BL-040 — Nuevo ticker INMD (InMode, NASDAQ, 20-F/6-K)
 - **Prioridad:** ALTA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Depende de:** BL-036 DONE — puede usar solo 20-F annual si 6-K quarterly da problemas
-- **Descripción:** Añadir InMode Ltd. (Israel) como foreign private issuer con 20-F/6-K. Sector healthcare (nuevo). iXBRL disponible. Patrón 6-K con Exhibit 99.1 (mismo que GCT/NEXN). Con BL-036 resuelto, promover a FULL con quarterly. Datos en `3_0-ELSIAN-INVEST/casos/INMD/`.
-- **Criterio de aceptación:** INMD en VALIDATED_TICKERS al 100%. period_scope FULL con quarterly. eval --all sin regresiones.
+- **Estado:** DONE ✅ (2026-03-03) — INMD ANNUAL_ONLY 100% (108/108, 6 periodos). Commit 58ab9b7.
+- **Asignado a:** Claude (elsian-4)
+- **Depende de:** BL-036 DONE
+- **Descripción:** InMode Ltd. (Israel, NASDAQ, CIK 1742692) foreign private issuer con 20-F/6-K. Sector medical devices/aesthetics (SIC 3845, IFRS). 6 periodos anuales FY2020-FY2025, 108 campos. Fixes al pipeline: (1) em-dash alias para eps_diluted, (2) double-column recalibration para tablas MD&A con sub-columnas $/%, (3) `(income)` pattern en _BENEFIT_RE, (4) income_tax IFRS priority patterns. Fix ACLS regression: guard de porcentaje en recalibration block. Fix SONO expected.json: eps_diluted Q4-2025 0.78→0.75 (era basic, no diluted). Pendiente: promover a FULL con quarterly (6-K Exhibit 99.1).
+- **Criterio de aceptación:** ✅ INMD en VALIDATED_TICKERS al 100%. ✅ eval --all 12/12 PASS. ✅ 489 tests pass. Pendiente: period_scope FULL.
 
 ### BL-041 — Nuevo ticker BOBS (Bob's Discount Furniture, NYSE, SEC)
 - **Prioridad:** ALTA
