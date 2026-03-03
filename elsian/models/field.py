@@ -24,6 +24,7 @@ class Provenance:
     row: int | None = None
     col: int | None = None
     raw_text: str = ""
+    extraction_method: str = ""  # "table" | "narrative" | "manual" | ""
     # Preflight metadata (optional — populated when preflight analysis runs)
     preflight_currency: str = ""
     preflight_standard: str = ""
@@ -47,6 +48,8 @@ class Provenance:
             d["col"] = self.col
         if self.raw_text:
             d["raw_text"] = self.raw_text
+        if self.extraction_method:
+            d["extraction_method"] = self.extraction_method
         if self.preflight_currency:
             d["preflight_currency"] = self.preflight_currency
         if self.preflight_standard:

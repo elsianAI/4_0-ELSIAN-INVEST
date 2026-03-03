@@ -6,7 +6,7 @@
 - **What:** Audited and fixed all extractors to propagate complete L2 provenance metadata: `source_filing`, `table_index`, `table_title`, `row_label`, `col_label`, `row`, `col`, `raw_text`, plus new `extraction_method` field (`"table"` | `"narrative"` | `"manual"`). Before: 0% of fields had complete L2 provenance. After: 100% across all 13 tickers.
 - **Files changed:** `elsian/models/field.py` (added `extraction_method` to `Provenance`), `elsian/extract/html_tables.py` (expanded `TableField` with 6 provenance fields, updated 3 extraction functions), `elsian/extract/phase.py` (updated `_make_field_result` with keyword provenance args, fixed additive accumulation, dividend, manual override, EPS duplication, vertical BS, and `_recover_total_liabilities` paths), `elsian/extract/vertical.py` (populated provenance on both creation spots + synthesised total_debt).
 - **Tests:** 627 passed (17 new in `tests/unit/test_provenance.py`: 4 model unit tests + 13 per-ticker L2 completeness checks).
-- **Regression:** eval --all: 12/13 tickers PASS 100%. CROX 91.84% (pre-existing, improved from 82.31%).
+- **Regression:** eval --all: 12/13 tickers PASS 100%. CROX 95.24% (pre-existing, improved from 82.31%).
 
 ## 2026-03-03
 

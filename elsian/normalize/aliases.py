@@ -102,6 +102,10 @@ _REJECT_PATTERNS: Dict[str, List[re.Pattern]] = {
         # included in accounts payable and accrued liabilities" — these are
         # not actual capex from the investing section.
         re.compile(r"included\s+in\s+accounts\s+payable", re.I),
+        # Reject "Accrued purchases of property, equipment, and software" —
+        # supplemental non-cash disclosure at end of CF table; fuzzy-matches
+        # genuine capex aliases but is NOT a cash outflow.
+        re.compile(r"^\s*accrued\b", re.I),
     ],
     "income_tax": [
         re.compile(r"before\s+.*income\s+tax", re.I),
@@ -149,6 +153,11 @@ _REJECT_PATTERNS: Dict[str, List[re.Pattern]] = {
         re.compile(r"\bunallocated\b", re.I),
         re.compile(r"\bupstream\b", re.I),
         re.compile(r"non[\s-]?gaap", re.I),
+        # Reject segment-specific SGA rows footnoted with (2), (3), etc.
+        # e.g. "Selling, general and administrative expenses (2)" is a brand-
+        # segment breakdown — summing it with the consolidated (1) row
+        # double-counts the expense.  Note (1) is always consolidated.
+        re.compile(r"\(\s*[2-9]\d*\s*\)\s*$", re.I),
     ],
     "total_debt": [
         re.compile(r"\brepayment\b", re.I),

@@ -20,6 +20,13 @@ class TableField:
     value: float
     column_header: str = ""  # The column header (e.g. year/period)
     source_location: str = ""  # e.g. "table:income_statement:row5"
+    # Level 2 provenance fields
+    raw_text: str = ""  # Raw cell text before parse_number()
+    col_label: str = ""  # The period column header text (e.g. "Year Ended December 31, 2024")
+    table_title: str = ""  # Section/sub-section heading (e.g. "income_statement:operating_income")
+    row_idx: int = -1  # 0-based row index within the table
+    col_idx: int = -1  # 0-based column index within the table
+    table_index: int = -1  # 0-based table index within the file
 
 
 def parse_number(text: str) -> Optional[float]:
@@ -806,6 +813,12 @@ def extract_from_markdown_table(
     # Track last section-heading row for parent-label concatenation.
     # Heading rows have a non-empty label but no numeric data cells.
     last_heading = ""
+    # Flag: True while we are inside a brand or segment sub-table whose
+    # data rows belong to a specific entity, not the consolidated company.
+    # E.g. "Crocs Brand:", "HEYDUDE Brand:", "Americas Segment:" headings.
+    # Rows under such headers are skipped entirely to prevent entity-level
+    # values from interfering with consolidated financial data.
+    _in_brand_segment_section = False
 
     for row_idx, row in enumerate(rows):
         if not row:
@@ -820,6 +833,19 @@ def extract_from_markdown_table(
         )
         if not has_number:
             last_heading = label
+            # Detect brand / segment sub-table headers.  These headings:
+            #   • end with ":" (e.g. "Crocs Brand:", "HEYDUDE Brand:")
+            #   • contain "Brand", "Segment", or "Division" (case-insensitive)
+            # All data rows immediately after such a heading belong to that
+            # specific entity.  The flag resets when any other heading appears.
+            _in_brand_segment_section = (
+                label.strip().endswith(":")
+                and bool(re.search(r"\bBrand\b|\bSegment\b|\bDivision\b", label, re.IGNORECASE))
+            )
+            continue
+
+        # Skip rows inside a brand / segment sub-table.
+        if _in_brand_segment_section:
             continue
 
         # Parent-label concatenation: if label starts with an em-dash or
@@ -904,6 +930,7 @@ def extract_from_markdown_table(
                 continue
 
             cell_text = row[col_idx].strip()
+            raw_cell_text = cell_text  # Track the raw text before parsing
             value = parse_number(cell_text)
 
             # Sparse-column scan: if cell has no numeric value (empty,
@@ -920,11 +947,13 @@ def extract_from_markdown_table(
                     scan_val = parse_number(scan_text)
                     if scan_val is not None:
                         value = scan_val
+                        raw_cell_text = scan_text
                         break
                     # Dash-as-zero inside sparse scan: a dash in
                     # a period's span means 0, not "no data".
                     if scan_text in {"\u2014", "\u2013", "-"}:
                         value = 0.0
+                        raw_cell_text = scan_text
                         break
 
             # Dash-as-zero: if the period column itself contains a
@@ -934,6 +963,22 @@ def extract_from_markdown_table(
                 value = 0.0
 
             if value is not None:
+                # Resolve column header label text; fall back to period_key
+                # when the header at the data column is empty (common in
+                # sparse EDGAR tables where colspan-to-markdown conversion
+                # leaves empty header cells at the data column position).
+                col_header_text = headers[col_idx].strip() if col_idx < len(headers) else ""
+                if not col_header_text:
+                    # Search original period_map for a header that resolved
+                    # to this same period_key — that header has the text.
+                    for orig_col, orig_pk in period_map.items():
+                        if orig_pk == period_key and orig_col < len(headers):
+                            h = headers[orig_col].strip()
+                            if h:
+                                col_header_text = h
+                                break
+                    if not col_header_text:
+                        col_header_text = period_key
                 location = f"table:{section_name}:tbl{table_idx}:row{row_idx + 1}:col{col_idx}"
                 results.append(
                     TableField(
@@ -941,6 +986,12 @@ def extract_from_markdown_table(
                         value=value,
                         column_header=period_key,
                         source_location=location,
+                        raw_text=raw_cell_text,
+                        col_label=col_header_text,
+                        table_title=section_name,
+                        row_idx=row_idx,
+                        col_idx=col_idx,
+                        table_index=table_idx,
                     )
                 )
 
@@ -1263,11 +1314,18 @@ def extract_shares_outstanding_from_text(
         # Assign values to periods (left-to-right = most recent first)
         for idx, val in enumerate(values[:len(periods)]):
             location = f"{source_filename}:shares:L{i + 1}"
+            raw_int = ints[idx] if idx < len(ints) else str(val)
             results.append(TableField(
                 label="Weighted average number of ordinary shares",
                 value=float(val),
                 column_header=periods[idx],
                 source_location=location,
+                raw_text=raw_int,
+                col_label=periods[idx],
+                table_title="shares_outstanding",
+                row_idx=i,
+                col_idx=idx,
+                table_index=0,
             ))
 
     return results
@@ -1470,6 +1528,17 @@ def _extract_space_aligned_table(
         for col_idx, value in extracted.items():
             if value is not None:
                 period_key = period_headers[col_idx]
+                # Capture raw text: find the number token nearest to this
+                # column's anchor position to get the original cell text.
+                raw_text = ""
+                anchor_pos = col_anchors[col_idx] if col_idx < len(col_anchors) else 0
+                best_dist = float("inf")
+                for m in num_matches:
+                    dist = abs(m.end() - anchor_pos)
+                    if dist < best_dist:
+                        best_dist = dist
+                        raw_text = m.group()
+                col_header_text = period_headers.get(col_idx, "")
                 location = (
                     f"{source_filename}:table:{section_name}:"
                     f"tbl{table_idx}:row{row_idx + 1}:col{col_idx}"
@@ -1480,6 +1549,12 @@ def _extract_space_aligned_table(
                         value=value,
                         column_header=period_key,
                         source_location=location,
+                        raw_text=raw_text,
+                        col_label=col_header_text,
+                        table_title=section_name,
+                        row_idx=row_idx,
+                        col_idx=col_idx,
+                        table_index=table_idx,
                     )
                 )
 

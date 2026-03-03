@@ -181,7 +181,11 @@ _PRIMARY_IS_SECTION = re.compile(
     r":operating_income|:operating_profit|:consolidated_statements_of_operations"
     r"|:consolidated_statements_of_income"
     r"|:consolidated_balance_sheets|:consolidated_statements_of_comprehensive"
-    r"|:income_from_operations",
+    # Require :tbl suffix to distinguish the *direct* consolidated IS table
+    # (section_label ends in :income_from_operations:tblN) from sub-tables
+    # such as brand/segment breakdowns (trailing colon → double :: before tbl)
+    # or footnote-marked segments (_( suffix, e.g. income_from_operations_(1)).
+    r"|:income_from_operations:tbl",
     re.I,
 )
 _DEPRIORITIZED_SECTION = re.compile(
@@ -212,7 +216,12 @@ _STRONGLY_DEPRIORITIZED_SECTION = re.compile(
     r"|undistributed_earnings"
     # Equity-method investee sub-schedules — balance-sheet and income data
     # from the investee's financial statements are NOT parent company data.
-    r"|:equity_method_investment",
+    r"|:equity_method_investment"
+    # Acquisition fair-value note tables (e.g. HEYDUDE acquisition summary in
+    # CROX 10-K) — headed by a liabilities footnote like "Income taxes payable
+    # (7)".  These show acquired-entity cash/assets at acquisition date, NOT
+    # the parent company's consolidated balances.
+    r"|:income_taxes_payable",
     re.I,
 )
 
@@ -386,6 +395,15 @@ def compute_sort_key(
 def _make_field_result(
     value: float, scale: str, source_filing: str,
     source_location: str, confidence: str,
+    *,
+    table_index: int | None = None,
+    table_title: str = "",
+    row_label: str = "",
+    col_label: str = "",
+    row: int | None = None,
+    col: int | None = None,
+    raw_text: str = "",
+    extraction_method: str = "",
 ) -> FieldResult:
     """Create a FieldResult with Provenance from flat args."""
     return FieldResult(
@@ -393,6 +411,14 @@ def _make_field_result(
         provenance=Provenance(
             source_filing=source_filing,
             source_location=source_location,
+            table_index=table_index,
+            table_title=table_title,
+            row_label=row_label,
+            col_label=col_label,
+            row=row,
+            col=col,
+            raw_text=raw_text,
+            extraction_method=extraction_method,
         ),
         scale=scale,
         confidence=confidence,
@@ -552,6 +578,14 @@ class ExtractPhase(PipelinePhase):
                         src.provenance.source_filing,
                         src.provenance.source_location,
                         src.confidence,
+                        table_index=src.provenance.table_index,
+                        table_title=src.provenance.table_title,
+                        row_label=src.provenance.row_label,
+                        col_label=src.provenance.col_label,
+                        row=src.provenance.row,
+                        col=src.provenance.col,
+                        raw_text=src.provenance.raw_text,
+                        extraction_method=src.provenance.extraction_method,
                     )
                 elif "eps_diluted" in pf[_pk] and "eps_basic" not in pf[_pk]:
                     src = pf[_pk]["eps_diluted"]
@@ -560,6 +594,14 @@ class ExtractPhase(PipelinePhase):
                         src.provenance.source_filing,
                         src.provenance.source_location,
                         src.confidence,
+                        table_index=src.provenance.table_index,
+                        table_title=src.provenance.table_title,
+                        row_label=src.provenance.row_label,
+                        col_label=src.provenance.col_label,
+                        row=src.provenance.row,
+                        col=src.provenance.col,
+                        raw_text=src.provenance.raw_text,
+                        extraction_method=src.provenance.extraction_method,
                     )
 
         # Merge all filing extractions
@@ -638,7 +680,15 @@ class ExtractPhase(PipelinePhase):
                 period_fields[dps_period] = {}
             if "dividends_per_share" not in period_fields[dps_period]:
                 fr = _make_field_result(
-                    dps_value, "raw", filing_path.name, dps_loc, "high"
+                    dps_value, "raw", filing_path.name, dps_loc, "high",
+                    table_index=0,
+                    table_title="equity_statement",
+                    row_label="Dividend paid ($ per share)",
+                    col_label=dps_period,
+                    row=0,
+                    col=0,
+                    raw_text=str(dps_value),
+                    extraction_method="table",
                 )
                 period_fields[dps_period]["dividends_per_share"] = fr
                 audit.accept(
@@ -796,6 +846,14 @@ class ExtractPhase(PipelinePhase):
             fr = _make_field_result(
                 _normalize_sign(canonical, tf.label, tf.value),
                 scale, filing_path.name, tf.source_location, confidence,
+                table_index=tf.table_index if tf.table_index >= 0 else None,
+                table_title=tf.table_title,
+                row_label=tf.label,
+                col_label=tf.col_label,
+                row=tf.row_idx if tf.row_idx >= 0 else None,
+                col=tf.col_idx if tf.col_idx >= 0 else None,
+                raw_text=tf.raw_text,
+                extraction_method="table",
             )
             fr._sort_key = new_sort_key  # type: ignore[attr-defined]
             period_fields[period_key][canonical] = fr
@@ -871,6 +929,8 @@ class ExtractPhase(PipelinePhase):
             fr = _make_field_result(
                 _normalize_sign(canonical, nf.label, nf.value),
                 scale, filing_path.name, nf.source_location, confidence,
+                raw_text=nf.label,
+                extraction_method="narrative",
             )
             fr._sort_key = new_sk  # type: ignore[attr-defined]
             period_fields[period_key][canonical] = fr
@@ -989,11 +1049,20 @@ class ExtractPhase(PipelinePhase):
                     combined_value = existing.value + _normalize_sign(
                         canonical, tf.label, tf.value
                     )
+                    ep = existing.provenance
                     fr = _make_field_result(
                         combined_value, existing.scale,
-                        existing.provenance.source_filing,
-                        existing.provenance.source_location,
+                        ep.source_filing,
+                        ep.source_location,
                         existing.confidence,
+                        table_index=ep.table_index,
+                        table_title=ep.table_title,
+                        row_label=ep.row_label,
+                        col_label=ep.col_label,
+                        row=ep.row,
+                        col=ep.col,
+                        raw_text=ep.raw_text,
+                        extraction_method=ep.extraction_method or "table",
                     )
                     fr._sort_key = existing._sort_key  # type: ignore[attr-defined]
                     period_fields[period_key][canonical] = fr
@@ -1030,6 +1099,14 @@ class ExtractPhase(PipelinePhase):
         fr = _make_field_result(
             _normalize_sign(canonical, tf.label, tf.value),
             scale, filing_path.name, tf.source_location, confidence,
+            table_index=tf.table_index if tf.table_index >= 0 else None,
+            table_title=tf.table_title,
+            row_label=tf.label,
+            col_label=tf.col_label,
+            row=tf.row_idx if tf.row_idx >= 0 else None,
+            col=tf.col_idx if tf.col_idx >= 0 else None,
+            raw_text=tf.raw_text,
+            extraction_method="table",
         )
         fr._sort_key = new_sk  # type: ignore[attr-defined]
 
@@ -1082,12 +1159,14 @@ class ExtractPhase(PipelinePhase):
                 nc_val = None
                 c_val = None
                 nc_loc = ""
+                nc_rtf = None
                 for rtf in raw_table_fields:
                     if rtf.column_header != pk:
                         continue
                     if _NC_LIAB_RE.search(rtf.label):
                         nc_val = rtf.value
                         nc_loc = rtf.source_location
+                        nc_rtf = rtf
                     elif _C_LIAB_RE.search(rtf.label):
                         c_val = rtf.value
                 if nc_val is not None and c_val is not None:
@@ -1095,6 +1174,14 @@ class ExtractPhase(PipelinePhase):
                         nc_val + c_val, filing_scale,
                         source_filename, nc_loc,
                         filing_scale_confidence,
+                        table_index=nc_rtf.table_index if nc_rtf and nc_rtf.table_index >= 0 else None,
+                        table_title=nc_rtf.table_title if nc_rtf else "",
+                        row_label="total_liabilities (computed: non-current + current)",
+                        col_label=nc_rtf.col_label if nc_rtf else "",
+                        row=nc_rtf.row_idx if nc_rtf and nc_rtf.row_idx >= 0 else None,
+                        col=nc_rtf.col_idx if nc_rtf and nc_rtf.col_idx >= 0 else None,
+                        raw_text=f"{nc_val} + {c_val}",
+                        extraction_method="table",
                     )
 
     # ── MANUAL OVERRIDES ─────────────────────────────────────────────
@@ -1158,6 +1245,7 @@ class ExtractPhase(PipelinePhase):
                 )
                 fr = _make_field_result(
                     value, "raw", "manual_override", loc, "manual",
+                    extraction_method="manual",
                 )
                 period_result.fields[field_name] = fr
                 result.audit.fields_extracted += 1

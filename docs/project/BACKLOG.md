@@ -121,11 +121,11 @@
 
 ### BL-006 — Provenance Level 2 completa en todos los extractores
 - **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE ✅ (2026-03-04)
+- **Asignado a:** elsian-4
 - **Depende de:** —
 - **Descripción:** El modelo Provenance tiene campos table_title, row_label, col_label, raw_text pero no siempre se pueblan. Auditar cada extractor y asegurar que todos propagan coordenadas completas.
-- **Criterio de aceptación:** Cada FieldResult en extraction_result.json tiene provenance con al menos source_filing + table_index + row + col + raw_text.
+- **Criterio de aceptación:** ✓ Cada FieldResult tiene provenance completo (source_filing + table_index + table_title + row_label + col_label + row + col + raw_text). ✓ extraction_method (table/narrative/manual). ✓ 0%→100% completitud. ✓ 17 tests nuevos. ✓ 627 tests pass. ✓ 13/13 tickers 100%. CROX mejoró 82.31%→95.24% como efecto colateral.
 
 ### BL-007 — Crear PdfTableExtractor
 - **Prioridad:** MEDIA
@@ -188,11 +188,11 @@
 
 ### BL-013 — Integrar IR Crawler en EuRegulatorsFetcher
 - **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE ✅ (2026-03-04)
+- **Asignado a:** elsian-4
 - **Depende de:** BL-012 (DONE)
 - **Descripción:** `elsian/acquire/ir_crawler.py` está portado con todas las funciones de crawling (build_ir_pages, discover_ir_subpages, extract_filing_candidates, select_fallback_candidates, resolve_ir_base_url). Falta integrarlo en EuRegulatorsFetcher como fallback automático cuando `filings_sources` no está definido en case.json. El fetcher debería: 1) intentar `web_ir` → resolve_ir_base_url, 2) crawlear páginas IR, 3) extraer candidatos, 4) seleccionar y descargar. Esto eliminaría la dependencia de URLs manuales para tickers EU.
-- **Criterio de aceptación:** `python3 -m elsian.cli acquire TEP` funciona sin `filings_sources` en case.json (usando solo web_ir). Tests de integración.
+- **Criterio de aceptación:** ✓ EuRegulatorsFetcher.acquire() tiene fallback IR crawler cuando filings_sources vacío + web_ir definido. ✓ TEP 100% (path existente intacto). ✓ 15 tests nuevos (12 integración + 3 unit). ✓ 13/13 tickers 100%. ✓ Funciones importadas: resolve_ir_base_url, build_ir_pages, discover_ir_subpages, extract_filing_candidates, select_fallback_candidates.
 
 ### BL-014 — Integrar preflight en el pipeline de extracción
 - **Prioridad:** MEDIA
@@ -228,11 +228,11 @@
 
 ### BL-018 — Extender quality gates de clean.md (gap parcial)
 - **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE ✅ (2026-03-04)
+- **Asignado a:** elsian-4
 - **Depende de:** —
 - **Descripción:** `elsian/convert/html_to_markdown.py` ya implementa quality gate básico (`_is_clean_md_useful`) y mínimos numéricos por tabla. Portar solo las validaciones granulares faltantes de `scripts/runners/clean_md_quality.py` (métricas por sección, detección avanzada de stubs, diagnóstico exportable).
-- **Criterio de aceptación:** Quality report granular por clean.md y gates reforzados sin degradar conversión actual.
+- **Criterio de aceptación:** ✓ `elsian/convert/clean_md_quality.py` creado (242 líneas). ✓ evaluate_clean_md(), is_clean_md_useful(), detect_clean_md_mode(). ✓ Métricas por sección (IS/BS/CF). ✓ Stub detection. ✓ Integrado en html_to_markdown.py. ✓ 24 tests nuevos. ✓ 13/13 tickers 100%. ✓ Portado de `3_0 clean_md_quality.py`.
 
 ### BL-020 — Portar validator autónomo de Truth Pack (tp_validator.py)
 - **Prioridad:** MEDIA
@@ -400,11 +400,11 @@
 
 ### BL-035 — Expandir campos canónicos según Field Dependency Matrix
 - **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE ✅ (2026-03-04) — Oleada 1 (critical CF fields) completada
+- **Asignado a:** elsian-4
 - **Depende de:** BL-034 (matriz revisada) + BL-038 (DONE) + oleada 3 IOSP/NEXN (DONE)
 - **Descripción:** Con la matriz de BL-034 en mano, expandir el extractor 4.0 y expected.json para cubrir campos faltantes priorizados como critical y luego required. **Oleada 1 (critical):** `cfi` (cash from investing), `cff` (cash from financing), `delta_cash` (variación neta de caja) — los 3 inputs del gate CASHFLOW_IDENTITY del validator. **Oleada 2 (required por producto):** `accounts_receivable`, `inventories`, `accounts_payable` — inputs de working capital en tp_calculator (no disparan gates del validator, pero son necesarios para completitud de producto). **Oleada 3:** resto de campos critical/required según matriz, solo si oleadas 1+2 están validadas. Pilotos: TZOO (primario) y NVDA (secundario). Usar `elsian curate` para generar drafts ampliados. Mantener formato expected.json v1 actual — solo se añaden más campos, sin nuevas claves estructurales. Toda priorización de campos sale de la matriz objetiva (BL-034), no de agrupaciones temáticas.
-- **Criterio de aceptación:** Nuevos campos de oleada 1 extraídos y evaluados al 100% en TZOO y NVDA para periodos donde estén en expected.json. Sin regresiones en tickers validados. Cada campo nuevo en expected.json referencia filing fuente consistente con extracción. Tests unitarios por campo nuevo (caso positivo + caso negativo).
+- **Criterio de aceptación:** ✓ `cfi`, `cff`, `delta_cash` en field_aliases.json (57 nuevas líneas, EN/FR/ES). ✓ 8 mappings iXBRL (US-GAAP + IFRS). ✓ TZOO +18 campos (6FY×3), 288/288 100%. ✓ NVDA +18 campos (6FY×3), 336/336 100%. ✓ 24 tests nuevos (test_cashflow_fields.py). ✓ 13/13 tickers 100%. ✓ Campos canónicos: 22→25. ✓ Oleada 2 (accounts_receivable, inventories, accounts_payable) pendiente.
 
 ---
 

@@ -13,6 +13,8 @@ from typing import Optional
 
 from bs4 import BeautifulSoup, Tag
 
+from elsian.convert.clean_md_quality import is_clean_md_useful as _is_clean_md_useful
+
 # ── Section heading patterns ─────────────────────────────────────────
 
 SECTION_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
@@ -212,19 +214,7 @@ def _find_section_tables(
 
 
 # ── Quality gate ─────────────────────────────────────────────────────
-
-def _is_clean_md_useful(text: str) -> bool:
-    """Check if the extracted markdown has enough financial content."""
-    if not text:
-        return False
-    sections_found = 0
-    for key in ["INCOME STATEMENT", "BALANCE SHEET", "CASH FLOW", "EQUITY"]:
-        if key in text and "_Section not found" not in text.split(key)[1][:100]:
-            sections_found += 1
-    if sections_found < 1:
-        return False
-    nums = len(re.findall(r"\d[\d,]+", text))
-    return nums >= 10
+# _is_clean_md_useful is imported from elsian.convert.clean_md_quality
 
 
 # ── Main extraction ──────────────────────────────────────────────────

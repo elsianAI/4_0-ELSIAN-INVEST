@@ -195,6 +195,11 @@ def extract_vertical_bs(
                         debt_by_period.get(period, 0.0) + val
                     )
                 else:
+                    # Capture the raw text from the value line
+                    raw_val_text = ""
+                    val_line_idx = j + 1 + vi
+                    if val_line_idx < len(lines):
+                        raw_val_text = lines[val_line_idx].strip().replace("$", "").strip()
                     results.append(TableField(
                         label=stripped,
                         value=val,
@@ -203,6 +208,12 @@ def extract_vertical_bs(
                             f"{source_filename}:vertical_bs"
                             f":consolidated:{canonical}"
                         ),
+                        raw_text=raw_val_text or str(val),
+                        col_label=period,
+                        table_title="vertical_bs:consolidated",
+                        row_idx=j,
+                        col_idx=vi,
+                        table_index=0,
                     ))
             break  # matched a pattern, move to next line
 
@@ -216,6 +227,12 @@ def extract_vertical_bs(
                 f"{source_filename}:vertical_bs"
                 ":consolidated:total_debt"
             ),
+            raw_text=str(debt_total),
+            col_label=period,
+            table_title="vertical_bs:consolidated",
+            row_idx=0,
+            col_idx=0,
+            table_index=0,
         ))
 
     return results

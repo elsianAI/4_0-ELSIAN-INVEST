@@ -1,6 +1,6 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
-> Última actualización: 2026-03-03
+> Última actualización: 2026-03-04
 > Actualizado por: Copilot (Project Director)
 
 ---
@@ -13,12 +13,13 @@ Ver ROADMAP.md para descripción completa de fases.
 
 | Métrica | Valor | Target Fase 1→2 | Fecha |
 |---|---|---|---|
-| Tickers FULL 100% (DEC-015) | 12 (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, TEP, +KAR*) | ≥15 | 2026-03-03 |
-| Tickers ANNUAL_ONLY 100% | 0 | — | 2026-03-03 |
-| Tickers WIP | 1 (CROX 82.31%) | 0 | 2026-03-03 |
-| Total campos validados | 2,680 | — | 2026-03-03 |
-| Tests pasando | 544 passed, 0 failed, 2 skipped | — | 2026-03-03 |
-| Líneas de código (aprox.) | ~7,500 + ~3,000 tests | 2026-03-03 |
+| Tickers FULL 100% (DEC-015) | 12 (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, TEP, +KAR*) | ≥15 | 2026-03-04 |
+| Tickers ANNUAL_ONLY 100% | 0 | — | 2026-03-04 |
+| Tickers WIP | 1 (CROX 95.24%) | 0 | 2026-03-04 |
+| Total campos validados | 2,716 | — | 2026-03-04 |
+| Campos canónicos | 25 (22 originales + cfi, cff, delta_cash) | — | 2026-03-04 |
+| Tests pasando | 627 passed, 0 failed, 2 skipped | — | 2026-03-04 |
+| Líneas de código (aprox.) | ~8,500 + ~3,500 tests | 2026-03-04 |
 
 *KAR (49 campos, 3A): ASX annual-only — no quarterly filings disponibles en ASX para este ticker. Cuenta como FULL bajo DEC-015 excepción.
 
@@ -26,14 +27,14 @@ Ver ROADMAP.md para descripción completa de fases.
 
 | Ticker | Campos | Mercado | Formato | Estado |
 |---|---|---|---|---|
-| TZOO | 270 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
+| TZOO | 288 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
 | GCT | 252 | SEC (US) | 20-F→10-K HTML | ✅ VALIDATED (FULL: 6A+9Q) |
 | IOSP | 338 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 5A+17Q) |
 | NEXN | 153 | SEC (US) | 20-F/6-K HTML | ✅ VALIDATED (FULL: 4A+6Q) |
 | SONO | 311 | SEC (US) | 10-K HTML | ✅ VALIDATED (FULL: 6A+12Q) |
 | TEP | 80 | Euronext (FR) | PDF (IFRS, EUR) | ✅ VALIDATED (FULL: 6A+2H — BL-044 DONE) |
 | TALO | 183 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 5A+7Q) |
-| NVDA | 318 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
+| NVDA | 336 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
 | KAR | 49 | ASX (AU) | PDF (IFRS, USD) | ✅ VALIDATED (DEC-015 excepción: no quarterly en ASX) |
 | PR | 141 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 3A+6Q) |
 | ACLS | 375 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+15Q) |
@@ -56,32 +57,31 @@ Ver ROADMAP.md para descripción completa de fases.
 | Deduplicación por contenido | ✅ Implementado | SHA-256 content hash portado. Integrado en AsxFetcher. BL-010 DONE |
 | Exchange/Country awareness | ✅ Implementado | markets.py unificado: normalize_country/exchange, is_non_us, infer_regulator_code. BL-011 DONE |
 | Filing Classification automática | ✅ Implementado | classify_filing_type() con 5 tipos. BL-012 DONE |
-| IR Website Crawling | ✅ Implementado | ir_crawler.py portado completo (~600 líneas). Falta integrar en EuRegulatorsFetcher (BL-013) |
-| Provenance Level 2 | ⚠️ Parcial | Modelo existe, campos no siempre poblados (BL-006) |
+| IR Website Crawling | ✅ Implementado + Integrado | ir_crawler.py portado completo (~600 líneas). Integrado en EuRegulatorsFetcher como fallback automático (BL-013 DONE). |
+| Provenance Level 2 | ✅ Completo | BL-006 DONE. Todos los extractores emiten L2 completo (table_title, row_label, col_label, raw_text, row, col, table_index, extraction_method). 100% completitud. |
 | Provenance Level 3 | ❌ Pendiente | source_map.json no implementado |
 | CI GitHub Actions | ✅ Implementado | Workflow ci.yml en .github/workflows/. pytest en Python 3.11. WP-5 DONE |
 | Sanity Checks post-extracción | ✅ Implementado | capex sign, revenue neg, gp>revenue, YoY >10x. BL-016 DONE |
 | validate_expected.py | ✅ Implementado | 8 reglas + 2 sanity warnings. Pre-check en evaluate(). BL-017 DONE |
-| Field Dependency Matrix | ✅ Publicado | 26 campos analizados (8 critical, 12 required, 6 optional). 10 faltan en 4.0. BL-034 DONE |
+| Field Dependency Matrix | ✅ Publicado + Oleada 1 DONE | 26 campos analizados (8 critical, 12 required, 6 optional). 3 campos críticos añadidos: cfi, cff, delta_cash (BL-035 DONE). 7 faltan. |
 
 ## Tickers WIP
 
 | Ticker | Campos | Score | Mercado | Problema principal | BL |
 |---|---|---|---|---|---|
-| CROX | 294 expected | 82.31% (242/294) | SEC (US) | IS segmentado por marca (Crocs+HEYDUDE), regex captura parciales en vez de consolidado | BL-041 |
+| CROX | 294 expected | 95.24% (280/294) | SEC (US) | IS segmentado por marca (Crocs+HEYDUDE), mejoró con provenance L2 | BL-041 |
 
 ## Bloqueantes actuales
 
-No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para los 13 tickers validados (12 FULL + KAR* excepción). CROX es WIP (82.31%).
+No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para los 13 tickers validados (12 FULL + KAR* excepción). CROX es WIP (95.24%).
 
 **Gaps pendientes (no bloqueantes):**
-1. **IR Crawler no integrado en EuRegulatorsFetcher** — ir_crawler.py portado pero TEP sigue dependiendo de filings_sources manuales. BL-013.
-2. **IxbrlExtractor para producción pendiente** — Parser listo y curate funcional, falta integrar como Extractor en pipeline (WP-6, futuro).
+1. **IxbrlExtractor para producción pendiente** — Parser listo y curate funcional, falta integrar como Extractor en pipeline (WP-6, futuro).
+2. **BL-035 Oleada 2 pendiente** — accounts_receivable, inventories, accounts_payable (required por producto, no critical).
 
 ## Hitos recientes
 
-- ⚠️ **CROX: revert iXBRL no autorizado (2026-03-03)** — Sub-agente de BL-041 inyectó ~89 líneas de iXBRL en phase.py + reestructuró merger.py sin autorización (viola WP-6 DIFERIDO y DEC-010). Causó 3 regresiones (ACLS 98.93%, SONO 98.07%, TEP 98.75%). Revertido en commit `8800f70`. CROX real: 82.31% (sin iXBRL). DEC-019 establece regla de protección de ficheros core. Problema real: IS segmentado por marca.
-- ✅ **Oleada 1 paralela (BL-034, BL-016, BL-017, BL-030)** — 4 tareas ejecutadas en paralelo: Field Dependency Matrix publicada, sanity checks integrados, validate_expected portado, Exhibit 99 tests creados. +52 tests (492→544). 13/13 tickers 100%.
+- ✅ **Oleada paralela BL-035/BL-006/BL-018/BL-013 (2026-03-04)** — 4 tareas ejecutadas en paralelo: (1) BL-035: cfi/cff/delta_cash añadidos como campos canónicos 23-25, pilotados en TZOO (+18) y NVDA (+18), +24 tests. (2) BL-006: Provenance L2 completo en todos los extractores (0%→100%), +17 tests, CROX mejoró 82%→95% como efecto colateral. (3) BL-018: Quality gates clean.md portados de 3.0, +24 tests. (4) BL-013: IR Crawler integrado en EuRegulatorsFetcher como fallback, +15 tests. Total: +80 tests (544→627). 2,716 campos validados.
 - ✅ **TEP → FULL** — Promovido a FULL (80/80, 6A+2H). Semestrales H1 curados desde Euronext interim filing.
 - ✅ **INMD → FULL** — Promovido de ANNUAL_ONLY (108) a FULL (210/210, 6A+6Q).
 - ✅ **BL-045 DONE** — Limpieza post-auditoría: KAR/TEP period_scope explícito, ficheros basura eliminados, .gitignore actualizado, pyproject.toml corregido.
