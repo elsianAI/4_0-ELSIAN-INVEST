@@ -16,6 +16,7 @@ htmlcov/
 # Generated pipeline outputs (regenerable)
 cases/*/extraction_result.json
 cases/*/filings_manifest.json
+cases/*/expected_draft.json
 
 # Downloaded filings (large, not tracked)
 cases/*/filings/*.htm
@@ -31,6 +32,7 @@ Thumbs.db
 
 # Temporary debug/scratch scripts
 _debug_*.py
+_run_*.py
 
 # IDE
 .idea/

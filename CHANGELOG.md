@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-03-03 (session 3)
+
+### [4.0] BL-045 Hygiene — scope fields, gitignore, junk files, pyproject python version
+- **What:** (1) Added `period_scope: ANNUAL_ONLY` to KAR and TEP case.json (BL-027 compliance). (2) Removed junk files: `cases/NVDA/simple.txt`, `cases/NVDA/test.json`, `cases/NVDA/test.txt`, `_run_acquire.py`. (3) Updated `.gitignore` to cover `_run_*.py` and `cases/*/expected_draft.json`. (4) Fixed `pyproject.toml` requires-python from `>=3.11` to `>=3.9` (all files use `from __future__ import annotations`; no match/case or tomllib; local env is 3.9.6).
+- **Tests:** 489 passed, 2 skipped.
+- **Regression:** eval --all: 12/12 tickers PASS 100%.
+
 ## 2026-03-03 (session 2)
 
 ### [4.0] BL-040 INMD ANNUAL_ONLY 100% (108/108) — 20-F filings

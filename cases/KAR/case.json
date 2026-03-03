@@ -7,5 +7,6 @@
   "accounting_standard": "IFRS",
   "fiscal_year_end_month": 12,
   "filings_expected_count": 6,
+  "period_scope": "ANNUAL_ONLY",
   "notes": "Australian oil & gas company. Reports in USD (functional currency). Changed fiscal year from June to December in 2023; TY23 is a 6-month transition period (Jul-Dec 2023). FY2024 and FY2025 are full calendar years. Filings acquired autonomously via ASX announcement API."
 }
