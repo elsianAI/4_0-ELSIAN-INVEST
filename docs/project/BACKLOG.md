@@ -341,6 +341,54 @@
 - **Descripción:** El SecEdgarFetcher actual descarga `primary_doc` para 6-Ks, pero para foreign private issuers como NEXN (Israel/UK, 20-F/6-K), los datos financieros trimestrales están en el **Exhibit 99.1** adjunto al 6-K, no en el primary_doc (que es solo la portada del formulario, ~48 líneas). El fetcher ya tiene `_find_exhibit_99()` para 8-Ks pero no lo aplica a 6-Ks. Fix: extender la lógica de exhibit discovery a 6-Ks que contengan earnings results. Verificado: SRC_010_6-K_Q4-2025.txt referencia explícitamente "Exhibit 99.1" con financial statements completos (IS/BS/CF para three/nine months). Sin este fix, NEXN no puede promoverse a FULL.
 - **Criterio de aceptación:** `acquire NEXN` descarga los .htm de Exhibit 99.1 de los 6-K con earnings results. Los .htm se convierten a .clean.md. `extract NEXN` produce periodos Q* con datos de IS/BS/CF. Tests unitarios para la nueva lógica de 6-K exhibit discovery. Sin regresiones en otros tickers SEC.
 
+### BL-039 — Nuevo ticker ACLS (Axcelis Technologies, NASDAQ, SEC)
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-03) — ACLS FULL 100% (375/375, 21 periodos). Commits 79938bd + 3961d2b.
+- **Asignado a:** Claude (elsian-4)
+- **Depende de:** —
+- **Descripción:** Axcelis Technologies como ticker SEC con iXBRL. NASDAQ, semiconductor (sector nuevo). Cobertura: 6 annual + 15 quarterly = 21 periodos, 375 campos. Cuatro fixes al pipeline: (1) ZWS stripping en html_tables.py, (2) "Twelve/Year Ended" period detection, (3) pro-forma column guard, (4) narrative suppression cuando .clean.md existe. Segundo commit: orphaned date fragment merging, income_tax IS/CF priority, section bonus fix.
+- **Criterio de aceptación:** ✅ ACLS en VALIDATED_TICKERS al 100% FULL. 12/12 tickers al 100%. 487 tests pass. **Nota:** source_filing vacío en 223/375 campos quarterly — pendiente de corrección.
+
+### BL-040 — Nuevo ticker INMD (InMode, NASDAQ, 20-F/6-K)
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** BL-036 DONE — puede usar solo 20-F annual si 6-K quarterly da problemas
+- **Descripción:** Añadir InMode Ltd. (Israel) como foreign private issuer con 20-F/6-K. Sector healthcare (nuevo). iXBRL disponible. Patrón 6-K con Exhibit 99.1 (mismo que GCT/NEXN). Con BL-036 resuelto, promover a FULL con quarterly. Datos en `3_0-ELSIAN-INVEST/casos/INMD/`.
+- **Criterio de aceptación:** INMD en VALIDATED_TICKERS al 100%. period_scope FULL con quarterly. eval --all sin regresiones.
+
+### BL-041 — Nuevo ticker BOBS (Bob's Discount Furniture, NYSE, SEC)
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** Añadir BOBS como ticker SEC NYSE. **Test de robustez del fetcher SEC:** en el 3.0 solo se descargaron Form 4 (insider trading), lo que indica que el fetcher no identificó 10-K/10-Q correctamente. El pipeline 4.0 debe adquirirlos automáticamente con `elsian acquire BOBS`. Si no los descarga → diagnosticar y arreglar el bug en SecEdgarFetcher. Datos en `3_0-ELSIAN-INVEST/casos/BOBS/`.
+- **Criterio de aceptación:** `acquire BOBS` descarga ≥3 annual + ≥6 quarterly filings automáticamente (no Form 4). BOBS en VALIDATED_TICKERS al 100% FULL. Si el fetcher tiene bug → bug corregido con test de regresión.
+
+### BL-042 — Nuevo ticker SOM (Somero Enterprises, LSE, UK/FCA)
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** Primer ticker London Stock Exchange. Requiere: (1) Investigar si LSE/FCA tiene API de filings automatizable (RNS feed, FCA National Storage Mechanism). (2) Si la hay → construir `LseFetcher(Fetcher)`. (3) Si no → usar ManualFetcher. Filings son PDF annual reports con formato corporativo UK. Portar filings del 3.0 desde `3_0-ELSIAN-INVEST/casos/SOM/`. El fetcher LSE queda como infraestructura reutilizable.
+- **Criterio de aceptación:** SOM en VALIDATED_TICKERS al 100%. Fetcher LSE (o ManualFetcher con justificación) funcional. period_scope: ANNUAL_ONLY inicialmente, evaluar si hay H1 para FULL.
+
+### BL-043 — Nuevo ticker 0327 (PAX Global Technology, HKEX, Hong Kong)
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** Primer ticker Hong Kong Exchange. Requiere: (1) Investigar si HKEX tiene API de filings automatizable. (2) Si la hay → construir `HkexFetcher(Fetcher)`. (3) Si no → usar ManualFetcher. Filings son PDF annual reports en formato asiático. Portar filings del 3.0 desde `3_0-ELSIAN-INVEST/casos/0327/`. Sector industrials (nuevo).
+- **Criterio de aceptación:** 0327 en VALIDATED_TICKERS al 100%. Fetcher HKEX (o ManualFetcher con justificación) funcional. period_scope: evaluar interim reports en HKEX (H1 obligatorio en HK → debería ser FULL).
+
+### BL-044 — Promover TEP a FULL (investigar semestrales Euronext)
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** TEP (Teleperformance, Euronext Paris) está en ANNUAL_ONLY con 55 campos y 100%. La EU Transparency Directive obliga a publicar reportes semestrales (H1). Investigar: (1) ¿Teleperformance publica H1 financial statements completos? (2) Si sí → descargar, curar con H1, cambiar period_scope a FULL. (3) Si no → documentar excepción bajo DEC-015.
+- **Criterio de aceptación:** Si H1 existe → TEP al 100% con period_scope FULL. Si no → excepción DEC-015 documentada.
+
 ### BL-034 — Field Dependency Matrix: análisis de dependencias 3.0→4.0
 - **Prioridad:** MEDIA
 - **Estado:** TODO

@@ -134,3 +134,18 @@
 - **Excepciones:** Tickers de mercados sin quarterly filings (ej: TEP/Euronext con solo annual reports publicados, KAR/ASX con annual-only) pueden contar si se confirma que no hay quarterly filings disponibles en ese mercado/regulador. El criterio es "todos los periodos disponibles evaluados", no "tiene que tener quarterly".
 - **Supersede:** Criterios parciales anteriores en ROADMAP.md y project-director.agent.md.
 - **Impacto:** Estado actual pasa de 6/15 (FULL) a 6/15 objetivo unificado. Los 4 tickers ANNUAL_ONLY (IOSP, KAR, NEXN, TEP) necesitan evaluarse: ¿tienen quarterly disponibles? Si sí → promover. Si no → documentar excepción.
+
+## DEC-016 — Oleada 4: selección de 5 tickers nuevos para llegar a 15 FULL
+- **Fecha:** 2026-03-03
+- **Contexto:** Con 9 tickers FULL + 2 ANNUAL_ONLY (11 total), DEC-015 exige ≥15 FULL para Fase 2. Necesitamos 5 tickers nuevos + promover los ANNUAL_ONLY restantes. La selección sigue el principio estratégico: cada ticker debe mejorar el sistema, no solo sumar al contador. Se priorizó diversidad de mercado, formato de filing y exposición de debilidades del pipeline.
+- **Decisión:** Oleada 4 compuesta por 5 tickers nuevos:
+  1. **INMD** (InMode, NASDAQ, Israel) — 20-F/6-K con Exhibit 99.1. Foreign private issuer. Sector healthcare (nuevo). iXBRL disponible. Valida el patrón 6-K con exhibits (mismo que GCT/NEXN). Prioridad alta — avanza rápido con infraestructura existente.
+  2. **SOM** (Somero Enterprises, LSE, UK/FCA) — PDF annual reports. **Nuevo mercado: LSE.** No hay fetcher LSE. Fuerza construir fetcher LSE + mejorar extracción PDF para formatos corporativos UK. Infraestructura pesada.
+  3. **0327** (PAX Global Technology, HKEX, Hong Kong) — PDF annual reports. **Nuevo mercado: HKEX.** No hay fetcher HKEX. Formato PDF asiático diferente a SEC/EU/UK. Infraestructura pesada.
+  4. **BOBS** (Bob's Discount Furniture, NYSE) — 10-K/10-Q SEC. Test de robustez: en el 3.0 el fetcher SEC solo descargó Form 4 (insider trading), lo que indica un bug en la identificación de filing types. El pipeline 4.0 debe adquirirlos automáticamente. Si no → el fetcher tiene un bug.
+  5. **ACLS** (Axcelis Technologies, NASDAQ) — 10-K/10-Q SEC. iXBRL disponible. Semiconductor (sector nuevo). Cobertura rica (6A+12Q). Avanza el contador rápido mientras SOM/0327 construyen infraestructura.
+- **Priorización de ejecución:** ACLS e INMD primero (iXBRL, avanzan rápido). BOBS en paralelo (diagnóstico fetcher SEC). SOM y 0327 son infraestructura pesada — pueden ejecutarse en oleadas separadas si bloquean.
+- **Infraestructura vs. ticker:** SOM y 0327 requieren fetchers nuevos (LSE, HKEX). El primer paso de cada ticker es construir el fetcher correspondiente, que queda como infraestructura reutilizable. No se crean BL de infraestructura separados — van integrados en las BL del ticker, pero el criterio de aceptación exige que el fetcher funcione como componente independiente.
+- **Promociones pendientes:** TEP necesita investigación de reportes semestrales Euronext (BL-044). NEXN desbloqueado por BL-036 (DONE).
+- **Razón:** La combinación equilibra: (a) velocidad — ACLS/INMD atacan con infraestructura existente, (b) profundidad — BOBS diagnostica bugs del fetcher SEC, (c) amplitud — SOM/0327 abren 2 mercados nuevos (LSE, HKEX) que son inversión estratégica para el producto.
+- **Referencia:** Datos del 3.0 disponibles en `3_0-ELSIAN-INVEST/casos/` para SOM, 0327, BOBS, INMD.
