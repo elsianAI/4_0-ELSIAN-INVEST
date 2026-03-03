@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-03-03
+
+### [BL-036] NEXN promoted to FULL scope — 6-K Exhibit 99.1 download + html_tables drift-4 fix (153/153, 100%)
+- **What:** Promoted NEXN from ANNUAL_ONLY (76 fields, FY2021-FY2024) to FULL scope (153 fields, FY2021-FY2024 + Q1-Q3 2024/2025). All 6 quarterly periods extracted and verified with cross-checks against cumulative H1/9M values (100% pass rate on all fields: ingresos, cost_of_revenue, net_income, R&D, SG&A, EBIT).
+- **Fix 1 — `elsian/acquire/sec_edgar.py`:** Extended `_find_exhibit_99()` to support 6-K filings (previously 8-K only). Added `doc_type` field check (EX-99.1, EX-99.2, EX-99) and PDF support. Modified quarterly download loop to call `_find_exhibit_99()` for `form == "6-K"` and use the exhibit HTML instead of the bare cover-page primary_doc.
+- **Fix 2 — `elsian/extract/html_tables.py`:** Changed sparse-header calibration threshold `_max_drift <= 3` → `_max_drift <= 4`. NEXN 6-K sub-tables use a 4-column layout (9M+Q3 or H1+Q2) where period headers sit at stride-3 positions but data values sit at stride-4 positions (max drift = 4). Old threshold incorrectly mapped Q3-2024 → Q3-2025 value and Q2-2024 → Q2-2025 value.
+- **Tests:** `tests/unit/test_html_tables.py` — 2 new tests: `test_nexn_6k_nine_months_then_three_months_column_order` (9M+Q3 layout, verifies Q3-2024 = 90,184 ≠ Q3-2025 94,791), `test_nexn_6k_six_months_then_three_months_column_order` (H1+Q2 layout, verifies Q2-2024 = 88,577 ≠ Q2-2025 90,948).
+- **Regression:** eval --all: 10/10 tickers PASS 100% | 477 tests passed, 2 skipped.
+
 ## 2026-03-02
 
 ### [FIX] GCT Q1-Q3 2024 regression — dollar/pct annotation-row filter (252/252, 100%)

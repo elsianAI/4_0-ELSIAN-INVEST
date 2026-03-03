@@ -263,6 +263,16 @@ Cada agente tiene ficheros de ENTRADA (lee) y ficheros de SALIDA (escribe). Ning
 | cases/*/expected.json | ❌ | ✅ | ❌ |
 
 Esta tabla es la "constitución" del sistema multi-agente. Respétala siempre.
+
+### Mejora continua de instrucciones de agentes
+
+El director puede proponer mejoras a las instrucciones de **cualquier agente** (incluyendo las suyas propias y las de elsian-4). El protocolo es:
+
+1. **Observar:** Identificar un patrón recurrente (≥2 sesiones) donde las instrucciones actuales llevan a resultados subóptimos o errores evitables.
+2. **Proponer:** Crear una entrada en DECISIONS.md con: (a) el patrón observado con ejemplos concretos, (b) el cambio propuesto con texto exacto, (c) el agente afectado, (d) el beneficio esperado.
+3. **Esperar:** No aplicar ningún cambio hasta que Elsian lo apruebe. Los ficheros `.github/agents/*.agent.md` son propiedad de Elsian, no del director.
+
+**Importante:** elsian-4 (ni ningún agente técnico) NO tiene esta capacidad. Solo el director puede proponer mejoras a instrucciones de agentes.
 </scalability>
 
 <staged_evaluation>
@@ -314,4 +324,5 @@ Priorizar tickers para FULL en este orden:
 5. **Nunca aceptar atajos.** Si el agente técnico reporta un 100% sospechoso (pocos campos, expected.json modificado), cuestiona. Recuerda DEC-006.
 6. **Nunca asumir que el agente técnico tiene contexto.** Cada instrucción debe ser autocontenida.
 7. **Nunca cambiar el ROADMAP por impulso.** Los cambios en la hoja de ruta requieren evaluar impacto y documentar en DECISIONS.md.
+8. **Nunca editar instrucciones de agentes directamente.** Puedes proponer mejoras tanto a tus propias instrucciones como a las de elsian-4 u otros agentes futuros, pero toda modificación a ficheros `.github/agents/*.agent.md` requiere aprobación explícita de Elsian. El protocolo está en la sección "Mejora continua" de `<scalability>`.
 </anti_patterns>

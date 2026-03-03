@@ -235,7 +235,12 @@ def _collect_all_filings(
 def _find_exhibit_99(
     client: SecClient, cik_int: int, rec: _FilingRecord
 ) -> Optional[str]:
-    """Find Exhibit 99 document in an 8-K filing index."""
+    """Find Exhibit 99.1 (or variant) in a filing's index.
+
+    Works for both 8-K earnings releases and 6-K interim reports from
+    foreign private issuers, who attach financial statements as Exhibit 99.1.
+    Returns the exhibit filename, or None if no matching exhibit is found.
+    """
     try:
         idx = client.get_json(_build_index_json_url(cik_int, rec.accession_nodash))
     except Exception:
@@ -243,12 +248,16 @@ def _find_exhibit_99(
     items = idx.get("directory", {}).get("item", [])
     for entry in items:
         name = str(entry.get("name", ""))
+        doc_type = str(entry.get("type", ""))
         low = name.lower()
         if "index" in low or "header" in low:
             continue
-        if not low.endswith((".htm", ".html", ".txt", ".xml")):
+        if not low.endswith((".htm", ".html", ".txt", ".xml", ".pdf")):
             continue
-        if re.search(r"(exhibit[-_ ]?99|ex[-_ ]?99|99[-_ ]?1)", low):
+        # Match by EDGAR document type tag OR by filename pattern
+        if doc_type in ("EX-99.1", "EX-99.2", "EX-99") or re.search(
+            r"(exhibit[-_ ]?99|ex[-_ ]?99|99[-_ ]?1)", low
+        ):
             return name
     return None
 
@@ -444,7 +453,11 @@ class SecEdgarFetcher(Fetcher):
 
         for rec in quarterly:
             period = _period_from_doc_or_date(rec.primary_doc, rec.filing_date, rec.form)
-            _download_record(rec, rec.form.replace("/", "-"), period)
+            exhibit: Optional[str] = None
+            if rec.form == "6-K":
+                # Foreign private issuers attach financial statements as Exhibit 99.1
+                exhibit = _find_exhibit_99(client, cik_int, rec)
+            _download_record(rec, rec.form.replace("/", "-"), period, exhibit)
 
         for rec, exhibit in earnings_8k:
             period = rec.filing_date

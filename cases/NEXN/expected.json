@@ -333,6 +333,119 @@
           "source_filing": "SRC_002_20-F_FY2024.clean.md"
         }
       }
+    },
+    "Q1-2024": {
+      "fecha_fin": "2024-03-31",
+      "tipo_periodo": "trimestral",
+      "fields": {
+        "ingresos": {"value": 74432, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "cost_of_revenue": {"value": 14538, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "ebit": {"value": -6554, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "net_income": {"value": -6874, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "eps_basic": {"value": -0.1, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "eps_diluted": {"value": -0.1, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "research_and_development": {"value": 12381, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "sga": {"value": 38274, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "depreciation_amortization": {"value": 15793, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "income_tax": {"value": 225, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "cfo": {"value": 37726, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "capex": {"value": -2719, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "cash_and_equivalents": {"value": 244937, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"}
+      }
+    },
+    "Q2-2024": {
+      "fecha_fin": "2024-06-30",
+      "tipo_periodo": "trimestral",
+      "fields": {
+        "ingresos": {"value": 88577, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "cost_of_revenue": {"value": 15557, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "ebit": {"value": 6357, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "net_income": {"value": 2916, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "eps_basic": {"value": 0.04, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "eps_diluted": {"value": 0.04, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "research_and_development": {"value": 12531, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "sga": {"value": 37140, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "depreciation_amortization": {"value": 15504, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "income_tax": {"value": 2350, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"}
+      }
+    },
+    "Q3-2024": {
+      "fecha_fin": "2024-09-30",
+      "tipo_periodo": "trimestral",
+      "fields": {
+        "ingresos": {"value": 90184, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "cost_of_revenue": {"value": 13857, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "ebit": {"value": 16262, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "net_income": {"value": 14541, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "eps_basic": {"value": 0.21, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "eps_diluted": {"value": 0.21, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "research_and_development": {"value": 11693, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "sga": {"value": 35614, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "depreciation_amortization": {"value": 12758, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "income_tax": {"value": 1503, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"}
+      }
+    },
+    "Q1-2025": {
+      "fecha_fin": "2025-03-31",
+      "tipo_periodo": "trimestral",
+      "fields": {
+        "ingresos": {"value": 78330, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "cost_of_revenue": {"value": 11199, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "ebit": {"value": 3449, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "net_income": {"value": 1633, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "eps_basic": {"value": 0.03, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "eps_diluted": {"value": 0.02, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "research_and_development": {"value": 12764, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "sga": {"value": 35651, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "depreciation_amortization": {"value": 15267, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "income_tax": {"value": 2876, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "cfo": {"value": 19275, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "capex": {"value": -2274, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "cash_and_equivalents": {"value": 164712, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "total_assets": {"value": 751641, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "total_equity": {"value": 502726, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"},
+        "total_liabilities": {"value": 248915, "source_filing": "SRC_012_6-K_Q2-2025.clean.md"}
+      }
+    },
+    "Q2-2025": {
+      "fecha_fin": "2025-06-30",
+      "tipo_periodo": "trimestral",
+      "fields": {
+        "ingresos": {"value": 90948, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "cost_of_revenue": {"value": 12057, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "ebit": {"value": 8704, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "net_income": {"value": 8666, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "eps_basic": {"value": 0.14, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "eps_diluted": {"value": 0.14, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "research_and_development": {"value": 14965, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "sga": {"value": 39701, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "depreciation_amortization": {"value": 15521, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "income_tax": {"value": 1437, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "cash_and_equivalents": {"value": 131459, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "total_assets": {"value": 740874, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "total_equity": {"value": 480289, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"},
+        "total_liabilities": {"value": 260585, "source_filing": "SRC_011_6-K_Q3-2025.clean.md"}
+      }
+    },
+    "Q3-2025": {
+      "fecha_fin": "2025-09-30",
+      "tipo_periodo": "trimestral",
+      "fields": {
+        "ingresos": {"value": 94791, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "cost_of_revenue": {"value": 16262, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "ebit": {"value": 7273, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "net_income": {"value": 4208, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "eps_basic": {"value": 0.07, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "eps_diluted": {"value": 0.07, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "research_and_development": {"value": 14765, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "sga": {"value": 40411, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "depreciation_amortization": {"value": 16080, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "income_tax": {"value": 4455, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "cash_and_equivalents": {"value": 116728, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "total_assets": {"value": 747734, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "total_equity": {"value": 470922, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"},
+        "total_liabilities": {"value": 276812, "source_filing": "SRC_010_6-K_Q4-2025.clean.md"}
+      }
     }
   }
 }

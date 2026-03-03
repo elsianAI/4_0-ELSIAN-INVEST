@@ -622,7 +622,7 @@ def extract_from_markdown_table(
                     _best_np[i] < _best_np[i + 1]
                     for i in range(len(_best_np) - 1)
                 )
-                and _max_drift <= 3
+                and _max_drift <= 4
                 # Boundary-crossing check: only recalibrate when at
                 # least one data column sits AT or PAST the NEXT
                 # period's header column.

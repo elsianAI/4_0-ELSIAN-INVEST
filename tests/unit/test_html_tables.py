@@ -370,3 +370,84 @@ def test_dollar_pct_annotation_row_does_not_suppress_normal_is_table():
     assert by_period.get(("Service revenues", "Q1-2024")) == 67415.0
     assert by_period.get(("Service revenues", "Q1-2023")) == 35096.0
     assert by_period.get(("Operating income", "Q1-2024")) == 34817.0
+
+
+# ── NEXN 6-K: 4-column table with reversed group order (9M then Q) ───────────
+
+def test_nexn_6k_nine_months_then_three_months_column_order():
+    """6-K sub-table where cumulative (9M) columns come BEFORE quarterly (Q3).
+
+    NEXN (and similar foreign private issuers) file 6-K interim reports
+    that include a combined IFRS statement table with the column order:
+    9M-current | 9M-prior | Q3-current | Q3-prior
+
+    The HTML-to-markdown conversion places the period-type header at the
+    FIRST data column of each group (positions 2 and 5), but the actual
+    values land at positions 3, 7, 11, 15 (offset +1 per column, +4 at
+    the last column).  This produces max_drift=4, which previously exceeded
+    the threshold of 3, causing the calibration to be rejected and Q3-2024
+    to receive the Q3-2025 value instead of the correct prior-year value.
+
+    After the fix (_max_drift <= 4), recalibration succeeds and each column
+    receives its correct year value.
+    """
+    # Replicates the NEXN SRC_010 / SRC_011 sub-table format (IFRS statements).
+    # Header: "9M ended Sep 30" at col 2, "Q3 ended Sep 30" at col 5.
+    # Sub-years 2025,2024 at cols 2,5 and 2025,2024 at cols 11,14.
+    table = (
+        "|  |  | For the nine months ended September 30 |  |"
+        "  | For the three months ended September 30 |  |  |  |  |  |  |  |  |  |  |  |\n"
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | ---"
+        " | --- | --- | --- | --- | --- | --- | --- |\n"
+        "|  |  | 2025 |  |  | 2024 |  |  | 2025 |  |  | 2024 |  |  |  |  |  |\n"
+        "| Revenue |  |  | 264,069 |  |  |  | 253,193 |  |  |  | 94,791 |  |  |  | 90,184 |  |\n"
+        "| Cost of revenue |  |  | 39,518 |  |  |  | 43,952 |  |  |  | 16,262 |  |  |  | 13,857 |  |\n"
+        "| Gross profit |  |  | 186,782 |  |  |  | 174,008 |  |  |  | 65,585 |  |  |  | 64,309 |  |\n"
+        "| Operating income |  |  | 19,918 |  |  |  | 16,342 |  |  |  | 7,273 |  |  |  | 16,303 |  |\n"
+        "| Net income |  |  | 14,507 |  |  |  | 10,583 |  |  |  | 4,208 |  |  |  | 14,541 |  |\n"
+    )
+    fields = extract_from_markdown_table(table, filing_type="6-K")
+    by_period = {(f.label, f.column_header): f.value for f in fields}
+
+    # 9M values must be correct
+    assert by_period.get(("Revenue", "9M-2025")) == 264069.0
+    assert by_period.get(("Revenue", "9M-2024")) == 253193.0
+    # Q3 values must use the CORRECT prior-year column (Q3-2024 = 90,184, NOT 94,791)
+    assert by_period.get(("Revenue", "Q3-2025")) == 94791.0
+    assert by_period.get(("Revenue", "Q3-2024")) == 90184.0, (
+        f"Q3-2024 Revenue should be 90184 (prior year), got {by_period.get(('Revenue','Q3-2024'))}"
+    )
+    # Cross-check other fields to ensure consistent recalibration
+    assert by_period.get(("Net income", "Q3-2025")) == 4208.0
+    assert by_period.get(("Net income", "Q3-2024")) == 14541.0
+
+
+def test_nexn_6k_six_months_then_three_months_column_order():
+    """6-K sub-table for H1 reports: H1 columns before Q2 columns.
+
+    Same pattern as the 9M test but for semi-annual (H1 = six months)
+    combined with Q2 (three months ended June 30).
+    """
+    table = (
+        "|  |  | For the six months ended June 30 |  |"
+        "  | For the three months ended June 30 |  |  |  |  |  |  |  |  |  |  |  |\n"
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | ---"
+        " | --- | --- | --- | --- | --- | --- | --- |\n"
+        "|  |  | 2025 |  |  | 2024 |  |  | 2025 |  |  | 2024 |  |  |  |  |  |\n"
+        "| Revenue |  |  | 169,278 |  |  |  | 163,009 |  |  |  | 90,948 |  |  |  | 88,577 |  |\n"
+        "| Cost of revenue |  |  | 23,256 |  |  |  | 30,095 |  |  |  | 12,057 |  |  |  | 15,557 |  |\n"
+        "| Gross profit |  |  | 120,197 |  |  |  | 107,699 |  |  |  | 66,634 |  |  |  | 51,425 |  |\n"
+        "| Operating income |  |  | 12,470 |  |  |  | 9,069 |  |  |  | 8,704 |  |  |  | 4,469 |  |\n"
+        "| Net income |  |  | 10,299 |  |  |  | 42 |  |  |  | 8,666 |  |  |  | 725 |  |\n"
+    )
+    fields = extract_from_markdown_table(table, filing_type="6-K")
+    by_period = {(f.label, f.column_header): f.value for f in fields}
+
+    # H1 values
+    assert by_period.get(("Revenue", "H1-2025")) == 169278.0
+    assert by_period.get(("Revenue", "H1-2024")) == 163009.0
+    # Q2 values — Q2-2024 must be 88,577, NOT 90,948 (Q2-2025)
+    assert by_period.get(("Revenue", "Q2-2025")) == 90948.0
+    assert by_period.get(("Revenue", "Q2-2024")) == 88577.0, (
+        f"Q2-2024 Revenue should be 88577 (prior year), got {by_period.get(('Revenue','Q2-2024'))}"
+    )

@@ -116,6 +116,16 @@
 - **Decisión:** Trackear PR en el repo como WIP. Añadir case.json y expected.json al control de versiones. Añadir a WIP_TICKERS en test_regression.py (tarea para agente técnico). No bloquea la promoción de otros tickers a FULL (BL-026) — PR se resuelve en paralelo o después.
 - **Razón:** PR aporta diversidad sectorial (oil & gas, primer ticker del sector) y es un caso FULL con quarterly filings. El 88.65% es una base sólida desde la que iterar. Eliminar perdería el trabajo de curación ya hecho. Los problemas (shares_outstanding, total_debt) son patrones repetibles que beneficiarán a otros tickers al resolverse.
 
+## DEC-014 — Plan v3: Expansión de campos canónicos en 3 fases
+- **Fecha:** 2026-03-02
+- **Contexto:** Codex propuso un plan para expandir los campos canónicos y preparar la estructura para truth_pack. La versión inicial (Plan v2) tenía problemas: timing prematuro, over-engineering de `period_status`/`null_reason`, piloto equivocado (GCT en vez de TZOO), y mezcla de prioridades. Tras corrección, se produjo Plan v3 con 3 fases limpias.
+- **Decisión:** Adoptar Plan v3 con la siguiente secuencia:
+  - **Gate 0 (prerequisito):** BL-038 resuelto + oleada 3 (BL-026) completada. ✅ Completado.
+  - **Fase A — Field Dependency Matrix (BL-034):** Análisis estático del 3.0 para generar matriz de dependencias entre campos. Puede ejecutarse en paralelo con Gate 0. Piloto: TZOO (referencia, 6A+12Q).
+  - **Fase B — Expandir campos canónicos (BL-035):** Añadir campos identificados en Fase A a `field_aliases.json` + actualizar extractores. Solo campos con ≥3 ocurrencias en tickers existentes.
+  - **Fase C (diferida):** `period_status`, `null_reason`, `runtime_contract`. Se implementa solo cuando haya ≥15 tickers FULL y se necesite para producción.
+- **Razón:** Separar análisis (Fase A) de implementación (Fase B) reduce riesgo. Diferir Fase C evita over-engineering prematuro. TZOO como piloto porque tiene la mayor cobertura de periodos (6A+12Q) y ya está validado al 100%.
+
 ## DEC-015 — Criterio unificado de transición Fase 1→2: ≥15 tickers FULL 100%
 - **Fecha:** 2026-03-02
 - **Contexto:** El criterio anterior de Fase 1→2 tenía dos umbrales separados: "≥15 tickers validados al 100%" y "≥5 tickers promovidos a FULL al 100%". Esto creaba una situación donde el criterio FULL ya estaba superado (6/5) pero el criterio de tickers totales no (10/15), y permitía llegar a 15 con tickers ANNUAL_ONLY que solo cubren una fracción de los periodos disponibles. Un ticker ANNUAL_ONLY no demuestra que el pipeline maneja la complejidad real de quarterly filings (formatos variados, columnas multi-periodo, escalas por sección).
