@@ -38,7 +38,7 @@
 
     "us-gaap:LongTermDebt": "total_debt",
     "us-gaap:LongTermDebtAndCapitalLeaseObligations": "total_debt",
-    "us-gaap:DebtInstrumentCarryingAmount": "total_debt",
+    "us-gaap:LongTermDebtNoncurrent": "total_debt",
 
     "us-gaap:ResearchAndDevelopmentExpense": "research_and_development",
 
@@ -94,7 +94,8 @@
     ],
     "total_debt": [
       "us-gaap:LongTermDebt",
-      "us-gaap:DebtInstrumentCarryingAmount"
+      "us-gaap:LongTermDebtAndCapitalLeaseObligations",
+      "us-gaap:LongTermDebtNoncurrent"
     ],
     "depreciation_amortization": [
       "us-gaap:DepreciationDepletionAndAmortization",

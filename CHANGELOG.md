@@ -16,6 +16,10 @@
 ### [4.0] BL-034 Field Dependency Matrix publicada
 - **What:** Análisis estático completo de `tp_validator.py`, `tp_calculator.py`, `tp_normalizer.py` del 3.0. 26 campos analizados (8 critical, 12 required, 6 optional). 16 ya en 4.0, 10 faltan (3 high-priority: cfi, cff, delta_cash). Publicado en `docs/project/FIELD_DEPENDENCY_MATRIX.md` + JSON.
 
+### [4.0] CROX WIP checkpoint (82.31%, 242/294) + cleanup TZOO_backup
+- **What:** Checkpoint de CROX (Crocs Inc., CIK 1334036): case.json + expected.json con 294 campos (6A+12Q). Score real 82.31% — IS segmentado por marca (Crocs+HEYDUDE) requiere mejora de parser de tablas. Eliminado `cases/TZOO_backup/` (directorio obsoleto). Actualizado `config/ixbrl_concept_map.json` (nuevos mappings CROX).
+- **Regression:** eval --all: 13/13 PASS 100%, CROX FAIL 82.31% (known WIP).
+
 ## 2026-03-03 (revert)
 
 ### [4.0] Revert unauthorized iXBRL injection from production pipeline — fixes ACLS/SONO/TEP regressions

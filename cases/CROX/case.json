@@ -1,0 +1,13 @@
+{
+  "ticker": "CROX",
+  "exchange": "NASDAQ",
+  "country": "US",
+  "currency": "USD",
+  "cik": "0001334036",
+  "source_hint": "sec",
+  "filings_expected_count": null,
+  "fiscal_year_end_month": 12,
+  "period_scope": "FULL",
+  "use_ixbrl_override": true,
+  "notes": "Crocs Inc., footwear company (SIC 3021 Rubber & Plastics Footwear). NASDAQ listed, US-GAAP, FYE December. CIK 0001334036. Has 15 10-K and 44 10-Q on SEC EDGAR. use_ixbrl_override: segmented income statement causes markdown to extract HEYDUDE-only revenues; iXBRL consolidated context is correct."
+}
