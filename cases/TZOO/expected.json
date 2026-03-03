@@ -4,7 +4,7 @@
   "currency": "USD",
   "restatement_policy": "as_reported_unless_explicit_restatement",
   "scale": "mixed",
-  "scale_notes": "Monetary fields in thousands as stated in filing tables ('In thousands'). EPS in raw units per share. Shares (weighted-average basic) in thousands. total_equity convention: 'Total stockholders equity' line (NCI-inclusive when available). FY2019 includes Asia Pacific segment (reclassified as discontinued in FY2020). Quarterly periods omit cash-flow items (cfo, capex, depreciation_amortization) because 10-Q cash-flow statements report YTD, not single-quarter figures.",
+  "scale_notes": "Monetary fields in thousands as stated in filing tables ('In thousands'). EPS in raw units per share. Shares (weighted-average basic) in thousands. total_equity convention: 'Total stockholders equity' line (NCI-inclusive when available). FY2019 includes Asia Pacific segment (reclassified as discontinued in FY2020). Quarterly periods omit cash-flow items (cfo, capex, cfi, cff, delta_cash, depreciation_amortization) because 10-Q cash-flow statements report YTD, not single-quarter figures.",
   "periods": {
     "FY2024": {
       "fecha_fin": "2024-12-31",
@@ -76,6 +76,18 @@
         },
         "shares_outstanding": {
           "value": 12594,
+          "source_filing": "SRC_001_10-K_FY2024.clean.md"
+        },
+        "cfi": {
+          "value": -177,
+          "source_filing": "SRC_001_10-K_FY2024.clean.md"
+        },
+        "cff": {
+          "value": -18973,
+          "source_filing": "SRC_001_10-K_FY2024.clean.md"
+        },
+        "delta_cash": {
+          "value": 1351,
           "source_filing": "SRC_001_10-K_FY2024.clean.md"
         }
       }
@@ -151,6 +163,18 @@
         "shares_outstanding": {
           "value": 14897,
           "source_filing": "SRC_002_10-K_FY2023.clean.md"
+        },
+        "cfi": {
+          "value": -39,
+          "source_filing": "SRC_002_10-K_FY2023.clean.md"
+        },
+        "cff": {
+          "value": -14150,
+          "source_filing": "SRC_002_10-K_FY2023.clean.md"
+        },
+        "delta_cash": {
+          "value": -2989,
+          "source_filing": "SRC_002_10-K_FY2023.clean.md"
         }
       }
     },
@@ -224,6 +248,18 @@
         },
         "shares_outstanding": {
           "value": 12372,
+          "source_filing": "SRC_003_10-K_FY2022.clean.md"
+        },
+        "cfi": {
+          "value": -1315,
+          "source_filing": "SRC_003_10-K_FY2022.clean.md"
+        },
+        "cff": {
+          "value": 1282,
+          "source_filing": "SRC_003_10-K_FY2022.clean.md"
+        },
+        "delta_cash": {
+          "value": -25611,
           "source_filing": "SRC_003_10-K_FY2022.clean.md"
         }
       }
@@ -299,6 +335,18 @@
         "shares_outstanding": {
           "value": 11646,
           "source_filing": "SRC_004_10-K_FY2021.clean.md"
+        },
+        "cfi": {
+          "value": 104,
+          "source_filing": "SRC_004_10-K_FY2021.clean.md"
+        },
+        "cff": {
+          "value": -11158,
+          "source_filing": "SRC_004_10-K_FY2021.clean.md"
+        },
+        "delta_cash": {
+          "value": -19396,
+          "source_filing": "SRC_004_10-K_FY2021.clean.md"
         }
       }
     },
@@ -372,6 +420,18 @@
         },
         "shares_outstanding": {
           "value": 11344,
+          "source_filing": "SRC_005_10-K_FY2020.clean.md"
+        },
+        "cfi": {
+          "value": 2067,
+          "source_filing": "SRC_005_10-K_FY2020.clean.md"
+        },
+        "cff": {
+          "value": -6982,
+          "source_filing": "SRC_005_10-K_FY2020.clean.md"
+        },
+        "delta_cash": {
+          "value": 43675,
           "source_filing": "SRC_005_10-K_FY2020.clean.md"
         }
       }
@@ -502,6 +562,18 @@
         },
         "shares_outstanding": {
           "value": 11809,
+          "source_filing": "SRC_006_10-K_FY2019.clean.md"
+        },
+        "cfi": {
+          "value": -1147,
+          "source_filing": "SRC_006_10-K_FY2019.clean.md"
+        },
+        "cff": {
+          "value": -9106,
+          "source_filing": "SRC_006_10-K_FY2019.clean.md"
+        },
+        "delta_cash": {
+          "value": 1249,
           "source_filing": "SRC_006_10-K_FY2019.clean.md"
         }
       }

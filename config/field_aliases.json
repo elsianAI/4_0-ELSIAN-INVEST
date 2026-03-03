@@ -241,7 +241,8 @@
       "long term debt",
       "total long-term debt",
       "other financial liabilities",
-      "borrowings"
+      "borrowings",
+      "long-term borrowings"
     ],
     "multiplier": null,
     "additive": true
@@ -259,7 +260,9 @@
       "net cash used in operating activities",
       "net cash flow from operating activities",
       "net cash flows from operating activities",
-      "net cash flows used in operating activities"
+      "net cash flows used in operating activities",
+      "cash provided by operating activities",
+      "cash used in operating activities"
     ],
     "multiplier": null
   },
@@ -285,7 +288,8 @@
       "expenditures for property, plant and equipment",
       "expenditures for property, plant and equipment and capitalized software",
       "purchase of fixed assets",
-      "purchases of fixed assets"
+      "purchases of fixed assets",
+      "purchases of property, equipment, and software"
     ],
     "multiplier": null
   },
@@ -415,6 +419,63 @@
       "total expenses taxes on income",
       "impôt sur les sociétés",
       "impuesto sobre beneficios"
+    ],
+    "multiplier": null
+  },
+  "cfi": {
+    "aliases": [
+      "cash from investing activities",
+      "cash used in investing activities",
+      "net cash from investing activities",
+      "net cash used in investing activities",
+      "net cash provided by investing activities",
+      "net cash provided by (used in) investing activities",
+      "investing activities",
+      "cash flows from investing activities",
+      "net cash flows from investing activities",
+      "net cash flows used in investing activities",
+      "flux de trésorerie d'investissement",
+      "flujo de caja de inversión",
+      "cash flow from investing activities"
+    ],
+    "multiplier": null
+  },
+  "cff": {
+    "aliases": [
+      "cash from financing activities",
+      "cash used in financing activities",
+      "net cash from financing activities",
+      "net cash used in financing activities",
+      "net cash provided by financing activities",
+      "net cash provided by (used in) financing activities",
+      "financing activities",
+      "cash flows from financing activities",
+      "net cash flows from financing activities",
+      "net cash flows used in financing activities",
+      "flux de trésorerie de financement",
+      "flujo de caja de financiación",
+      "cash flow from financing activities"
+    ],
+    "multiplier": null
+  },
+  "delta_cash": {
+    "aliases": [
+      "net change in cash",
+      "net increase in cash",
+      "net decrease in cash",
+      "net increase (decrease) in cash",
+      "net increase (decrease) in cash and cash equivalents",
+      "net change in cash and cash equivalents",
+      "change in cash and cash equivalents",
+      "increase (decrease) in cash and cash equivalents",
+      "increase (decrease) in cash, cash equivalents and restricted cash",
+      "net increase (decrease) in cash, cash equivalents and restricted cash",
+      "net change in cash, cash equivalents and restricted cash",
+      "change in cash, cash equivalents and restricted cash",
+      "net decrease in cash, cash equivalents and restricted cash",
+      "net increase in cash, cash equivalents and restricted cash",
+      "variation nette de la trésorerie",
+      "variación neta de efectivo"
     ],
     "multiplier": null
   }

@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026-03-04
+
+### [4.0] BL-006 Provenance Level 2 complete in all extractors
+- **What:** Audited and fixed all extractors to propagate complete L2 provenance metadata: `source_filing`, `table_index`, `table_title`, `row_label`, `col_label`, `row`, `col`, `raw_text`, plus new `extraction_method` field (`"table"` | `"narrative"` | `"manual"`). Before: 0% of fields had complete L2 provenance. After: 100% across all 13 tickers.
+- **Files changed:** `elsian/models/field.py` (added `extraction_method` to `Provenance`), `elsian/extract/html_tables.py` (expanded `TableField` with 6 provenance fields, updated 3 extraction functions), `elsian/extract/phase.py` (updated `_make_field_result` with keyword provenance args, fixed additive accumulation, dividend, manual override, EPS duplication, vertical BS, and `_recover_total_liabilities` paths), `elsian/extract/vertical.py` (populated provenance on both creation spots + synthesised total_debt).
+- **Tests:** 627 passed (17 new in `tests/unit/test_provenance.py`: 4 model unit tests + 13 per-ticker L2 completeness checks).
+- **Regression:** eval --all: 12/13 tickers PASS 100%. CROX 91.84% (pre-existing, improved from 82.31%).
+
+## 2026-03-03
+
+### [4.0] BL-035 Expand canonical fields: cfi, cff, delta_cash
+- **What:** Added 3 new canonical Cash Flow fields (`cfi`, `cff`, `delta_cash`) to `config/field_aliases.json` (with EN/FR/ES aliases), `config/ixbrl_concept_map.json` (US-GAAP + IFRS concepts), and verified via extraction on TZOO and NVDA. 36 new field values validated across 12 periods (6 TZOO FY + 6 NVDA FY). All values verified against 10-K Cash Flow Statements. Canonical field count: 22 → 25.
+- **Tests:** 565 passed, 0 failed (24 new tests in `test_cashflow_fields.py`).
+- **Regression:** eval --all: 13/13 tickers PASS 100%. TZOO 288/288 (+18), NVDA 336/336 (+18). CROX 82.31% (known WIP, unchanged).
+
+### [4.0] BL-018 Quality gates clean.md — granular section-level validation ported from 3.0
+- **What:** Ported `clean_md_quality.py` from 3.0 to `elsian/convert/clean_md_quality.py`. Mode detection (html_table/pdf_text), section-level metrics (numeric row counts per IS/BS/CF), stub detection, PDF signal gates, exportable stats dict. Integrated into html_to_markdown.py.
+- **Ported from:** `3_0-ELSIAN-INVEST/scripts/runners/clean_md_quality.py` (241 lines)
+- **Tests:** 24 new tests (test_clean_md_quality.py). 522 unit + 16 integration passed.
+- **Regression:** eval --all: 13/13 tickers PASS 100% (CROX 82.31% known WIP).
+
+### [4.0] BL-013 IR Crawler integrated into EuRegulatorsFetcher
+- **What:** Integrated `ir_crawler.py` functions into `EuRegulatorsFetcher.acquire()` as fallback when `filings_sources` is not defined and `web_ir` is set. Flow: `resolve_ir_base_url` → `build_ir_pages` → fetch HTML → `discover_ir_subpages` → `extract_filing_candidates` → `select_fallback_candidates` → download + convert. TEP still works via `filings_sources` (no behavior change). IR crawler activates only when `web_ir` is set and no manual sources exist.
+- **Files changed:** `elsian/acquire/eu_regulators.py`, `tests/unit/test_eu_regulators.py`, `tests/integration/test_ir_crawler_integration.py` (new).
+- **Tests:** 556 passed, 0 failed (15 new tests: 3 unit + 12 integration).
+- **Regression:** eval --all: 13/13 PASS 100% (CROX 82.31% known WIP).
+
 ## 2026-03-03 (commits huérfanos)
 
 ### [4.0] BL-016 Sanity checks portados + BL-017 validate_expected portado — 34 tests nuevos

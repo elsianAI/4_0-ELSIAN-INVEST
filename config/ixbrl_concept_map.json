@@ -1,7 +1,7 @@
 {
   "_version": "1.0",
   "_description": "Maps US-GAAP iXBRL concept names to ELSIAN canonical field names. Discovered from TZOO and NVDA 10-K filings.",
-  "_fields_covered": 22,
+  "_fields_covered": 25,
   "mapping": {
     "us-gaap:Revenues": "ingresos",
     "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax": "ingresos",
@@ -65,6 +65,15 @@
     "us-gaap:PaymentsToAcquirePropertyPlantAndEquipment": "capex",
     "us-gaap:PaymentsToAcquireProductiveAssets": "capex",
 
+    "us-gaap:NetCashProvidedByUsedInInvestingActivities": "cfi",
+    "ifrs-full:CashFlowsFromUsedInInvestingActivities": "cfi",
+
+    "us-gaap:NetCashProvidedByUsedInFinancingActivities": "cff",
+    "ifrs-full:CashFlowsFromUsedInFinancingActivities": "cff",
+
+    "us-gaap:CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect": "delta_cash",
+    "us-gaap:CashAndCashEquivalentsPeriodIncreaseDecrease": "delta_cash",
+
     "us-gaap:CommonStockDividendsPerShareDeclared": "dividends_per_share",
     "us-gaap:CommonStockDividendsPerShareCashPaid": "dividends_per_share",
     "us-gaap:DividendsCommonStockCash": "dividends_per_share"
@@ -101,6 +110,10 @@
       "us-gaap:DepreciationDepletionAndAmortization",
       "us-gaap:DepreciationAndAmortization",
       "us-gaap:Depreciation"
+    ],
+    "delta_cash": [
+      "us-gaap:CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect",
+      "us-gaap:CashAndCashEquivalentsPeriodIncreaseDecrease"
     ]
   }
 }
