@@ -2,6 +2,10 @@
 
 ## 2026-03-04
 
+### [DATA] ACLS: fill 223 empty source_filing in expected.json — quarterly traceability complete
+- **What:** All 223 quarterly fields (Q1-2021 through Q3-2025) in ACLS expected.json had empty `source_filing`. Filled each with the correct 10-Q .clean.md filename. For 2021 quarters (no own 10-Q acquired), used the 2022 same-quarter 10-Q as source (comparative columns). Fields already traced to 8-K earnings releases (ebitda, some cfo/capex/depreciation) were preserved. Zero source_filing fields remain empty.
+- **Verified:** eval ACLS 100% (375/375), eval --all 12/12 at 100%, 487 tests passed.
+
 ### [BL-039] ACLS promoted to FULL scope at 100% — orphaned date fragments, income_tax IS/CF collision, section bonus fix (375/375)
 - **What:** Promoted ACLS from ANNUAL_ONLY (114/114) to FULL scope (375/375, 21 periods including 15 quarterly). Three root causes fixed:
   1. **Orphaned date fragment merging (`html_tables.py`):** Grouped-year sub-header consumption produces headers like "Three months ended 2022" when the month ("June 30,") sits in an adjacent column. Added post-processing step in `_parse_markdown_table()` that detects `_PERIOD_YEAR_NO_MONTH_RE` patterns and merges the adjacent date fragment. Fixes period detection for Q2/Q3 of older 10-Qs.
