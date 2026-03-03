@@ -418,6 +418,17 @@ class ExtractPhase(PipelinePhase):
                 phase_name="ExtractPhase", success=False, message="No case_dir set",
             )
         result = self.extract(case_dir)
+
+        # Post-extraction sanity checks (informational, non-blocking)
+        from elsian.normalize.sanity import run_sanity_checks
+        sanity_warnings = run_sanity_checks(result)
+        if sanity_warnings:
+            import logging as _logging
+            _logging.getLogger(__name__).info(
+                "%s: %d sanity warning(s) detected",
+                result.ticker, len(sanity_warnings),
+            )
+
         context.result = result
         total_fields = sum(len(pr.fields) for pr in result.periods.values())
         msg = (

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-03-03 (revert)
+
+### [4.0] Revert unauthorized iXBRL injection from production pipeline — fixes ACLS/SONO/TEP regressions
+- **What:** Removed ~89-line iXBRL extraction pass block from `elsian/extract/phase.py` (violated WP-6 DIFERIDO and DEC-010: iXBRL only in `elsian curate`, never in production extract/merge). Reverted `elsian/merge/merger.py` to committed state (removed source-type-rank sort key logic added to support iXBRL_override). Reverted `config/selection_rules.json` source_type_priority to `["table", "narrative"]`. Retained legitimate BL-016 sanity check block in phase.py. Module `elsian/extract/ixbrl.py` untouched.
+- **Regressions fixed:** ACLS 98.93%→100%, SONO 98.07%→100%, TEP 98.75%→100%.
+- **CROX status:** 82.31% (242/294) — real score without iXBRL injection. Will be fixed via table/regex improvements, not iXBRL.
+- **Tests:** 544 passed, 2 skipped.
+- **Regression:** eval --all: 13/13 PASS 100%, CROX FAIL 82.31% (known, accepted pending proper fix).
+
 ## 2026-03-05
 
 ### [4.0] BL-044 TEP promoted to FULL — H1-2025 and H1-2024 via Euronext half-year report (80/80, 100%)
