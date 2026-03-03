@@ -3,7 +3,7 @@
   "company_name": "Axcelis Technologies Inc.",
   "cik": "1113232",
   "source_hint": "sec",
-  "period_scope": "ANNUAL_ONLY",
+  "period_scope": "FULL",
   "currency": "USD",
   "exchange": "NASDAQ",
   "sector": "Semiconductors",

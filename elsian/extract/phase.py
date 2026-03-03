@@ -173,7 +173,8 @@ def _extract_dividends_per_share(
 _PRIMARY_IS_SECTION = re.compile(
     r":operating_income|:operating_profit|:consolidated_statements_of_operations"
     r"|:consolidated_statements_of_income"
-    r"|:consolidated_balance_sheets|:consolidated_statements_of_comprehensive",
+    r"|:consolidated_balance_sheets|:consolidated_statements_of_comprehensive"
+    r"|:income_from_operations",
     re.I,
 )
 _DEPRIORITIZED_SECTION = re.compile(

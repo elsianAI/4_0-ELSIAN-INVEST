@@ -331,6 +331,33 @@ def _parse_markdown_table(table_text: str) -> Tuple[List[str], List[List[str]]]:
 
         rows = rows[1:]
 
+    # ── Post-process: incorporate orphaned date fragments ───────────
+    # The grouped-year assignment places e.g. "Three months ended 2022"
+    # at the year's column index, but the date fragment "June 30," may
+    # sit in an adjacent column (idx+1), left as a standalone header.
+    # This step merges orphaned date fragments into period-type headers
+    # that have a year but no month, producing the correct full header
+    # "Three months ended June 30, 2022".
+    _PERIOD_YEAR_NO_MONTH_RE = re.compile(
+        r"^((?:Three|Six|Nine|Twelve)\s+months?\s+ended"
+        r"|Years?\s+ended)\s+(20\d{2})$",
+        re.IGNORECASE,
+    )
+    for idx in range(len(headers)):
+        h = headers[idx].strip()
+        if not h:
+            continue
+        m = _PERIOD_YEAR_NO_MONTH_RE.match(h)
+        if m:
+            period_prefix = m.group(1)
+            year = m.group(2)
+            # Check next column for an orphaned date fragment
+            if idx + 1 < len(headers):
+                adj = headers[idx + 1].strip()
+                if adj and _MONTH_NAME_RE.match(adj):
+                    headers[idx] = f"{period_prefix} {adj} {year}"
+                    headers[idx + 1] = ""  # consumed
+
     return headers, rows
 
 

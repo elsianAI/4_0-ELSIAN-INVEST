@@ -538,3 +538,59 @@ def test_zws_subheader_detection():
         f"ZWS in cells should not block period detection. Got periods: "
         f"{set(f.column_header for f in fields)}"
     )
+
+
+def test_orphaned_date_fragment_merged():
+    """Orphaned date fragments are merged with period-type-only headers (BL-039 Fix 6).
+
+    Grouped-year sub-header consumption can produce headers like
+    "Three months ended 2022" (period-type + year, no month) when the
+    month part ("June 30,") sits in an adjacent column.  The post-processing
+    step should merge the fragment into the header so period detection works.
+    """
+    table = (
+        "|  |  | Three months ended |  |  |  |  |\n"
+        "| --- | --- | --- | --- | --- | --- | --- |\n"
+        "|  |  | June 30, |  | June 30, |  |  |\n"
+        "|  |  | 2022 |  | 2021 |  |  |\n"
+        "| Revenue | $ | 180,453 |  | $ | 156,792 |  |\n"
+    )
+    fields = extract_from_markdown_table(table, filing_type="10-Q")
+    by_period = {(f.label, f.column_header): f.value for f in fields}
+    assert by_period.get(("Revenue", "Q2-2022")) == 180453.0, (
+        f"Orphaned date fragment should be merged. Got: "
+        f"{[(f.label, f.column_header, f.value) for f in fields]}"
+    )
+    assert by_period.get(("Revenue", "Q2-2021")) == 156792.0
+
+
+def test_income_from_operations_section_primary():
+    """Sections named 'Income from operations' get PRIMARY bonus, not deprioritized (BL-039 Fix 7).
+
+    The regex ':income.*from_operations' in DEPRIORITIZED incorrectly matched
+    ':income_from_operations' (the actual IS section).  Adding it to PRIMARY
+    ensures it's checked first and gets bonus=5.
+    """
+    from elsian.extract.phase import _section_bonus
+    # income_from_operations is the main IS section in ACLS filings
+    bonus = _section_bonus("income_statement:income_from_operations:tbl1:row5:col2")
+    assert bonus == 5, f"income_from_operations should get PRIMARY bonus=5, got {bonus}"
+
+    # income_loss_from_operations should still be deprioritized
+    penalty = _section_bonus("income_statement:income_loss_from_operations:tbl2:row3:col1")
+    assert penalty == -5, f"income_loss_from_operations should get DEPRIORITIZED penalty=-5, got {penalty}"
+
+
+def test_income_tax_provision_label_priority():
+    """'Income tax provision' gets high label priority for income_tax field (BL-039 Fix 7).
+
+    This ensures the IS 'Income tax provision' row wins over CF 'Income taxes'
+    in per-filing collision resolution even without section_bonus differences.
+    """
+    from elsian.normalize.aliases import AliasResolver
+    lp_provision = AliasResolver.label_priority("income_tax", "Income tax provision")
+    lp_taxes = AliasResolver.label_priority("income_tax", "Income taxes")
+    assert lp_provision > lp_taxes, (
+        f"'Income tax provision' priority ({lp_provision}) should beat "
+        f"'Income taxes' priority ({lp_taxes})"
+    )

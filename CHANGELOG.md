@@ -2,6 +2,16 @@
 
 ## 2026-03-04
 
+### [BL-039] ACLS promoted to FULL scope at 100% — orphaned date fragments, income_tax IS/CF collision, section bonus fix (375/375)
+- **What:** Promoted ACLS from ANNUAL_ONLY (114/114) to FULL scope (375/375, 21 periods including 15 quarterly). Three root causes fixed:
+  1. **Orphaned date fragment merging (`html_tables.py`):** Grouped-year sub-header consumption produces headers like "Three months ended 2022" when the month ("June 30,") sits in an adjacent column. Added post-processing step in `_parse_markdown_table()` that detects `_PERIOD_YEAR_NO_MONTH_RE` patterns and merges the adjacent date fragment. Fixes period detection for Q2/Q3 of older 10-Qs.
+  2. **`income_from_operations` promoted to PRIMARY section (`phase.py`):** Section heading `:income_from_operations` was incorrectly caught by `_DEPRIORITIZED_SECTION`'s `:income.*from_operations` regex (intended for footnotes like `income_loss_from_operations`). Added `:income_from_operations` to `_PRIMARY_IS_SECTION` so it's checked first in the if/elif chain, getting bonus=5 instead of penalty=-5.
+  3. **`income_tax_provision` label priority (`aliases.py`):** Added `^income\s+tax\s+provision` as priority pattern for `income_tax` field. "Income tax provision" (IS row) now gets label_priority=100 while "Income taxes" (CF working capital row) gets 0, ensuring the IS value wins in per-filing collision resolution.
+- **expected.json:** Expanded from 6 FY periods (114 fields) to 21 periods (375 fields) via iXBRL curate + manual curation. Removed Q1-Q3 2021 total_equity (no 2021 10-Q filings acquired; 10-Q BS comparatives only show prior FY-end, not prior quarterly snapshots). sga uses pipeline S&M+G&A sum (iXBRL has only G&A), depreciation_amortization uses pipeline values (iXBRL has wrong scale).
+- **case.json:** period_scope changed from ANNUAL_ONLY to FULL.
+- **Tests:** 3 new unit tests: `test_orphaned_date_fragment_merged`, `test_income_from_operations_section_primary`, `test_income_tax_provision_label_priority`. 487 passed, 2 skipped.
+- **Regression:** eval --all: 12/12 tickers PASS 100%.
+
 ### [BL-039] ACLS (Axcelis Technologies) ANNUAL_ONLY at 100% — ZWS fix, "Twelve/Year Ended" period detection, pro-forma guard, narrative suppression (114/114)
 - **What:** Brought ACLS from 8.77% (10/114) to 100% (114/114) in ANNUAL_ONLY scope. Four root causes fixed:
   1. **ZWS stripping (`html_tables.py`):** HTML→Markdown converters insert U+200B zero-width spaces in empty table cells. Added `_strip_invisible()` function and applied it to header and data cell parsing, unblocking sub-header detection for ~95% of ACLS tables.

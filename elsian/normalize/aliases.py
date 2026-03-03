@@ -219,6 +219,7 @@ _PRIORITY_PATTERNS: Dict[str, List[re.Pattern]] = {
         re.compile(r"^(total\s+)?income\s+tax\s+expense(\s*\(benefit\))?\s*$", re.I),
         re.compile(r"^income\s+tax$", re.I),
         re.compile(r"provision\s+for\s+income\s+tax", re.I),
+        re.compile(r"^income\s+tax\s+provision", re.I),
     ],
     "interest_expense": [
         re.compile(r"\bgross\s+financing", re.I),
