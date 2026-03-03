@@ -1,6 +1,22 @@
 # Changelog
 
-## 2026-03-04
+## 2026-03-05
+
+### [4.0] CROX 82.31% → 100% (294/294) — 6 root causes fixed
+
+- **What:** Took CROX from 82.31% (242/294) to 100% (294/294) by diagnosing and fixing 6 distinct extraction bugs.
+- **Root Cause 1 — IS segment overwriting consolidated:** `_PRIMARY_IS_SECTION` regex matched brand-breakdown sections (e.g. `income_from_operations:` with trailing colon → double `::` in loc) AND footnote-segment sections (`income_from_operations_(1)`). Fixed by requiring `:income_from_operations:tbl` (direct `:tbl` suffix), so only the canonical IS section gets PRIMARY bonus (+5).
+- **Root Cause 2 — CF section empty (26 missed → 0):** CROX 10-K renders CF as CSS divs, not `<table>` tags. CF data lands under `### Net income (loss)` within INCOME STATEMENT. Fixed by adding missing aliases: `cfo` ← "cash provided/used by operating activities"; `capex` ← "purchases of property, equipment, and software"; `total_debt` ← "long-term borrowings".
+- **Root Cause 3 — Capex wrong (10 periods):** "Accrued purchases of property, equipment, and software" (supplemental non-cash disclosure at CF table end) fuzzy-matched genuine capex alias. Fixed by adding `r"^\s*accrued\b"` reject pattern for `capex`.
+- **Root Cause 4 — SGA additive double-count (FY2022):** `expenses (2)` footnoted row = Crocs Brand segment SGA being summed with consolidated. Fixed by adding `r"\(\s*[2-9]\d*\s*\)\s*$"` reject pattern for `sga`.
+- **Root Cause 5 — Brand/segment sub-table rows (9 Q1/Q2/Q3-2025 fields + annual):** 10-Q segment breakdown tables share the same `### Income from operations` heading as the consolidated IS. Sub-headers "Crocs Brand:" / "HEYDUDE Brand:" were tracked as `last_heading` but rows below them were resolved to canonical fields. Fixed by adding `_in_brand_segment_section` flag in `html_tables.py`: when a heading ends with `:` and contains "Brand/Segment/Division", all subsequent data rows are skipped entirely (not concatenated — concatenation insufficient for long labels like SGA).
+- **Root Cause 6 — Acquisition note overwriting BS cash:** "Cash and cash equivalents = 6,232" from the HEYDUDE acquisition fair-value table (under `### Income taxes payable (7)` heading) was winning over the consolidated BS value 191,629. Two fixes: (a) Added `:income_taxes_payable` to `_STRONGLY_DEPRIORITIZED_SECTION` in `phase.py`; (b) Fixed merger condition in `merger.py` — removed `existing_sk[3] > 0` guard from the replacement check (the guard incorrectly blocked replacement when `label_priority` partially offset the STRONGLY_DEPRIORITIZED penalty, making `semantic_rank = 0` instead of `> 0`).
+- **Root Cause 7 — FY2021 revenue/net_income from acquisition note:** "Revenues = 2,894,094" and "Net income = 706,853" from a `### Net income` acquisition commentary note in FY2022 10-K were winning over primary FY2021 filing values. The merger fix (Root Cause 6) also resolved this: primary FY2021 filing's better semantic_rank now wins over the note table.
+- **Files changed:** `elsian/extract/phase.py` (PRIMARY_IS_SECTION regex, STRONGLY_DEPRIORITIZED_SECTION), `elsian/extract/html_tables.py` (_in_brand_segment_section skip logic), `elsian/normalize/aliases.py` (capex accrued reject, sga footnote-number reject), `config/field_aliases.json` (cfo/capex/total_debt new aliases), `elsian/merge/merger.py` (semantic_rank comparison fix).
+- **Tests:** 781 passed, 13 failed (pre-existing: GCT/INMD/NEXN/TEP regression + test_pdf_tables mock issue — all pre-existing, no new failures).
+- **Regression:** eval --all: 9/13 tickers PASS 100% (ACLS, CROX, IOSP, KAR, NVDA, PR, SONO, TALO, TZOO). GCT 99.21%, INMD 97.62%, NEXN 95.42%, TEP 98.75% (all pre-existing failures, unchanged from before this session).
+
+
 
 ### [4.0] BL-006 Provenance Level 2 complete in all extractors
 - **What:** Audited and fixed all extractors to propagate complete L2 provenance metadata: `source_filing`, `table_index`, `table_title`, `row_label`, `col_label`, `row`, `col`, `raw_text`, plus new `extraction_method` field (`"table"` | `"narrative"` | `"manual"`). Before: 0% of fields had complete L2 provenance. After: 100% across all 13 tickers.

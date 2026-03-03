@@ -27,6 +27,7 @@ from elsian.extract.html_tables import (
 )
 from elsian.extract.vertical import extract_vertical_bs
 from elsian.extract.narrative import extract_from_narrative, NarrativeField
+from elsian.extract.pdf_tables import extract_tables_from_pdf
 from elsian.normalize.aliases import AliasResolver
 from elsian.normalize.scale import infer_scale_cascade, validate_scale_sanity
 from elsian.normalize.audit import AuditLog
@@ -866,6 +867,30 @@ class ExtractPhase(PipelinePhase):
                 scale=scale,
             )
 
+        # ── PDF structured table extraction ────────────────────
+        # If a .pdf sibling exists for this .txt, run the PDF table
+        # extractor for structured data.  Results feed into the same
+        # _process_table_field pipeline — additive to text extraction.
+        pdf_sibling = filing_path.with_suffix(".pdf")
+        if pdf_sibling.exists():
+            pdf_table_fields = extract_tables_from_pdf(
+                str(pdf_sibling), filing_source_id=filing_path.name,
+            )
+            for tf in pdf_table_fields:
+                # Override extraction_method via raw_text prefix for
+                # provenance tracking — the TableField itself only
+                # carries data; the _process_table_field path sets
+                # extraction_method="table".  We'll patch provenance
+                # after creation.
+                self._process_table_field(
+                    tf, filing_path, metadata, filing_scale,
+                    filing_scale_confidence, rules, audit,
+                    period_fields, additive_labels,
+                    source_type="table",
+                    use_section_bonus=False,
+                    preflight_result=preflight_result,
+                )
+
         # Narrative extraction — skipped when a .clean.md counterpart
         # already provided table-parsed values for this filing.
         if suppress_narrative:
@@ -1096,6 +1121,10 @@ class ExtractPhase(PipelinePhase):
                 )
                 return
 
+        # Determine extraction_method: "pdf_table" when the source_location
+        # contains "pdf_tbl" (set by extract_tables_from_pdf), else "table".
+        _ext_method = "pdf_table" if "pdf_tbl" in tf.source_location else "table"
+
         fr = _make_field_result(
             _normalize_sign(canonical, tf.label, tf.value),
             scale, filing_path.name, tf.source_location, confidence,
@@ -1106,7 +1135,7 @@ class ExtractPhase(PipelinePhase):
             row=tf.row_idx if tf.row_idx >= 0 else None,
             col=tf.col_idx if tf.col_idx >= 0 else None,
             raw_text=tf.raw_text,
-            extraction_method="table",
+            extraction_method=_ext_method,
         )
         fr._sort_key = new_sk  # type: ignore[attr-defined]
 
