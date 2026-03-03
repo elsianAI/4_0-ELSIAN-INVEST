@@ -16,7 +16,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | Tickers FULL 100% (DEC-015) | 9 (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, +KAR*) | ≥15 | 2026-03-03 |
 | Tickers ANNUAL_ONLY pendientes | 1 (TEP — sin quarterly publicados, excepción DEC-015) | Documentar excepción | 2026-03-03 |
 | Tickers WIP | 0 | 0 | 2026-03-03 |
-| Total campos validados | 2,170 | — | 2026-03-03 |
+| Total campos validados | 2,070 | — | 2026-03-03 |
 | Tests pasando | 477 passed, 0 failed, 2 skipped | — | 2026-03-03 |
 | Líneas de código (aprox.) | ~7,500 + ~2,200 tests | 2026-03-03 |
 
