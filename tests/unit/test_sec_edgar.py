@@ -1,6 +1,7 @@
 """Tests for elsian.acquire.sec_edgar — helpers only (no network calls)."""
 
 import pytest
+from unittest.mock import MagicMock
 
 from elsian.acquire.sec_edgar import (
     _quarter_for_month,
@@ -8,7 +9,9 @@ from elsian.acquire.sec_edgar import (
     _build_doc_url,
     _build_index_json_url,
     _strip_html_to_text,
+    _find_exhibit_99,
     _FilingRecord,
+    SecClient,
     SecEdgarFetcher,
     ANNUAL_FORMS,
     PERIODIC_FORMS,
@@ -160,3 +163,173 @@ class TestCacheLogicalCount:
         result = fetcher.acquire(case)
 
         assert result.filings_downloaded == 2
+
+
+# ── _find_exhibit_99 tests ───────────────────────────────────────────
+
+def _make_rec(
+    accession: str = "0001234567-24-000001",
+    form: str = "8-K",
+    primary_doc: str = "primary.htm",
+) -> _FilingRecord:
+    """Helper: create a minimal _FilingRecord for testing."""
+    return _FilingRecord(
+        form=form,
+        filing_date="2024-03-15",
+        accession=accession,
+        primary_doc=primary_doc,
+    )
+
+
+def _mock_client(index_json: dict) -> MagicMock:
+    """Helper: create a mock SecClient whose get_json returns *index_json*."""
+    client = MagicMock(spec=SecClient)
+    client.get_json.return_value = index_json
+    return client
+
+
+def _wrap_items(*items: dict) -> dict:
+    """Wrap item dicts into the EDGAR index.json structure."""
+    return {"directory": {"item": list(items)}}
+
+
+class TestFindExhibit99:
+    """Unit tests for _find_exhibit_99 — BL-030."""
+
+    # (a) Match by EDGAR document type "EX-99.1"
+    def test_find_exhibit_99_ex991_by_type(self):
+        idx = _wrap_items(
+            {"name": "primary.htm", "type": "8-K"},
+            {"name": "earningsrelease.htm", "type": "EX-99.1"},
+        )
+        client = _mock_client(idx)
+        rec = _make_rec()
+        result = _find_exhibit_99(client, 12345, rec)
+        assert result == "earningsrelease.htm"
+
+    # (b) Match by filename pattern when no type tag
+    def test_find_exhibit_99_by_filename_pattern(self):
+        idx = _wrap_items(
+            {"name": "primary.htm", "type": "8-K"},
+            {"name": "exhibit99-1.htm", "type": ""},
+        )
+        client = _mock_client(idx)
+        rec = _make_rec()
+        result = _find_exhibit_99(client, 12345, rec)
+        assert result == "exhibit99-1.htm"
+
+    # (c) No exhibits → returns None
+    def test_find_exhibit_99_no_match(self):
+        idx = _wrap_items(
+            {"name": "primary.htm", "type": "8-K"},
+            {"name": "R9999.htm", "type": "GRAPHIC"},
+        )
+        client = _mock_client(idx)
+        rec = _make_rec()
+        result = _find_exhibit_99(client, 12345, rec)
+        assert result is None
+
+    # (d) Skips index/header files even if they match filename pattern
+    def test_find_exhibit_99_skips_index_files(self):
+        idx = _wrap_items(
+            {"name": "index.htm", "type": ""},
+            {"name": "filing-index.htm", "type": ""},
+            {"name": "header.htm", "type": ""},
+            {"name": "ex99-1press.htm", "type": "EX-99.1"},
+        )
+        client = _mock_client(idx)
+        rec = _make_rec()
+        result = _find_exhibit_99(client, 12345, rec)
+        assert result == "ex99-1press.htm"
+
+    # (e) Match EX-99.2 type (some issuers use this)
+    def test_find_exhibit_99_ex992_type(self):
+        idx = _wrap_items(
+            {"name": "primary.htm", "type": "8-K"},
+            {"name": "supplemental.htm", "type": "EX-99.2"},
+        )
+        client = _mock_client(idx)
+        rec = _make_rec()
+        result = _find_exhibit_99(client, 12345, rec)
+        assert result == "supplemental.htm"
+
+    # (f) PDF exhibit — should be returned (extension is allowed)
+    def test_find_exhibit_99_pdf_exhibit(self):
+        idx = _wrap_items(
+            {"name": "primary.htm", "type": "8-K"},
+            {"name": "exhibit99.pdf", "type": "EX-99.1"},
+        )
+        client = _mock_client(idx)
+        rec = _make_rec()
+        result = _find_exhibit_99(client, 12345, rec)
+        assert result == "exhibit99.pdf"
+
+    # (g) API error → graceful None
+    def test_find_exhibit_99_api_error(self):
+        client = MagicMock(spec=SecClient)
+        client.get_json.side_effect = ConnectionError("network failure")
+        rec = _make_rec()
+        result = _find_exhibit_99(client, 12345, rec)
+        assert result is None
+
+    # ── Additional edge-case tests ───────────────────────────────────
+
+    def test_find_exhibit_99_ex99_bare_type(self):
+        """Match EX-99 bare type (no .1/.2 suffix)."""
+        idx = _wrap_items(
+            {"name": "earnings.htm", "type": "EX-99"},
+        )
+        client = _mock_client(idx)
+        result = _find_exhibit_99(client, 12345, _make_rec())
+        assert result == "earnings.htm"
+
+    def test_find_exhibit_99_filename_ex_99_underscore(self):
+        """Filename pattern with underscore: ex_99_1.htm."""
+        idx = _wrap_items(
+            {"name": "ex_99_1.htm", "type": ""},
+        )
+        client = _mock_client(idx)
+        result = _find_exhibit_99(client, 12345, _make_rec())
+        assert result == "ex_99_1.htm"
+
+    def test_find_exhibit_99_skips_image_extension(self):
+        """Files with non-document extensions (e.g. .jpg) are ignored."""
+        idx = _wrap_items(
+            {"name": "exhibit99.jpg", "type": ""},
+            {"name": "exhibit99chart.png", "type": "GRAPHIC"},
+        )
+        client = _mock_client(idx)
+        result = _find_exhibit_99(client, 12345, _make_rec())
+        assert result is None
+
+    def test_find_exhibit_99_empty_index(self):
+        """Empty directory items → None."""
+        idx = {"directory": {"item": []}}
+        client = _mock_client(idx)
+        result = _find_exhibit_99(client, 12345, _make_rec())
+        assert result is None
+
+    def test_find_exhibit_99_malformed_index(self):
+        """Index JSON without 'directory' key → None."""
+        client = _mock_client({})
+        result = _find_exhibit_99(client, 12345, _make_rec())
+        assert result is None
+
+    def test_find_exhibit_99_returns_first_match(self):
+        """Multiple matching exhibits → returns the first one encountered."""
+        idx = _wrap_items(
+            {"name": "ex99-1.htm", "type": "EX-99.1"},
+            {"name": "ex99-2.htm", "type": "EX-99.2"},
+        )
+        client = _mock_client(idx)
+        result = _find_exhibit_99(client, 12345, _make_rec())
+        assert result == "ex99-1.htm"
+
+    def test_find_exhibit_99_txt_extension(self):
+        """Exhibit with .txt extension should be matched."""
+        idx = _wrap_items(
+            {"name": "ex99-1.txt", "type": "EX-99.1"},
+        )
+        client = _mock_client(idx)
+        result = _find_exhibit_99(client, 12345, _make_rec())
+        assert result == "ex99-1.txt"
