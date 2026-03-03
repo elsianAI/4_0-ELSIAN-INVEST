@@ -77,7 +77,8 @@ _MONTH_NAME_RE = re.compile(
 )
 
 _PERIOD_INDICATOR_RE = re.compile(
-    r"^(?:Three|Six|Nine)\s+Months?\s+Ended$",
+    r"^(?:Three|Six|Nine|Twelve)\s+Months?\s+Ended"
+    r"|^Years?\s+Ended",
     re.IGNORECASE,
 )
 
@@ -94,10 +95,21 @@ _SCALE_NOTE_RE = re.compile(
 # assignment.  Matches "Three/Six/Nine Months Ended", "Year Ended",
 # "Fiscal Year", and "Quarters Ended".
 _PERIOD_TYPE_HDR_RE = re.compile(
-    r"(?:three|six|nine)\s+months?\s+ended"
-    r"|year\s+ended|fiscal\s+year|quarters?\s+ended",
+    r"(?:three|six|nine|twelve)\s+months?\s+ended"
+    r"|years?\s+ended|fiscal\s+year|quarters?\s+ended",
     re.IGNORECASE,
 )
+
+# Unicode invisible characters that HTML→Markdown converters may insert.
+# Stripping these from table cells ensures period/sub-header detection works.
+_INVISIBLE_CHARS_RE = re.compile(
+    "[\u200b\u200c\u200d\u200e\u200f\ufeff\u00ad\u2060\u2063]"
+)
+
+
+def _strip_invisible(text: str) -> str:
+    """Remove Unicode zero-width / invisible characters, then strip whitespace."""
+    return _INVISIBLE_CHARS_RE.sub("", text).strip()
 
 
 def _is_subheader_row(cells: List[str]) -> bool:
@@ -197,10 +209,11 @@ def _parse_markdown_table(table_text: str) -> Tuple[List[str], List[List[str]]]:
     if len(lines) < 3:  # header + separator + at least 1 data row
         return [], []
 
-    # Parse header
+    # Parse header — strip invisible Unicode chars (e.g. U+200B zero-width
+    # space) that some HTML→Markdown converters insert as cell placeholders.
     header_line = lines[0]
     headers = [
-        cell.strip() for cell in header_line.strip("|").split("|")
+        _strip_invisible(cell) for cell in header_line.strip("|").split("|")
     ]
 
     # Skip separator line (lines[1])
@@ -209,7 +222,7 @@ def _parse_markdown_table(table_text: str) -> Tuple[List[str], List[List[str]]]:
     raw_rows: List[List[str]] = []
     for line in lines[2:]:
         if line.startswith("|"):
-            cells = [cell.strip() for cell in line.strip("|").split("|")]
+            cells = [_strip_invisible(cell) for cell in line.strip("|").split("|")]
             # Collapse split-cell parentheticals ONLY when the row is wider
             # than the header by exactly the number of paren pairs.  This
             # handles tables where the HTML→markdown converter created a
@@ -370,6 +383,11 @@ def _identify_period_columns(
     for idx, header in enumerate(headers):
         header_clean = header.strip()
         if not header_clean:
+            continue
+
+        # Skip pro-forma / supplemental columns — their values are
+        # hypothetical and must not compete with audited actuals.
+        if re.search(r"pro\s*forma", header_clean, re.IGNORECASE):
             continue
 
         # "Year Ended December 31, 2024" -> FY2024

@@ -278,7 +278,9 @@
       "payments for purchase of property and equipment",
       "acquisition of fixed assets",
       "acquisition of intangible assets and property",
-      "acquisition of intangible assets and property, plant and equipment"
+      "acquisition of intangible assets and property, plant and equipment",
+      "expenditures for property, plant and equipment",
+      "expenditures for property, plant and equipment and capitalized software"
     ],
     "multiplier": null
   },
@@ -324,7 +326,9 @@
       "weighted-average shares used in computing loss per share",
       "basic weighted average shares of class a common stock outstanding",
       "weighted average shares of class a common stock outstanding",
-      "weighted average shares of class a common stock"
+      "weighted average shares of class a common stock",
+      "basic weighted average shares of common stock",
+      "basic weighted average common shares"
     ],
     "multiplier": null
   },

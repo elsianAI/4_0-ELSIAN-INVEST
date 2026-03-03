@@ -1,0 +1,11 @@
+{
+  "ticker": "ACLS",
+  "company_name": "Axcelis Technologies Inc.",
+  "cik": "1113232",
+  "source_hint": "sec",
+  "period_scope": "ANNUAL_ONLY",
+  "currency": "USD",
+  "exchange": "NASDAQ",
+  "sector": "Semiconductors",
+  "notes": "Standard calendar fiscal year (Dec 31). iXBRL available. Ion implantation semiconductor equipment manufacturer."
+}

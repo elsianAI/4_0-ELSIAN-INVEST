@@ -1,0 +1,502 @@
+{
+  "version": "1.0",
+  "ticker": "ACLS",
+  "currency": "USD",
+  "restatement_policy": "as_reported_unless_explicit_restatement",
+  "scale": "mixed",
+  "scale_notes": "Monetary fields in thousands as stated in filing tables ('dollars in thousands'). EPS in raw dollars per share. Shares (weighted average basic) in thousands. ACLS has standard calendar fiscal year ending December 31. No traditional debt — only finance lease obligations (not included as total_debt since filing labels them 'finance lease obligation', not matching any total_debt alias). SGA is sum of 'Sales and marketing' + 'General and administrative' (additive field).",
+  "periods": {
+    "FY2025": {
+      "fecha_fin": "2025-12-31",
+      "tipo_periodo": "anual",
+      "fields": {
+        "ingresos": {
+          "value": 839048,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "cost_of_revenue": {
+          "value": 462200,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "gross_profit": {
+          "value": 376848,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "research_and_development": {
+          "value": 108958,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "sga": {
+          "value": 148575,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "ebit": {
+          "value": 119315,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "interest_expense": {
+          "value": 5364,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "income_tax": {
+          "value": 18011,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "net_income": {
+          "value": 120238,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "eps_basic": {
+          "value": 3.81,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "eps_diluted": {
+          "value": 3.80,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "shares_outstanding": {
+          "value": 31574,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "depreciation_amortization": {
+          "value": 17613,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "total_assets": {
+          "value": 1361351,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "total_liabilities": {
+          "value": 326674,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "total_equity": {
+          "value": 1034677,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "cash_and_equivalents": {
+          "value": 145451,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "cfo": {
+          "value": 118305,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "capex": {
+          "value": -11295,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        }
+      }
+    },
+    "FY2024": {
+      "fecha_fin": "2024-12-31",
+      "tipo_periodo": "anual",
+      "fields": {
+        "ingresos": {
+          "value": 1017865,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "cost_of_revenue": {
+          "value": 563211,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "gross_profit": {
+          "value": 454654,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "research_and_development": {
+          "value": 105497,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "sga": {
+          "value": 138363,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "ebit": {
+          "value": 210794,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "interest_expense": {
+          "value": 5462,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "income_tax": {
+          "value": 29282,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "net_income": {
+          "value": 200992,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "eps_basic": {
+          "value": 6.17,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "eps_diluted": {
+          "value": 6.15,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "shares_outstanding": {
+          "value": 32552,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "depreciation_amortization": {
+          "value": 15809,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "total_assets": {
+          "value": 1348781,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "total_liabilities": {
+          "value": 335991,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "total_equity": {
+          "value": 1012790,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "cash_and_equivalents": {
+          "value": 123512,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "cfo": {
+          "value": 140818,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "capex": {
+          "value": -12181,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        }
+      }
+    },
+    "FY2023": {
+      "fecha_fin": "2023-12-31",
+      "tipo_periodo": "anual",
+      "fields": {
+        "ingresos": {
+          "value": 1130604,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "cost_of_revenue": {
+          "value": 639303,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "gross_profit": {
+          "value": 491301,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "research_and_development": {
+          "value": 96907,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "sga": {
+          "value": 128599,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "ebit": {
+          "value": 265795,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "interest_expense": {
+          "value": 5347,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "income_tax": {
+          "value": 32336,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "net_income": {
+          "value": 246263,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "eps_basic": {
+          "value": 7.52,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "eps_diluted": {
+          "value": 7.43,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "shares_outstanding": {
+          "value": 32758,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "depreciation_amortization": {
+          "value": 13069,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "total_assets": {
+          "value": 1281967,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "total_liabilities": {
+          "value": 417085,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "total_equity": {
+          "value": 864882,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "cash_and_equivalents": {
+          "value": 167297,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "cfo": {
+          "value": 156869,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "capex": {
+          "value": -20656,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        }
+      }
+    },
+    "FY2022": {
+      "fecha_fin": "2022-12-31",
+      "tipo_periodo": "anual",
+      "fields": {
+        "ingresos": {
+          "value": 919998,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "cost_of_revenue": {
+          "value": 518208,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "gross_profit": {
+          "value": 401790,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "research_and_development": {
+          "value": 78356,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "sga": {
+          "value": 111073,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "ebit": {
+          "value": 212361,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "interest_expense": {
+          "value": 5576,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "income_tax": {
+          "value": 21806,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "net_income": {
+          "value": 183079,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "eps_basic": {
+          "value": 5.54,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "eps_diluted": {
+          "value": 5.46,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "shares_outstanding": {
+          "value": 33043,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "depreciation_amortization": {
+          "value": 11607,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "total_assets": {
+          "value": 1013641,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "total_liabilities": {
+          "value": 346385,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "total_equity": {
+          "value": 667256,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "cash_and_equivalents": {
+          "value": 185595,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "cfo": {
+          "value": 215607,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "capex": {
+          "value": -10683,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        }
+      }
+    },
+    "FY2021": {
+      "fecha_fin": "2021-12-31",
+      "tipo_periodo": "anual",
+      "fields": {
+        "ingresos": {
+          "value": 662428,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "cost_of_revenue": {
+          "value": 375983,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "gross_profit": {
+          "value": 286445,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "research_and_development": {
+          "value": 65431,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "sga": {
+          "value": 93689,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "ebit": {
+          "value": 127325,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "interest_expense": {
+          "value": 4835,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "income_tax": {
+          "value": 21778,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "net_income": {
+          "value": 98650,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "eps_basic": {
+          "value": 2.94,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "eps_diluted": {
+          "value": 2.88,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "shares_outstanding": {
+          "value": 33555,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "depreciation_amortization": {
+          "value": 10818,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "total_assets": {
+          "value": 753240,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "total_liabilities": {
+          "value": 214281,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "total_equity": {
+          "value": 538959,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "cash_and_equivalents": {
+          "value": 294923,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "cfo": {
+          "value": 150190,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "capex": {
+          "value": -8718,
+          "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        }
+      }
+    },
+    "FY2020": {
+      "fecha_fin": "2020-12-31",
+      "tipo_periodo": "anual",
+      "fields": {
+        "ingresos": {
+          "value": 474560,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "cost_of_revenue": {
+          "value": 275976,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "gross_profit": {
+          "value": 198584,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "research_and_development": {
+          "value": 61833,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "sga": {
+          "value": 78710,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "ebit": {
+          "value": 58041,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "interest_expense": {
+          "value": 5211,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "income_tax": {
+          "value": 5904,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "net_income": {
+          "value": 49982,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "eps_basic": {
+          "value": 1.50,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "eps_diluted": {
+          "value": 1.46,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "shares_outstanding": {
+          "value": 33257,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "depreciation_amortization": {
+          "value": 9939,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "total_assets": {
+          "value": 624624,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "total_liabilities": {
+          "value": 143022,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "total_equity": {
+          "value": 481602,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "cash_and_equivalents": {
+          "value": 203479,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "cfo": {
+          "value": 69703,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "capex": {
+          "value": -7434,
+          "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        }
+      }
+    }
+  }
+}

@@ -451,3 +451,90 @@ def test_nexn_6k_six_months_then_three_months_column_order():
     assert by_period.get(("Revenue", "Q2-2024")) == 88577.0, (
         f"Q2-2024 Revenue should be 88577 (prior year), got {by_period.get(('Revenue','Q2-2024'))}"
     )
+
+
+# ── BL-039: ZWS stripping, "Twelve Months Ended", pro-forma guard ──
+
+
+def test_strip_invisible_zero_width_space():
+    """_strip_invisible removes U+200B zero-width spaces (BL-039 Fix 1)."""
+    from elsian.extract.html_tables import _strip_invisible
+
+    assert _strip_invisible("\u200b") == ""
+    assert _strip_invisible("\u200bFoo\u200b") == "Foo"
+    assert _strip_invisible("Clean") == "Clean"
+    assert _strip_invisible("  \u200b  ") == ""  # strips whitespace too
+
+
+def test_twelve_months_ended_period_detection():
+    """'Twelve months ended' is recognised as a period indicator (BL-039 Fix 2)."""
+    table = (
+        "|  | Twelve months ended |  |\n"
+        "| --- | --- | --- |\n"
+        "|  | December 31, 2024 | December 31, 2023 |\n"
+        "| Revenue | 100,000 | 90,000 |\n"
+    )
+    fields = extract_from_markdown_table(table, filing_type="10-K")
+    by_period = {(f.label, f.column_header): f.value for f in fields}
+    assert by_period.get(("Revenue", "FY2024")) == 100000.0
+    assert by_period.get(("Revenue", "FY2023")) == 90000.0
+
+
+def test_year_ended_period_detection():
+    """'Year ended' (without 'Twelve months') is recognised (BL-039 Fix 2)."""
+    table = (
+        "|  | Year ended |  |\n"
+        "| --- | --- | --- |\n"
+        "|  | December 31, 2024 | December 31, 2023 |\n"
+        "| Revenue | 200,000 | 180,000 |\n"
+    )
+    fields = extract_from_markdown_table(table, filing_type="10-K")
+    by_period = {(f.label, f.column_header): f.value for f in fields}
+    assert by_period.get(("Revenue", "FY2024")) == 200000.0
+    assert by_period.get(("Revenue", "FY2023")) == 180000.0
+
+
+def test_pro_forma_column_skipped():
+    """Pro-forma columns are excluded from period identification (BL-039 Fix 4).
+
+    NVDA has note tables headed 'Pro Forma / Year Ended / January 31, 2021'
+    that contain hypothetical values; these must not produce period mappings.
+    """
+    table = (
+        "|  | Pro Forma |  |  |  |  |\n"
+        "| --- | --- | --- | --- | --- | --- |\n"
+        "|  | Year Ended |  |  |  |  |\n"
+        "|  | January 31, 2021 |  |  |  |  |\n"
+        "|  | (In millions) |  |  |  |  |\n"
+        "| Revenue | $ | 17,104 |  |  |  |\n"
+        "| Net income | $ | 4,757 |  |  |  |\n"
+    )
+    fields = extract_from_markdown_table(table, filing_type="10-K")
+    # Pro forma table should produce no period-mapped fields because
+    # the merged header "Pro Forma Year Ended January 31, 2021" is
+    # filtered out by the pro-forma guard.
+    period_mapped = [f for f in fields if f.column_header.startswith("FY")]
+    assert period_mapped == [], (
+        f"Pro-forma table should not produce FY-mapped fields, got: "
+        f"{[(f.label, f.column_header, f.value) for f in period_mapped]}"
+    )
+
+
+def test_zws_subheader_detection():
+    """ZWS characters in table cells don't block sub-header detection (BL-039 Fix 1).
+
+    ACLS clean.md files have U+200B in otherwise-empty first cells of sub-header
+    rows, causing _is_subheader_row to return False if not stripped.
+    """
+    table = (
+        "| \u200b | \u200b | Twelve months ended |  |  |\n"
+        "| --- | --- | --- | --- | --- |\n"
+        "| \u200b | \u200b | December 31, 2024 | December 31, 2023 |  |\n"
+        "| Revenue | \u200b | 100,000 | 90,000 |  |\n"
+    )
+    fields = extract_from_markdown_table(table, filing_type="10-K")
+    by_period = {(f.label, f.column_header): f.value for f in fields}
+    assert by_period.get(("Revenue", "FY2024")) == 100000.0, (
+        f"ZWS in cells should not block period detection. Got periods: "
+        f"{set(f.column_header for f in fields)}"
+    )

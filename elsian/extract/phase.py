@@ -449,6 +449,16 @@ class ExtractPhase(PipelinePhase):
         audit = AuditLog()
         filing_extractions: List[Tuple[str, str, Dict[str, Dict[str, FieldResult]]]] = []
 
+        # Build a set of filing prefixes that have .clean.md versions.
+        # When a .clean.md exists, narrative extraction from the .txt
+        # counterpart is suppressed (the .clean.md has the same content
+        # but superior HTML table parsing; narrative values like "$634.4
+        # million" would compete incorrectly with exact table values).
+        _clean_md_prefixes: set[str] = set()
+        for fp in filings_dir.iterdir():
+            if fp.name.endswith(".clean.md"):
+                _clean_md_prefixes.add(fp.name.rsplit(".clean.md", 1)[0])
+
         for filing_path in sorted(filings_dir.iterdir()):
             if not filing_path.is_file():
                 continue
@@ -485,11 +495,19 @@ class ExtractPhase(PipelinePhase):
                     preflight_result=pf_result,
                 )
             else:
+                # Suppress narrative extraction when a .clean.md with
+                # the same prefix exists — the .clean.md has exact table
+                # values while narrative produces approximate ones.
+                _suppress_narrative = (
+                    suffix == ".txt"
+                    and filing_path.stem in _clean_md_prefixes
+                )
                 self._extract_from_txt(
                     text, filing_path, metadata, filing_scale,
                     filing_scale_confidence, rules, audit,
                     period_fields, additive_labels, _raw_table_fields,
                     preflight_result=pf_result,
+                    suppress_narrative=_suppress_narrative,
                 )
 
             # Post-process: recover total_liabilities from sub-totals
@@ -626,8 +644,16 @@ class ExtractPhase(PipelinePhase):
         additive_labels: Dict[str, Dict[str, set]],
         raw_table_fields: list,
         preflight_result: Optional[PreflightResult] = None,
+        suppress_narrative: bool = False,
     ) -> None:
-        """Extract from .txt files (space-aligned tables + narrative)."""
+        """Extract from .txt files (space-aligned tables + narrative).
+
+        Args:
+            suppress_narrative: When True, skip the narrative extraction
+                pass.  Used when a .clean.md counterpart exists for the
+                same filing — the .clean.md already produced exact table
+                values and narrative would introduce approximate duplicates.
+        """
         txt_table_fields = extract_tables_from_text(
             text, source_filename=filing_path.name,
         )
@@ -761,7 +787,11 @@ class ExtractPhase(PipelinePhase):
                 scale=scale,
             )
 
-        # Narrative extraction
+        # Narrative extraction — skipped when a .clean.md counterpart
+        # already provided table-parsed values for this filing.
+        if suppress_narrative:
+            return
+
         narrative_fields = extract_from_narrative(
             text, source_filename=filing_path.name
         )

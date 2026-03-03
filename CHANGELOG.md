@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-03-04
+
+### [BL-039] ACLS (Axcelis Technologies) ANNUAL_ONLY at 100% — ZWS fix, "Twelve/Year Ended" period detection, pro-forma guard, narrative suppression (114/114)
+- **What:** Brought ACLS from 8.77% (10/114) to 100% (114/114) in ANNUAL_ONLY scope. Four root causes fixed:
+  1. **ZWS stripping (`html_tables.py`):** HTML→Markdown converters insert U+200B zero-width spaces in empty table cells. Added `_strip_invisible()` function and applied it to header and data cell parsing, unblocking sub-header detection for ~95% of ACLS tables.
+  2. **"Twelve Months / Year Ended" period indicator (`html_tables.py`):** Extended `_PERIOD_INDICATOR_RE` and `_PERIOD_TYPE_HDR_RE` to recognise "Twelve Months Ended" and "Year(s) Ended" sub-headers, which are ACLS's primary format for annual IS/CF/BS tables.
+  3. **Pro-forma column guard (`html_tables.py`):** Added `pro\s*forma` regex skip in `_identify_period_columns()` to prevent hypothetical/pro-forma note tables from producing period-mapped fields (fixes NVDA regression where a pro-forma Revenue competed with the actual audited value).
+  4. **Narrative suppression for .txt with .clean.md counterpart (`phase.py`):** When a .clean.md exists for a filing, the narrative extraction from its .txt counterpart is now suppressed. This prevents approximate sentence-parsed values ("$634.4 million") from competing with exact table-parsed values (662,428 thousands) in the merger. Space-aligned table and vertical-BS extraction from .txt are preserved.
+- **Aliases added (`config/field_aliases.json`):** 4 new aliases — capex: "expenditures for property, plant and equipment [and capitalized software]"; shares_outstanding: "basic weighted average shares of common stock", "basic weighted average common shares".
+- **Tests:** 5 new unit tests in `test_html_tables.py`: `test_strip_invisible_zero_width_space`, `test_twelve_months_ended_period_detection`, `test_year_ended_period_detection`, `test_pro_forma_column_skipped`, `test_zws_subheader_detection`. ACLS added to VALIDATED_TICKERS.
+- **Regression:** eval --all: 12/12 tickers PASS 100% | 482 tests passed, 2 skipped.
+
 ## 2026-03-03
 
 ### [BL-036] NEXN promoted to FULL scope — 6-K Exhibit 99.1 download + html_tables drift-4 fix (153/153, 100%)
