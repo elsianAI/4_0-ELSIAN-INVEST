@@ -44,7 +44,7 @@ _ALWAYS_POSITIVE_FIELDS = frozenset({
     "interest_expense",
 })
 
-_BENEFIT_RE = re.compile(r"\bbenefit\b", re.IGNORECASE)
+_BENEFIT_RE = re.compile(r"\bbenefit\b|\(income\)", re.IGNORECASE)
 
 
 # ── Field → financial statement section mapping ────────────────────────
@@ -186,6 +186,8 @@ _DEPRIORITIZED_SECTION = re.compile(
     r"|prepaid_income_taxes"
     r"|:income_tax_payable"
     r"|details_of_income_tax"
+    r"|:income_taxes\b"
+    r"|:income_tax\b"
     r"|components_of_income"
     r"|components_of_results"
     r"|net_income.*margin"

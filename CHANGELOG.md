@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-03-03 (session 2)
+
+### [4.0] BL-040 INMD FULL 100% (108/108) — 20-F + 6-K filings
+- **What:** Added InMed Pharmaceuticals (INMD) as new ticker. 20-F annual filings + 6-K quarterly exhibits acquired via SEC EDGAR. Full IFRS field mapping with % of revenue sub-columns in MD&A tables. 108/108 fields at 100% across all periods.
+- **Tests:** 489 passed, 2 skipped.
+- **Regression:** eval --all: 12/12 tickers PASS 100%.
+
+### [4.0] Fix html_tables.py double-column recalibration guard (ACLS regression)
+- **What:** The double-column recalibration block (designed for IFRS 20-F MD&A tables with interleaved $ and % sub-columns) was incorrectly triggering on ACLS 6-K tables where even/odd column pairs are quarterly vs. YTD values (not $ vs. %). Added a guard that verifies the odd-indexed columns actually contain percentage-like values (in [0, 100] range or raw cell ends with "%"). ACLS YTD values (e.g. 424,772) exceed 100 and fail the guard, preventing recalibration. INMD % values (e.g. 23.5) pass the guard, preserving the fix.
+- **Regression fixed:** ACLS Q2-2021 ingresos 424,772→147,274; Q3-2021 ingresos 653,947→176,694.
+
+### [4.0] Fix SONO expected.json eps_diluted Q4-2025 (0.78→0.75)
+- **What:** Corrected pre-existing curation error in SONO Q4-2025: eps_diluted was set to 0.78 (which is eps_basic) instead of the actual diluted value 0.75. Verified against SRC_007_10-Q_Q4-2025.clean.md which shows Basic=$0.78, Diluted=$0.75.
+
 ## 2026-03-04
 
 ### [DATA] ACLS: fill 223 empty source_filing in expected.json — quarterly traceability complete

@@ -146,6 +146,7 @@
       "diluted earnings per share",
       "diluted eps",
       "earnings per share - diluted",
+      "earnings per share—diluted",
       "diluted net income per share",
       "eps diluted",
       "diluted income per share",
@@ -280,7 +281,9 @@
       "acquisition of intangible assets and property",
       "acquisition of intangible assets and property, plant and equipment",
       "expenditures for property, plant and equipment",
-      "expenditures for property, plant and equipment and capitalized software"
+      "expenditures for property, plant and equipment and capitalized software",
+      "purchase of fixed assets",
+      "purchases of fixed assets"
     ],
     "multiplier": null
   },
@@ -407,6 +410,7 @@
       "tax expense",
       "tax expenses",
       "tax expenses (benefit)",
+      "total expenses taxes on income",
       "impôt sur les sociétés",
       "impuesto sobre beneficios"
     ],

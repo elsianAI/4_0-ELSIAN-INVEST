@@ -477,11 +477,14 @@ def _identify_period_columns(
                 continue
 
         # Standalone date: "September 30, 2025", "Dec. 31, 2024"
+        # Also handles "December 31 , 2020" (space before comma) which
+        # appears in some EDGAR filings where the original HTML colspan
+        # cell contained a trailing space before punctuation.
         # Maps to quarter or FY depending on fiscal_year_end_month.
         m = re.search(
             r"(January|February|March|April|May|June|July|August|September|"
             r"October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|"
-            r"Sep|Sept|Oct|Nov|Dec)\.?\s+\d{1,2},?\s+(\d{4})",
+            r"Sep|Sept|Oct|Nov|Dec)\.?\s+\d{1,2}\s*,?\s+(\d{4})",
             header_clean,
             re.IGNORECASE,
         )
@@ -679,6 +682,77 @@ def extract_from_markdown_table(
                 period_map = {
                     nc: pk
                     for nc, (_, pk) in zip(_best_np, _sorted_periods)
+                }
+
+    # ── Double-column recalibration ($ and % interleaved) ─────────────
+    # Handles MD&A summary IS tables where each period has adjacent
+    # monetary and percentage-of-revenue sub-columns. Due to HTML colspan
+    # drift, the header year identifiers land on % sub-columns:
+    #
+    #   header: | 2025 | | | 2024 | | | 2023 | |  (year spans 3 cells each)
+    #   sub:    |  $  |  |  | % of rev |  |  |  $  |  ... ($ at 0, % at 3)
+    #
+    # After merging, "2024" + "% of revenues" → period_map col5=FY2024
+    # but col5 in data rows IS the FY2025% column, not FY2024$.
+    # When every row has exactly 2×N numeric values for N periods, the
+    # monetary columns are the even-indexed subset (0, 2, 4…) of the
+    # sorted numeric positions.
+    if _sparse_header and period_map and rows and len(period_map) >= 2:
+        from collections import Counter as _DblCounter
+        _dbl_patterns: _DblCounter = _DblCounter()
+        for _dpr in rows:
+            _dncols = tuple(
+                i for i, cell in enumerate(_dpr[1:], start=1)
+                if parse_number(cell.strip()) is not None
+            )
+            if len(_dncols) == 2 * len(period_map):
+                _dbl_patterns[_dncols] += 1
+        if _dbl_patterns:
+            _best_dp, _best_dc = _dbl_patterns.most_common(1)[0]
+            _monetary_cols = _best_dp[0::2]  # even-indexed = dollar columns
+            _pct_cols = _best_dp[1::2]       # odd-indexed = assumed pct columns
+            _sorted_periods_d = sorted(period_map.items(), key=lambda x: x[0])
+            # Guard: verify odd-indexed columns actually hold percentage values
+            # (in [0, 100] range or raw cell ends with "%"). This prevents
+            # quarterly vs. YTD tables (e.g. ACLS 6-K) from triggering: YTD
+            # values are large monetary figures that exceed 100 and fail this
+            # check, while genuine % columns (like INMD 20-F MD&A) stay ≤ 100.
+            _pct_rows_checked = 0
+            _pct_rows_pass = 0
+            for _dpr2 in rows:
+                _dpr2_cells = {
+                    i: cell.strip()
+                    for i, cell in enumerate(_dpr2[1:], start=1)
+                }
+                _pct_nums = [
+                    (parse_number(_dpr2_cells.get(c, "")), _dpr2_cells.get(c, ""))
+                    for c in _pct_cols
+                    if parse_number(_dpr2_cells.get(c, "")) is not None
+                ]
+                if _pct_nums:
+                    _pct_rows_checked += 1
+                    if all(
+                        raw.endswith("%") or 0 <= abs(val) <= 100
+                        for val, raw in _pct_nums
+                    ):
+                        _pct_rows_pass += 1
+            _odd_are_pct = (
+                _pct_rows_checked >= 2
+                and _pct_rows_pass / _pct_rows_checked >= 0.5
+            )
+            if (
+                _odd_are_pct
+                and _best_dc >= 3
+                and len(_monetary_cols) == len(_sorted_periods_d)
+                and all(
+                    _monetary_cols[i] < _monetary_cols[i + 1]
+                    for i in range(len(_monetary_cols) - 1)
+                )
+                and set(_monetary_cols) != set(period_map.keys())
+            ):
+                period_map = {
+                    mc: pk
+                    for mc, (_, pk) in zip(_monetary_cols, _sorted_periods_d)
                 }
 
     # ── Dollar-column calibration (mixed pct/monetary tables only) ───

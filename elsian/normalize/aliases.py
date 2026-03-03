@@ -125,7 +125,7 @@ _REJECT_PATTERNS: Dict[str, List[re.Pattern]] = {
         # with our storage convention (positive=expense, negative=benefit).
         # The note-section twin label "Income tax (benefit) expense" has correct sign
         # and should be preferred instead.
-        re.compile(r"\bbenefit\b\s*\(expense\)", re.I),
+        re.compile(r"\bbenefit\b\s*\(expenses?\)", re.I),
     ],
     "shares_outstanding": [
         re.compile(r"par\s+value", re.I),
@@ -220,6 +220,8 @@ _PRIORITY_PATTERNS: Dict[str, List[re.Pattern]] = {
         re.compile(r"^income\s+tax$", re.I),
         re.compile(r"provision\s+for\s+income\s+tax", re.I),
         re.compile(r"^income\s+tax\s+provision", re.I),
+        # IFRS 20-F notes IS row — e.g. InMode: "Total expenses (income) taxes on income"
+        re.compile(r"^total\s+(?:expenses?\s+)?\(?income\)?\s+taxes?\s+on\s+income$", re.I),
     ],
     "interest_expense": [
         re.compile(r"\bgross\s+financing", re.I),

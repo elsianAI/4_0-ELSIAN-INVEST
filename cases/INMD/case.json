@@ -1,0 +1,12 @@
+{
+  "ticker": "INMD",
+  "exchange": "NASDAQ",
+  "country": "IL",
+  "currency": "USD",
+  "cik": "1742692",
+  "source_hint": "sec",
+  "period_scope": "ANNUAL_ONLY",
+  "fiscal_year_end_month": 12,
+  "filings_expected_count": null,
+  "notes": "Foreign private issuer (Israel). Medical devices / aesthetics (SIC 3845). Files 20-F (annual) + 6-K (quarterly with Exhibit 99.1). Same pattern as NEXN and GCT. CIK 1742692 confirmed via SEC EDGAR."
+}
