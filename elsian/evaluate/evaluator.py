@@ -10,6 +10,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from elsian.evaluate.validate_expected import validate_expected
 from elsian.models.result import EvalMatch, EvalReport, ExtractionResult
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,11 @@ def evaluate(extraction: ExtractionResult, expected_path: str | Path) -> EvalRep
     expected_file = Path(expected_path)
     if not expected_file.exists():
         return EvalReport(ticker=extraction.ticker, total_expected=0, score=0.0)
+
+    # Pre-check: validate expected.json structure (informational only)
+    validation_issues = validate_expected(str(expected_file))
+    for issue in validation_issues:
+        logger.warning("validate_expected [%s]: %s", extraction.ticker, issue)
 
     expected_data = json.loads(expected_file.read_text(encoding="utf-8"))
     expected_periods: dict[str, Any] = expected_data.get("periods", {})

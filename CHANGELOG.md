@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-03-03 (commits huérfanos)
+
+### [4.0] BL-016 Sanity checks portados + BL-017 validate_expected portado — 34 tests nuevos
+- **BL-016:** Portado `tp_normalizer.py` sanity checks a `elsian/normalize/sanity.py`: capex_positive (auto-fix), revenue_negative, gp_gt_revenue, yoy_jump >10x. Integrado en ExtractPhase (non-blocking logging). 12 tests unitarios.
+- **BL-017:** Portado `validate_expected.py` a `elsian/evaluate/validate_expected.py`: 8 errores estructurales + 2 sanity warnings (revenue>0, BS identity). Integrado en `evaluate()` como pre-check. 22 tests unitarios.
+- **Governance:** DEC-017 (diversidad sobre velocidad), DEC-018 (BOBS→CROX), DEC-019 (protección ficheros core). PROJECT_STATE y BACKLOG actualizados.
+- **Tests:** 544 passed, 2 skipped.
+- **Regression:** eval --all: 13/13 PASS 100%.
+
+### [4.0] BL-030 Exhibit 99 fallback tests — 18 tests nuevos
+- **What:** 14 unit tests (TestFindExhibit99) + 4 integration tests (fixtures TZOO/GCT 6-K) para `_find_exhibit_99`. Pass 2 HTML fallback determinado NO necesario — todos los tickers resuelven vía Pass 1 (index.json).
+- **Tests:** 544 passed, 2 skipped.
+
+### [4.0] BL-034 Field Dependency Matrix publicada
+- **What:** Análisis estático completo de `tp_validator.py`, `tp_calculator.py`, `tp_normalizer.py` del 3.0. 26 campos analizados (8 critical, 12 required, 6 optional). 16 ya en 4.0, 10 faltan (3 high-priority: cfi, cff, delta_cash). Publicado en `docs/project/FIELD_DEPENDENCY_MATRIX.md` + JSON.
+
+### [4.0] CROX WIP checkpoint (82.31%, 242/294) + cleanup TZOO_backup
+- **What:** Checkpoint de CROX (Crocs Inc., CIK 1334036): case.json + expected.json con 294 campos (6A+12Q). Score real 82.31% — IS segmentado por marca (Crocs+HEYDUDE) requiere mejora de parser de tablas. Eliminado `cases/TZOO_backup/` (directorio obsoleto). Actualizado `config/ixbrl_concept_map.json` (nuevos mappings CROX).
+- **Regression:** eval --all: 13/13 PASS 100%, CROX FAIL 82.31% (known WIP).
+
 ## 2026-03-03 (revert)
 
 ### [4.0] Revert unauthorized iXBRL injection from production pipeline — fixes ACLS/SONO/TEP regressions

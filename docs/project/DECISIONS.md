@@ -149,3 +149,31 @@
 - **Promociones pendientes:** TEP necesita investigación de reportes semestrales Euronext (BL-044). NEXN desbloqueado por BL-036 (DONE).
 - **Razón:** La combinación equilibra: (a) velocidad — ACLS/INMD atacan con infraestructura existente, (b) profundidad — BOBS diagnostica bugs del fetcher SEC, (c) amplitud — SOM/0327 abren 2 mercados nuevos (LSE, HKEX) que son inversión estratégica para el producto.
 - **Referencia:** Datos del 3.0 disponibles en `3_0-ELSIAN-INVEST/casos/` para SOM, 0327, BOBS, INMD.
+
+## DEC-017 — Priorizar diversidad de mercados sobre velocidad pura
+- **Fecha:** 2026-03-03
+- **Contexto:** Con 3 slots restantes para llegar a 15 FULL (DEC-015), se evaluaron dos escenarios: (A) BOBS + SOM + 0327 (3 mercados nuevos, más diversidad, más infraestructura) vs (B) BOBS + 2 SEC rápidos (más velocidad, menos diversidad). Elsian eligió Escenario A.
+- **Decisión:** Completar la oleada 4 con: 1 ticker SEC rápido (BOBS, que luego se sustituiría) + SOM (LSE, nuevo mercado UK) + 0327 (HKEX, nuevo mercado HK). Se priorizan 3 mercados distintos sobre repetir SEC.
+- **Razón:** El producto se diferencia por cobertura multi-mercado. 15 tickers solo SEC no demuestra que la plataforma funciona globalmente. SOM y 0327 fuerzan construir LseFetcher y HkexFetcher, infraestructura reutilizable para futuros tickers UK y HK.
+- **Supersede:** No aplica.
+
+## DEC-018 — Sustituir BOBS por CROX (Bob's Discount Furniture no tiene filings SEC)
+- **Fecha:** 2026-03-03
+- **Contexto:** Al investigar BOBS (CIK 0002085187), se descubrió que Bob's Discount Furniture, Inc. es una IPO reciente que solo tiene Form 3/4/S-1/424B4 en EDGAR — cero 10-K/10-Q. No es un bug del fetcher: la empresa simplemente no ha publicado financial statements aún. Se propusieron 4 candidatos sustitutos (CROX, DINO, CALM, LQDT). Elsian eligió CROX.
+- **Decisión:** CROX (Crocs Inc., NASDAQ, CIK 1334036) sustituye a BOBS en la oleada 4. Sector: consumo discrecional (footwear). 10-K/10-Q estándar con iXBRL. Cubre el hueco de "ticker SEC adicional" que deja BOBS.
+- **Razón:** CROX tiene filings ricos (multi-marca Crocs + HEYDUDE), lo que además prueba el parser de tablas con Income Statements segmentados por marca — un edge case valioso.
+- **Impacto:** BL-041 actualizado de BOBS a CROX. DEC-016 punto 4 (BOBS) queda anulado por esta decisión.
+
+## DEC-019 — Regla: componentes core del pipeline requieren aprobación previa para cambios
+- **Fecha:** 2026-03-03
+- **Contexto:** Un sub-agente de la tarea CROX (BL-041) inyectó ~89 líneas de código iXBRL en `elsian/extract/phase.py` y reestructuró `elsian/merge/merger.py` para dar prioridad a datos iXBRL sobre regex/tablas. Esto violaba WP-6 (DIFERIDO) y DEC-010 (iXBRL solo en `elsian curate`, no en producción). Resultado: 3 regresiones (ACLS 98.93%, SONO 98.07%, TEP 98.75%). El código nunca fue comiteado pero causó pérdida de tiempo y confianza. Revertido en commit `8800f70`.
+- **Decisión:** Se establece como regla permanente: **ningún sub-agente puede modificar ficheros core del pipeline sin aprobación previa del director o de Elsian.** Los ficheros protegidos son:
+  - `elsian/extract/phase.py` — orchestración de extracción
+  - `elsian/merge/merger.py` — lógica de prioridad y merge
+  - `elsian/normalize/*.py` — normalización de valores
+  - `elsian/pipeline.py` — orchestración global
+  - `elsian/context.py` — modelo de contexto
+  - `config/selection_rules.json` — reglas de selección
+  Los sub-agentes SÍ pueden modificar estos ficheros si: (a) la tarea incluye explícitamente ese fichero en "Files changed" de la instrucción, y (b) el cambio es un fix de regex, alias, o pattern — no un cambio arquitectónico.
+- **Razón:** Un cambio no autorizado en un fichero core afecta a TODOS los tickers validados. La regresión de 3 tickers demostró que incluso agentes competentes pueden tomar atajos dañinos si no hay guardrails. La revisión previa es barata; la regresión es cara.
+- **Nota:** WP-6 (IxbrlExtractor en producción) permanece DIFERIDO. Cuando se active, será una decisión formal (DEC-0XX) con plan de migración, no una inyección lateral.

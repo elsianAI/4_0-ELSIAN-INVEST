@@ -13,12 +13,12 @@ Ver ROADMAP.md para descripción completa de fases.
 
 | Métrica | Valor | Target Fase 1→2 | Fecha |
 |---|---|---|---|
-| Tickers FULL 100% (DEC-015) | 10 (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, +KAR*) | ≥15 | 2026-03-03 |
-| Tickers ANNUAL_ONLY 100% | 2 (TEP, INMD) | Promover a FULL | 2026-03-03 |
-| Tickers WIP | 0 | 0 | 2026-03-03 |
-| Total campos validados | 2,553 | — | 2026-03-03 |
-| Tests pasando | 489 passed, 0 failed, 2 skipped | — | 2026-03-03 |
-| Líneas de código (aprox.) | ~7,500 + ~2,200 tests | 2026-03-03 |
+| Tickers FULL 100% (DEC-015) | 12 (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, TEP, +KAR*) | ≥15 | 2026-03-03 |
+| Tickers ANNUAL_ONLY 100% | 0 | — | 2026-03-03 |
+| Tickers WIP | 1 (CROX 82.31%) | 0 | 2026-03-03 |
+| Total campos validados | 2,680 | — | 2026-03-03 |
+| Tests pasando | 544 passed, 0 failed, 2 skipped | — | 2026-03-03 |
+| Líneas de código (aprox.) | ~7,500 + ~3,000 tests | 2026-03-03 |
 
 *KAR (49 campos, 3A): ASX annual-only — no quarterly filings disponibles en ASX para este ticker. Cuenta como FULL bajo DEC-015 excepción.
 
@@ -29,15 +29,15 @@ Ver ROADMAP.md para descripción completa de fases.
 | TZOO | 270 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
 | GCT | 252 | SEC (US) | 20-F→10-K HTML | ✅ VALIDATED (FULL: 6A+9Q) |
 | IOSP | 338 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 5A+17Q) |
-| NEXN | 153 | SEC (US) | 20-F/6-K HTML | ✅ VALIDATED (FULL: 4A+6Q — BL-036 DONE) |
+| NEXN | 153 | SEC (US) | 20-F/6-K HTML | ✅ VALIDATED (FULL: 4A+6Q) |
 | SONO | 311 | SEC (US) | 10-K HTML | ✅ VALIDATED (FULL: 6A+12Q) |
-| TEP | 55 | Euronext (FR) | PDF (IFRS, EUR) | ✅ VALIDATED (ANNUAL_ONLY — sin quarterly publicados) |
+| TEP | 80 | Euronext (FR) | PDF (IFRS, EUR) | ✅ VALIDATED (FULL: 6A+2H — BL-044 DONE) |
 | TALO | 183 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 5A+7Q) |
 | NVDA | 318 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
 | KAR | 49 | ASX (AU) | PDF (IFRS, USD) | ✅ VALIDATED (DEC-015 excepción: no quarterly en ASX) |
 | PR | 141 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 3A+6Q) |
-| ACLS | 375 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+15Q — BL-039 DONE) |
-| INMD | 108 | SEC (US) | 20-F/6-K HTML (IFRS) | ✅ VALIDATED (ANNUAL_ONLY: 6A — BL-040 DONE) |
+| ACLS | 375 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+15Q) |
+| INMD | 210 | SEC (US) | 20-F/6-K HTML (IFRS) | ✅ VALIDATED (FULL: 6A+6Q — BL-040 promoted) |
 
 ## Componentes implementados
 
@@ -60,10 +60,19 @@ Ver ROADMAP.md para descripción completa de fases.
 | Provenance Level 2 | ⚠️ Parcial | Modelo existe, campos no siempre poblados (BL-006) |
 | Provenance Level 3 | ❌ Pendiente | source_map.json no implementado |
 | CI GitHub Actions | ✅ Implementado | Workflow ci.yml en .github/workflows/. pytest en Python 3.11. WP-5 DONE |
+| Sanity Checks post-extracción | ✅ Implementado | capex sign, revenue neg, gp>revenue, YoY >10x. BL-016 DONE |
+| validate_expected.py | ✅ Implementado | 8 reglas + 2 sanity warnings. Pre-check en evaluate(). BL-017 DONE |
+| Field Dependency Matrix | ✅ Publicado | 26 campos analizados (8 critical, 12 required, 6 optional). 10 faltan en 4.0. BL-034 DONE |
+
+## Tickers WIP
+
+| Ticker | Campos | Score | Mercado | Problema principal | BL |
+|---|---|---|---|---|---|
+| CROX | 294 expected | 82.31% (242/294) | SEC (US) | IS segmentado por marca (Crocs+HEYDUDE), regex captura parciales en vez de consolidado | BL-041 |
 
 ## Bloqueantes actuales
 
-No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para los 12 tickers (10 FULL + 2 ANNUAL_ONLY).
+No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para los 13 tickers validados (12 FULL + KAR* excepción). CROX es WIP (82.31%).
 
 **Gaps pendientes (no bloqueantes):**
 1. **IR Crawler no integrado en EuRegulatorsFetcher** — ir_crawler.py portado pero TEP sigue dependiendo de filings_sources manuales. BL-013.
@@ -71,27 +80,15 @@ No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para l
 
 ## Hitos recientes
 
-- ✅ **BL-008 DONE** — AsxFetcher reescrito con escaneo 1-day backward. PDFs byte-idénticos. KAR autónomo.
-- ✅ **BL-001 DONE** — KAR rehecho desde cero con AsxFetcher autónomo. 49 campos, 3 periodos, 100%.
-- ✅ **BL-002 DONE** — NVDA completado y expandido. 318 campos (6A+12Q), 18 periodos, 100%. Scope corregido.
-- ✅ **BL-027 DONE** — Scope Governance (WP-1). NVDA period_scope:FULL. Test de consistencia scope creado (9 tickers). 360 tests pasando.
-- ✅ **BL-028 DONE** — SEC Hardening (WP-2). Cache lógico en sec_edgar.py. CaseConfig acepta `cik`. SecEdgarFetcher usa cik preconfigurado. 364 tests.
-- ✅ **BL-004 DONE** — Parser iXBRL determinista (WP-3). 594 líneas, 45 concept mappings, 21/23 campos cubiertos. 63 tests nuevos.
-- ✅ **BL-025 DONE** — Comando `elsian curate` (WP-3). TZOO: 100% field coverage, 93% value match. NVDA: 93% field coverage. KAR: skeleton OK.
-- ✅ **WP-5 DONE** — CI GitHub Actions + verificación Python 3.11. Workflow ci.yml creado. Markers `slow`/`network` registrados.
-- ✅ **BL-014/WP-4 DONE** — Preflight integrado en ExtractPhase. units_by_section → ScaleCascade por sección (IS/BS/CF). Provenance extendido con preflight_currency/standard/units_hint. 18 tests nuevos. 445 total.
-- ✅ **BL-031 DONE** — Tests de integración para `elsian curate`. 18 tests: E2E TZOO (6), skeleton TEP (4), cobertura vs expected.json (2, guardrail ≥90%, medido 100%), sanity checks (6). 463 tests total.
-- ✅ **BL-026 DONE** — FULL promotions: SONO 311/311 (6A+12Q), GCT 202/202 (6A+6Q), TALO 183/183 (5A+7Q). IOSP bloqueado por BL-038. 6 tickers FULL total (TZOO, NVDA, SONO, GCT, TALO, PR).
-- ✅ **BL-033 DONE** — PR promovido de WIP a VALIDATED: 141/141 (100%, FULL scope, 3A+6Q). Fixes: shares_outstanding regex, total_debt reject patterns, eps_basic/net_income priority patterns, ascending_table_number override.
-- ✅ **BL-036 DONE** — NEXN promovido a FULL: 153/153 (100%, 4A+6Q). 6-K Exhibit 99.1 download + html_tables drift-4 fix. 9 FULL tickers total. 477 tests.
-- ✅ **BL-038 DONE** — Table parser fix: parenthetical `( value | )` collapse, `$` currency prefix normalization, scale-note subheader tolerance. IOSP desbloquea 24+ Q periods. GCT Q1-Q3 2024 ahora disponibles. 473 tests, 0 regresiones.
-- ✅ **BL-003 DONE** — Pipeline wiring completo. Todas las fases heredan PipelinePhase.
-- ✅ **BL-009 DONE** — Filing Preflight portado de 3.0 (idioma, estándar, moneda, unidades, restatement).
-- ✅ **BL-010 DONE** — Deduplicación por contenido SHA-256 portada e integrada.
-- ✅ **BL-011 DONE** — Exchange/Country awareness unificado en markets.py.
-- ✅ **BL-012 DONE** — Filing Classification automática portada.
-- ✅ **Acquire layer completo** — SecEdgarFetcher, EuRegulatorsFetcher, AsxFetcher, ManualFetcher, IR Crawler, converters.
-- ✅ **115+ tests nuevos** del port de acquire (277→346 total).
+- ⚠️ **CROX: revert iXBRL no autorizado (2026-03-03)** — Sub-agente de BL-041 inyectó ~89 líneas de iXBRL en phase.py + reestructuró merger.py sin autorización (viola WP-6 DIFERIDO y DEC-010). Causó 3 regresiones (ACLS 98.93%, SONO 98.07%, TEP 98.75%). Revertido en commit `8800f70`. CROX real: 82.31% (sin iXBRL). DEC-019 establece regla de protección de ficheros core. Problema real: IS segmentado por marca.
+- ✅ **Oleada 1 paralela (BL-034, BL-016, BL-017, BL-030)** — 4 tareas ejecutadas en paralelo: Field Dependency Matrix publicada, sanity checks integrados, validate_expected portado, Exhibit 99 tests creados. +52 tests (492→544). 13/13 tickers 100%.
+- ✅ **TEP → FULL** — Promovido a FULL (80/80, 6A+2H). Semestrales H1 curados desde Euronext interim filing.
+- ✅ **INMD → FULL** — Promovido de ANNUAL_ONLY (108) a FULL (210/210, 6A+6Q).
+- ✅ **BL-045 DONE** — Limpieza post-auditoría: KAR/TEP period_scope explícito, ficheros basura eliminados, .gitignore actualizado, pyproject.toml corregido.
+- ✅ **BL-039 DONE** — ACLS (Axcelis Technologies): SEC semiconductor, iXBRL, FULL 375/375.
+- ✅ **BL-040 DONE** — INMD (InMode): SEC 20-F/6-K, healthcare (IFRS), FULL 210/210.
+- ✅ **BL-036 DONE** — NEXN promovido a FULL: 153/153 (4A+6Q). 6-K Exhibit 99.1 download.
+- ✅ **BL-038 DONE** — Table parser fix: parenthetical collapse, currency prefix normalization.
 
 ## Próximas prioridades
 
@@ -106,19 +103,17 @@ Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC
 - **WP-6** — IxbrlExtractor en producción. **DIFERIDO.**
 
 **Siguiente fase — Oleada 4 (DEC-016):**
-- ✅ **BL-039 (ACLS)** — DONE. SEC semiconductor, iXBRL, FULL 375/375. Nota: source_filing vacío en 223 campos quarterly — pendiente corrección.
-- ✅ **BL-040 INMD** — DONE. SEC 20-F/6-K, healthcare (IFRS), ANNUAL_ONLY 108/108. Pendiente promover a FULL.
-- **BL-041 (BOBS)** — SEC, test robustez fetcher (Form 4 bug en 3.0). TODO. Prioridad ALTA.
-- **BL-042 (SOM)** — LSE, nuevo mercado, requiere fetcher LSE. TODO. Infraestructura pesada.
-- **BL-043 (0327)** — HKEX, nuevo mercado, requiere fetcher HKEX. TODO. Infraestructura pesada.
-- **BL-044 (TEP→FULL)** — Investigar semestrales Euronext. TODO.
-- **BL-036 (NEXN→FULL)** — DONE ✅. Desbloquea NEXN FULL + INMD 6-K.
+- ✅ **BL-039 (ACLS)** — DONE. SEC semiconductor, iXBRL, FULL 375/375.
+- ✅ **BL-040 (INMD)** — DONE. SEC 20-F/6-K, healthcare (IFRS), FULL 210/210.
+- ✅ **BL-044 (TEP→FULL)** — DONE. Euronext semestrales, FULL 80/80.
+- **BL-041 (CROX)** — SEC, sustituye a BOBS (DEC-018). TODO. Prioridad ALTA.
+- **BL-042 (SOM)** — LSE, nuevo mercado, requiere fetcher LSE. TODO.
+- **BL-043 (0327)** — HKEX, nuevo mercado, requiere fetcher HKEX. TODO.
 
 **Ruta a 15 FULL (DEC-015):**
-- Actuales: 10 FULL (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, KAR*)
-- ANNUAL_ONLY pendientes de FULL: INMD (BL-040), TEP (BL-044)
-- Nuevos oleada 4 pendientes: BOBS, SOM, 0327
-- Proyección: 10 + 2 promociones + 3 nuevos = **15 FULL** (exacto al target)
+- Actuales: 12 FULL (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, TEP, KAR*)
+- Pendientes: CROX (SEC, rápido), SOM (LSE, nuevo mercado), 0327 (HKEX, nuevo mercado)
+- Proyección: 12 + 3 nuevos = **15 FULL** (exacto al target)
 
 **WP-6** — IxbrlExtractor en producción (diferido).
 
