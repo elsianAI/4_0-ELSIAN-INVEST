@@ -1,6 +1,6 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
-> Última actualización: 2026-03-02
+> Última actualización: 2026-03-03
 > Actualizado por: Copilot (Project Director)
 
 ---
@@ -13,12 +13,12 @@ Ver ROADMAP.md para descripción completa de fases.
 
 | Métrica | Valor | Target Fase 1→2 | Fecha |
 |---|---|---|---|
-| Tickers FULL 100% (DEC-015) | 8 (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, +KAR*) | ≥15 | 2026-03-02 |
-| Tickers ANNUAL_ONLY pendientes | 2 (NEXN — blocked BL-036, TEP — sin quarterly publicados) | Promover o documentar excepción | 2026-03-02 |
-| Tickers WIP | 0 | 0 | 2026-03-02 |
-| Total campos validados | 2,093 | — | 2026-03-02 |
-| Tests pasando | 475 passed, 0 failed, 2 skipped | — | 2026-03-02 |
-| Líneas de código (aprox.) | ~7,500 + ~2,200 tests | 2026-03-02 |
+| Tickers FULL 100% (DEC-015) | 9 (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, +KAR*) | ≥15 | 2026-03-03 |
+| Tickers ANNUAL_ONLY pendientes | 1 (TEP — sin quarterly publicados, excepción DEC-015) | Documentar excepción | 2026-03-03 |
+| Tickers WIP | 0 | 0 | 2026-03-03 |
+| Total campos validados | 2,170 | — | 2026-03-03 |
+| Tests pasando | 477 passed, 0 failed, 2 skipped | — | 2026-03-03 |
+| Líneas de código (aprox.) | ~7,500 + ~2,200 tests | 2026-03-03 |
 
 *KAR (49 campos, 3A): ASX annual-only — no quarterly filings disponibles en ASX para este ticker. Cuenta como FULL bajo DEC-015 excepción.
 
@@ -29,7 +29,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | TZOO | 270 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
 | GCT | 252 | SEC (US) | 20-F→10-K HTML | ✅ VALIDATED (FULL: 6A+9Q) |
 | IOSP | 338 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 5A+17Q) |
-| NEXN | 76 | SEC (US) | 20-F/6-K HTML | ✅ VALIDATED (ANNUAL_ONLY — blocked BL-036: 6-K exhibits) |
+| NEXN | 153 | SEC (US) | 20-F/6-K HTML | ✅ VALIDATED (FULL: 4A+6Q — BL-036 DONE) |
 | SONO | 311 | SEC (US) | 10-K HTML | ✅ VALIDATED (FULL: 6A+12Q) |
 | TEP | 55 | Euronext (FR) | PDF (IFRS, EUR) | ✅ VALIDATED (ANNUAL_ONLY — sin quarterly publicados) |
 | TALO | 183 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 5A+7Q) |
@@ -81,6 +81,7 @@ No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para l
 - ✅ **BL-031 DONE** — Tests de integración para `elsian curate`. 18 tests: E2E TZOO (6), skeleton TEP (4), cobertura vs expected.json (2, guardrail ≥90%, medido 100%), sanity checks (6). 463 tests total.
 - ✅ **BL-026 DONE** — FULL promotions: SONO 311/311 (6A+12Q), GCT 202/202 (6A+6Q), TALO 183/183 (5A+7Q). IOSP bloqueado por BL-038. 6 tickers FULL total (TZOO, NVDA, SONO, GCT, TALO, PR).
 - ✅ **BL-033 DONE** — PR promovido de WIP a VALIDATED: 141/141 (100%, FULL scope, 3A+6Q). Fixes: shares_outstanding regex, total_debt reject patterns, eps_basic/net_income priority patterns, ascending_table_number override.
+- ✅ **BL-036 DONE** — NEXN promovido a FULL: 153/153 (100%, 4A+6Q). 6-K Exhibit 99.1 download + html_tables drift-4 fix. 9 FULL tickers total. 477 tests.
 - ✅ **BL-038 DONE** — Table parser fix: parenthetical `( value | )` collapse, `$` currency prefix normalization, scale-note subheader tolerance. IOSP desbloquea 24+ Q periods. GCT Q1-Q3 2024 ahora disponibles. 473 tests, 0 regresiones.
 - ✅ **BL-003 DONE** — Pipeline wiring completo. Todas las fases heredan PipelinePhase.
 - ✅ **BL-009 DONE** — Filing Preflight portado de 3.0 (idioma, estándar, moneda, unidades, restatement).
@@ -103,8 +104,7 @@ Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC
 - **WP-6** — IxbrlExtractor en producción. **DIFERIDO.**
 
 **Siguiente fase:**
-- **BL-036** — NEXN 6-K exhibit download → desbloquea NEXN FULL.
-- **BL-005** — 5 tickers nuevos para llegar a 15 FULL (DEC-015).
+- **BL-005** — 5+ tickers nuevos para llegar a 15 FULL (DEC-015). Actualmente 9/15.
 - **WP-6** — IxbrlExtractor en producción (diferido).
 
 ---

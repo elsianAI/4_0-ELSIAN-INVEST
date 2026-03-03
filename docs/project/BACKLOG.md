@@ -335,8 +335,8 @@
 
 ### BL-036 — SecEdgarFetcher: descargar Exhibit 99.1 de 6-K (NEXN quarterly)
 - **Prioridad:** ALTA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE ✅ (2026-03-03)
+- **Asignado a:** Claude (Copilot)
 - **Depende de:** —
 - **Descripción:** El SecEdgarFetcher actual descarga `primary_doc` para 6-Ks, pero para foreign private issuers como NEXN (Israel/UK, 20-F/6-K), los datos financieros trimestrales están en el **Exhibit 99.1** adjunto al 6-K, no en el primary_doc (que es solo la portada del formulario, ~48 líneas). El fetcher ya tiene `_find_exhibit_99()` para 8-Ks pero no lo aplica a 6-Ks. Fix: extender la lógica de exhibit discovery a 6-Ks que contengan earnings results. Verificado: SRC_010_6-K_Q4-2025.txt referencia explícitamente "Exhibit 99.1" con financial statements completos (IS/BS/CF para three/nine months). Sin este fix, NEXN no puede promoverse a FULL.
 - **Criterio de aceptación:** `acquire NEXN` descarga los .htm de Exhibit 99.1 de los 6-K con earnings results. Los .htm se convierten a .clean.md. `extract NEXN` produce periodos Q* con datos de IS/BS/CF. Tests unitarios para la nueva lógica de 6-K exhibit discovery. Sin regresiones en otros tickers SEC.
