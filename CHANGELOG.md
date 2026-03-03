@@ -2,8 +2,8 @@
 
 ## 2026-03-03 (session 2)
 
-### [4.0] BL-040 INMD FULL 100% (108/108) — 20-F + 6-K filings
-- **What:** Added InMed Pharmaceuticals (INMD) as new ticker. 20-F annual filings + 6-K quarterly exhibits acquired via SEC EDGAR. Full IFRS field mapping with % of revenue sub-columns in MD&A tables. 108/108 fields at 100% across all periods.
+### [4.0] BL-040 INMD ANNUAL_ONLY 100% (108/108) — 20-F filings
+- **What:** Added InMode Ltd. (INMD) as new ticker. 20-F annual filings acquired via SEC EDGAR. IFRS field mapping with % of revenue sub-columns in MD&A tables. 108/108 fields at 100% across all periods.
 - **Tests:** 489 passed, 2 skipped.
 - **Regression:** eval --all: 12/12 tickers PASS 100%.
 
