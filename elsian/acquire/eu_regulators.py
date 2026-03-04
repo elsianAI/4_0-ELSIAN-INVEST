@@ -43,10 +43,16 @@ _TEXT_SUFFIXES = {".md", ".txt", ".htm", ".html", ".pdf"}
 
 # ── HTTP client ──────────────────────────────────────────────────────
 
-USER_AGENT = "ELSIAN-INVEST-Bot/1.0 (research; bot@elsian-invest.local)"
+USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/121.0.0.0 Safari/537.36"
+)
 _HEADERS = {
     "User-Agent": USER_AGENT,
     "Accept": "application/pdf,text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://www.google.com/",
 }
 _TIMEOUT = 60
 _RATE_LIMIT = 0.5

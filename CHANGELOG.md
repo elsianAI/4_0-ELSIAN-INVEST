@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-03-04
+
+### [FIX] SOM — acquire filings from IR website (DEC-006 compliance)
+- **What:** `cases/SOM/case.json` now declares `filings_sources` with 3 verified URLs from investors.somero.com. `elsian acquire SOM` downloads PDFs autonomously; no manual copy from 3.0 needed. Fixed `elsian/acquire/eu_regulators.py` User-Agent from bot string to browser-like UA (required by Somero IR CDN). Files: `SRC_001_ANNUAL_REPORT_FY2024.pdf`, `SRC_002_RESULTS_PRESENTATION_FY2024.pdf`, `SRC_003_INTERIM_H1_2025.pdf`. Score unchanged: 100% (36/36). Tests: 1044 passed, 0 failed.
+- **Regression:** eval --all 14/14 PASS 100%.
+
 ## 2026-06-26
 
 ### [TICKER] BL-042 — SOM (Somero Enterprises, LSE/AIM, Industrials) — ANNUAL_ONLY 36/36 (100%)
