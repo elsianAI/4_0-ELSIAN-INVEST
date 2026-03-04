@@ -10,11 +10,11 @@
 ### [FIX] SOM — DEC-022 reconstruction: 16 periods / 179 fields / 100% score
 - **What:** Re-curated expected.json from 2 periods (36 fields) to 16 periods (179 fields), incorporating FY2009-FY2022 historical data from SRC_003 (H1 2025 Interim presentation wide table). Three bug fixes required to reach 100%:
   1. **SGA alias** (`config/field_aliases.json`): Added `"sales, marketing and customer support"` — SOM annual report labels the selling row "Sales, marketing and customer support" (not "Selling"), causing the extractor to miss it and capture only G&A. Additive combine now picks up both rows correctly.
-  2. **income_tax sign** (`elsian/extract/phase.py` — `_normalize_sign`): Historical table in SRC_003 uses explicit `"-"` for tax benefits (e.g. "-1.2", "-0.2", "-2.1"). Previous logic applied `abs()` to any negative income_tax without a "benefit" keyword in the label, converting credits to debits. Fixed: when the raw cell text starts with an explicit `-` or `−`, the negative sign is preserved. Added `raw_text` parameter to `_normalize_sign` and updated all 3 TableField call sites.
+  2. **income_tax sign** (`elsian/extract/pdf_tables.py` + `elsian/extract/phase.py`): Historical table in SRC_003 uses explicit `"-"` for tax benefits (e.g. "-1.2", "-0.2", "-2.1"). Fix: wide historical-results table extractor (`_extract_wide_historical_fields`) now annotates tax rows with negative values as "(benefit)" in the label, so `_normalize_sign` preserves the negative via its `_BENEFIT_RE` check. This approach avoids regressing TEP/IFRS tickers where explicit minus is just IFRS presentation convention (not a benefit).
   3. **dividends_per_share noise** (`elsian/normalize/aliases.py` + `cases/SOM/case.json`): SRC_002 results presentation shows DPS in US cents ("Supplemental dividend per share" = 4.1c, "Ordinary dividend per share" = 16.9c). Fuzzy alias resolver matched "supplemental dividend per share" → `dividends_per_share` with value 4.1 (wrong; expected $0.169). Added `dividends_per_share` reject patterns for `\bsupplemental\b` and `^ordinary\s+dividend`. Added `manual_overrides` in case.json for FY2024 ($0.169) and FY2023 ($0.2319).
-- **Files changed:** `config/field_aliases.json`, `elsian/normalize/aliases.py`, `elsian/extract/phase.py`, `cases/SOM/case.json`, `cases/SOM/expected.json`, `cases/SOM/extraction_result.json`.
-- **Tests:** 1084 passed, 0 failed.
-- **Regression:** eval --all 13/14 PASS 100% (TEP 93.75% — pre-existing, unrelated).
+- **Files changed:** `config/field_aliases.json`, `elsian/normalize/aliases.py`, `elsian/extract/phase.py`, `elsian/extract/pdf_tables.py`, `cases/SOM/case.json`, `cases/SOM/expected.json`, `cases/SOM/extraction_result.json`.
+- **Tests:** 1122 passed, 0 failed.
+- **Regression:** eval --all 14/14 PASS 100%.
 
 ### [4.0] BL-049 — Truth Pack assembler (TruthPack_v1)
 - **What:** `elsian/assemble/truth_pack.py` (296L). TruthPackAssembler combines extraction_result.json + _market_data.json + derived metrics (elsian/calculate/derived.py) + autonomous validation (elsian/evaluate/validation.py) into truth_pack.json (TruthPack_v1 schema). CLI: `elsian assemble {TICKER}`. Sections: financial_data, derived_metrics (TTM/FCF/EV/margins/returns/multiples/per-share), market_data, quality (9 gates summary), metadata.
@@ -27,11 +27,10 @@
 
 ## 2026-06-26
 
-### [TICKER] BL-042 — SOM (Somero Enterprises, LSE/AIM, Industrials) — ANNUAL_ONLY 36/36 (100%)
-- **What:** New ticker SOM (Somero Enterprises Inc., LSE AIM, source_hint=eu_manual). 3 PDFs ported from 3.0: Annual Report FY2024 (SRC_001, 3.2MB), Results Presentation FY2024 (SRC_002, 2.6MB), H1 2025 Interim (SRC_003, 5.7MB). expected.json: FY2024+FY2023, 18 fields each (36 total), from audited Annual Report in US$000. Score: 100% (36/36). Added to VALIDATED_TICKERS.
-- **Aliases added:** `capex`: "property and equipment purchases"; `shares_outstanding`: "basic weighted shares outstanding", "weighted average number of common shares outstanding", "basic" (for pdfplumber layout-split labels "Basic" in EPS note tables).
-- **Notes:** FY2020-2022 data exists in SRC_003 (investor presentation historical table, US$ millions, wide 16-col format) but not extractable by current column-position extractor. Expected.json intentionally scoped to audited FY2024 Annual Report only. To add FY2020-2022: acquire individual Annual Reports for those years.
-- **Tests:** 1109 passed, 0 failed (2 skipped). Regression: eval --all 14/14 PASS 100%.
+### [TICKER] BL-042 — SOM REBUILT (Somero Enterprises, LSE/AIM, Industrials) — ANNUAL_ONLY 179/179 (100%)
+- **What:** SOM expected.json rebuilt from scratch per DEC-022. 16 periods (FY2009-FY2024), 179 total fields. FY2024/FY2023 from Annual Report (SRC_001, US$000): 23 fields IS+BS+CF each. FY2009-FY2022 from historical table (SRC_003, US$ Millions ×1000): 9-10 fields each. Provenance L2 complete (extraction_method=pdf_table). Pipeline fixes: wide historical table extractor annotates negative tax rows as "(benefit)" to preserve sign semantics without regressing IFRS tickers; `_normalize_sign` reverted to always flip negative income_tax to positive (benefit check via label). New aliases: "sales, marketing and customer support" (sga), "tax" (income_tax). DPS manual_overrides for FY2024/FY2023.
+- **Tests:** 1122 passed, 0 failed.
+- **Regression:** eval --all 14/14 PASS 100%.
 
 
 - [FIX] validation.py: CASHFLOW_IDENTITY → critical:True, _CANONICAL_FIELDS 23→26 (cfi, cff, delta_cash)

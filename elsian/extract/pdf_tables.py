@@ -30,16 +30,20 @@ from elsian.normalize.aliases import AliasResolver
 
 # Maximum number of pages to process per PDF.  Financial statements
 # typically appear within the first ~30 pages of a results announcement.
-# Annual reports are handled by the text-based pipeline.
-_MAX_PAGES = 40
+# Annual reports are handled by the text-based pipeline.  Increased to 60
+# to accommodate investor presentations that include historical-results
+# tables at the very end (e.g. Somero SRC_003, page 41).
+_MAX_PAGES = 60
 
-# Maximum PDF file size in bytes (5 MB).  pdfplumber's extract_tables()
+# Maximum PDF file size in bytes (10 MB).  pdfplumber's extract_tables()
 # performs full layout analysis (edges, lines, chars) per page which is
 # significantly slower than extract_text().  Large annual reports (10-24 MB,
 # 100+ pages) are prohibitively slow and already well-served by the
 # text-based .txt pipeline.  This extractor adds value for smaller PDFs
 # like results announcements and regulatory filings.
-_MAX_FILE_SIZE = 5_000_000
+# Updated to 10 MB to handle investor presentations with historical results
+# tables (e.g. Somero SRC_003 ~6 MB).
+_MAX_FILE_SIZE = 10_000_000
 
 
 # ── Financial table detection keywords ───────────────────────────────
@@ -308,6 +312,169 @@ def _extract_column_headers(
     return headers, data_start
 
 
+# ── Wide historical-results table extraction ─────────────────────────
+
+# Matches pages that contain a multi-year pivot table (e.g. "HISTORICAL RESULTS"
+# or "YEARS ENDED DECEMBER 31" spanning 8+ fiscal years).  These tables have
+# year headers in the page TEXT (not in table cells), so the standard
+# _extract_column_headers() path finds no periods and skips them.
+_WIDE_TABLE_SECTION_RE = re.compile(
+    r"HISTORICAL\s+RESULTS|YEARS\s+ENDED\s+DECEMBER\s+31",
+    re.IGNORECASE,
+)
+# Regex to detect "US$ Millions" / "USD millions" scale annotation in the page
+_MILLIONS_SCALE_RE = re.compile(r"US\$?\s*Millions?|USD\s*Millions?", re.IGNORECASE)
+# Skip rows whose LABEL matches these patterns (Non-GAAP, ratios, growth %)
+_WIDE_SKIP_LABEL_RE = re.compile(
+    r"growth|margin|adjusted|percent|\%|earnings per share",
+    re.IGNORECASE,
+)
+# Identifies the capital-expenditure row (value must be stored as negative)
+_CAPEX_LABEL_RE = re.compile(r"capital\s+expenditure", re.IGNORECASE)
+# Identifies income-tax rows; negative values = tax benefit in historical context
+_TAX_LABEL_RE = re.compile(r"^tax$|^income\s+tax", re.IGNORECASE)
+
+
+def _find_consecutive_years(text: str) -> list[int]:
+    """Find the longest consecutive year sequence (≥8 years) in *text*.
+
+    Returns the full sequence if found, otherwise an empty list.  Used to
+    map columns of a wide pivot table to fiscal years.
+    """
+    found = sorted({int(m.group()) for m in re.finditer(r"\b(20\d{2})\b", text)})
+    if len(found) < 8:
+        return []
+    best: list[int] = []
+    current: list[int] = []
+    for y in found:
+        if not current or y == current[-1] + 1:
+            current.append(y)
+        else:
+            if len(current) > len(best):
+                best = current
+            current = [y]
+    if len(current) > len(best):
+        best = current
+    return best if len(best) >= 8 else []
+
+
+def _extract_wide_historical_fields(
+    table: list,
+    years: list[int],
+    page_num: int,
+    table_idx: int,
+    filing_source_id: str,
+    scale_multiplier: float = 1.0,
+) -> list[TableField]:
+    """Extract fields from a pivot-format historical-results table.
+
+    The table is expected to have:
+    - Column 0: row label (e.g. "Revenue", "Net income", …)
+    - Column 1: blank (visual separator in the PDF)
+    - Columns 2…N: one value per year (oldest → newest)
+
+    The caller supplies *years* (e.g. [2009, 2010, …, 2024]) and
+    *scale_multiplier* (1000 when the page header says "US$ Millions").
+
+    Args:
+        table: Raw table from pdfplumber (list of rows, each a list of cells).
+        years: Ordered list of fiscal years matching data columns.
+        page_num: PDF page number (used for provenance).
+        table_idx: Table index within the page (used for provenance).
+        filing_source_id: Source filing ID string for provenance.
+        scale_multiplier: Factor applied to every extracted value; 1000 when
+            the table is denominated in millions and the pipeline stores
+            thousands.
+
+    Returns:
+        List of TableField objects, one per (row, year) cell.
+    """
+    results: list[TableField] = []
+    n_cols = max((len(r) for r in table if r), default=0)
+    if n_cols < 2 or not years:
+        return results
+
+    # Identify data-column indices: any column (beyond 0) that has at least
+    # one numeric value across all rows.  Column 1 is typically blank.
+    data_cols: list[int] = []
+    for col_idx in range(1, n_cols):
+        has_numeric = any(
+            _parse_cell_value(str(row[col_idx] if col_idx < len(row) else "") or "") is not None
+            for row in table
+            if row
+        )
+        if has_numeric:
+            data_cols.append(col_idx)
+
+    if len(data_cols) < len(years):
+        return results  # Cannot map all years → give up
+
+    # Map the first len(years) data columns to respective years
+    col_to_year: dict[int, int] = {
+        dc: yr for dc, yr in zip(data_cols[: len(years)], years)
+    }
+    unique_table_idx = page_num * 100 + table_idx
+
+    for row_idx, row in enumerate(table):
+        if not row:
+            continue
+        label = str(row[0] or "").strip()
+        if not label or _WIDE_SKIP_LABEL_RE.search(label):
+            continue
+
+        # Skip percentage rows: if any of the first numeric cells contains "%"
+        sample_cells = [str(row[c] or "") for c in data_cols[:6] if c < len(row)]
+        if any("%" in cell for cell in sample_cells):
+            continue
+
+        is_capex = bool(_CAPEX_LABEL_RE.search(label))
+        is_tax = bool(_TAX_LABEL_RE.search(label))
+
+        for col_idx, year in col_to_year.items():
+            if col_idx >= len(row):
+                continue
+            raw_text = str(row[col_idx] or "").strip()
+            if "%" in raw_text:
+                continue
+            value = _parse_cell_value(raw_text)
+            if value is None:
+                continue
+
+            value = value * scale_multiplier
+            # Capital expenditure is always a cash outflow (negative)
+            if is_capex and value > 0:
+                value = -value
+
+            # Tax row with negative value in a historical table = tax benefit.
+            # Annotate the label so _normalize_sign (which always flips
+            # negative income_tax to positive) preserves the negative via
+            # its _BENEFIT_RE check.
+            effective_label = label
+            if is_tax and value < 0:
+                effective_label = f"{label} (benefit)"
+
+            period_key = f"FY{year}"
+            source_loc = (
+                f"{filing_source_id}:income_statement:pdf_tbl{unique_table_idx}"
+                f":row{row_idx}:col{col_idx}"
+            )
+            tf = TableField(
+                label=effective_label,
+                value=value,
+                column_header=period_key,
+                source_location=source_loc,
+                raw_text=raw_text,
+                col_label=str(year),
+                table_title="income_statement:historical_results",
+                row_idx=row_idx,
+                col_idx=col_idx,
+                table_index=unique_table_idx,
+            )
+            results.append(tf)
+
+    return results
+
+
 def extract_tables_from_pdf(
     pdf_path: str,
     filing_source_id: str = "",
@@ -443,5 +610,39 @@ def extract_tables_from_pdf(
                             table_index=unique_table_idx,
                         )
                         results.append(tf)
+
+            # ── Wide historical-results table (multi-year pivot) ──────────
+            # Some PDF filings (e.g. investor presentations) include a
+            # multi-year P&L summary where year headers appear in the page
+            # TEXT above the table rather than as table cell rows.  The
+            # standard _extract_column_headers() path finds no periods and
+            # skips these tables.  We detect them by page-level text patterns
+            # and delegate to _extract_wide_historical_fields().
+            if _WIDE_TABLE_SECTION_RE.search(page_text):
+                years = _find_consecutive_years(page_text)
+                if years:
+                    # Skip the 2 most recent years from the historical table.
+                    # Those years are covered by dedicated annual report filings
+                    # with higher precision (thousands vs millions).  Including
+                    # them would cause the merger to incorrectly prefer the
+                    # lower-quality historical table values over the annual
+                    # report values due to the merger's _guess_type_from_source
+                    # asymmetry (non-SEC filing types resolve to 'unknown').
+                    years_to_extract = years[:-2] if len(years) > 2 else years
+                    scale_mult = (
+                        1000.0 if _MILLIONS_SCALE_RE.search(page_text) else 1.0
+                    )
+                    for wide_idx, tbl in enumerate(tables):
+                        if not tbl:
+                            continue
+                        wide_fields = _extract_wide_historical_fields(
+                            tbl,
+                            years_to_extract,
+                            page_num,
+                            wide_idx + 500,  # Offset avoids index collision with normal tables
+                            filing_source_id,
+                            scale_mult,
+                        )
+                        results.extend(wide_fields)
 
     return results

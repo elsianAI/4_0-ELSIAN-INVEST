@@ -97,9 +97,7 @@ _PREFLIGHT_UNIT_TO_SCALE: dict[str, str] = {
 }
 
 
-def _normalize_sign(
-    canonical: str, raw_label: str, value: float, raw_text: str = ""
-) -> float:
+def _normalize_sign(canonical: str, raw_label: str, value: float) -> float:
     """Ensure expense fields use the correct sign convention.
 
     Args:
@@ -107,10 +105,6 @@ def _normalize_sign(
         raw_label: Raw label from the filing (used to detect benefit keywords).
         value: Parsed numeric value (may be negative from parenthetical or
             explicit minus-sign formatting).
-        raw_text: Original cell text before numeric parsing.  When this starts
-            with an explicit '-' the filing itself used a minus sign, meaning
-            a negative income_tax is an intentional benefit/credit and must
-            NOT be flipped to positive.
     """
     if canonical in _ALWAYS_POSITIVE_FIELDS:
         return abs(value)
@@ -120,13 +114,7 @@ def _normalize_sign(
         if _BENEFIT_FIRST_RE.search(raw_label):
             return -value
         if value < 0 and not _BENEFIT_RE.search(raw_label):
-            # Only flip to positive when the original cell used parenthetical
-            # notation, NOT when the filing used an explicit '-' sign.
-            # Explicit '-' in a P&L table means the filer intended a credit
-            # (tax benefit) — preserve the negative per sign convention.
-            has_explicit_minus = raw_text.strip().startswith(("-", "\u2212"))
-            if not has_explicit_minus:
-                return abs(value)
+            return abs(value)
     return value
 
 
@@ -910,7 +898,7 @@ class ExtractPhase(PipelinePhase):
                     continue
 
             fr = _make_field_result(
-                _normalize_sign(canonical, tf.label, tf.value, tf.raw_text),
+                _normalize_sign(canonical, tf.label, tf.value),
                 scale, filing_path.name, tf.source_location, confidence,
                 table_index=tf.table_index if tf.table_index >= 0 else None,
                 table_title=tf.table_title,
@@ -1151,7 +1139,7 @@ class ExtractPhase(PipelinePhase):
 
                 if is_new:
                     combined_value = existing.value + _normalize_sign(
-                        canonical, tf.label, tf.value, tf.raw_text
+                        canonical, tf.label, tf.value
                     )
                     ep = existing.provenance
                     fr = _make_field_result(
@@ -1205,7 +1193,7 @@ class ExtractPhase(PipelinePhase):
         _ext_method = "pdf_table" if "pdf_tbl" in tf.source_location else "table"
 
         fr = _make_field_result(
-            _normalize_sign(canonical, tf.label, tf.value, tf.raw_text),
+            _normalize_sign(canonical, tf.label, tf.value),
             scale, filing_path.name, tf.source_location, confidence,
             table_index=tf.table_index if tf.table_index >= 0 else None,
             table_title=tf.table_title,
