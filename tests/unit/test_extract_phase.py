@@ -24,9 +24,22 @@ def test_normalize_sign_income_tax_benefit():
     assert _normalize_sign("income_tax", "Benefit from income taxes", -50) == -50
 
 
+def test_normalize_sign_income_tax_annotated_benefit():
+    """income_tax with pdf_tables.py-annotated '(benefit)' label stays negative (SOM case)."""
+    # pdf_tables._extract_wide_historical_fields appends " (benefit)" to the label
+    # when a tax row has a negative value in a historical wide table.
+    assert _normalize_sign("income_tax", "Tax (benefit)", -2100) == -2100
+    assert _normalize_sign("income_tax", "Income tax (benefit)", -200) == -200
+
+
 def test_normalize_sign_income_tax_no_benefit():
-    """income_tax without 'benefit' becomes positive."""
+    """income_tax without 'benefit' becomes positive (TEP/IFRS convention)."""
     assert _normalize_sign("income_tax", "Provision for income taxes", -50) == 50
+    # TEP (Teleperformance, IFRS): filing presents income tax expense with explicit '-'
+    # This is IFRS presentation convention, NOT a tax benefit → must be flipped to positive.
+    assert _normalize_sign("income_tax", "Income tax", -346) == 346
+    assert _normalize_sign("income_tax", "Income tax", -228) == 228
+
 
 
 def test_normalize_sign_net_income_preserves():

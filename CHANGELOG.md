@@ -2,6 +2,14 @@
 
 ## 2026-03-04
 
+### [FIX] BL-046 — Regresión TEP por BL-042 (DEC-022): income_tax sign
+- **What:** BL-042 introdujo `raw_text: str = ""` en `_normalize_sign` para preservar el signo negativo cuando el raw_text empezaba con `-`. Esto rompió TEP: los 5 periodos con `income_tax` (FY2023, FY2024, FY2025, H1-2024, H1-2025) se extraían como negativos (-228, -346, -289, -113, -123) en lugar de positivos. El filing francés IFRS presenta los gastos con signo negativo explícito (convención de presentación, no beneficio fiscal).
+- **Root cause:** El parámetro `raw_text` era innecesario. El caso SOM ya estaba cubierto por `pdf_tables.py:_extract_wide_historical_fields` que anota `"(benefit)"` en la etiqueta cuando el tax es negativo en tablas históricas wide, y `_normalize_sign` usa `_BENEFIT_RE` para detectar ese label y preservar el negativo.
+- **Fix:** Eliminar el parámetro `raw_text` de `_normalize_sign` (y los 3 call sites) — revertir a la lógica pre-BL-042 pura de label detection.
+- **Files changed:** `elsian/extract/phase.py` (remove `raw_text` param from `_normalize_sign` + 3 call sites), `tests/unit/test_extract_phase.py` (added `test_normalize_sign_income_tax_annotated_benefit` for SOM case and expanded TEP cases).
+- **Tests:** 1123 passed, 0 failed.
+- **Regression:** Direct JSON comparison (extraction_result.json vs expected.json, eval CLI no ejecutado por lentitud PDF): TEP 80/80, SOM 179/179, 14/14 PASS wrong=0.
+
 ### [4.0] BL-051 — Auto-discovery de ticker (elsian discover)
 - **What:** New `elsian/discover/discover.py`. TickerDiscoverer auto-detects: exchange, country, currency, regulator, accounting_standard, CIK (SEC), web_ir, fiscal_year_end_month, company_name, sector. SEC path: EDGAR company_tickers.json + submissions API. Non-US path: suffix parsing + Yahoo Finance chart/quoteSummary APIs. CLI: `elsian discover {TICKER}` → cases/{TICKER}/case.json. Overwrite protection (--force flag). Graceful fallback with `_discovery_warnings` for unresolvable fields.
 - **Tests:** 38 passed, 0 failed (unit). 3 integration tests (skipped without ELSIAN_NET_TESTS=1). Total unit: 1122 passed.
