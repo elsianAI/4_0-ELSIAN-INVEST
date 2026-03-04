@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-03-04
+
+### [4.0] BL-041 CROX 98.98% → 100% — fix suplementales de adquisición HEYDUDE
+- **What:** Tres campos wrong en CROX: FY2022/cash_and_equivalents (6,232 vs 191,629), FY2021/ingresos (2,894,094 vs 2,313,416), FY2021/net_income (706,853 vs 725,694). Todos venían de notas de adquisición HEYDUDE en SRC_002_10-K_FY2024 (pro-forma) y no del IS primario en SRC_003_10-K_FY2023.
+- **Root causes y fixes en `elsian/extract/phase.py`:**
+  1. `severe_penalty` default -100→-300: el candidato de `income_taxes_payable` tenía semantic_rank=0 (label_priority=100 cancelaba penalty=-100). Con -300, semantic_rank=200 → merger condition `existing_sk[3]>0` dispara → SRC_003 reemplaza.
+  2. Regla canónica: `ingresos` en section `income_statement:net_income:` → severe_penalty. Revenue nunca aparece en sección "Net income" en IS primario — siempre es nota suplementaria.
+  3. Override siempre-activo para `.txt`: en `_process_table_field`, aplica `_section_bonus()` incluso con `use_section_bonus=False`, pero solo si el resultado es negativo (`if _canonical_override < 0`). Previene que `.txt` dé sec_bonus=+3 a tablas de adquisición.
+  4. `_SUPPLEMENTAL_PRONE_FIELDS = {"net_income"}` + check de affinidad por año para FY periods: si `filing_year - period_year > 2`, affinity=1 (deprioritized). FY2021/net_income en SRC_002 (FY2024, gap=3) → affinity=1; SRC_003 (FY2023, gap=2) → affinity=0 → wins.
+- **Tests:** 794 passed, 2 skipped, 0 failed (sin cambio en número de tests).
+- **Regression:** eval --all: 14/14 PASS 100% (CROX PASS 294/294, 0 wrong).
+- **Files changed:** `elsian/extract/phase.py`
+
 ## 2026-03-05
 
 ### [4.0] DEC-020 + corrección CHANGELOG CROX + actualización governance

@@ -238,15 +238,21 @@ def _section_bonus(source_location: str, rules: Optional[Dict] = None,
     When *canonical* is ``"total_equity"`` and the source is an
     income-statement section, applies a severe penalty (equity
     never belongs on the IS).
+
+    The severe_penalty default is -300 (not -100) so that high
+    label_priority scores (max ~100) cannot cancel the penalty.
+    A candidate from a strongly-deprioritised section always
+    produces semantic_rank > 0, enabling the merger's replacement
+    path for deprioritised existing candidates.
     """
     bonus = 5
     penalty = -5
-    severe_penalty = -100
+    severe_penalty = -300
     if rules and "section_weights" in rules:
         sw = rules["section_weights"]
         bonus = sw.get("primary_is_bonus", 5)
         penalty = sw.get("deprioritized_penalty", -5)
-        severe_penalty = sw.get("strongly_deprioritized_penalty", -100)
+        severe_penalty = sw.get("strongly_deprioritized_penalty", -300)
     if _PRIMARY_IS_SECTION.search(source_location):
         base = bonus
     elif _STRONGLY_DEPRIORITIZED_SECTION.search(source_location):
@@ -261,6 +267,15 @@ def _section_bonus(source_location: str, rules: Optional[Dict] = None,
     if canonical == "total_equity":
         loc_lower = source_location.lower()
         if ":income_statement:" in loc_lower:
+            base = min(base, severe_penalty)
+
+    # Revenue (ingresos) extracted from an IS "net_income" sub-section is
+    # always supplemental acquisition pro-forma data, never primary-IS
+    # revenue.  Revenue appears at the top of the IS, not nested under a
+    # "Net income" heading.
+    if canonical == "ingresos":
+        loc_lower = source_location.lower()
+        if ":income_statement:" in loc_lower and ":net_income:" in loc_lower:
             base = min(base, severe_penalty)
 
     return base
@@ -334,12 +349,33 @@ _SPLIT_SENSITIVE_FIELDS: set = {
 }
 
 
+# IS fields that commonly appear in supplemental acquisition pro-forma notes
+# (e.g. "Net income supplemental disclosure" in CROX 10-K FY2024 covering
+# pre-acquisition FY2021 data).  For these fields the pipeline prefers the
+# most recent filing that still covers the period in its standard 3-year
+# comparative window (gap ≤ 2 years from the filing year).
+_SUPPLEMENTAL_PRONE_FIELDS: frozenset = frozenset({"net_income"})
+
+_FY_YEAR_RE = re.compile(r"FY(\d{4})")
+
+
+def _extract_fy_year(s: str) -> int | None:
+    """Parse the fiscal year from a string like 'FY2024' or a filename."""
+    m = _FY_YEAR_RE.search(s)
+    return int(m.group(1)) if m else None
+
+
 def _period_affinity(period_key: str, source_filing: str,
                      canonical_field: str | None = None) -> int:
     """Return 0 when the filing is the best source for *period_key*, else 1.
 
     **FY periods — split-sensitive fields** (EPS, shares, DPS): the primary
     filing is preferred (FY tag matches) so as-reported pre-split values win.
+
+    **FY periods — supplemental-prone fields** (net_income): prefer the most
+    recent filing whose standard 3-year window includes the period.  A filing
+    that is 3+ years newer than the period likely only carries that period’s
+    data in a supplemental acquisition note (pro-forma), not the primary IS.
 
     **FY periods — all other fields**: affinity is always 0. The tiebreaker
     becomes filing_rank (lower SRC number = newer filing), so implicit
@@ -351,8 +387,18 @@ def _period_affinity(period_key: str, source_filing: str,
     cumulative in 10-Q comparatives).
     """
     if period_key.startswith("FY"):
-        # Non-split FY fields: no preference → newer filing wins
         if canonical_field and canonical_field not in _SPLIT_SENSITIVE_FIELDS:
+            # Supplemental-prone fields: penalise filings that are 3+ years
+            # newer than the period (standard 3-year look-back boundary).
+            if canonical_field in _SUPPLEMENTAL_PRONE_FIELDS:
+                period_year = _extract_fy_year(period_key)
+                filing_year = _extract_fy_year(source_filing)
+                if (
+                    period_year is not None
+                    and filing_year is not None
+                    and filing_year - period_year > 2
+                ):
+                    return 1
             return 0
         # Split-sensitive (or unknown): prefer primary filing
         fy_tag = period_key
@@ -1045,6 +1091,20 @@ class ExtractPhase(PipelinePhase):
             loc_lower = tf.source_location.lower()
             if any(s in loc_lower for s in ("income_statement", "balance_sheet", "cash_flow")):
                 sec_bonus = 3 if "income_statement" in loc_lower else 1
+            # Always enforce canonical-specific section penalties even for
+            # .txt extraction.  Without this, the +3 income_statement
+            # fallback above would give acquisition-note tables (e.g.
+            # income_taxes_payable) or supplemental sections (e.g.
+            # net_income sub-section in a pro-forma note) an inflated score
+            # that beats the correct primary-IS candidate from another
+            # filing in the merger.  Apply only when the override is a
+            # penalty (< 0) so that neutral sections (returning 0) do not
+            # inadvertently reduce the +3 income_statement fallback.
+            _canonical_override = _section_bonus(
+                tf.source_location, rules, canonical=canonical
+            )
+            if _canonical_override < 0:
+                sec_bonus = min(sec_bonus, _canonical_override)
         new_sk = compute_sort_key(
             period_key=period_key,
             filing_type=metadata.filing_type,
