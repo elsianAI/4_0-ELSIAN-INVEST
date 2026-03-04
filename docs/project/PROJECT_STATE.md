@@ -18,7 +18,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | Tickers WIP | 0 | 0 | 2026-03-04 |
 | Total campos validados | 3,010 (14×100%) | — | 2026-03-04 |
 | Campos canónicos | 25 (22 originales + cfi, cff, delta_cash) | — | 2026-03-04 |
-| Tests pasando | 1002 passed, 0 failed, 2 skipped | — | 2026-03-04 |
+| Tests pasando | 1106 passed, 0 failed, 2 skipped | — | 2026-03-04 |
 | Líneas de código (aprox.) | ~10,000 + ~5,000 tests | 2026-03-04 |
 
 *KAR (49 campos, 3A): ASX annual-only — no quarterly filings disponibles en ASX para este ticker. Cuenta como FULL bajo DEC-015 excepción.
@@ -66,6 +66,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | Provenance Level 3 | ❌ Pendiente | source_map.json no implementado |
 | CI GitHub Actions | ✅ Implementado | Workflow ci.yml en .github/workflows/. pytest en Python 3.11. WP-5 DONE |
 | Sanity Checks post-extracción | ✅ Implementado | capex sign, revenue neg, gp>revenue, YoY >10x. BL-016 DONE |
+| Autonomous Validator | ✅ Implementado | 9 quality gates intrínsecos (BS identity, CF identity, units 1000x, EV, margins, TTM, recency, completeness). BL-020 DONE |
 | validate_expected.py | ✅ Implementado | 8 reglas + 2 sanity warnings. Pre-check en evaluate(). BL-017 DONE |
 | Field Dependency Matrix | ✅ Publicado + Oleada 1 DONE | 26 campos analizados (8 critical, 12 required, 6 optional). 3 campos críticos añadidos: cfi, cff, delta_cash (BL-035 DONE). 7 faltan. |
 

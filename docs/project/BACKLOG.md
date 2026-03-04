@@ -207,8 +207,8 @@
 - **Estado:** DONE ✅ (2026-03-04)
 - **Asignado a:** elsian-4
 - **Depende de:** BL-022
-- **Descripción:** Portado `scripts/runners/tp_calculator.py` (3.0) a `elsian/calculate/derived.py` (430L). TTM cascade (4Q sum → semestral FY+H1 → FY0 fallback), Q4 sintético, FCF, EV, márgenes (gross/op/net/FCF), retornos (ROIC/ROE/ROA), múltiplos (EV/EBIT, EV/FCF, P/FCF), net_debt, per-share. Null propagation. 88 tests.
-- **Criterio de aceptación:** ✓ elsian/calculate/derived.py creado (430L). ✓ 88 tests pasando. ✓ 1002 tests total, 0 failed. ✓ Sin regresiones.
+- **Descripción:** Portado `scripts/runners/tp_calculator.py` (3.0) a `elsian/calculate/derived.py` (714L). TTM cascade (4Q sum → semestral FY+H1 → FY0 fallback), Q4 sintético, FCF, EV, márgenes (gross/op/net/FCF), retornos (ROIC/ROE/ROA), múltiplos (EV/EBIT, EV/FCF, P/FCF), net_debt, per-share. Null propagation. 88 tests.
+- **Criterio de aceptación:** ✓ elsian/calculate/derived.py creado (714L). ✓ 88 tests pasando. ✓ 1002 tests total, 0 failed. ✓ Sin regresiones.
 
 ### BL-016 — Portar sanity checks del normalizer (tp_normalizer.py)
 - **Prioridad:** ALTA
@@ -236,11 +236,11 @@
 
 ### BL-020 — Portar validator autónomo de Truth Pack (tp_validator.py)
 - **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE ✅ (2026-03-04)
+- **Asignado a:** elsian-4
 - **Depende de:** BL-015, BL-016
-- **Descripción:** Portar validaciones autónomas de `scripts/runners/tp_validator.py` a `elsian/evaluate/validation.py` para checks intrínsecos (sin expected.json): identidad BS/CF, sanity de márgenes/escala/consistencia.
-- **Criterio de aceptación:** Validator ejecutable sobre extraction/calc outputs con score de calidad y tests.
+- **Descripción:** Portado `scripts/runners/tp_validator.py` (3.0) a `elsian/evaluate/validation.py` (707L). 9 quality gates intrínsecos: BALANCE_IDENTITY (±2%), CASHFLOW_IDENTITY (±5%), UNIDADES_SANITY (1000x), EV_SANITY, MARGIN_SANITY (20 sectores), TTM_SANITY, TTM_CONSECUTIVE, RECENCY_SANITY, DATA_COMPLETENESS. Confidence score. Sin CLI (librería interna). 104 tests.
+- **Criterio de aceptación:** ✓ validation.py creado (707L). ✓ 9 gates. ✓ 104 tests pasando. ✓ 1106 tests total, 0 failed. ✓ Sin regresiones.
 
 ### BL-021 — Portar prefetch coverage audit
 - **Prioridad:** MEDIA
@@ -263,8 +263,8 @@
 - **Estado:** DONE ✅ (2026-03-04)
 - **Asignado a:** elsian-4
 - **Depende de:** BL-022, BL-024
-- **Descripción:** Portado `scripts/runners/sources_compiler_runner.py` (3.0) a `elsian/acquire/sources_compiler.py` (430L). Merge multi-fetcher, dedup URL/hash/accession, IDs canónicos SRC_NNN, clasificación por tipo, cobertura documental, SourcesPack_v1. CLI `elsian compile {TICKER}`. 76 tests.
-- **Criterio de aceptación:** ✓ sources_compiler.py creado (430L). ✓ CLI integrado. ✓ 76 tests pasando. ✓ Sin regresiones.
+- **Descripción:** Portado `scripts/runners/sources_compiler_runner.py` (3.0) a `elsian/acquire/sources_compiler.py` (749L). Merge multi-fetcher, dedup URL/hash/accession, IDs canónicos SRC_NNN, clasificación por tipo, cobertura documental, SourcesPack_v1. CLI `elsian compile {TICKER}`. 76 tests.
+- **Criterio de aceptación:** ✓ sources_compiler.py creado (749L). ✓ CLI integrado. ✓ 76 tests pasando. ✓ Sin regresiones.
 
 ### BL-024 — Portar transcript finder
 - **Prioridad:** MEDIA
