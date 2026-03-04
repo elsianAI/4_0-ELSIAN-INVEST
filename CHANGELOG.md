@@ -2,6 +2,14 @@
 
 ## 2026-03-04
 
+- [PORT] BL-015: Port derived metrics calculator → elsian/calculate/derived.py
+
+### [4.0] BL-015 — Port derived metrics calculator
+- **What:** New `elsian/calculate/__init__.py` (empty) and `elsian/calculate/derived.py`. `calculate(extraction_result, market_data)` computes TTM (4Q sum | semestral FY+H1_new-H1_old | FY0 fallback), FCF=CFO-|capex|, EV=mcap+debt-cash, gross/operating/net/FCF margins, ROIC (21% tax)/ROE/ROA, EV/EBIT, EV/FCF, P/FCF, FCF_yield multiples, net_debt, EPS/FCF-per-share/BV-per-share. Null propagation throughout.
+- **Ported from:** `3_0-ELSIAN-INVEST/scripts/runners/tp_calculator.py` — adapted to 4.0's `periods` dict format with canonical field names (no `_usd` suffix); removed 3.0 balance_sheet_ultimo/historico_anual structures; removed LLM/SourcesPack market-data formats.
+- **Tests:** 88 passed, 0 failed (`tests/unit/test_derived.py`). Full suite: 1002 passed, 2 skipped, 0 failed.
+- **Regression:** eval not executed (no extraction logic changed)
+
 - [PORT] BL-023: Portar sources compiler → elsian/acquire/sources_compiler.py
 - [PORT] BL-021: Portar prefetch coverage audit
 
