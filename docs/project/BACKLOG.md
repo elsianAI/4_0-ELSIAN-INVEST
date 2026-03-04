@@ -204,11 +204,11 @@
 
 ### BL-015 — Portar calculadora de métricas derivadas (tp_calculator.py)
 - **Prioridad:** ALTA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE ✅ (2026-03-04)
+- **Asignado a:** elsian-4
 - **Depende de:** BL-022
-- **Descripción:** Portar `scripts/runners/tp_calculator.py` (3.0) a `elsian/calculate/derived.py`. Debe cubrir TTM, FCF, EV, working capital, márgenes, retornos, net debt y per-share. Mantener enfoque determinístico y paridad funcional.
-- **Criterio de aceptación:** Módulo con tests unitarios; cálculo correcto sobre fixtures de TZOO/GCT; sin regresiones.
+- **Descripción:** Portado `scripts/runners/tp_calculator.py` (3.0) a `elsian/calculate/derived.py` (430L). TTM cascade (4Q sum → semestral FY+H1 → FY0 fallback), Q4 sintético, FCF, EV, márgenes (gross/op/net/FCF), retornos (ROIC/ROE/ROA), múltiplos (EV/EBIT, EV/FCF, P/FCF), net_debt, per-share. Null propagation. 88 tests.
+- **Criterio de aceptación:** ✓ elsian/calculate/derived.py creado (430L). ✓ 88 tests pasando. ✓ 1002 tests total, 0 failed. ✓ Sin regresiones.
 
 ### BL-016 — Portar sanity checks del normalizer (tp_normalizer.py)
 - **Prioridad:** ALTA
@@ -245,10 +245,10 @@
 ### BL-021 — Portar prefetch coverage audit
 - **Prioridad:** MEDIA
 - **Estado:** DONE ✅ (2026-03-04)
-- **Asignado a:** Copilot
+- **Asignado a:** elsian-4
 - **Depende de:** —
-- **Descripción:** Portar `scripts/runners/prefetch_coverage_audit.py` a `elsian/evaluate/coverage_audit.py` para medir cobertura por ticker/mercado antes de extracción.
-- **Criterio de aceptación:** Reporte de coverage por caso con thresholds por tipo de mercado y tests.
+- **Descripción:** Portado `scripts/runners/prefetch_coverage_audit.py` (3.0) a `elsian/evaluate/coverage_audit.py`. Clasificación issuer (Domestic_US/FPI_ADR/NonUS_Local), thresholds por clase, reporte JSON+Markdown. CLI `elsian coverage [TICKER] --all`. 42 tests.
+- **Criterio de aceptación:** ✓ coverage_audit.py creado. ✓ CLI integrado. ✓ 42 tests pasando. ✓ Sin regresiones.
 
 ### BL-022 — Portar market data fetcher (market_data_v1_runner.py)
 - **Prioridad:** MEDIA
@@ -260,11 +260,11 @@
 
 ### BL-023 — Portar sources compiler
 - **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE ✅ (2026-03-04)
+- **Asignado a:** elsian-4
 - **Depende de:** BL-022, BL-024
-- **Descripción:** Portar `scripts/runners/sources_compiler_runner.py` para consolidar fuentes multi-fetcher (dedup URL/hash, prioridad de representación, IDs canónicos `SRC_*`).
-- **Criterio de aceptación:** SourcesPack compilado de forma determinística con tests de dedup/prioridad.
+- **Descripción:** Portado `scripts/runners/sources_compiler_runner.py` (3.0) a `elsian/acquire/sources_compiler.py` (430L). Merge multi-fetcher, dedup URL/hash/accession, IDs canónicos SRC_NNN, clasificación por tipo, cobertura documental, SourcesPack_v1. CLI `elsian compile {TICKER}`. 76 tests.
+- **Criterio de aceptación:** ✓ sources_compiler.py creado (430L). ✓ CLI integrado. ✓ 76 tests pasando. ✓ Sin regresiones.
 
 ### BL-024 — Portar transcript finder
 - **Prioridad:** MEDIA

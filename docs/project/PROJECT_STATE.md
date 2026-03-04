@@ -18,7 +18,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | Tickers WIP | 0 | 0 | 2026-03-04 |
 | Total campos validados | 3,010 (14×100%) | — | 2026-03-04 |
 | Campos canónicos | 25 (22 originales + cfi, cff, delta_cash) | — | 2026-03-04 |
-| Tests pasando | 794 passed, 0 failed, 2 skipped | — | 2026-03-04 |
+| Tests pasando | 1002 passed, 0 failed, 2 skipped | — | 2026-03-04 |
 | Líneas de código (aprox.) | ~10,000 + ~5,000 tests | 2026-03-04 |
 
 *KAR (49 campos, 3A): ASX annual-only — no quarterly filings disponibles en ASX para este ticker. Cuenta como FULL bajo DEC-015 excepción.
@@ -58,6 +58,9 @@ Ver ROADMAP.md para descripción completa de fases.
 | Deduplicación por contenido | ✅ Implementado | SHA-256 content hash portado. Integrado en AsxFetcher. BL-010 DONE |
 | Exchange/Country awareness | ✅ Implementado | markets.py unificado: normalize_country/exchange, is_non_us, infer_regulator_code. BL-011 DONE |
 | Filing Classification automática | ✅ Implementado | classify_filing_type() con 5 tipos. BL-012 DONE |
+| Calculadora métricas derivadas | ✅ Implementado | TTM, FCF, EV, márgenes, retornos, múltiplos, per-share. BL-015 DONE |
+| Prefetch coverage audit | ✅ Implementado | Issuer class, thresholds, reporte. CLI `elsian coverage`. BL-021 DONE |
+| Sources compiler | ✅ Implementado | Merge multi-fetcher, dedup, SourcesPack_v1. CLI `elsian compile`. BL-023 DONE |
 | IR Website Crawling | ✅ Implementado + Integrado | ir_crawler.py portado completo (~600 líneas). Integrado en EuRegulatorsFetcher como fallback automático (BL-013 DONE). |
 | Provenance Level 2 | ✅ Completo | BL-006 DONE. Todos los extractores emiten L2 completo (table_title, row_label, col_label, raw_text, row, col, table_index, extraction_method). 100% completitud. |
 | Provenance Level 3 | ❌ Pendiente | source_map.json no implementado |
