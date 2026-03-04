@@ -9,8 +9,8 @@ WITHOUT requiring expected.json.  This is intrinsic consistency validation
 Gates:
   N1) BALANCE_IDENTITY:   Assets ≈ Liabilities + Equity (±2%)
   N2) CASHFLOW_IDENTITY:  CFO + CFI + CFF ≈ ΔCash (±5%)
-                          NOTE: cfi/cff are not canonical 22-fields; gate
-                          SKIPs gracefully when absent (non-critical).
+                          cfi/cff/delta_cash are canonical fields (26-field set).
+                          Gate SKIPs only when all 13 tickers provide these fields.
   N3) UNIDADES_SANITY:    No 1000x jumps between consecutive annual periods.
                           Distinct from sanity.py's 10x YoY check:
                           1000x = unit-error indicator (thousands vs raw).
@@ -72,7 +72,7 @@ SECTOR_MARGINS: dict[str, dict[str, tuple[float, float]]] = {
 # Gate sequence with criticality flags
 _GATE_DEFS: list[dict[str, Any]] = [
     {"name": "BALANCE_IDENTITY",   "critical": True},
-    {"name": "CASHFLOW_IDENTITY",  "critical": False},   # SKIPs in 4.0 when cfi/cff absent
+    {"name": "CASHFLOW_IDENTITY",  "critical": True},
     {"name": "UNIDADES_SANITY",    "critical": False},
     {"name": "EV_SANITY",          "critical": False},
     {"name": "MARGIN_SANITY",      "critical": False},
@@ -82,13 +82,14 @@ _GATE_DEFS: list[dict[str, Any]] = [
     {"name": "DATA_COMPLETENESS",  "critical": False},
 ]
 
-# The 22 canonical fields used for DATA_COMPLETENESS
+# The 26 canonical fields used for DATA_COMPLETENESS
 _CANONICAL_FIELDS: tuple[str, ...] = (
     "ingresos", "cost_of_revenue", "gross_profit", "ebitda", "ebit",
     "net_income", "eps_basic", "eps_diluted", "total_assets", "total_liabilities",
     "total_equity", "cash_and_equivalents", "total_debt", "cfo", "capex", "fcf",
     "dividends_per_share", "shares_outstanding", "research_and_development",
     "sga", "depreciation_amortization", "interest_expense", "income_tax",
+    "cfi", "cff", "delta_cash",
 )
 
 

@@ -281,9 +281,9 @@ class TestGateCashflowIdentity:
         result = _gate_cashflow_identity(annual)
         assert result["status"] == "FAIL"
 
-    def test_gate_is_non_critical(self):
+    def test_gate_is_critical(self):
         gate_def = next(g for g in _GATE_DEFS if g["name"] == "CASHFLOW_IDENTITY")
-        assert gate_def["critical"] is False
+        assert gate_def["critical"] is True
 
 
 # ---------------------------------------------------------------------------
@@ -486,6 +486,7 @@ class TestGateDataCompleteness:
             net_income=150, total_assets=2000, total_liabilities=1000,
             total_equity=1000, cash_and_equivalents=300, cfo=200,
             capex=-100, shares_outstanding=50, eps_basic=3.0,
+            cfi=-50, cff=-100, delta_cash=50,
         ))
         result = _gate_data_completeness(er)
         assert result["status"] == "PASS"
@@ -503,7 +504,7 @@ class TestGateDataCompleteness:
         assert result["status"] == "WARNING"
 
     def test_canonical_count(self):
-        assert len(_CANONICAL_FIELDS) == 23
+        assert len(_CANONICAL_FIELDS) == 26
 
 
 # ---------------------------------------------------------------------------

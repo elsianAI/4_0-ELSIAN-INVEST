@@ -2,6 +2,7 @@
 
 ## 2026-03-04
 
+- [FIX] validation.py: CASHFLOW_IDENTITY → critical:True, _CANONICAL_FIELDS 23→26 (cfi, cff, delta_cash)
 - [PORT] BL-020: Port tp_validator.py → elsian/evaluate/validation.py
 - [PORT] BL-015: Port derived metrics calculator → elsian/calculate/derived.py
 
