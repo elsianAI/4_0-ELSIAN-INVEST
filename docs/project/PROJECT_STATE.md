@@ -14,11 +14,11 @@ Ver ROADMAP.md para descripción completa de fases.
 | Métrica | Valor | Target Fase 1→2 | Fecha |
 |---|---|---|---|
 | Tickers FULL 100% (DEC-015) | **13** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, TEP, CROX, +KAR*) | ≥15 | 2026-03-04 |
-| Tickers ANNUAL_ONLY 100% | 1 (KAR) | — | 2026-03-04 |
+| Tickers ANNUAL_ONLY 100% | 2 (KAR, SOM) | — | 2026-03-04 |
 | Tickers WIP | 0 | 0 | 2026-03-04 |
-| Total campos validados | 3,010 (14×100%) | — | 2026-03-04 |
+| Total campos validados | 3,046 (15×100%) | — | 2026-03-04 |
 | Campos canónicos | 26 (23 originales + cfi, cff, delta_cash) | — | 2026-03-04 |
-| Tests pasando | 1106 passed, 0 failed, 2 skipped | — | 2026-03-04 |
+| Tests pasando | 1109 passed, 0 failed, 2 skipped | — | 2026-03-04 |
 | Líneas de código (aprox.) | ~10,000 + ~5,000 tests | 2026-03-04 |
 
 *KAR (49 campos, 3A): ASX annual-only — no quarterly filings disponibles en ASX para este ticker. Cuenta como FULL bajo DEC-015 excepción.
@@ -40,6 +40,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | ACLS | 375 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+15Q) |
 | INMD | 210 | SEC (US) | 20-F/6-K HTML (IFRS) | ✅ VALIDATED (FULL: 6A+6Q — BL-040 promoted) |
 | CROX | 294 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL — BL-041 DONE) |
+| SOM | 36 | LSE/AIM (GB) | PDF (US-GAAP, USD) | ✅ VALIDATED (ANNUAL_ONLY: 2A — BL-042 DONE) |
 
 ## Componentes implementados
 
