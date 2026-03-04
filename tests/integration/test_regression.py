@@ -15,7 +15,7 @@ from elsian.evaluate.evaluator import evaluate
 CASES_DIR = Path(__file__).resolve().parent.parent.parent / "cases"
 
 # Tickers expected to score 100% (curated and validated in 3.0)
-VALIDATED_TICKERS = ["TZOO", "GCT", "IOSP", "NEXN", "SONO", "TEP", "TALO", "NVDA", "KAR", "PR", "ACLS", "INMD"]
+VALIDATED_TICKERS = ["TZOO", "GCT", "IOSP", "NEXN", "SONO", "TEP", "TALO", "NVDA", "KAR", "PR", "ACLS", "INMD", "CROX"]
 
 # Tickers with known issues pending recertification
 PENDING_RECERT_TICKERS: list[str] = []

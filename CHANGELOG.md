@@ -2,6 +2,8 @@
 
 ## 2026-03-04
 
+- [FIX] Añadir CROX a VALIDATED_TICKERS — protección contra regresiones
+
 ### [4.0] BL-041 CROX 98.98% → 100% — fix suplementales de adquisición HEYDUDE
 - **What:** Tres campos wrong en CROX: FY2022/cash_and_equivalents (6,232 vs 191,629), FY2021/ingresos (2,894,094 vs 2,313,416), FY2021/net_income (706,853 vs 725,694). Todos venían de notas de adquisición HEYDUDE en SRC_002_10-K_FY2024 (pro-forma) y no del IS primario en SRC_003_10-K_FY2023.
 - **Root causes y fixes en `elsian/extract/phase.py`:**
