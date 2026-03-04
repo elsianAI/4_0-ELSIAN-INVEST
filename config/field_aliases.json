@@ -289,7 +289,8 @@
       "expenditures for property, plant and equipment and capitalized software",
       "purchase of fixed assets",
       "purchases of fixed assets",
-      "purchases of property, equipment, and software"
+      "purchases of property, equipment, and software",
+      "property and equipment purchases"
     ],
     "multiplier": null
   },
@@ -337,7 +338,10 @@
       "weighted average shares of class a common stock outstanding",
       "weighted average shares of class a common stock",
       "basic weighted average shares of common stock",
-      "basic weighted average common shares"
+      "basic weighted average common shares",
+      "basic weighted shares outstanding",
+      "weighted average number of common shares outstanding",
+      "basic"
     ],
     "multiplier": null
   },

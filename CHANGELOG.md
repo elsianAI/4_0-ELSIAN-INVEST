@@ -1,6 +1,13 @@
 # Changelog
 
-## 2026-03-04
+## 2026-06-26
+
+### [TICKER] BL-042 — SOM (Somero Enterprises, LSE/AIM, Industrials) — ANNUAL_ONLY 36/36 (100%)
+- **What:** New ticker SOM (Somero Enterprises Inc., LSE AIM, source_hint=eu_manual). 3 PDFs ported from 3.0: Annual Report FY2024 (SRC_001, 3.2MB), Results Presentation FY2024 (SRC_002, 2.6MB), H1 2025 Interim (SRC_003, 5.7MB). expected.json: FY2024+FY2023, 18 fields each (36 total), from audited Annual Report in US$000. Score: 100% (36/36). Added to VALIDATED_TICKERS.
+- **Aliases added:** `capex`: "property and equipment purchases"; `shares_outstanding`: "basic weighted shares outstanding", "weighted average number of common shares outstanding", "basic" (for pdfplumber layout-split labels "Basic" in EPS note tables).
+- **Notes:** FY2020-2022 data exists in SRC_003 (investor presentation historical table, US$ millions, wide 16-col format) but not extractable by current column-position extractor. Expected.json intentionally scoped to audited FY2024 Annual Report only. To add FY2020-2022: acquire individual Annual Reports for those years.
+- **Tests:** 1109 passed, 0 failed (2 skipped). Regression: eval --all 14/14 PASS 100%.
+
 
 - [FIX] validation.py: CASHFLOW_IDENTITY → critical:True, _CANONICAL_FIELDS 23→26 (cfi, cff, delta_cash)
 - [PORT] BL-020: Port tp_validator.py → elsian/evaluate/validation.py

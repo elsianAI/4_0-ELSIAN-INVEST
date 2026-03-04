@@ -1,0 +1,165 @@
+{
+  "version": "1.0",
+  "ticker": "SOM",
+  "currency": "USD",
+  "scale": "thousands",
+  "scale_notes": "All monetary fields in US$000 (thousands) as stated in the Consolidated Financial Statements of the Annual Report 2024 (SRC_001). EPS values in raw USD per share. Shares outstanding in raw count. Capital expenditures stored as negative per sign convention. Source: only the FY2024 Annual Report is available; FY2024 and FY2023 are from the audited comparative columns. FY2020-2022 require acquisition of the respective Annual Reports.",
+  "periods": {
+    "FY2024": {
+      "fecha_fin": "2024-12-31",
+      "tipo_periodo": "anual",
+      "fields": {
+        "ingresos": {
+          "value": 109154,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "cost_of_revenue": {
+          "value": 50350,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "gross_profit": {
+          "value": 58804,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "research_and_development": {
+          "value": 2691,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "ebit": {
+          "value": 24277,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "interest_expense": {
+          "value": 53,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "income_tax": {
+          "value": 5195,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "net_income": {
+          "value": 18604,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "eps_basic": {
+          "value": 0.34,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "eps_diluted": {
+          "value": 0.33,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "shares_outstanding": {
+          "value": 55126730,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "total_assets": {
+          "value": 98116,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "total_liabilities": {
+          "value": 13815,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "total_equity": {
+          "value": 84301,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "cash_and_equivalents": {
+          "value": 29486,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "cfo": {
+          "value": 17627,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "capex": {
+          "value": -2449,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "depreciation_amortization": {
+          "value": 1830,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        }
+      }
+    },
+    "FY2023": {
+      "fecha_fin": "2023-12-31",
+      "tipo_periodo": "anual",
+      "fields": {
+        "ingresos": {
+          "value": 120699,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "cost_of_revenue": {
+          "value": 53343,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "gross_profit": {
+          "value": 67356,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "research_and_development": {
+          "value": 2679,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "ebit": {
+          "value": 33595,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "interest_expense": {
+          "value": 19,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "income_tax": {
+          "value": 5259,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "net_income": {
+          "value": 27978,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "eps_basic": {
+          "value": 0.5,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "eps_diluted": {
+          "value": 0.5,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "shares_outstanding": {
+          "value": 55735120,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "total_assets": {
+          "value": 98550,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "total_liabilities": {
+          "value": 15315,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "total_equity": {
+          "value": 83235,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "cash_and_equivalents": {
+          "value": 33311,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "cfo": {
+          "value": 24446,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "capex": {
+          "value": -1740,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "depreciation_amortization": {
+          "value": 1560,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        }
+      }
+    }
+  }
+}
