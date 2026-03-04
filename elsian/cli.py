@@ -365,6 +365,88 @@ def _compare_draft_vs_expected(
     )
 
 
+def cmd_market(args: argparse.Namespace) -> None:
+    """Fetch market data snapshot for a ticker."""
+    from elsian.acquire.market_data import MarketDataFetcher
+
+    case_dir = _find_case_dir(args.ticker)
+    if not case_dir:
+        print(f"Case not found: {args.ticker}")
+        sys.exit(1)
+
+    case = CaseConfig.from_file(case_dir)
+    exchange = getattr(args, "exchange", None)
+    country = getattr(args, "country", None)
+
+    # Read exchange/country from case.json if not provided via CLI
+    if not exchange:
+        case_data = json.loads((case_dir / "case.json").read_text(encoding="utf-8"))
+        exchange = case_data.get("exchange")
+    if not country:
+        case_data = json.loads((case_dir / "case.json").read_text(encoding="utf-8"))
+        country = case_data.get("country")
+
+    fetcher = MarketDataFetcher()
+    md = fetcher.fetch_and_save(
+        ticker=case.ticker or args.ticker,
+        case_dir=case_dir,
+        exchange=exchange,
+        country=country,
+    )
+
+    print(f"{md.ticker}: {md.currency} {md.price}")
+    if md.market_cap is not None:
+        print(f"  Market cap: {md.currency} {md.market_cap}M")
+    if md.shares_outstanding is not None:
+        print(f"  Shares outstanding: {md.shares_outstanding}M")
+    if md.sector:
+        print(f"  Sector: {md.sector}")
+    if md.industry:
+        print(f"  Industry: {md.industry}")
+    if md.high_52w is not None and md.low_52w is not None:
+        print(f"  52w range: {md.low_52w} - {md.high_52w}")
+    if md.avg_volume_30d is not None:
+        print(f"  Avg volume (30d): {md.avg_volume_30d}")
+    print(f"  Source: {md.source}")
+    print(f"  Saved to {case_dir / '_market_data.json'}")
+
+
+def cmd_transcripts(args: argparse.Namespace) -> None:
+    """Find earnings transcripts and IR presentations."""
+    from elsian.acquire.transcripts import TranscriptFinder
+
+    case_dir = _find_case_dir(args.ticker)
+    if not case_dir:
+        print(f"Case not found: {args.ticker}")
+        sys.exit(1)
+
+    case = CaseConfig.from_file(case_dir)
+    finder = TranscriptFinder()
+    result = finder.find(case)
+
+    # Save result
+    out_path = case_dir / "_transcripts.json"
+    out_path.write_text(
+        json.dumps(result.to_dict(), indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    transcript_count = sum(1 for s in result.sources if s.tipo == "EARNINGS_TRANSCRIPT")
+    presentation_count = sum(
+        1 for s in result.sources if s.tipo in ("INVESTOR_PRESENTATION", "ANNUAL_REPORT")
+    )
+    print(
+        f"{args.ticker}: {len(result.sources)} sources found "
+        f"({transcript_count} transcripts, {presentation_count} presentations)"
+    )
+    if result.discarded:
+        print(f"  Discarded: {len(result.discarded)}")
+    if result.missing:
+        for gap in result.missing:
+            print(f"  GAP: {gap}")
+    print(f"  Saved to {out_path}")
+
+
 def cmd_dashboard(args: argparse.Namespace) -> None:
     """Show dashboard summary."""
     rows: list[DashboardRow] = []
@@ -415,6 +497,16 @@ def main() -> None:
     p_curate = sub.add_parser("curate", help="Generate expected_draft.json from iXBRL")
     p_curate.add_argument("ticker")
     p_curate.set_defaults(func=cmd_curate)
+
+    p_market = sub.add_parser("market", help="Fetch market data snapshot")
+    p_market.add_argument("ticker")
+    p_market.add_argument("--exchange", default=None, help="Exchange code (e.g. NASDAQ, EPA)")
+    p_market.add_argument("--country", default=None, help="Country code (e.g. US, FR)")
+    p_market.set_defaults(func=cmd_market)
+
+    p_transcripts = sub.add_parser("transcripts", help="Find earnings transcripts and IR presentations")
+    p_transcripts.add_argument("ticker")
+    p_transcripts.set_defaults(func=cmd_transcripts)
 
     p_dash = sub.add_parser("dashboard", help="Summary table of all cases")
     p_dash.set_defaults(func=cmd_dashboard)

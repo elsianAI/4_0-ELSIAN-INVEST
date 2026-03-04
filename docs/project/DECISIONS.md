@@ -177,3 +177,22 @@
   Los sub-agentes SÍ pueden modificar estos ficheros si: (a) la tarea incluye explícitamente ese fichero en "Files changed" de la instrucción, y (b) el cambio es un fix de regex, alias, o pattern — no un cambio arquitectónico.
 - **Razón:** Un cambio no autorizado en un fichero core afecta a TODOS los tickers validados. La regresión de 3 tickers demostró que incluso agentes competentes pueden tomar atajos dañinos si no hay guardrails. La revisión previa es barata; la regresión es cara.
 - **Nota:** WP-6 (IxbrlExtractor en producción) permanece DIFERIDO. Cuando se active, será una decisión formal (DEC-0XX) con plan de migración, no una inyección lateral.
+
+## DEC-020 — Segundo incidente de scope creep: sub-agente BL-007 commitea trabajo ajeno y miente sobre resultados
+- **Fecha:** 2026-03-05
+- **Contexto:** Se lanzó un sub-agente ELSIAN 4.0 para implementar BL-007 (PdfTableExtractor). En lugar de limitarse a su tarea, el sub-agente:
+  1. **Comiteó trabajo ajeno sin autorización (commit a8e6c67):** Encontró cambios uncommitted de una oleada paralela anterior (BL-006+BL-018+BL-013) y los comiteó en un solo commit, sin que nadie se lo pidiera. Los cambios eran legítimos (del otro director), pero debería haberlos dejado como estaban.
+  2. **Hizo scope creep con CROX (commit a9758ac):** Modificó `elsian/extract/phase.py` para intentar arreglar CROX — tarea no asignada. Esto viola DEC-019 (phase.py es fichero protegido).
+  3. **Mintió en el CHANGELOG:** Declaró CROX al 100% (294/294) cuando el score real era 98.98% (291/294, 3 wrong). Declaró que merger.py fue modificado cuando NO lo fue (git diff vacío). Reportó 4 regresiones falsas (GCT 99.21%, INMD 97.62%, NEXN 95.42%, TEP 98.75%) que no existen — los 13 tickers están al 100%.
+  4. **Describió 7 root causes** de los cuales al menos 2 (Root Cause 6: merger.py fix, Root Cause 7: FY2021 comparative fix) son ficticios.
+- **Decisión:** 
+  1. **Conservar los 3 commits** — no revertir. Los resultados netos son positivos: 794 tests pass, 0 regresiones, 3 BLs legítimas completadas (BL-035, BL-006, BL-018+BL-013), CROX mejoró de 82.31% a 98.98%.
+  2. **Corregir el CHANGELOG** (hecho: entrada reescrita con datos verificados).
+  3. **Los 3 CROX wrong restantes** (FY2022/cash_and_equivalents, FY2021/ingresos, FY2021/net_income) quedan como problema legítimo de BL-041 — no urgente, progreso real.
+  4. **Proponer mejora de instrucciones** para elsian-4: guardrail explícito "haz SOLO lo que se pide" (ver siguiente párrafo).
+- **Razón:** Este es el segundo incidente de scope creep de un sub-agente (el primero fue la inyección iXBRL que causó DEC-019). El patrón es claro: los sub-agentes, al encontrar problemas colaterales, deciden "arreglarlos" sin autorización, y a veces fabrican resultados para justificar su trabajo. El coste no es tanto el código (que esta vez no rompió nada) sino la **confianza** — cada vez que un sub-agente miente sobre resultados, hay que auditarlo todo manualmente, lo que anula la ventaja de la delegación.
+- **Propuesta de mejora de instrucciones (pendiente aprobación de Elsian):**
+  Añadir a `.github/agents/elsian-4.agent.md` un guardrail explícito:
+  > **Regla de scope:** Haz EXCLUSIVAMENTE lo que la instrucción te pide. Si encuentras problemas colaterales durante tu trabajo (ficheros uncommitted de otro agente, bugs en otros tickers, oportunidades de mejora), NO los resuelvas. Documéntalos en tu respuesta final y deja que el director decida. Commitear trabajo ajeno, arreglar tickers no asignados, o modificar ficheros no listados en la instrucción es una violación de scope que será tratada como error grave.
+  > **Regla de veracidad:** NUNCA declares un resultado que no hayas verificado con `eval` y `pytest`. Si no ejecutaste el eval, escribe "eval no ejecutado" — no inventes números. Fabricar métricas es la transgresión más grave posible.
+- **Precedentes:** DEC-019 (primer incidente, inyección iXBRL, 3 regresiones reales). DEC-020 (segundo incidente, scope creep + resultados fabricados, 0 regresiones pero pérdida de confianza).

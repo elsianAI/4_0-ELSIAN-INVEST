@@ -129,11 +129,11 @@
 
 ### BL-007 — Crear PdfTableExtractor
 - **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE ✅ (2026-03-05)
+- **Asignado a:** elsian-4
 - **Depende de:** —
-- **Descripción:** pdfplumber está integrado para conversión pero no hay un Extractor(ABC) dedicado a tablas PDF. Necesario para tickers como TEP y KAR que dependen de PDF.
-- **Criterio de aceptación:** PdfTableExtractor(Extractor) con tests. TEP sigue al 100% usando el nuevo extractor.
+- **Descripción:** Creado `elsian/extract/pdf_tables.py` (447L). PdfTableExtractor usando pdfplumber.extract_tables() para extracción estructurada de tablas PDF. Complementa pipeline text-based (pdf_to_text.py). Diseñado para Euronext (TEP), ASX (KAR) y futuros tickers PDF. 47 tests.
+- **Criterio de aceptación:** ✓ PdfTableExtractor(Extractor) con tests. ✓ TEP sigue al 100%. ✓ 47 tests pass. ✓ Sin regresiones.
 
 ### BL-009 — Portar Filing Preflight desde 3.0
 - **Prioridad:** ALTA
@@ -252,11 +252,11 @@
 
 ### BL-022 — Portar market data fetcher (market_data_v1_runner.py)
 - **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE ✅ (2026-03-05)
+- **Asignado a:** elsian-4
 - **Depende de:** —
-- **Descripción:** Portar `scripts/runners/market_data_v1_runner.py` a `elsian/acquire/market_data.py` (Fetcher ABC). Necesario para múltiplos de valoración en BL-015.
-- **Criterio de aceptación:** Fetcher de market cap/shares/precio con tests y contrato de salida estable.
+- **Descripción:** Portado `market_data_v1_runner.py` (3.0) a `elsian/acquire/market_data.py` (830L). MarketDataFetcher con Finviz (US), Stooq (OHLCV), Yahoo Finance (non-US fallback). Comando CLI `elsian market {TICKER}`. 62 tests.
+- **Criterio de aceptación:** ✓ Fetcher funcional. ✓ CLI integrado. ✓ 62 tests pass. ✓ Sin regresiones.
 
 ### BL-023 — Portar sources compiler
 - **Prioridad:** MEDIA
@@ -268,11 +268,11 @@
 
 ### BL-024 — Portar transcript finder
 - **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE ✅ (2026-03-05)
+- **Asignado a:** elsian-4
 - **Depende de:** —
-- **Descripción:** Portar `scripts/runners/transcript_finder_v2_runner.py` a `elsian/acquire/transcripts.py` (Fetcher ABC) para captura de earnings transcripts.
-- **Criterio de aceptación:** Fetcher funcional con tests y outputs integrables en acquire pipeline.
+- **Descripción:** Portado `transcript_finder_v2_runner.py` (3.0) a `elsian/acquire/transcripts.py` (1085L). TranscriptFinder con Fintool transcripts + IR presentations. Reutiliza ir_crawler.py, dedup.py, markets.py. Comando CLI `elsian transcripts {TICKER}`. 58 tests.
+- **Criterio de aceptación:** ✓ Fetcher funcional con tests. ✓ CLI integrado. ✓ 58 tests pass. ✓ Sin regresiones.
 
 > Nota: **BL-019 no se crea** porque la extracción financiera por secciones y presupuestos ya está portada en `elsian/convert/html_to_markdown.py`.
 
@@ -359,11 +359,11 @@
 
 ### BL-041 — Nuevo ticker CROX (Crocs Inc., NASDAQ, SEC)
 - **Prioridad:** ALTA
-- **Estado:** IN_PROGRESS — 82.31% (242/294), pendiente fix regex/tablas
+- **Estado:** IN_PROGRESS — 98.98% (291/294), 3 wrong restantes
 - **Asignado a:** sin asignar
 - **Depende de:** —
-- **Descripción:** Sustituye a BOBS (DEC-018: BOBS=IPO reciente, no tiene 10-K/10-Q en SEC). CROX (Crocs Inc., NASDAQ, CIK 1334036) — consumo discrecional (footwear), 10-K/10-Q estándar. **Estado actual:** case.json, expected.json (294 campos), filings adquiridos — todo creado por sub-agente anterior pero NO comiteado. Score real: 82.31% (242/294, 26 wrong + 26 missed). **Problema principal:** Income Statement segmentado por marca (Crocs + HEYDUDE + Consolidated). El regex captura valores parciales de marca en vez del consolidado. **Requiere:** mejorar parser de tablas para detectar secciones "Consolidated" y descartar sub-segmentos. **PROHIBIDO:** inyectar iXBRL en el pipeline de producción (DEC-019). La solución es regex/tablas puro.
-- **Criterio de aceptación:** CROX en VALIDATED_TICKERS al 100% FULL. expected.json con ≥15 campos/periodo, curado con iXBRL + verificación manual. Sin regresiones en los 13 tickers existentes. Sin modificaciones a phase.py/merger.py sin aprobación (DEC-019).
+- **Descripción:** Sustituye a BOBS (DEC-018: BOBS=IPO reciente, no tiene 10-K/10-Q en SEC). CROX (Crocs Inc., NASDAQ, CIK 1334036) — consumo discrecional (footwear), 10-K/10-Q estándar. **Estado actual:** case.json, expected.json (294 campos), filings adquiridos. Score: 98.98% (291/294, 3 wrong). **3 wrong restantes:** FY2022/cash_and_equivalents (exp=191,629 got=6,232 — acquisition note HEYDUDE), FY2021/ingresos (exp=2,313,416 got=2,894,094 — comparative from acquisition note), FY2021/net_income (exp=725,694 got=706,853 — same). **Probable causa:** merger.py no prioriza correctamente los valores del filing primario FY2021/FY2022 sobre los valores de tablas de notas de adquisición en el 10-K FY2022. **Historial:** 82.31% → 95.24% (BL-006 provenance L2) → 98.98% (scope creep BL-007, DEC-020). **PROHIBIDO:** inyectar iXBRL en el pipeline de producción (DEC-019).
+- **Criterio de aceptación:** CROX en VALIDATED_TICKERS al 100% FULL. Sin regresiones en los 13 tickers existentes. Sin modificaciones a phase.py/merger.py sin aprobación (DEC-019).
 
 ### BL-042 — Nuevo ticker SOM (Somero Enterprises, LSE, UK/FCA)
 - **Prioridad:** MEDIA
