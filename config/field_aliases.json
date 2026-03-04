@@ -372,7 +372,9 @@
       "selling & marketing expenses",
       "sales and marketing",
       "sales and marketing expenses",
-      "frais généraux et administratifs"
+      "frais généraux et administratifs",
+      "selling, marketing and customer support",
+      "sales, marketing and customer support"
     ],
     "multiplier": null,
     "additive": true
@@ -421,6 +423,7 @@
       "tax expenses",
       "tax expenses (benefit)",
       "total expenses taxes on income",
+      "tax",
       "impôt sur les sociétés",
       "impuesto sobre beneficios"
     ],

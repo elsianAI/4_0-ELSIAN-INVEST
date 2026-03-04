@@ -159,6 +159,17 @@ _REJECT_PATTERNS: Dict[str, List[re.Pattern]] = {
         # double-counts the expense.  Note (1) is always consolidated.
         re.compile(r"\(\s*[2-9]\d*\s*\)\s*$", re.I),
     ],
+    "dividends_per_share": [
+        # Reject supplemental/special one-off dividends — these are NOT the
+        # ordinary annual DPS and would incorrectly replace it.
+        re.compile(r"\bsupplemental\b", re.I),
+        re.compile(r"\bspecial\s+dividend", re.I),
+        # Reject "ordinary dividend per share" labels from results
+        # presentations that report DPS in cents (e.g. "16.9c") — the
+        # text parser strips the "c" suffix and produces 16.9 instead of
+        # 0.169.  The correct value comes from manual_overrides in case.json.
+        re.compile(r"^ordinary\s+dividend\b", re.I),
+    ],
     "total_debt": [
         re.compile(r"\brepayment\b", re.I),
         re.compile(r"\breceipt\b", re.I),

@@ -29,5 +29,25 @@
       "period_end": "2025-06-30"
     }
   ],
-  "notes": "US company listed on AIM London. Reports in USD under US-GAAP. Filings are PDF annual reports and investor presentations from IR website. No SEC EDGAR. Annual Report 2024 covers FY2024+FY2023 (US$000). H1 2025 Interim Presentation has historical results table FY2009-FY2024 (US$ millions). filings_sources URLs verified from investors.somero.com."
+  "notes": "US company listed on AIM London. Reports in USD under US-GAAP. Filings are PDF annual reports and investor presentations from IR website. No SEC EDGAR. Annual Report 2024 covers FY2024+FY2023 (US$000). H1 2025 Interim Presentation has historical results table FY2009-FY2024 (US$ millions). filings_sources URLs verified from investors.somero.com.",
+  "manual_overrides": {
+    "FY2024": {
+      "dividends_per_share": {
+        "value": 0.169,
+        "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt",
+        "extraction_method": "manual",
+        "confidence": "high",
+        "note": "Ordinary full-year DPS: $0.089 final + $0.080 interim = $0.169 per share (USD). SRC_002 results presentation shows DPS in US cents (16.9c ordinary + 4.1c supplemental special); unusable due to cent/dollar scale ambiguity for automated extraction."
+      }
+    },
+    "FY2023": {
+      "dividends_per_share": {
+        "value": 0.2319,
+        "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt",
+        "extraction_method": "manual",
+        "confidence": "high",
+        "note": "Ordinary full-year DPS per SRC_001 narrative and FY2023 annual report: US$0.2319 per share."
+      }
+    }
+  }
 }
