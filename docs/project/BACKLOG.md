@@ -359,11 +359,11 @@
 
 ### BL-041 — Nuevo ticker CROX (Crocs Inc., NASDAQ, SEC)
 - **Prioridad:** ALTA
-- **Estado:** IN_PROGRESS — 98.98% (291/294), 3 wrong restantes
-- **Asignado a:** elsian-4 (pendiente generar instrucción)
+- **Estado:** DONE ✅ (2026-03-06)
+- **Asignado a:** elsian-4
 - **Depende de:** —
-- **Descripción:** Sustituye a BOBS (DEC-018: BOBS=IPO reciente, no tiene 10-K/10-Q en SEC). CROX (Crocs Inc., NASDAQ, CIK 1334036) — consumo discrecional (footwear), 10-K/10-Q estándar. **Estado actual:** case.json, expected.json (294 campos), filings adquiridos. Score: 98.98% (291/294, 3 wrong). **3 wrong restantes:** FY2022/cash_and_equivalents (exp=191,629 got=6,232 — acquisition note HEYDUDE), FY2021/ingresos (exp=2,313,416 got=2,894,094 — comparative from acquisition note), FY2021/net_income (exp=725,694 got=706,853 — same). **Probable causa:** merger.py no prioriza correctamente los valores del filing primario FY2021/FY2022 sobre los valores de tablas de notas de adquisición en el 10-K FY2022. **Historial:** 82.31% → 95.24% (BL-006 provenance L2) → 98.98% (scope creep BL-007, DEC-020). **PROHIBIDO:** inyectar iXBRL en el pipeline de producción (DEC-019). **⚠️ Intento previo fallido (2026-03-06):** la sesión anterior modificó phase.py (`:income_statement:net_income:` en STRONGLY_DEPRIORITIZED + severe_penalty -100→-106). Arregla CROX pero REGRESIONA GCT (4 wrong depreciation_amortization). Cambios deben revertirse. El fix necesita ser más quirúrgico — posiblemente en merger.py (prioridad filing primario sobre nota) en vez de deprioritización genérica de secciones.
-- **Criterio de aceptación:** CROX en VALIDATED_TICKERS al 100% FULL. Sin regresiones en los 13 tickers existentes. Sin modificaciones a phase.py/merger.py sin aprobación (DEC-019).
+- **Descripción:** CROX (Crocs Inc., NASDAQ, CIK 1334036) — consumo discrecional (footwear), 10-K/10-Q estándar. Score: 100% (294/294). Fix en phase.py: severe_penalty -100→-300 (impide label_priority cancelar penalización), regla canónica ingresos+income_statement:net_income (revenue en sección "Net income" = nota suplementaria), override activo para .txt, afinidad año-periodo para net_income (FY2021 en FY2024 filing deprioritizado vs FY2023). Historial: 82.31% → 95.24% (BL-006) → 98.98% (DEC-020 scope creep) → 100% (BL-041).
+- **Criterio de aceptación:** ✓ CROX 100% (294/294). ✓ 14/14 PASS. ✓ 794 tests, 0 failed. ✓ Sin regresiones.
 
 ### BL-042 — Nuevo ticker SOM (Somero Enterprises, LSE, UK/FCA)
 - **Prioridad:** MEDIA

@@ -13,12 +13,12 @@ Ver ROADMAP.md para descripción completa de fases.
 
 | Métrica | Valor | Target Fase 1→2 | Fecha |
 |---|---|---|---|
-| Tickers FULL 100% (DEC-015) | 12 (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, TEP, +KAR*) | ≥15 | 2026-03-06 |
+| Tickers FULL 100% (DEC-015) | **13** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, TEP, CROX, +KAR*) | ≥15 | 2026-03-06 |
 | Tickers ANNUAL_ONLY 100% | 0 | — | 2026-03-06 |
-| Tickers WIP | 1 (CROX 98.98%, 291/294) | 0 | 2026-03-06 |
-| Total campos validados | 3,261 (13×100% + CROX 291) | — | 2026-03-06 |
+| Tickers WIP | 0 | 0 | 2026-03-06 |
+| Total campos validados | 3,555 (14×100%) | — | 2026-03-06 |
 | Campos canónicos | 25 (22 originales + cfi, cff, delta_cash) | — | 2026-03-06 |
-| Tests pasando | 794 passed, 0 failed, 2 skipped (baseline commiteado) | — | 2026-03-06 |
+| Tests pasando | 794 passed, 0 failed, 2 skipped | — | 2026-03-06 |
 | Líneas de código (aprox.) | ~10,000 + ~5,000 tests | 2026-03-06 |
 
 *KAR (49 campos, 3A): ASX annual-only — no quarterly filings disponibles en ASX para este ticker. Cuenta como FULL bajo DEC-015 excepción.
@@ -39,6 +39,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | PR | 141 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 3A+6Q) |
 | ACLS | 375 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+15Q) |
 | INMD | 210 | SEC (US) | 20-F/6-K HTML (IFRS) | ✅ VALIDATED (FULL: 6A+6Q — BL-040 promoted) |
+| CROX | 294 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL — BL-041 DONE) |
 
 ## Componentes implementados
 
@@ -67,24 +68,22 @@ Ver ROADMAP.md para descripción completa de fases.
 
 ## Tickers WIP
 
-| Ticker | Campos | Score | Mercado | Problema principal | BL |
-|---|---|---|---|---|---|
-| CROX | 294 expected | 98.98% (291/294) | SEC (US) | 3 wrong: FY2022/cash_and_equivalents, FY2021/ingresos, FY2021/net_income (acquisition note vs consolidated) | BL-041 |
+Ninguno. Todos los 14 tickers están al 100%.
 
 ## Bloqueantes actuales
 
-**⚠️ Cambios no commiteados en working tree (2026-03-06):**
-La sesión anterior dejó cambios sin commitear en `elsian/extract/phase.py` que arreglan CROX (100%) pero regresionan GCT (98.41%, 4 wrong depreciation_amortization). Estos cambios DEBEN revertirse. El guardrail DEC-020 en `.github/agents/elsian-4.agent.md` sí es válido y debe commitearse. El script `_debug_crox.py` debe eliminarse.
+No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para los 14 tickers validados (13 FULL + KAR* excepción).
 
 **Gaps pendientes (no bloqueantes):**
 1. **IxbrlExtractor para producción pendiente** — Parser listo y curate funcional, falta integrar como Extractor en pipeline (WP-6, futuro).
 2. **BL-035 Oleada 2 pendiente** — accounts_receivable, inventories, accounts_payable (required por producto, no critical).
-3. **CROX 3 wrong** — FY2022/cash_and_equivalents (exp=191,629 got=6,232), FY2021/ingresos (exp=2,313,416 got=2,894,094), FY2021/net_income (exp=725,694 got=706,853). Probable: acquisition note HEYDUDE compitiendo con valores consolidados. Requiere fix en merger.py o deprioritización de secciones.
+3. **Faltan 2 tickers para llegar a 15 FULL (DEC-015):** SOM (LSE) y 0327 (HKEX). Ambos requieren fetchers nuevos.
 
 ## Hitos recientes
 
 - ✅ **BL-022 + BL-024 + BL-007 (2026-03-05)** — Market data fetcher portado (830L, 62 tests), transcript finder portado (1085L, 58 tests), PdfTableExtractor creado (447L, 47 tests). +167 tests. CLI ampliado con `market` y `transcripts`.
-- ⚠️ **CROX mejoró 82.31% → 98.98% (2026-03-05)** — Scope creep de sub-agente BL-007 (DEC-020). Solo phase.py modificado. 3 wrong restantes son problema legítimo de BL-041. CHANGELOG corregido (sub-agente declaró 100% falso).
+- ✅ **BL-041 CROX 100% (2026-03-06)** — CROX (Crocs Inc.) arreglado de 98.98% a 100% (294/294). Fix en phase.py: severe_penalty -100→-300, regla canónica ingresos+income_statement:net_income, override activo para .txt, afinidad año-periodo para net_income. Sin regresiones: 14/14 PASS.
+- ⚠️ **CROX mejoró 82.31% → 98.98% (2026-03-05)** — Scope creep de sub-agente BL-007 (DEC-020). Solo phase.py modificado. 3 wrong restantes resueltos en BL-041.
 - ✅ **Oleada paralela BL-035/BL-006/BL-018/BL-013 (2026-03-04)** — 4 tareas ejecutadas en paralelo: (1) BL-035: cfi/cff/delta_cash añadidos como campos canónicos 23-25, pilotados en TZOO (+18) y NVDA (+18), +24 tests. (2) BL-006: Provenance L2 completo en todos los extractores (0%→100%), +17 tests, CROX mejoró 82%→95% como efecto colateral. (3) BL-018: Quality gates clean.md portados de 3.0, +24 tests. (4) BL-013: IR Crawler integrado en EuRegulatorsFetcher como fallback, +15 tests. Total: +80 tests (544→627). 2,716 campos validados.
 - ✅ **TEP → FULL** — Promovido a FULL (80/80, 6A+2H). Semestrales H1 curados desde Euronext interim filing.
 - ✅ **INMD → FULL** — Promovido de ANNUAL_ONLY (108) a FULL (210/210, 6A+6Q).
@@ -110,14 +109,14 @@ Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC
 - ✅ **BL-039 (ACLS)** — DONE. SEC semiconductor, iXBRL, FULL 375/375.
 - ✅ **BL-040 (INMD)** — DONE. SEC 20-F/6-K, healthcare (IFRS), FULL 210/210.
 - ✅ **BL-044 (TEP→FULL)** — DONE. Euronext semestrales, FULL 80/80.
-- **BL-041 (CROX)** — SEC, sustituye a BOBS (DEC-018). TODO. Prioridad ALTA.
+- ✅ **BL-041 (CROX)** — DONE. SEC footwear, FULL 294/294.
 - **BL-042 (SOM)** — LSE, nuevo mercado, requiere fetcher LSE. TODO.
 - **BL-043 (0327)** — HKEX, nuevo mercado, requiere fetcher HKEX. TODO.
 
 **Ruta a 15 FULL (DEC-015):**
-- Actuales: 12 FULL (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, TEP, KAR*)
-- Pendientes: CROX (SEC, rápido), SOM (LSE, nuevo mercado), 0327 (HKEX, nuevo mercado)
-- Proyección: 12 + 3 nuevos = **15 FULL** (exacto al target)
+- Actuales: **13 FULL** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, TEP, CROX, KAR*)
+- Pendientes: SOM (LSE, nuevo mercado), 0327 (HKEX, nuevo mercado)
+- Proyección: 13 + 2 nuevos = **15 FULL** (exacto al target)
 
 **WP-6** — IxbrlExtractor en producción (diferido).
 
