@@ -447,6 +447,28 @@ def cmd_transcripts(args: argparse.Namespace) -> None:
     print(f"  Saved to {out_path}")
 
 
+def cmd_compile(args: argparse.Namespace) -> None:
+    """Compile multi-fetcher outputs into SourcesPack_v1 for a ticker."""
+    from elsian.acquire.sources_compiler import save_sources_pack
+
+    case_dir = _find_case_dir(args.ticker)
+    if not case_dir:
+        print(f"Case not found: {args.ticker}")
+        sys.exit(1)
+
+    out_path = save_sources_pack(args.ticker, case_dir)
+    pack = json.loads(out_path.read_text(encoding="utf-8"))
+    meta = pack.get("_meta", {}).get("fuentes_consolidadas", {})
+    print(
+        f"{args.ticker}: {meta.get('total_final', 0)} sources compiled "
+        f"({meta.get('duplicados_eliminados', 0)} duplicates removed)"
+    )
+    by_cat = pack.get("_meta", {}).get("by_category", {})
+    for cat, count in sorted(by_cat.items()):
+        print(f"  {cat}: {count}")
+    print(f"  Saved to {out_path}")
+
+
 def cmd_coverage(args: argparse.Namespace) -> None:
     """Audit filing coverage for one or all tickers."""
     from elsian.evaluate.coverage_audit import evaluate_case, build_report, render_markdown
@@ -532,6 +554,10 @@ def main() -> None:
     p_transcripts = sub.add_parser("transcripts", help="Find earnings transcripts and IR presentations")
     p_transcripts.add_argument("ticker")
     p_transcripts.set_defaults(func=cmd_transcripts)
+
+    p_compile = sub.add_parser("compile", help="Compile sources into SourcesPack_v1")
+    p_compile.add_argument("ticker")
+    p_compile.set_defaults(func=cmd_compile)
 
     p_coverage = sub.add_parser("coverage", help="Audit filing coverage for a ticker or all")
     p_coverage.add_argument("ticker", nargs="?", default="")

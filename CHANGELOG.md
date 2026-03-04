@@ -2,7 +2,13 @@
 
 ## 2026-03-04
 
+- [PORT] BL-023: Portar sources compiler → elsian/acquire/sources_compiler.py
 - [PORT] BL-021: Portar prefetch coverage audit
+
+### [4.0] BL-023 — Port sources compiler
+- **What:** New `elsian/acquire/sources_compiler.py`. Consolidates multi-fetcher outputs (filings/, filings_manifest.json, _market_data.json, _transcripts.json) into a SourcesPack_v1 dict. Dedup by URL, accession_number, content_hash with quality-aware replacement. Cobertura documental (8 coverage categories). New CLI command `elsian compile {TICKER}`.
+- **Ported from:** `3_0-ELSIAN-INVEST/scripts/runners/sources_compiler_runner.py` — fully adapted to 4.0 architecture: files already named SRC_NNN (no renaming), reads from filings/ not _raw_filings/, no file system renaming, no self-heal (converter exists independently), no LLM calls.
+- **Tests:** 76 passed, 0 failed (`tests/unit/test_sources_compiler.py`). Full suite: 914 passed, 2 skipped, 0 failed.
 
 ### [4.0] BL-021 — Port prefetch coverage audit
 - **What:** New `elsian/evaluate/coverage_audit.py` module. Classifies issuers as Domestic_US / FPI_ADR / NonUS_Local based on case.json (source_hint + country + cik). Checks filing counts against per-class thresholds (Domestic: annual≥3 total≥10; FPI: annual≥2 total≥5; Local: total≥1). Returns PASS / NEEDS_ACTION per case. New CLI command `elsian coverage [TICKER|--all]`.
