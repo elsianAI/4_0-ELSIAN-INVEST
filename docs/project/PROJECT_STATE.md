@@ -1,6 +1,6 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
-> Última actualización: 2026-03-05
+> Última actualización: 2026-03-06
 > Actualizado por: Copilot (Project Director)
 
 ---
@@ -13,13 +13,13 @@ Ver ROADMAP.md para descripción completa de fases.
 
 | Métrica | Valor | Target Fase 1→2 | Fecha |
 |---|---|---|---|
-| Tickers FULL 100% (DEC-015) | 12 (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, TEP, +KAR*) | ≥15 | 2026-03-05 |
-| Tickers ANNUAL_ONLY 100% | 0 | — | 2026-03-05 |
-| Tickers WIP | 1 (CROX 98.98%, 291/294) | 0 | 2026-03-05 |
-| Total campos validados | 3,261 (13×100% + CROX 291) | — | 2026-03-05 |
-| Campos canónicos | 25 (22 originales + cfi, cff, delta_cash) | — | 2026-03-05 |
-| Tests pasando | 794 passed, 0 failed, 2 skipped | — | 2026-03-05 |
-| Líneas de código (aprox.) | ~10,000 + ~5,000 tests | 2026-03-05 |
+| Tickers FULL 100% (DEC-015) | 12 (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, TEP, +KAR*) | ≥15 | 2026-03-06 |
+| Tickers ANNUAL_ONLY 100% | 0 | — | 2026-03-06 |
+| Tickers WIP | 1 (CROX 98.98%, 291/294) | 0 | 2026-03-06 |
+| Total campos validados | 3,261 (13×100% + CROX 291) | — | 2026-03-06 |
+| Campos canónicos | 25 (22 originales + cfi, cff, delta_cash) | — | 2026-03-06 |
+| Tests pasando | 794 passed, 0 failed, 2 skipped (baseline commiteado) | — | 2026-03-06 |
+| Líneas de código (aprox.) | ~10,000 + ~5,000 tests | 2026-03-06 |
 
 *KAR (49 campos, 3A): ASX annual-only — no quarterly filings disponibles en ASX para este ticker. Cuenta como FULL bajo DEC-015 excepción.
 
@@ -73,7 +73,8 @@ Ver ROADMAP.md para descripción completa de fases.
 
 ## Bloqueantes actuales
 
-No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para los 13 tickers validados (12 FULL + KAR* excepción). CROX es WIP (98.98%).
+**⚠️ Cambios no commiteados en working tree (2026-03-06):**
+La sesión anterior dejó cambios sin commitear en `elsian/extract/phase.py` que arreglan CROX (100%) pero regresionan GCT (98.41%, 4 wrong depreciation_amortization). Estos cambios DEBEN revertirse. El guardrail DEC-020 en `.github/agents/elsian-4.agent.md` sí es válido y debe commitearse. El script `_debug_crox.py` debe eliminarse.
 
 **Gaps pendientes (no bloqueantes):**
 1. **IxbrlExtractor para producción pendiente** — Parser listo y curate funcional, falta integrar como Extractor en pipeline (WP-6, futuro).
