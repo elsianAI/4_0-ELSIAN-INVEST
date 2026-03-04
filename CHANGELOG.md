@@ -2,7 +2,14 @@
 
 ## 2026-03-04
 
+- [PORT] BL-020: Port tp_validator.py → elsian/evaluate/validation.py
 - [PORT] BL-015: Port derived metrics calculator → elsian/calculate/derived.py
+
+### [4.0] BL-020 — Port autonomous Truth Pack validator
+- **What:** New `elsian/evaluate/validation.py`. 9 intrinsic quality gates: BALANCE_IDENTITY (critical), CASHFLOW_IDENTITY (non-critical — SKIPs when cfi/cff absent), UNIDADES_SANITY, EV_SANITY, MARGIN_SANITY, TTM_SANITY, TTM_CONSECUTIVE (critical), RECENCY_SANITY, DATA_COMPLETENESS. Public API: `validate(extraction_result, derived, sector) → {status, confidence_score, gates, warnings, faltantes_criticos, limitaciones}`. Confidence: 100 - 15×FAIL - 5×WARN - 10×SKIP. No expected.json required.
+- **Ported from:** `3_0-ELSIAN-INVEST/scripts/runners/tp_validator.py` — adapted to 4.0 `periods` dict format (FY2024/Q1-2024 keys, `{"value": N}` wrappers); CASHFLOW_IDENTITY non-critical (cfi/cff not canonical); UNIDADES_SANITY threshold 1000x (distinct from sanity.py's 10x); removed CORE_FILING_COVERAGE, _compute_completitud_ajustada, _reconcile_cross_filing (3.0-only patterns).
+- **Tests:** 104 passed, 0 failed (`tests/unit/test_validation.py`). Full suite: 1106 passed, 2 skipped, 0 failed.
+- **Regression:** eval not executed (no extraction logic changed)
 
 ### [4.0] BL-015 — Port derived metrics calculator
 - **What:** New `elsian/calculate/__init__.py` (empty) and `elsian/calculate/derived.py`. `calculate(extraction_result, market_data)` computes TTM (4Q sum | semestral FY+H1_new-H1_old | FY0 fallback), FCF=CFO-|capex|, EV=mcap+debt-cash, gross/operating/net/FCF margins, ROIC (21% tax)/ROE/ROA, EV/EBIT, EV/FCF, P/FCF, FCF_yield multiples, net_debt, EPS/FCF-per-share/BV-per-share. Null propagation throughout.
