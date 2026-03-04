@@ -280,7 +280,7 @@
 
 ## Nuevas tareas (descubiertas en BL-002 NVDA)
 
-### BL-010 — Mejorar HTML table extractor: interest_income + capex
+### BL-046 — Mejorar HTML table extractor: interest_income + capex
 - **Prioridad:** MEDIA
 - **Estado:** TODO
 - **Asignado a:** sin asignar
@@ -359,7 +359,7 @@
 
 ### BL-041 — Nuevo ticker CROX (Crocs Inc., NASDAQ, SEC)
 - **Prioridad:** ALTA
-- **Estado:** DONE ✅ (2026-03-06)
+- **Estado:** DONE ✅ (2026-03-04)
 - **Asignado a:** elsian-4
 - **Depende de:** —
 - **Descripción:** CROX (Crocs Inc., NASDAQ, CIK 1334036) — consumo discrecional (footwear), 10-K/10-Q estándar. Score: 100% (294/294). Fix en phase.py: severe_penalty -100→-300 (impide label_priority cancelar penalización), regla canónica ingresos+income_statement:net_income (revenue en sección "Net income" = nota suplementaria), override activo para .txt, afinidad año-periodo para net_income (FY2021 en FY2024 filing deprioritizado vs FY2023). Historial: 82.31% → 95.24% (BL-006) → 98.98% (DEC-020 scope creep) → 100% (BL-041).
