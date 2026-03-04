@@ -2,6 +2,11 @@
 
 ## 2026-03-04
 
+### [4.0] BL-051 — Auto-discovery de ticker (elsian discover)
+- **What:** New `elsian/discover/discover.py`. TickerDiscoverer auto-detects: exchange, country, currency, regulator, accounting_standard, CIK (SEC), web_ir, fiscal_year_end_month, company_name, sector. SEC path: EDGAR company_tickers.json + submissions API. Non-US path: suffix parsing + Yahoo Finance chart/quoteSummary APIs. CLI: `elsian discover {TICKER}` → cases/{TICKER}/case.json. Overwrite protection (--force flag). Graceful fallback with `_discovery_warnings` for unresolvable fields.
+- **Tests:** 38 passed, 0 failed (unit). 3 integration tests (skipped without ELSIAN_NET_TESTS=1). Total unit: 1122 passed.
+- **Regression:** eval --all 14/14 PASS 100%.
+
 ### [FIX] SOM — DEC-022 reconstruction: 16 periods / 179 fields / 100% score
 - **What:** Re-curated expected.json from 2 periods (36 fields) to 16 periods (179 fields), incorporating FY2009-FY2022 historical data from SRC_003 (H1 2025 Interim presentation wide table). Three bug fixes required to reach 100%:
   1. **SGA alias** (`config/field_aliases.json`): Added `"sales, marketing and customer support"` — SOM annual report labels the selling row "Sales, marketing and customer support" (not "Selling"), causing the extractor to miss it and capture only G&A. Additive combine now picks up both rows correctly.
