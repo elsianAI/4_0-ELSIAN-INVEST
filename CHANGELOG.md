@@ -2,6 +2,11 @@
 
 ## 2026-03-04
 
+### [4.0] BL-049 — Truth Pack assembler (TruthPack_v1)
+- **What:** `elsian/assemble/truth_pack.py` (296L). TruthPackAssembler combines extraction_result.json + _market_data.json + derived metrics (elsian/calculate/derived.py) + autonomous validation (elsian/evaluate/validation.py) into truth_pack.json (TruthPack_v1 schema). CLI: `elsian assemble {TICKER}`. Sections: financial_data, derived_metrics (TTM/FCF/EV/margins/returns/multiples/per-share), market_data, quality (9 gates summary), metadata.
+- **Tests:** 40 unit + 5 integration = 45 passed. 0 failed.
+- **Regression:** eval --all 13/14 PASS 100% (SOM FAIL 97.21% — pre-existing, not caused by BL-049).
+
 ### [FIX] SOM — acquire filings from IR website (DEC-006 compliance)
 - **What:** `cases/SOM/case.json` now declares `filings_sources` with 3 verified URLs from investors.somero.com. `elsian acquire SOM` downloads PDFs autonomously; no manual copy from 3.0 needed. Fixed `elsian/acquire/eu_regulators.py` User-Agent from bot string to browser-like UA (required by Somero IR CDN). Files: `SRC_001_ANNUAL_REPORT_FY2024.pdf`, `SRC_002_RESULTS_PRESENTATION_FY2024.pdf`, `SRC_003_INTERIM_H1_2025.pdf`. Score unchanged: 100% (36/36). Tests: 1044 passed, 0 failed.
 - **Regression:** eval --all 14/14 PASS 100%.

@@ -494,6 +494,37 @@ def cmd_coverage(args: argparse.Namespace) -> None:
             sys.exit(1)
 
 
+def cmd_assemble(args: argparse.Namespace) -> None:
+    """Assemble TruthPack_v1 for a ticker."""
+    from elsian.assemble.truth_pack import TruthPackAssembler
+
+    case_dir = _find_case_dir(args.ticker)
+    if not case_dir:
+        print(f"Case not found: {args.ticker}")
+        sys.exit(1)
+
+    assembler = TruthPackAssembler()
+    tp = assembler.assemble(case_dir)
+
+    # Print summary
+    fd = tp.get("financial_data", {})
+    meta = tp.get("metadata", {})
+    quality = tp.get("quality", {})
+    dm = tp.get("derived_metrics", {})
+
+    print(f"{args.ticker}: TruthPack_v1 assembled")
+    print(f"  Periods: {meta.get('total_periods', 0)}")
+    print(f"  Fields: {meta.get('total_fields', 0)}")
+    print(f"  Quality: {quality.get('validation_status', 'UNKNOWN')} (confidence={quality.get('confidence_score', 0)})")
+    if quality.get("warnings"):
+        for w in quality["warnings"]:
+            print(f"    WARNING: {w}")
+    has_market = tp.get("market_data") is not None
+    print(f"  Market data: {'YES' if has_market else 'NO'}")
+    print(f"  Derived periodo_base: {dm.get('periodo_base', 'N/A')}")
+    print(f"  Saved to {case_dir / 'truth_pack.json'}")
+
+
 def cmd_dashboard(args: argparse.Namespace) -> None:
     """Show dashboard summary."""
     rows: list[DashboardRow] = []
@@ -516,6 +547,51 @@ def cmd_dashboard(args: argparse.Namespace) -> None:
         ))
 
     print(format_dashboard(rows))
+
+
+def cmd_discover(args: argparse.Namespace) -> None:
+    """Auto-discover ticker metadata and generate case.json."""
+    from elsian.discover.discover import TickerDiscoverer, parse_ticker_suffix
+
+    discoverer = TickerDiscoverer()
+    result = discoverer.discover(args.ticker)
+
+    # Determine case directory name (strip suffix for non-US tickers)
+    base_ticker, _suffix = parse_ticker_suffix(args.ticker)
+    case_dir = CASES_DIR / base_ticker.upper()
+    case_file = case_dir / "case.json"
+
+    # Check existing
+    if case_file.exists() and not args.force:
+        print(f"ERROR: {case_file} already exists. Use --force to overwrite.")
+        sys.exit(1)
+
+    # Create directory and write case.json
+    case_dir.mkdir(parents=True, exist_ok=True)
+    case_dict = result.to_case_dict()
+    case_file.write_text(
+        json.dumps(case_dict, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+    # Print summary
+    print(f"Discovered: {args.ticker}")
+    print(f"  Company:    {result.company_name or '(unknown)'}")
+    print(f"  Exchange:   {result.exchange or '(unknown)'}")
+    print(f"  Country:    {result.country or '(unknown)'}")
+    print(f"  Currency:   {result.currency or '(unknown)'}")
+    print(f"  Source:     {result.source_hint or '(unknown)'}")
+    print(f"  Accounting: {result.accounting_standard or '(unknown)'}")
+    print(f"  CIK:        {result.cik or '(N/A)'}")
+    print(f"  FY end:     month {result.fiscal_year_end_month or '(unknown)'}")
+    print(f"  Sector:     {result.sector or '(unknown)'}")
+    if result.web_ir:
+        print(f"  Web IR:     {result.web_ir}")
+    if result.warnings:
+        print(f"  Warnings:")
+        for w in result.warnings:
+            print(f"    - {w}")
+    print(f"  Saved to {case_file}")
 
 
 def main() -> None:
@@ -566,6 +642,15 @@ def main() -> None:
 
     p_dash = sub.add_parser("dashboard", help="Summary table of all cases")
     p_dash.set_defaults(func=cmd_dashboard)
+
+    p_assemble = sub.add_parser("assemble", help="Assemble TruthPack_v1 for a ticker")
+    p_assemble.add_argument("ticker")
+    p_assemble.set_defaults(func=cmd_assemble)
+
+    p_discover = sub.add_parser("discover", help="Auto-discover ticker metadata → case.json")
+    p_discover.add_argument("ticker", help="Ticker symbol (e.g. AAPL, TEP.PA, KAR.AX)")
+    p_discover.add_argument("--force", action="store_true", help="Overwrite existing case.json")
+    p_discover.set_defaults(func=cmd_discover)
 
     args = parser.parse_args()
     if not args.command:
