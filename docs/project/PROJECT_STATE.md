@@ -14,10 +14,10 @@ Ver ROADMAP.md para descripción completa de fases.
 | Métrica | Valor | Target Fase 1→2 | Fecha |
 |---|---|---|---|
 | Tickers FULL 100% (DEC-015) | **13** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, TEP, CROX, +KAR*) | ≥15 | 2026-03-04 |
-| Tickers ANNUAL_ONLY 100% | 0 | — | 2026-03-04 |
+| Tickers ANNUAL_ONLY 100% | 1 (KAR) | — | 2026-03-04 |
 | Tickers WIP | 0 | 0 | 2026-03-04 |
 | Total campos validados | 3,010 (14×100%) | — | 2026-03-04 |
-| Campos canónicos | 25 (22 originales + cfi, cff, delta_cash) | — | 2026-03-04 |
+| Campos canónicos | 26 (23 originales + cfi, cff, delta_cash) | — | 2026-03-04 |
 | Tests pasando | 1106 passed, 0 failed, 2 skipped | — | 2026-03-04 |
 | Líneas de código (aprox.) | ~10,000 + ~5,000 tests | 2026-03-04 |
 
@@ -82,6 +82,7 @@ No hay bloqueantes críticos activos. El pipeline es funcional end-to-end para l
 1. **IxbrlExtractor para producción pendiente** — Parser listo y curate funcional, falta integrar como Extractor en pipeline (WP-6, futuro).
 2. **BL-035 Oleada 2 pendiente** — accounts_receivable, inventories, accounts_payable (required por producto, no critical).
 3. **Faltan 2 tickers para llegar a 15 FULL (DEC-015):** SOM (LSE) y 0327 (HKEX). Ambos requieren fetchers nuevos.
+4. **TALO y TEP sin filings_manifest.json** — adquisición manual (ManualFetcher / EuRegulatorsFetcher). Coverage audit retorna NEEDS_ACTION. Limitación conocida, no bug.
 
 ## Hitos recientes
 

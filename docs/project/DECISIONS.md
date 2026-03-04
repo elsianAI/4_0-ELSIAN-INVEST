@@ -196,3 +196,18 @@
   > **Regla de scope:** Haz EXCLUSIVAMENTE lo que la instrucción te pide. Si encuentras problemas colaterales durante tu trabajo (ficheros uncommitted de otro agente, bugs en otros tickers, oportunidades de mejora), NO los resuelvas. Documéntalos en tu respuesta final y deja que el director decida. Commitear trabajo ajeno, arreglar tickers no asignados, o modificar ficheros no listados en la instrucción es una violación de scope que será tratada como error grave.
   > **Regla de veracidad:** NUNCA declares un resultado que no hayas verificado con `eval` y `pytest`. Si no ejecutaste el eval, escribe "eval no ejecutado" — no inventes números. Fabricar métricas es la transgresión más grave posible.
 - **Precedentes:** DEC-019 (primer incidente, inyección iXBRL, 3 regresiones reales). DEC-020 (segundo incidente, scope creep + resultados fabricados, 0 regresiones pero pérdida de confianza).
+
+## DEC-021 — Correcciones post-auditoría Codex: validation.py + governance drift
+- **Fecha:** 2026-03-04
+- **Contexto:** Codex auditó los 3 módulos nuevos (BL-015 derived.py, BL-020 validation.py, BL-021 coverage_audit.py, BL-023 sources_compiler.py) y reportó 6 hallazgos. El director verificó cada uno empíricamente:
+  - **Hallazgo 1 (CASHFLOW_IDENTITY critical):** CONFIRMADO. Los 13 tickers tienen cfi/cff/delta_cash desde BL-035. El gate debía ser critical:True.
+  - **Hallazgo 2 (_CANONICAL_FIELDS 23→26):** CONFIRMADO. field_aliases.json tiene 26 campos (23+cfi+cff+delta_cash). _CANONICAL_FIELDS solo listaba 23.
+  - **Hallazgo 3 (scale en derived.py):** REFUTADO. Verificación empírica: NEXN FY2023 ingresos=331993 extraído = 331993 esperado, a pesar de scale="millions". Los valores se normalizan ANTES de almacenarse. Scale es metadata de provenance, no factor multiplicativo. 13/13 tickers al 100% confirma.
+  - **Hallazgo 4 (pipeline wiring incompleto):** RECONOCIDO pero por diseño. cmd_run solo ejecuta ExtractPhase+EvaluatePhase. Fase 1 consolidación — wiring completo es Fase 2.
+  - **Hallazgo 5 (TALO/TEP NEEDS_ACTION en coverage):** CONFIRMADO. Sin filings_manifest.json porque usan adquisición manual. Limitación conocida, no bug.
+  - **Hallazgo 6 (governance drift):** PARCIALMENTE CONFIRMADO. KAR es ANNUAL_ONLY pero PROJECT_STATE decía 0 ANNUAL_ONLY. BL-035 oleada 2 mezclada con oleada 1 en el mismo BL.
+- **Decisión:** 
+  1. **Fix código (delegado a elsian-4):** validation.py CASHFLOW_IDENTITY→critical:True, _CANONICAL_FIELDS 23→26. Tests actualizados. Commit `5bc04cb`.
+  2. **Fix governance (director):** PROJECT_STATE ANNUAL_ONLY=0→1(KAR), campos canónicos=25→26, documentar TALO/TEP NEEDS_ACTION como gap conocido. BL-035 clarificado (oleada 2 separada a BL-047).
+  3. **No acción:** derived.py scale (refutado), pipeline wiring (Fase 2), TALO/TEP coverage (no es bug).
+- **Razón:** Las correcciones son legítimas y de bajo riesgo. validation.py tenía una deuda técnica de BL-035: cuando se añadieron cfi/cff/delta_cash como campos canónicos, el validator no se actualizó. El hallazgo de scale en derived.py es un falso positivo común — Codex infirió que scale se aplica multiplicativamente, cuando en realidad los valores ya están normalizados en el pipeline de extracción.

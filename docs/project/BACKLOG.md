@@ -403,8 +403,8 @@
 - **Estado:** DONE ✅ (2026-03-04) — Oleada 1 (critical CF fields) completada
 - **Asignado a:** elsian-4
 - **Depende de:** BL-034 (matriz revisada) + BL-038 (DONE) + oleada 3 IOSP/NEXN (DONE)
-- **Descripción:** Con la matriz de BL-034 en mano, expandir el extractor 4.0 y expected.json para cubrir campos faltantes priorizados como critical y luego required. **Oleada 1 (critical):** `cfi` (cash from investing), `cff` (cash from financing), `delta_cash` (variación neta de caja) — los 3 inputs del gate CASHFLOW_IDENTITY del validator. **Oleada 2 (required por producto):** `accounts_receivable`, `inventories`, `accounts_payable` — inputs de working capital en tp_calculator (no disparan gates del validator, pero son necesarios para completitud de producto). **Oleada 3:** resto de campos critical/required según matriz, solo si oleadas 1+2 están validadas. Pilotos: TZOO (primario) y NVDA (secundario). Usar `elsian curate` para generar drafts ampliados. Mantener formato expected.json v1 actual — solo se añaden más campos, sin nuevas claves estructurales. Toda priorización de campos sale de la matriz objetiva (BL-034), no de agrupaciones temáticas.
-- **Criterio de aceptación:** ✓ `cfi`, `cff`, `delta_cash` en field_aliases.json (57 nuevas líneas, EN/FR/ES). ✓ 8 mappings iXBRL (US-GAAP + IFRS). ✓ TZOO +18 campos (6FY×3), 288/288 100%. ✓ NVDA +18 campos (6FY×3), 336/336 100%. ✓ 24 tests nuevos (test_cashflow_fields.py). ✓ 13/13 tickers 100%. ✓ Campos canónicos: 22→25. ✓ Oleada 2 (accounts_receivable, inventories, accounts_payable) pendiente.
+- **Descripción:** Oleada 1 (critical CF fields) completada. `cfi`, `cff`, `delta_cash` añadidos como campos canónicos 24-26. Oleada 2 (working capital: accounts_receivable, inventories, accounts_payable) separada a BL-047.
+- **Criterio de aceptación:** ✓ `cfi`, `cff`, `delta_cash` en field_aliases.json (57 nuevas líneas, EN/FR/ES). ✓ 8 mappings iXBRL (US-GAAP + IFRS). ✓ TZOO +18 campos (6FY×3), 288/288 100%. ✓ NVDA +18 campos (6FY×3), 336/336 100%. ✓ 24 tests nuevos (test_cashflow_fields.py). ✓ 13/13 tickers 100%. ✓ Campos canónicos: 23→26.
 
 ---
 
@@ -415,6 +415,14 @@
 - **Depende de:** —
 - **Descripción:** Auditoría del director (2026-03-03) detectó 6 issues de governance/higiene. Ver instrucción completa más abajo. Resumen: (1) KAR y TEP sin period_scope explícito, (2) ficheros basura en NVDA, (3) _run_acquire.py trackeado, (4) expected_draft.json sin ignorar, (5) pyproject.toml requires-python incorrecto. Ninguno afecta datos ni scores — son deuda de governance.
 - **Criterio de aceptación:** (1) KAR y TEP case.json con `"period_scope": "ANNUAL_ONLY"`. (2) `cases/NVDA/simple.txt`, `test.json`, `test.txt` eliminados del repo. (3) `_run_acquire.py` eliminado del repo. (4) `.gitignore` incluye `expected_draft.json` y `_run_*.py`. (5) `pyproject.toml` cambia `requires-python` a `">=3.9"`. (6) Tests 489 pass, eval --all 12/12 100%. Un solo commit.
+
+### BL-047 — Expandir campos canónicos: oleada 2 (working capital)
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** BL-035 (oleada 1 DONE)
+- **Descripción:** Añadir `accounts_receivable`, `inventories`, `accounts_payable` como campos canónicos (27-29). Son inputs de working capital en tp_calculator. No disparan gates del validator, pero son necesarios para completitud de producto. Seguir mismo proceso que oleada 1: añadir a field_aliases.json, ixbrl_concept_map.json, pilotar en TZOO+NVDA, expandir a todos los tickers. Separado de BL-035 oleada 1 (DEC-021).
+- **Criterio de aceptación:** 3 campos nuevos en field_aliases.json + ixbrl_concept_map.json. TZOO y NVDA con expected.json ampliado. eval --all verde. Tests nuevos.
 
 ---
 
