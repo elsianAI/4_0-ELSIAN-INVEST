@@ -447,6 +447,31 @@ def cmd_transcripts(args: argparse.Namespace) -> None:
     print(f"  Saved to {out_path}")
 
 
+def cmd_coverage(args: argparse.Namespace) -> None:
+    """Audit filing coverage for one or all tickers."""
+    from elsian.evaluate.coverage_audit import evaluate_case, build_report, render_markdown
+
+    if getattr(args, "all", False):
+        report = build_report(CASES_DIR)
+        print(render_markdown(report))
+        s = report["summary"]
+        print(f"Summary: {s['pass_count']}/{s['total_tickers']} PASS, {s['needs_action_count']} NEEDS_ACTION")
+        if report["needs_action"]:
+            sys.exit(1)
+    else:
+        if not args.ticker:
+            print("Provide a TICKER or --all")
+            sys.exit(1)
+        case_dir = _find_case_dir(args.ticker)
+        if not case_dir:
+            print(f"Case not found: {args.ticker}")
+            sys.exit(1)
+        result = evaluate_case(case_dir)
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+        if result["status"] != "PASS":
+            sys.exit(1)
+
+
 def cmd_dashboard(args: argparse.Namespace) -> None:
     """Show dashboard summary."""
     rows: list[DashboardRow] = []
@@ -507,6 +532,11 @@ def main() -> None:
     p_transcripts = sub.add_parser("transcripts", help="Find earnings transcripts and IR presentations")
     p_transcripts.add_argument("ticker")
     p_transcripts.set_defaults(func=cmd_transcripts)
+
+    p_coverage = sub.add_parser("coverage", help="Audit filing coverage for a ticker or all")
+    p_coverage.add_argument("ticker", nargs="?", default="")
+    p_coverage.add_argument("--all", action="store_true")
+    p_coverage.set_defaults(func=cmd_coverage)
 
     p_dash = sub.add_parser("dashboard", help="Summary table of all cases")
     p_dash.set_defaults(func=cmd_dashboard)

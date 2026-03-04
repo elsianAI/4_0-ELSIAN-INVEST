@@ -244,8 +244,8 @@
 
 ### BL-021 — Portar prefetch coverage audit
 - **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE ✅ (2026-03-04)
+- **Asignado a:** Copilot
 - **Depende de:** —
 - **Descripción:** Portar `scripts/runners/prefetch_coverage_audit.py` a `elsian/evaluate/coverage_audit.py` para medir cobertura por ticker/mercado antes de extracción.
 - **Criterio de aceptación:** Reporte de coverage por caso con thresholds por tipo de mercado y tests.

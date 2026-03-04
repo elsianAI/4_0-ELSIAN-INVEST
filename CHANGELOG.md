@@ -2,6 +2,14 @@
 
 ## 2026-03-04
 
+- [PORT] BL-021: Portar prefetch coverage audit
+
+### [4.0] BL-021 — Port prefetch coverage audit
+- **What:** New `elsian/evaluate/coverage_audit.py` module. Classifies issuers as Domestic_US / FPI_ADR / NonUS_Local based on case.json (source_hint + country + cik). Checks filing counts against per-class thresholds (Domestic: annual≥3 total≥10; FPI: annual≥2 total≥5; Local: total≥1). Returns PASS / NEEDS_ACTION per case. New CLI command `elsian coverage [TICKER|--all]`.
+- **Ported from:** `3_0-ELSIAN-INVEST/scripts/runners/prefetch_coverage_audit.py` — adapted structure (cases/{TICKER}/, filings_manifest.json instead of _sec_fetcher_output.json; no transcript/market sources).
+- **Tests:** 42 passed, 0 failed (`tests/unit/test_coverage_audit.py`)
+- **Regression:** eval not executed (no extraction logic changed)
+
 - [FIX] Añadir CROX a VALIDATED_TICKERS — protección contra regresiones
 
 ### [4.0] BL-041 CROX 98.98% → 100% — fix suplementales de adquisición HEYDUDE
