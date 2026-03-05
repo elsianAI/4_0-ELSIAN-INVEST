@@ -112,7 +112,12 @@
       "profit for the financial period",
       "profit attributable to equity holders",
       "profit attributable to owners of the parent",
-      "profit for the period attributable to equity holders"
+      "profit for the period attributable to equity holders",
+      "profit attributable to the owners of the company",
+      "profit attributable to owners of the company",
+      "profit attributable to owners of the parent company",
+      "profit for the year attributable to owners of the company",
+      "profit for the year attributable to owners of the parent"
     ],
     "multiplier": null
   },
@@ -262,7 +267,8 @@
       "net cash flows from operating activities",
       "net cash flows used in operating activities",
       "cash provided by operating activities",
-      "cash used in operating activities"
+      "cash used in operating activities",
+      "net cash generated from operating activities"
     ],
     "multiplier": null
   },
@@ -274,6 +280,7 @@
       "purchases related to property and equipment",
       "purchases related to property and equipment and intangible assets",
       "purchases of property, plant and equipment",
+      "purchase of property, plant and equipment",
       "capital expenditure",
       "acquisition of property",
       "investissements",

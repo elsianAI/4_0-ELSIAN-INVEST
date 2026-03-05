@@ -43,8 +43,6 @@
     "us-gaap:ResearchAndDevelopmentExpense": "research_and_development",
 
     "us-gaap:SellingGeneralAndAdministrativeExpense": "sga",
-    "us-gaap:GeneralAndAdministrativeExpense": "sga",
-    "us-gaap:SellingAndMarketingExpense": "sga",
 
     "us-gaap:DepreciationDepletionAndAmortization": "depreciation_amortization",
     "us-gaap:DepreciationAndAmortization": "depreciation_amortization",
@@ -89,22 +87,29 @@
       "us-gaap:StockholdersEquity"
     ],
     "net_income": [
-      "us-gaap:NetIncomeLoss",
       "us-gaap:ProfitLoss",
+      "us-gaap:NetIncomeLoss",
       "us-gaap:NetIncomeLossAvailableToCommonStockholdersBasic"
+    ],
+    "eps_basic": [
+      "us-gaap:EarningsPerShareBasic",
+      "us-gaap:IncomeLossFromContinuingOperationsPerBasicShare"
+    ],
+    "eps_diluted": [
+      "us-gaap:EarningsPerShareDiluted",
+      "us-gaap:IncomeLossFromContinuingOperationsPerDilutedShare"
     ],
     "shares_outstanding": [
       "us-gaap:WeightedAverageNumberOfSharesOutstandingBasic",
       "us-gaap:CommonStockSharesOutstanding"
     ],
     "sga": [
-      "us-gaap:SellingGeneralAndAdministrativeExpense",
-      "us-gaap:GeneralAndAdministrativeExpense"
+      "us-gaap:SellingGeneralAndAdministrativeExpense"
     ],
     "total_debt": [
-      "us-gaap:LongTermDebt",
+      "us-gaap:LongTermDebtNoncurrent",
       "us-gaap:LongTermDebtAndCapitalLeaseObligations",
-      "us-gaap:LongTermDebtNoncurrent"
+      "us-gaap:LongTermDebt"
     ],
     "depreciation_amortization": [
       "us-gaap:DepreciationDepletionAndAmortization",

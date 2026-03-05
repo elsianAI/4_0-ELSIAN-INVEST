@@ -527,7 +527,7 @@
           "source_filing": "SRC_010_10-Q_Q1-2024.clean.md"
         },
         "depreciation_amortization": {
-          "value": 0.01,
+          "value": 380.0,
           "source_filing": "SRC_010_10-Q_Q1-2024.clean.md"
         },
         "cfo": {
@@ -721,7 +721,7 @@
           "source_filing": "SRC_007_10-Q_Q1-2025.clean.md"
         },
         "depreciation_amortization": {
-          "value": 0.05,
+          "value": 2049.0,
           "source_filing": "SRC_007_10-Q_Q1-2025.clean.md"
         },
         "cfo": {
@@ -1013,7 +1013,7 @@
           "source_filing": "SRC_009_10-Q_Q2-2024.clean.md"
         },
         "shares_outstanding": {
-          "value": 40806959.0,
+          "value": 41295216.0,
           "source_filing": "SRC_009_10-Q_Q2-2024.clean.md"
         },
         "total_liabilities": {
@@ -1083,7 +1083,7 @@
           "source_filing": "SRC_008_10-Q_Q3-2024.clean.md"
         },
         "shares_outstanding": {
-          "value": 40794241.0,
+          "value": 41364886.0,
           "source_filing": "SRC_008_10-Q_Q3-2024.clean.md"
         },
         "total_liabilities": {

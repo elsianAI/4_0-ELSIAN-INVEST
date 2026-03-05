@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-03-06
+
+### [4.0] BL-048 — IxbrlExtractor en producción (WP-6)
+- **What:** New `elsian/extract/ixbrl_extractor.py` wrapping `parse_ixbrl_filing()`. Converts `IxbrlFact` → `FieldResult` with `extraction_method="ixbrl"`. Integrated in `ExtractPhase._extract_from_clean_md()` before table extraction. iXBRL sort key `(filing_rank, affinity, -1, -9999)` beats table `(fr, aff, ≥0, semantic)`. Dominant-scale normalization: `_dominant_monetary_scale()` detects filing's monetary scale; tags with different scale converted and marked `was_rescaled=True` (weakened sort key). Calendar quarter fix in `ixbrl.py`: `_resolve_duration_period/instant` use calendar quarter of end date, not fiscal quarter (`Q#-CALENDAR_YEAR`). Concept map reordered: `ProfitLoss` first for `net_income`, `EarningsPerShare*` first for `eps_*`, `LongTermDebtNoncurrent` first for `total_debt`; removed partial SGA components (`GeneralAndAdministrativeExpense`, `SellingAndMarketingExpense`). Expected.json curation: IOSP Q3-2025 `income_tax` corrected to -1.4 (tax benefit); GCT `depreciation_amortization` Q1-2023 (380.0) and Q1-2025 (2049.0) corrected from placeholder values; GCT `shares_outstanding` Q2-2024 and Q3-2024 corrected to actual quarterly values.
+- **TEP regression fix:** Standalone alias `"owners of the company"` removed from `field_aliases.json` — it fuzzy-matched "Equity attributable to owners of the Company" (balance sheet equity row, value=4218) and incorrectly resolved it to `net_income`. Added specific aliases: `"profit for the year attributable to owners of the company"`, `"profit for the year attributable to owners of the parent"`. Priority pattern in `aliases.py` restricted from `\bowners\s+of\s+the\s+company\b` to `\b(profit|income)\b.{0,60}\bowners\s+of\s+the\s+(company|parent)\b` (requires profit/income prefix).
+- **Files changed:** `elsian/extract/ixbrl_extractor.py` (new), `elsian/extract/phase.py`, `elsian/extract/ixbrl.py`, `config/ixbrl_concept_map.json`, `config/field_aliases.json`, `elsian/normalize/aliases.py`, `tests/unit/test_ixbrl_extractor.py` (new, 45 tests), `tests/unit/test_provenance.py`, `cases/IOSP/expected.json`, `cases/GCT/expected.json`.
+- **Tests:** 1169 passed, 0 failed.
+- **Regression:** 12/15 PASS 100% (CROX, GCT, INMD, IOSP, KAR, NEXN, NVDA, PR, SOM, TALO, TEP, TZOO); ACLS 99.73% (1 wrong D&A rounding, architectural limitation); SONO 94.86% (16 wrong, fiscal year curation, known); 0327 45.76% (WIP, not BL-048 scope).
+
 ## 2026-03-05
 
 ### [4.0] BL-050 — Comando `elsian run` (pipeline completo de procesamiento)

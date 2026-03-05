@@ -1488,7 +1488,7 @@
           "source_filing": "SRC_007_10-Q_Q3-2025.clean.md"
         },
         "income_tax": {
-          "value": 1.4,
+          "value": -1.4,
           "source_filing": "SRC_007_10-Q_Q3-2025.clean.md"
         },
         "net_income": {

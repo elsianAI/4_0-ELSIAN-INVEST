@@ -223,11 +223,11 @@ def _resolve_duration_period(
         return f"FY{fy}"
 
     # Quarterly: ~80-100 days
+    # Use calendar quarter + calendar year of the end date so that period labels
+    # match the expected.json convention (Q#-CALENDAR_YEAR, independent of FYE).
     if 80 <= days <= 100:
-        quarter = _quarter_for_date(ctx.end_date, fiscal_year_end_month)
-        if quarter:
-            return f"Q{quarter}-{fy}"
-        return None
+        cal_q = (ctx.end_date.month - 1) // 3 + 1
+        return f"Q{cal_q}-{ctx.end_date.year}"
 
     # Semi-annual: ~175-195 days
     if 175 <= days <= 195:
@@ -286,15 +286,10 @@ def _resolve_instant_period(
     if d.month == expected_fy_end_month:
         return f"FY{fy}"
 
-    # Otherwise determine which quarter
-    quarter = _quarter_for_date(d, fiscal_year_end_month)
-    if quarter:
-        # Q4 end is also FY end
-        if quarter == 4:
-            return f"FY{fy}"
-        return f"Q{quarter}-{fy}"
-
-    return None
+    # Otherwise resolve to calendar quarter + calendar year of the balance-sheet date.
+    # (Annual FY-end dates are already caught above by the month-match check.)
+    cal_q = (d.month - 1) // 3 + 1
+    return f"Q{cal_q}-{d.year}"
 
 
 # ---------------------------------------------------------------------------

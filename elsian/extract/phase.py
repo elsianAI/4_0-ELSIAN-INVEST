@@ -34,6 +34,7 @@ from elsian.normalize.audit import AuditLog
 from elsian.merge.merger import merge_extractions
 from elsian.context import PipelineContext
 from elsian.pipeline import PipelinePhase
+from elsian.extract.ixbrl_extractor import IxbrlExtractor, make_ixbrl_sort_key
 
 
 # ── Sign normalisation ───────────────────────────────────────────────
@@ -537,6 +538,7 @@ class ExtractPhase(PipelinePhase):
 
         ticker = config.get("ticker", case_path.name)
         currency = config.get("currency", "USD")
+        fiscal_year_end_month = int(config.get("fiscal_year_end_month", 12))
 
         # Load selection rules
         rules = dict(self._load_selection_rules())
@@ -594,6 +596,7 @@ class ExtractPhase(PipelinePhase):
                     filing_scale_confidence, rules, audit,
                     period_fields, additive_labels, _raw_table_fields,
                     preflight_result=pf_result,
+                    fiscal_year_end_month=fiscal_year_end_month,
                 )
             else:
                 # Suppress narrative extraction when a .clean.md with
@@ -691,8 +694,45 @@ class ExtractPhase(PipelinePhase):
         additive_labels: Dict[str, Dict[str, set]],
         raw_table_fields: list,
         preflight_result: Optional[PreflightResult] = None,
+        fiscal_year_end_month: int = 12,
     ) -> None:
-        """Extract from .clean.md files (markdown tables)."""
+        """Extract from .clean.md files (markdown tables).
+
+        When an iXBRL ``.htm`` sibling exists (same base name), runs
+        ``IxbrlExtractor`` first to populate *period_fields* with
+        high-confidence iXBRL results.  The subsequent HTML-table extraction
+        pass will not overwrite those results because the iXBRL sort key
+        (``IXBRL_SRC_TYPE_RANK`` / ``IXBRL_SEMANTIC_RANK``) is always lower
+        (higher priority) than any table or narrative sort key.
+        """
+        # ── iXBRL extraction (primary source where available) ──────────────
+        _base = filing_path.name.removesuffix(".clean.md")
+        _htm_path = filing_path.parent / (_base + ".htm")
+        if _htm_path.exists() and IxbrlExtractor.has_ixbrl(_htm_path):
+            _ixbrl_ext = IxbrlExtractor()
+            _ixbrl_results = _ixbrl_ext.extract(_htm_path, fiscal_year_end_month)
+            for _period, _fields in _ixbrl_results.items():
+                if _period not in period_fields:
+                    period_fields[_period] = {}
+                _fr_rank = _filing_rank(_period, metadata.filing_type, rules)
+                for _field_name, _fr in _fields.items():
+                    _was_rescaled = getattr(_fr, "_ixbrl_was_rescaled", False)
+                    _ixbrl_sk = make_ixbrl_sort_key(
+                        _period, _htm_path.stem, _fr_rank,
+                        was_rescaled=_was_rescaled,
+                    )
+                    _fr._sort_key = _ixbrl_sk  # type: ignore[attr-defined]
+                    period_fields[_period][_field_name] = _fr
+                    audit.accept(
+                        field_name=_field_name,
+                        period=_period,
+                        source_filing=_htm_path.name,
+                        raw_label=_fr.provenance.row_label,
+                        raw_value=_fr.value,
+                        scale=_fr.scale,
+                    )
+
+        # ── HTML table extraction (fills gaps not covered by iXBRL) ────────
         table_fields = extract_tables_from_clean_md(
             text, source_filename=filing_path.name,
             filing_type=metadata.filing_type,
@@ -1130,52 +1170,62 @@ class ExtractPhase(PipelinePhase):
 
             # Additive fields
             if self._alias_resolver.is_additive(canonical):
-                seen = additive_labels.get(period_key, {}).get(canonical, set())
-                if use_section_bonus:
-                    is_new = not any(s in norm_lbl or norm_lbl in s for s in seen)
-                else:
-                    dedup_key = norm_lbl + "|" + tf.source_location
-                    is_new = dedup_key not in seen
-
-                if is_new:
-                    combined_value = existing.value + _normalize_sign(
-                        canonical, tf.label, tf.value
-                    )
-                    ep = existing.provenance
-                    fr = _make_field_result(
-                        combined_value, existing.scale,
-                        ep.source_filing,
-                        ep.source_location,
-                        existing.confidence,
-                        table_index=ep.table_index,
-                        table_title=ep.table_title,
-                        row_label=ep.row_label,
-                        col_label=ep.col_label,
-                        row=ep.row,
-                        col=ep.col,
-                        raw_text=ep.raw_text,
-                        extraction_method=ep.extraction_method or "table",
-                    )
-                    fr._sort_key = existing._sort_key  # type: ignore[attr-defined]
-                    period_fields[period_key][canonical] = fr
+                # If the existing slot was filled by iXBRL, skip additive
+                # accumulation.  iXBRL provides complete totals (e.g.
+                # us-gaap:Liabilities = total liabilities), not individual
+                # components.  Summation would double-count them.
+                # Fall through to normal sort-key collision resolution.
+                _existing_method = getattr(
+                    existing.provenance, "extraction_method", ""
+                )
+                if _existing_method != "ixbrl":
+                    seen = additive_labels.get(period_key, {}).get(canonical, set())
                     if use_section_bonus:
-                        additive_labels.setdefault(period_key, {}).setdefault(canonical, set()).add(norm_lbl)
+                        is_new = not any(s in norm_lbl or norm_lbl in s for s in seen)
                     else:
-                        additive_labels.setdefault(period_key, {}).setdefault(canonical, set()).add(dedup_key)
-                    audit.accept(
-                        field_name=canonical, period=period_key,
-                        source_filing=filing_path.name,
-                        raw_label=tf.label, raw_value=tf.value, scale=scale,
-                    )
-                    return
-                else:
-                    audit.discard(
-                        field_name=canonical, period=period_key,
-                        reason="additive_duplicate_constituent",
-                        source_filing=filing_path.name,
-                        raw_label=tf.label, raw_value=tf.value, scale=scale,
-                    )
-                    return
+                        dedup_key = norm_lbl + "|" + tf.source_location
+                        is_new = dedup_key not in seen
+
+                    if is_new:
+                        combined_value = existing.value + _normalize_sign(
+                            canonical, tf.label, tf.value
+                        )
+                        ep = existing.provenance
+                        fr = _make_field_result(
+                            combined_value, existing.scale,
+                            ep.source_filing,
+                            ep.source_location,
+                            existing.confidence,
+                            table_index=ep.table_index,
+                            table_title=ep.table_title,
+                            row_label=ep.row_label,
+                            col_label=ep.col_label,
+                            row=ep.row,
+                            col=ep.col,
+                            raw_text=ep.raw_text,
+                            extraction_method=ep.extraction_method or "table",
+                        )
+                        fr._sort_key = existing._sort_key  # type: ignore[attr-defined]
+                        period_fields[period_key][canonical] = fr
+                        if use_section_bonus:
+                            additive_labels.setdefault(period_key, {}).setdefault(canonical, set()).add(norm_lbl)
+                        else:
+                            additive_labels.setdefault(period_key, {}).setdefault(canonical, set()).add(dedup_key)
+                        audit.accept(
+                            field_name=canonical, period=period_key,
+                            source_filing=filing_path.name,
+                            raw_label=tf.label, raw_value=tf.value, scale=scale,
+                        )
+                        return
+                    else:
+                        audit.discard(
+                            field_name=canonical, period=period_key,
+                            reason="additive_duplicate_constituent",
+                            source_filing=filing_path.name,
+                            raw_label=tf.label, raw_value=tf.value, scale=scale,
+                        )
+                        return
+                # else: existing is iXBRL → fall through to normal collision resolution
 
             # Normal collision resolution
             old_sk = getattr(existing, "_sort_key", (999, 999, 0, ("", 0, 0, 0)))

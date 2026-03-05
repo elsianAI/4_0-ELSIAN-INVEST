@@ -225,6 +225,12 @@ _PRIORITY_PATTERNS: Dict[str, List[re.Pattern]] = {
     ],
     "net_income": [
         re.compile(r"^net\s+income(\s*\(loss\))?\s*$", re.I),
+        # HKFRS/IFRS companies with NCI: prefer the owners-only line over
+        # total "Profit for the year" which includes noncontrolling interests.
+        # Requires profit/income to precede "owners" so that balance-sheet
+        # labels like "Equity attributable to owners of the Company" are NOT
+        # matched (they resolve to total_equity, not net_income).
+        re.compile(r"\b(profit|income)\b.{0,60}\bowners\s+of\s+the\s+(company|parent)\b", re.I),
     ],
     "cash_and_equivalents": [
         re.compile(r"^cash\s+and\s+cash\s+equivalents$", re.I),

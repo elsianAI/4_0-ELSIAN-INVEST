@@ -102,6 +102,15 @@ def _l2_complete(fd: dict) -> bool:
         return has_sf and bool(fd.get("raw_text"))
     if method == "manual":
         return has_sf
+    if method == "ixbrl":
+        # iXBRL L2: concept name in row_label, period in col_label,
+        # displayed value in raw_text — no table coordinates needed.
+        return (
+            has_sf
+            and bool(fd.get("row_label"))
+            and bool(fd.get("col_label"))
+            and bool(fd.get("raw_text"))
+        )
     # Table-sourced fields need full coordinates
     return (
         has_sf
