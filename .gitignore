@@ -39,3 +39,6 @@ _run_*.py
 .vscode/
 *.swp
 *.swo
+
+# Generated analysis output
+cases/*/truth_pack.json
