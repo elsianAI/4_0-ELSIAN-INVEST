@@ -135,57 +135,273 @@ def cmd_extract(args: argparse.Namespace) -> None:
     print(f"  Saved to {out_path}")
 
 
-def cmd_run(args: argparse.Namespace) -> None:
-    """Run full pipeline: extract + eval via Pipeline orchestrator."""
-    from elsian.extract.phase import ExtractPhase
-    from elsian.evaluate.phase import EvaluatePhase
-    from elsian.pipeline import Pipeline
-    from elsian.context import PipelineContext
+def _convert_filings(case_dir: Path, force: bool = False) -> dict:
+    """Convert .htm → .clean.md and .pdf → .txt for all filings in case_dir.
 
-    case_dir = _find_case_dir(args.ticker)
+    Args:
+        case_dir: Path to the case directory.
+        force: Re-convert even if the output file already exists.
+
+    Returns:
+        Dict with keys: total, converted, skipped, failed.
+    """
+    from elsian.convert.html_to_markdown import convert as _html_to_md
+    from elsian.convert.pdf_to_text import extract_pdf_text
+
+    filings_dir = case_dir / "filings"
+    if not filings_dir.exists():
+        return {"total": 0, "converted": 0, "skipped": 0, "failed": 0}
+
+    converted = 0
+    skipped = 0
+    failed = 0
+    total = 0
+
+    for filing_path in sorted(filings_dir.iterdir()):
+        if not filing_path.is_file():
+            continue
+
+        suffix = filing_path.suffix.lower()
+
+        if suffix == ".htm":
+            total += 1
+            out_path = filings_dir / f"{filing_path.stem}.clean.md"
+            if out_path.exists() and not force:
+                skipped += 1
+                continue
+            try:
+                clean_md = _html_to_md(filing_path)
+                if clean_md:
+                    out_path.write_text(clean_md, encoding="utf-8")
+                    converted += 1
+                else:
+                    # Empty output — not useful, but not a failure
+                    skipped += 1
+            except Exception as exc:
+                logger.warning("Convert failed %s: %s", filing_path.name, exc)
+                failed += 1
+
+        elif suffix == ".pdf":
+            total += 1
+            out_path = filings_dir / f"{filing_path.stem}.txt"
+            if out_path.exists() and not force:
+                skipped += 1
+                continue
+            try:
+                content = filing_path.read_bytes()
+                text = extract_pdf_text(content)
+                out_path.write_text(text, encoding="utf-8")
+                converted += 1
+            except Exception as exc:
+                logger.warning("Convert failed %s: %s", filing_path.name, exc)
+                failed += 1
+
+    return {
+        "total": total,
+        "converted": converted,
+        "skipped": skipped,
+        "failed": failed,
+    }
+
+
+def _run_pipeline_for_ticker(
+    ticker: str,
+    args: argparse.Namespace,
+) -> tuple[bool, str]:
+    """Run the full processing pipeline for one ticker.
+
+    Phases: [acquire →] convert → extract → evaluate → [assemble]
+
+    Returns:
+        (success, one_line_summary)
+    """
+    from elsian.extract.phase import ExtractPhase
+    from elsian.evaluate.evaluator import evaluate as _evaluate
+
+    case_dir = _find_case_dir(ticker)
     if not case_dir:
-        print(f"Case not found: {args.ticker}")
-        sys.exit(1)
+        print(f"[{ticker}] Case not found")
+        return False, "case not found"
 
     case = CaseConfig.from_file(case_dir)
-    context = PipelineContext(case=case, config_dir=str(case_dir.parent.parent / "config"))
 
-    phases = [ExtractPhase(), EvaluatePhase()]
-    pipeline = Pipeline(phases)
-    context = pipeline.run(context)
+    # ── Acquire (optional) ────────────────────────────────────────────
+    if getattr(args, "with_acquire", False):
+        print(f"[Acquire] {ticker} — running acquire...")
+        fetcher = _get_fetcher(case)
+        try:
+            if hasattr(fetcher, "acquire"):
+                result = fetcher.acquire(case)
+                manifest_path = case_dir / "filings_manifest.json"
+                manifest_path.write_text(
+                    json.dumps(result.to_dict(), indent=2, ensure_ascii=False),
+                    encoding="utf-8",
+                )
+                print(
+                    f"[Acquire] {ticker} — {result.filings_downloaded} filings downloaded"
+                )
+            else:
+                filings = fetcher.fetch(case)
+                print(f"[Acquire] {ticker} — {len(filings)} filings found")
+        except Exception as exc:
+            print(f"[Acquire] {ticker} — ERROR: {exc}")
+            return False, f"acquire failed: {exc}"
 
-    # Save extraction result
+    # ── Convert ───────────────────────────────────────────────────────
+    force_convert = getattr(args, "force", False)
+    filings_dir = case_dir / "filings"
+    htm_count = len(list(filings_dir.glob("*.htm"))) if filings_dir.exists() else 0
+    pdf_count = len(list(filings_dir.glob("*.pdf"))) if filings_dir.exists() else 0
+    conv_total = htm_count + pdf_count
+
+    if conv_total > 0:
+        print(f"[Convert] {ticker} — converting {conv_total} filings...")
+        conv_stats = _convert_filings(case_dir, force=force_convert)
+        print(
+            f"[Convert] {ticker} — "
+            f"{conv_stats['converted']} new, "
+            f"{conv_stats['skipped']} cached, "
+            f"{conv_stats['failed']} failed"
+        )
+    else:
+        print(f"[Convert] {ticker} — no .htm/.pdf filings found, skipping")
+        conv_stats = {"converted": 0, "skipped": 0, "failed": 0}
+
+    # ── Extract ───────────────────────────────────────────────────────
+    print(f"[Extract] {ticker} — extracting fields...")
+    phase = ExtractPhase()
+    result = phase.extract(str(case_dir))
+
     out_path = case_dir / "extraction_result.json"
     out_path.write_text(
-        json.dumps(context.result.to_dict(), indent=2, ensure_ascii=False),
+        json.dumps(result.to_dict(), indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
-
-    # Print phase results
-    for error in context.errors:
-        print(f"  ERROR: {error}")
-
-    total_fields = sum(len(pr.fields) for pr in context.result.periods.values())
+    total_fields = sum(len(pr.fields) for pr in result.periods.values())
     print(
-        f"{args.ticker}: extracted {total_fields} fields across "
-        f"{len(context.result.periods)} periods from {context.result.filings_used} filings"
+        f"[Extract] {ticker} — {total_fields} fields across "
+        f"{len(result.periods)} periods from {result.filings_used} filings"
     )
 
+    # ── Evaluate ──────────────────────────────────────────────────────
+    eval_score: float | None = None
+    eval_matched = 0
+    eval_total = 0
     expected_path = case_dir / "expected.json"
+    eval_ok = True
+
     if expected_path.exists():
-        report = evaluate(context.result, str(expected_path))
-        status = "PASS" if report.score == 100.0 else "FAIL"
+        print(f"[Evaluate] {ticker} — evaluating vs expected.json...")
+        report = _evaluate(result, str(expected_path))
+        eval_score = report.score
+        eval_matched = report.matched
+        eval_total = report.total_expected
+        eval_ok = report.score == 100.0
+        status = "PASS" if eval_ok else "FAIL"
         print(
-            f"  Eval: {status} -- {report.score}% ({report.matched}/{report.total_expected}) "
+            f"[Evaluate] {ticker} — {status} {report.score}% "
+            f"({report.matched}/{report.total_expected}) "
             f"wrong={report.wrong} missed={report.missed} extra={report.extra}"
         )
-        if report.score < 100.0:
+        if not eval_ok:
             for d in report.details:
                 if d.status != "matched":
-                    print(f"    {d.status} {d.period}/{d.field_name} exp={d.expected} got={d.actual}")
+                    print(
+                        f"           {d.status} {d.period}/{d.field_name} "
+                        f"exp={d.expected} got={d.actual}"
+                    )
+    else:
+        print(f"[Evaluate] {ticker} — no expected.json, skipping")
+
+    # ── Assemble ──────────────────────────────────────────────────────
+    truth_pack_path: Path | None = None
+    if not getattr(args, "skip_assemble", False):
+        print(f"[Assemble] {ticker} — building truth_pack.json...")
+        try:
+            from elsian.assemble.truth_pack import TruthPackAssembler
+            assembler = TruthPackAssembler()
+            tp = assembler.assemble(case_dir)
+            truth_pack_path = case_dir / "truth_pack.json"
+            fd = tp.get("financial_data", {})
+            meta = tp.get("metadata", {})
+            dm = tp.get("derived_metrics", {})
+            derived_count = sum(
+                len(v) if isinstance(v, dict) else 1
+                for v in dm.values()
+                if v is not None and v != {}
+            )
+            print(
+                f"[Assemble] {ticker} — {truth_pack_path.name} "
+                f"({meta.get('total_periods', 0)} periods, "
+                f"{meta.get('total_fields', 0)} fields, "
+                f"{derived_count} derived)"
+            )
+        except Exception as exc:
+            print(f"[Assemble] {ticker} — WARNING: {exc}")
+            # Assemble failure is non-fatal — report but don't fail
+    else:
+        print(f"[Assemble] {ticker} — skipped (--skip-assemble)")
+
+    # ── Final report ──────────────────────────────────────────────────
+    conv_new = conv_stats["converted"]
+    conv_cached = conv_stats["skipped"]
+    eval_str = (
+        f"{eval_score:.1f}% ({eval_matched}/{eval_total})"
+        if eval_score is not None
+        else "N/A"
+    )
+    assemble_str = str(truth_pack_path) if truth_pack_path else "skipped"
+
+    print(f"\n=== {ticker} Pipeline Complete ===")
+    print(f"  Convert:  {conv_total} filings ({conv_new} new, {conv_cached} cached)")
+    print(f"  Extract:  {total_fields} fields extracted")
+    print(f"  Evaluate: {eval_str}")
+    print(f"  Assemble: {assemble_str}")
+
+    one_line = f"{eval_str}"
+    return eval_ok, one_line
+
+
+def cmd_run(args: argparse.Namespace) -> None:
+    """Run full pipeline: [acquire →] convert → extract → evaluate → [assemble]."""
+    if getattr(args, "all", False):
+        # Run all tickers that have both case.json and expected.json
+        tickers = sorted(
+            d.name for d in CASES_DIR.iterdir()
+            if d.is_dir()
+            and (d / "case.json").exists()
+            and (d / "expected.json").exists()
+        )
+        if not tickers:
+            print("No tickers found with case.json + expected.json")
+            sys.exit(1)
+
+        print(f"Running pipeline for {len(tickers)} tickers: {', '.join(tickers)}\n")
+        all_ok = True
+        results: list[tuple[str, bool, str]] = []
+        for ticker in tickers:
+            print(f"{'─' * 60}")
+            ok, summary = _run_pipeline_for_ticker(ticker, args)
+            results.append((ticker, ok, summary))
+            if not ok:
+                all_ok = False
+            print()
+
+        print(f"{'═' * 60}")
+        print("=== Pipeline Summary ===")
+        for ticker, ok, summary in results:
+            status = "PASS" if ok else "FAIL"
+            print(f"  {ticker}: {status} — {summary}")
+
+        if not all_ok:
             sys.exit(1)
     else:
-        print("  No expected.json — skipping evaluation")
+        if not args.ticker:
+            print("Provide a TICKER or --all")
+            sys.exit(1)
+        ok, _ = _run_pipeline_for_ticker(args.ticker, args)
+        if not ok:
+            sys.exit(1)
 
 
 def cmd_eval(args: argparse.Namespace) -> None:
@@ -608,8 +824,15 @@ def main() -> None:
     p_extract.add_argument("ticker")
     p_extract.set_defaults(func=cmd_extract)
 
-    p_run = sub.add_parser("run", help="Full pipeline: extract + eval")
-    p_run.add_argument("ticker")
+    p_run = sub.add_parser(
+        "run",
+        help="Full pipeline: [acquire →] convert → extract → evaluate → [assemble]",
+    )
+    p_run.add_argument("ticker", nargs="?", default="", help="Ticker symbol, or omit with --all")
+    p_run.add_argument("--all", action="store_true", help="Run all tickers with case.json + expected.json")
+    p_run.add_argument("--with-acquire", dest="with_acquire", action="store_true", help="Run acquire before convert")
+    p_run.add_argument("--skip-assemble", dest="skip_assemble", action="store_true", help="Skip truth_pack generation")
+    p_run.add_argument("--force", action="store_true", help="Re-convert filings even if .clean.md already exists")
     p_run.set_defaults(func=cmd_run)
 
     p_eval = sub.add_parser("eval", help="Evaluate extraction vs expected.json")

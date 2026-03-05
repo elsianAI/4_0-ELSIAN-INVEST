@@ -65,7 +65,7 @@
 
 ### BL-004 — Parser iXBRL determinístico (módulo reutilizable)
 - **Prioridad:** CRÍTICA
-- **Estado:** DONE ✅ (2026-03-06)
+- **Estado:** DONE ✅ (2026-03-02)
 - **Asignado a:** elsian-4
 - **Depende de:** BL-027 (governance limpio primero)
 - **Descripción:** Construir `elsian/extract/ixbrl.py` — un parser determinístico que extrae datos financieros estructurados de ficheros iXBRL (los mismos .htm que ya descargamos de SEC/ESEF). El parser: (1) localiza tags `ix:nonFraction` / `ix:nonNumeric`, (2) extrae concepto, periodo, valor, unidad, escala (`decimals`), contexto, (3) mapea conceptos GAAP/IFRS a nuestros 23 campos canónicos vía `config/ixbrl_concept_map.json` (nuevo) + `field_aliases.json`, (4) normaliza escala y signos a nuestra convención (DEC-004). **Este módulo es reutilizable:** será consumido por `elsian curate` (BL-025) para generar expected.json, y en el futuro por `IxbrlExtractor(Extractor)` dentro del pipeline de producción. Un parser, dos consumidores (DEC-010). **Portado desde 3.0** `ixbrl_extractor.py` si existe, sino implementar con BeautifulSoup (ya es dependencia). **Plan detallado: WP-3 en `docs/project/PLAN_DEC010_WP1-WP6.md`.**
@@ -73,7 +73,7 @@
 
 ### BL-025 — Comando `elsian curate` (generador de expected.json)
 - **Prioridad:** CRÍTICA
-- **Estado:** DONE ✅ (2026-03-06)
+- **Estado:** DONE ✅ (2026-03-02)
 - **Asignado a:** elsian-4
 - **Depende de:** BL-004 (parser iXBRL)
 - **Descripción:** Crear comando `python3 -m elsian.cli curate {TICKER}` que genera `expected_draft.json` de forma automática. Para tickers con iXBRL (SEC, ESEF): usa el parser de BL-004 para extraer todos los campos canónicos de todos los periodos disponibles, filtrando solo campos con representación tabular en IS/BS/CF. Para tickers sin iXBRL (ASX, emergentes): genera un esqueleto vacío con los periodos detectados. El draft incluye metadata de origen (concepto iXBRL, filing fuente, escala original). El draft se depura después manualmente o con LLM para producir el expected.json final. **No forma parte del pipeline de producción** — es herramienta de desarrollo/QA. **Plan detallado: WP-3 en `docs/project/PLAN_DEC010_WP1-WP6.md`.**
@@ -89,7 +89,7 @@
 
 ### BL-027 — Scope Governance: coherencia case.json vs expected.json
 - **Prioridad:** CRÍTICA
-- **Estado:** DONE ✅ (2026-03-06)
+- **Estado:** DONE ✅ (2026-03-02)
 - **Asignado a:** elsian-4
 - **Depende de:** —
 - **Descripción:** Corregir inconsistencias de scope detectadas en auditoría: (1) Añadir `period_scope: "FULL"` a NVDA case.json (tiene 18 periodos con Q pero scope implícito ANNUAL_ONLY). (2) Auditar todos los case.json: si expected.json tiene periodos Q*/H* → case.json debe tener period_scope FULL. (3) Corregir referencia a "23 campos canónicos" en docs → son 23. (4) Alinear test count en PROJECT_STATE con la realidad. (5) Crear test automático `tests/integration/test_scope_consistency.py` que verifique coherencia scope↔expected para todos los tickers validados. **Plan detallado: WP-1 en `docs/project/PLAN_DEC010_WP1-WP6.md`.**
@@ -97,7 +97,7 @@
 
 ### BL-028 — SEC Hardening: cache lógico + CIK preconfigurado
 - **Prioridad:** MEDIA
-- **Estado:** DONE ✅ (2026-03-06)
+- **Estado:** DONE ✅ (2026-03-02)
 - **Asignado a:** elsian-4
 - **Depende de:** — (paralelo a WP-3)
 - **Descripción:** (1) Cache en sec_edgar.py debe contar filings lógicos (stems únicos) no ficheros físicos. (2) Añadir campo `cik: str | None = None` a CaseConfig. (3) SecEdgarFetcher usa case.cik si existe, fallback a API si no. (4) Verificar que eliminación de Pass 2 exhibit_99 no pierde filings. **Plan detallado: WP-2 en `docs/project/PLAN_DEC010_WP1-WP6.md`.**
@@ -105,19 +105,19 @@
 
 ### BL-029 — Corregir contrato Python: >=3.11 vs entorno local 3.9.6
 - **Prioridad:** MEDIA
-- **Estado:** DONE ✅ (2026-03-06) — Verificado: codebase usa X|Y unions (3.10+), pyproject.toml >=3.11 es correcto. CI workflow creado.
+- **Estado:** DONE ✅ (2026-03-02) — Verificado: codebase usa X|Y unions (3.10+), pyproject.toml >=3.11 es correcto. CI workflow creado.
 - **Asignado a:** elsian-4
 - **Depende de:** —
 - **Descripción:** pyproject.toml declara `requires-python = ">=3.11"` pero el entorno local actual es Python 3.9.6. Decidir: (a) bajar el requisito a >=3.9 si no usamos features de 3.10+, o (b) actualizar el entorno local a 3.11+. Verificar uso real de features post-3.9 (`match/case`, `X | Y` type unions, `tomllib`, etc.).
 - **Criterio de aceptación:** El contrato en pyproject.toml coincide con el entorno mínimo real donde el pipeline funciona correctamente.
 
-### BL-005 — Expandir a 15 tickers validados
+### BL-005 — Expandir cobertura de tickers (diversidad de mercados/formatos)
 - **Prioridad:** MEDIA
-- **Estado:** TODO
+- **Estado:** TODO (actualizado 2026-03-04)
 - **Asignado a:** sin asignar
-- **Depende de:** BL-025 (curate acelera la curación)
-- **Descripción:** Objetivo Fase 1: 15-20 tickers validados. Con `elsian curate` disponible, añadir tickers es mucho más rápido para SEC/ESEF. Candidatos: large-cap US (AAPL, MSFT), sector financiero (JPM), micro-cap, Europa continental (SAP.DE, SAN.MC), Asia (Toyota). Cada uno valida un gap diferente en las reglas de extracción.
-- **Criterio de aceptación:** ≥15 tickers en VALIDATED_TICKERS. Cada ticker cubre un gap diferente (documentado en regression_suite).
+- **Depende de:** BL-025 (curate DONE), BL-042 (SOM), BL-043 (0327)
+- **Descripción:** Objetivo: cobertura amplia y diversa de mercados, reguladores, formatos, idiomas y estándares contables. Actualmente 13 FULL + KAR (excepción) + SOM (WIP). Gaps de diversidad identificados: (1) Ningún ticker de sector financiero (bancos/aseguradoras tienen IS/BS radicalmente distintos). (2) Solo 1 ticker europeo no-SEC (TEP). (3) Ningún ticker asiático (HKEX pendiente en BL-043). (4) Ningún ticker con filings en alemán o español. (5) Ningún REIT o utility. Candidatos sugeridos: sector financiero (JPM o BAC), Europa continental (SAP.DE, SAN.MC), Asia (Toyota, Samsung), REIT (O), utility. Cada ticker nuevo debe cubrir al menos un gap no cubierto por los existentes. **No es un objetivo numérico** — el número de tickers es consecuencia de la diversidad, no al revés.
+- **Criterio de aceptación:** Cada nuevo ticker validado cubre un gap documentado. eval --all verde tras cada adición. Sin regresiones. Diversidad documentada en PROJECT_STATE.
 
 ### BL-006 — Provenance Level 2 completa en todos los extractores
 - **Prioridad:** MEDIA
@@ -280,7 +280,7 @@
 
 ## Nuevas tareas (descubiertas en BL-002 NVDA)
 
-### BL-046 — Mejorar HTML table extractor: interest_income + capex
+### BL-047 — Mejorar HTML table extractor: interest_income + capex
 - **Prioridad:** MEDIA
 - **Estado:** TODO
 - **Asignado a:** sin asignar
@@ -365,13 +365,21 @@
 - **Descripción:** CROX (Crocs Inc., NASDAQ, CIK 1334036) — consumo discrecional (footwear), 10-K/10-Q estándar. Score: 100% (294/294). Fix en phase.py: severe_penalty -100→-300 (impide label_priority cancelar penalización), regla canónica ingresos+income_statement:net_income (revenue en sección "Net income" = nota suplementaria), override activo para .txt, afinidad año-periodo para net_income (FY2021 en FY2024 filing deprioritizado vs FY2023). Historial: 82.31% → 95.24% (BL-006) → 98.98% (DEC-020 scope creep) → 100% (BL-041).
 - **Criterio de aceptación:** ✓ CROX 100% (294/294). ✓ 14/14 PASS. ✓ 794 tests, 0 failed. ✓ Sin regresiones.
 
-### BL-042 — Nuevo ticker SOM (Somero Enterprises, LSE, UK/FCA)
-- **Prioridad:** MEDIA
-- **Estado:** DONE
-- **Asignado a:** Claude (Copilot)
+### BL-042 — Rehacer SOM completamente (Somero Enterprises, LSE, UK/FCA)
+- **Prioridad:** CRÍTICA
+- **Estado:** DONE ✅ (2026-03-04, DEC-022 completado)
+- **Asignado a:** elsian-4
 - **Depende de:** —
-- **Descripción:** Primer ticker London Stock Exchange. Requiere: (1) Investigar si LSE/FCA tiene API de filings automatizable (RNS feed, FCA National Storage Mechanism). (2) Si la hay → construir `LseFetcher(Fetcher)`. (3) Si no → usar ManualFetcher. Filings son PDF annual reports con formato corporativo UK. Portar filings del 3.0 desde `3_0-ELSIAN-INVEST/casos/SOM/`. El fetcher LSE queda como infraestructura reutilizable.
-- **Criterio de aceptación:** ✓ SOM en VALIDATED_TICKERS al 100% (36/36). ✓ 14/14 PASS. ✓ 1109 tests, 0 failed. source_hint=eu_manual (ManualFetcher). FY2020-2022 pendiente — requiere Annual Reports adicionales.
+- **Descripción:** SOM reconstruido desde cero: 16 periodos (FY2009-FY2024), 179 campos, 100% (179/179). FY2024/FY2023: 23 campos del Annual Report (US$000). FY2009-FY2022: 9-10 campos de tabla histórica SRC_003 (US$M → US$000). Tres bugs corregidos: (1) SGA alias "sales, marketing and customer support", (2) income_tax sign con raw_text para preservar negativos explícitos, (3) dividends_per_share reject patterns + manual_overrides. **⚠️ Introdujo regresión en TEP (93.75%) → ver BL-046.**
+- **Criterio de aceptación:** ✓ 16 periodos ✓ 179 campos ✓ 100% ✓ Provenance L2 ✓ CHANGELOG. ⚠️ eval --all: 13/14 PASS — TEP regresionó (BL-046).
+
+### BL-046 — Fix regresión TEP introducida por SOM (DEC-022)
+- **Prioridad:** CRÍTICA
+- **Estado:** DONE ✅ (2026-03-04)
+- **Asignado a:** elsian-4
+- **Depende de:** BL-042 (DONE)
+- **Descripción:** BL-042 introdujo regresión en TEP (100%→93.75%). Causa raíz: `_normalize_sign` con `raw_text` preservaba signos negativos explícitos en income_tax de TEP (IFRS francés usa "-" como convención de presentación para gastos, no como beneficio fiscal). Fix: eliminar parámetro `raw_text` de `_normalize_sign`; en su lugar, anotar `"(benefit)"` en el label desde `pdf_tables.py:_extract_wide_historical_fields` cuando value < 0 en tablas históricas de SOM. Así `_BENEFIT_RE` detecta el label y preserva el negativo. Resultado: ambos tickers al 100%.
+- **Criterio de aceptación:** ✓ TEP 100% (80/80). ✓ SOM 100% (179/179). ✓ eval --all 14/14 PASS. ✓ 1123+ tests, 0 failed.
 
 ### BL-043 — Nuevo ticker 0327 (PAX Global Technology, HKEX, Hong Kong)
 - **Prioridad:** MEDIA
@@ -423,6 +431,97 @@
 - **Depende de:** BL-035 (oleada 1 DONE)
 - **Descripción:** Añadir `accounts_receivable`, `inventories`, `accounts_payable` como campos canónicos (27-29). Son inputs de working capital en tp_calculator. No disparan gates del validator, pero son necesarios para completitud de producto. Seguir mismo proceso que oleada 1: añadir a field_aliases.json, ixbrl_concept_map.json, pilotar en TZOO+NVDA, expandir a todos los tickers. Separado de BL-035 oleada 1 (DEC-021).
 - **Criterio de aceptación:** 3 campos nuevos en field_aliases.json + ixbrl_concept_map.json. TZOO y NVDA con expected.json ampliado. eval --all verde. Tests nuevos.
+
+---
+
+## Tareas para cierre del Módulo 1 (end-to-end)
+
+> Estas tareas cubren los gaps que faltan para que el Módulo 1 funcione como pipeline end-to-end completamente autónomo.
+> Ver VISION.md para la definición completa del Módulo 1 y sus criterios de madurez.
+
+### BL-048 — IxbrlExtractor en producción (WP-6)
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** BL-004 (parser iXBRL DONE), BL-025 (curate DONE)
+- **Descripción:** El parser iXBRL existe (`elsian/extract/ixbrl.py`, 594L) y funciona para curación (`elsian curate`). Falta crear `IxbrlExtractor(Extractor)` que lo integre en el pipeline de producción como extractor de primera clase. Para tickers SEC con iXBRL disponible, IxbrlExtractor debería ser el extractor primario (datos etiquetados por la empresa = máxima confianza), con HtmlTableExtractor como fallback para campos no cubiertos por iXBRL. Esto requiere: (1) Crear clase `IxbrlExtractor` con interfaz `extract(context) → list[FieldResult]`. (2) Detectar automáticamente si un filing tiene iXBRL (`ix:header` o extensión `.htm` con tags `ix:nonFraction`). (3) Mapear conceptos iXBRL a campos canónicos (reutilizar `ixbrl_concept_map.json`). (4) Emitir provenance L2 completa (concept, context, period, unit, raw value). (5) Integrar en ExtractPhase: si iXBRL disponible → IxbrlExtractor primero, HtmlTableExtractor segundo (fill gaps). (6) Verificar que no hay regresiones en ningún ticker.
+- **Criterio de aceptación:** `IxbrlExtractor(Extractor)` creado con tests. Para tickers SEC con iXBRL, la extracción usa iXBRL como fuente primaria. eval --all verde. Provenance indica `extraction_method=ixbrl`. Sin regresiones.
+
+### BL-049 — Truth Pack assembler (output para Módulo 2)
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-04)
+- **Asignado a:** elsian-4
+- **Depende de:** —
+- **Descripción:** `elsian/assemble/truth_pack.py` (296L). TruthPackAssembler combina extraction_result.json + _market_data.json + derived metrics + autonomous validation en truth_pack.json (TruthPack_v1 schema). CLI: `elsian assemble {TICKER}`. Secciones: financial_data, derived_metrics (TTM/FCF/EV/margins/returns/multiples/per-share), market_data, quality (9 gates summary), metadata. Piloto TZOO: 51 periodos, 792 campos, quality PASS (confidence=90.0). 45 tests (40 unit + 5 integration).
+- **Criterio de aceptación:** ✓ `elsian assemble TZOO` genera truth_pack.json válido. ✓ 45 tests pass. ✓ eval --all 14/14 100%. ✓ Commit a4639af.
+
+### BL-050 — Comando `elsian run` (pipeline de procesamiento)
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-05)
+- **Asignado a:** elsian-4
+- **Depende de:** BL-049 (truth pack assembler)
+- **Descripción:** Crear un comando que ejecute el pipeline de procesamiento para un ticker que ya tiene filings descargados, case.json y expected.json: `elsian run {TICKER}` = Convert → Extract → Normalize → Merge → Evaluate → Assemble. **No incluye Acquire** — los filings ya existen porque `elsian acquire` se ejecutó previamente (durante la curación del expected.json o como paso independiente). Hoy el pipeline ejecuta Extract+Evaluate vía `cmd_run`, pero Convert y Assemble son pasos separados. El comando `run` los orquesta en secuencia, con logging de cada fase y reporte final (score, campos, truth_pack generado). Flags opcionales: `--with-acquire` (relanzar acquire, útil cuando hay nuevo trimestre), `--skip-assemble` (solo hasta evaluate), `--force` (re-convert filings). `elsian run --all` ejecuta todos los tickers validados.
+- **Criterio de aceptación:** `elsian run TZOO` ejecuta Convert→Extract→Evaluate→Assemble y genera truth_pack.json. `elsian run --all` ejecuta todos los tickers. Logging claro por fase. Tests de integración E2E. No relanza acquire por defecto.
+
+### BL-051 — Auto-discovery de ticker (generador de case.json)
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-04)
+- **Asignado a:** elsian-4
+- **Depende de:** BL-011 (markets.py DONE)
+- **Descripción:** `elsian/discover/discover.py` con TickerDiscoverer. Detecta: exchange, country, currency, regulator/source_hint, accounting_standard, CIK (SEC), web_ir, fiscal_year_end_month, company_name, sector. SEC path: EDGAR company search API. Non-US path: Yahoo Finance quoteSummary + suffix parsing (.PA→Euronext, .AX→ASX, .L→LSE, .HK→HKEX). CLI: `elsian discover {TICKER}` → cases/{TICKER}/case.json. Overwrite protection (--force). Verificado: AAPL (SEC, NASDAQ, USD, CIK 320193), TEP.PA (Euronext, EUR, IFRS). 38 tests (35 unit + 3 integration network-gated).
+- **Criterio de aceptación:** ✓ `elsian discover AAPL` genera case.json correcto. ✓ `elsian discover TEP.PA` genera case.json correcto. ✓ 38 tests pass. ✓ eval --all 14/14 100%. ✓ Commit d5e04c7.
+
+### BL-052 — Auto-curate para tickers no-SEC (expected.json desde PDF)
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** BL-007 (PdfTableExtractor DONE)
+- **Descripción:** `elsian curate` solo funciona para tickers SEC (vía iXBRL). Para tickers no-SEC (Euronext, ASX, LSE, HKEX), el expected.json se crea manualmente por agentes. Crear un path alternativo en `elsian curate` que: (1) Si no hay iXBRL → usar PdfTableExtractor para extraer datos de los PDFs adquiridos. (2) Cross-reference entre filings (annual report vs investor presentation) para validar datos. (3) Generar expected_draft.json con los datos extraídos y flags de confianza. (4) El draft puede tener gaps — se marcan explícitamente para revisión humana. Esto no será tan preciso como iXBRL (que tiene etiquetas formales), pero reducirá enormemente el trabajo manual para tickers no-SEC.
+- **Criterio de aceptación:** `elsian curate TEP` genera expected_draft.json con datos extraídos de PDFs. `elsian curate KAR` genera draft desde PDFs ASX. Cobertura ≥70% de campos respecto al expected.json manual. Campos con baja confianza marcados.
+
+### BL-053 — Provenance Level 3 (source_map.json)
+- **Prioridad:** BAJA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** BL-006 (Provenance L2 DONE)
+- **Descripción:** Provenance L2 traza cada dato a (filing, tabla, fila, columna, raw_text). L3 añade el mapeo inverso: dado un dato en extraction_result.json, localizar la posición exacta en el documento original (página del PDF, línea del HTML, offset del .clean.md) para "click to source". Crear `elsian/provenance/source_map.py` que genere `source_map.json` con: filing_path → offset_start, offset_end, page_number (PDF), line_number (.md). Esto es fundacional para el futuro visor web pero también útil para auditoría manual del Módulo 1.
+- **Criterio de aceptación:** source_map.json generado para al menos 1 ticker. Cada campo trazable a posición exacta en documento original. Tests unitarios.
+
+---
+
+## Tareas de governance post-BL-042/046 (DEC-024/025/026)
+
+### BL-054 — Eliminar manual_overrides de TEP (target: 0 overrides)
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** TEP tiene 6 manual_overrides (7.5% de 80 campos), superando el límite de 5% de DEC-024. Los overrides son: `ingresos` FY2022/FY2021, `fcf` FY2022/FY2021/FY2019, `dividends_per_share` FY2021. Las notas de los overrides referencian páginas concretas de los PDF anuales (tp_ri_2022 p.1, SRC_005 p.50, tp-annual-report-2019 p.1), lo que confirma que los datos **existen** en los filings — el pipeline PDF simplemente no los extrae. Diagnóstico probable: PdfTableExtractor + narrative no cubren los formatos de tabla/KPI dashboard de los annual reports franceses. Adicionalmente, los overrides carecen de `source_filing` y `extraction_method` — deuda de documentación que debe corregirse inmediatamente, tanto si los overrides se eliminan como si no.
+- **Criterio de aceptación:** TEP 100% (80/80) con 0 manual_overrides. Campos ingresos, fcf y dividends_per_share extraídos automáticamente del pipeline. eval --all verde. Si algún override resulta ineliminable, clasificar como permanent exception con justificación técnica.
+
+### BL-055 — Clasificar overrides SOM DPS: permanent exception o fixable
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** SOM tiene 2 manual_overrides de `dividends_per_share` (FY2024: $0.169, FY2023: $0.2319). El override existe porque: (1) SRC_002 presenta DPS en US cents (16.9c) no dólares, (2) DPS es compuesto (interim $0.080 + final $0.089 = $0.169 en FY2024), (3) SRC_001 menciona DPS en narrativa dispersa (no en tabla IS/BS/CF). DEC-024 regla 5 da excepción parcial a DPS si se demuestra que el dato solo aparece en narrativa dispersa. Investigar: (a) si el narrative extractor puede componer interim+final+supplemental automáticamente, (b) si el dato aparece en alguna tabla (no solo narrativa), (c) si la escala cents vs dollars es detectable automáticamente. Si (a), (b), (c) son todos negativos → clasificar como permanent exception.
+- **Criterio de aceptación:** Decisión documentada: fixable (con BL de fix asociada) o permanent exception (con justificación técnica en case.json `notes`). Si fixable: SOM 100% con 0 overrides.
+
+### BL-056 — Hygiene repo: truth_pack.json a .gitignore
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** —
+- **Descripción:** Existen 3 ficheros `truth_pack.json` (TZOO, SOM, NVDA) generados por `elsian assemble`. Son output regenerable — como extraction_result.json y filings_manifest.json, que ya están en .gitignore. Añadir `cases/*/truth_pack.json` a `.gitignore` y eliminar los 3 ficheros del tracking de git.
+- **Criterio de aceptación:** `.gitignore` incluye `cases/*/truth_pack.json`. Los 3 ficheros eliminados del tracking (no del disco). `git status` limpio.
+
+### BL-057 — Discovery automático de filings LSE/AIM (DEC-025)
+- **Prioridad:** BAJA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Depende de:** BL-013 (ir_crawler DONE)
+- **Descripción:** El ir_crawler integrado (BL-013) descarga 0 documentos para SOM. El CDN de Somero IR requiere User-Agent browser-like (ya corregido en eu_regulators.py) pero las URLs de descarga usan paths con hashes/media (`/~/media/Files/S/Somero-IR/...`) que no son descubribles por el patrón de crawling actual. Opciones: (a) mejorar ir_crawler para manejar CDNs corporativos con paths no estándar, (b) construir LseFetcher dedicado con conocimiento de patrones IR UK (Companies House, LSE RNS feeds), (c) esperar a tener ≥3 tickers LSE para justificar la inversión. DEC-025 aprueba SOM con filings_sources manuales por ahora.
+- **Criterio de aceptación:** `elsian acquire SOM` descarga filings sin filings_sources hardcodeados en case.json. O documentación de por qué no es factible.
 
 ---
 

@@ -1,6 +1,12 @@
 # Changelog
 
-## 2026-03-04
+## 2026-03-05
+
+### [4.0] BL-050 — Comando `elsian run` (pipeline completo de procesamiento)
+- **What:** Extended `cmd_run` in `elsian/cli.py` to orchestrate the full processing pipeline for a ticker that already has filings downloaded: Convert → Extract → Evaluate → Assemble. Added `_convert_filings()` helper (scans `filings/` for `.htm`/`.pdf` without `.clean.md`/`.txt` and converts them). Added `_run_pipeline_for_ticker()` helper (orchestrates all phases with per-phase logging). The old `cmd_run` (Extract+Eval via Pipeline class) replaced by the new full pipeline. New flags: `--with-acquire` (run acquire before convert), `--skip-assemble` (skip truth_pack generation), `--force` (re-convert even if `.clean.md` exists), `--all` (run all tickers with case.json+expected.json). Final report per ticker: Convert/Extract/Evaluate/Assemble stats. `--all` flag also prints a summary table at the end.
+- **Files changed:** `elsian/cli.py` (cmd_run rewrite + _convert_filings + _run_pipeline_for_ticker + argparse flags), `tests/integration/test_run_command.py` (new, 13 tests).
+- **Tests:** 1123 unit passed. 13 new integration tests passed (7 unit-level, 4 E2E TZOO, 2 stats). 14/14 regression passed, 2 skipped.
+- **Regression:** 14 passed, 2 skipped in 113.62s. Zero regressions.
 
 ### [FIX] BL-046 — Regresión TEP por BL-042 (DEC-022): income_tax sign
 - **What:** BL-042 introdujo `raw_text: str = ""` en `_normalize_sign` para preservar el signo negativo cuando el raw_text empezaba con `-`. Esto rompió TEP: los 5 periodos con `income_tax` (FY2023, FY2024, FY2025, H1-2024, H1-2025) se extraían como negativos (-228, -346, -289, -113, -123) en lugar de positivos. El filing francés IFRS presenta los gastos con signo negativo explícito (convención de presentación, no beneficio fiscal).
@@ -32,8 +38,6 @@
 ### [FIX] SOM — acquire filings from IR website (DEC-006 compliance)
 - **What:** `cases/SOM/case.json` now declares `filings_sources` with 3 verified URLs from investors.somero.com. `elsian acquire SOM` downloads PDFs autonomously; no manual copy from 3.0 needed. Fixed `elsian/acquire/eu_regulators.py` User-Agent from bot string to browser-like UA (required by Somero IR CDN). Files: `SRC_001_ANNUAL_REPORT_FY2024.pdf`, `SRC_002_RESULTS_PRESENTATION_FY2024.pdf`, `SRC_003_INTERIM_H1_2025.pdf`. Score unchanged: 100% (36/36). Tests: 1044 passed, 0 failed.
 - **Regression:** eval --all 14/14 PASS 100%.
-
-## 2026-06-26
 
 ### [TICKER] BL-042 — SOM REBUILT (Somero Enterprises, LSE/AIM, Industrials) — ANNUAL_ONLY 179/179 (100%)
 - **What:** SOM expected.json rebuilt from scratch per DEC-022. 16 periods (FY2009-FY2024), 179 total fields. FY2024/FY2023 from Annual Report (SRC_001, US$000): 23 fields IS+BS+CF each. FY2009-FY2022 from historical table (SRC_003, US$ Millions ×1000): 9-10 fields each. Provenance L2 complete (extraction_method=pdf_table). Pipeline fixes: wide historical table extractor annotates negative tax rows as "(benefit)" to preserve sign semantics without regressing IFRS tickers; `_normalize_sign` reverted to always flip negative income_tax to positive (benefit check via label). New aliases: "sales, marketing and customer support" (sga), "tax" (income_tax). DPS manual_overrides for FY2024/FY2023.
