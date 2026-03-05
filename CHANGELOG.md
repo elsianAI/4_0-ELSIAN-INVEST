@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-03-05
+
+### [Regression] Add 0327 to VALIDATED_TICKERS
+- **What:** Added "0327" (PAX Global) to `VALIDATED_TICKERS` in `tests/integration/test_regression.py`. Ticker is at 100% (59/59) in ANNUAL_ONLY scope.
+- **Files changed:** `tests/integration/test_regression.py`
+- **Tests:** N/A (config change only)
+- **Regression:** 0327: PASS 100.0% (59/59, wrong=0)
+
 ## 2026-03-09
 
 ### [4.0] fix(SONO) — align expected.json quarterly period values with pipeline calendar labels
