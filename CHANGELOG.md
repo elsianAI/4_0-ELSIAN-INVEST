@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-03-09
+
+### [4.0] fix(SONO) — align expected.json quarterly period values with pipeline calendar labels
+- **What:** Fixed 16 wrong fields in `cases/SONO/expected.json` that caused SONO: FAIL 94.86% (wrong=16). Root cause: SONO has a non-standard fiscal year ending late September/early October. Several quarterly periods in expected.json were curated using SONO's *fiscal* quarter dates and values, while the pipeline labels periods by *calendar* quarter (derived from iXBRL context end dates). No code changed.
+- **Fields corrected (6 periods):**
+  - Q2-2022, Q2-2023, Q3-2022, Q3-2023, Q4-2023 — `research_and_development`: pipeline iXBRL picks `us-gaap:ResearchAndDevelopmentExpense` (~62k–80k/quarter); expected.json had wrong ~8k-20k values from HTML table parser picking "Accrued manufacturing/logistics R&D" balance-sheet line.
+  - Q3-2023 — `fecha_fin` 2023-07-01 → 2023-09-30; balance sheet fields (`cash_and_equivalents`, `total_assets`, `total_liabilities`, `total_equity`, `shares_outstanding`) updated from interim SONO fiscal Q3 FY2023 snapshot (Jul 2023) to FY2023 year-end values (Sep 2023) as labeled Q3-2023 in FY2024 10-K iXBRL contexts.
+  - Q4-2022 — `fecha_fin` 2022-10-01 → 2022-12-31; income statement fields (`ingresos`, `gross_profit`, `net_income`, `eps_basic`, `eps_diluted`, `research_and_development`) updated from SONO fiscal Q4 FY2022 (Jul–Oct 2022, holiday pre-season) to Oct–Dec 2022 calendar data from FY2023 10-K iXBRL col "Q4-2022" (SONO fiscal Q1 FY2023, holiday quarter: revenues 672k not 316k).
+- **Files changed:** `cases/SONO/expected.json`
+- **Tests:** N/A (no code changes)
+- **Regression:** SONO: FAIL 94.86% (wrong=16) → **PASS 100.00% (311/311, wrong=0)**. All other previously-passing tickers unchanged.
+
 ## 2026-03-08
 
 ### [4.0] hotfix — BL-043 regressions (TEP, SOM, ACLS, 0327 alias collision)

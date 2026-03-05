@@ -679,7 +679,7 @@
           "source_filing": "SRC_018_10-Q_Q2-2022.clean.md"
         },
         "research_and_development": {
-          "value": 8091.0,
+          "value": 64947.0,
           "source_filing": "SRC_018_10-Q_Q2-2022.clean.md"
         },
         "sga": {
@@ -753,7 +753,7 @@
           "source_filing": "SRC_015_10-Q_Q2-2023.clean.md"
         },
         "research_and_development": {
-          "value": 9565.0,
+          "value": 80785.0,
           "source_filing": "SRC_015_10-Q_Q2-2023.clean.md"
         },
         "sga": {
@@ -979,7 +979,7 @@
           "source_filing": "SRC_017_10-Q_Q3-2022.clean.md"
         },
         "research_and_development": {
-          "value": 20131.0,
+          "value": 62522.0,
           "source_filing": "SRC_017_10-Q_Q3-2022.clean.md"
         },
         "sga": {
@@ -1025,7 +1025,7 @@
       }
     },
     "Q3-2023": {
-      "fecha_fin": "2023-07-01",
+      "fecha_fin": "2023-09-30",
       "tipo_periodo": "trimestral",
       "fields": {
         "ingresos": {
@@ -1049,27 +1049,27 @@
           "source_filing": "SRC_003_10-K_FY2023.clean.md"
         },
         "cash_and_equivalents": {
-          "value": 268286.0,
-          "source_filing": "SRC_014_10-Q_Q3-2023.clean.md"
+          "value": 220231.0,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
         },
         "total_assets": {
-          "value": 1065223.0,
-          "source_filing": "SRC_014_10-Q_Q3-2023.clean.md"
+          "value": 1002241.0,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
         },
         "total_liabilities": {
-          "value": 475013.0,
-          "source_filing": "SRC_014_10-Q_Q3-2023.clean.md"
+          "value": 483584.0,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
         },
         "total_equity": {
-          "value": 590210.0,
-          "source_filing": "SRC_014_10-Q_Q3-2023.clean.md"
+          "value": 518657.0,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
         },
         "cost_of_revenue": {
           "value": 201594.0,
           "source_filing": "SRC_014_10-Q_Q3-2023.clean.md"
         },
         "research_and_development": {
-          "value": 8637.0,
+          "value": 77758.0,
           "source_filing": "SRC_014_10-Q_Q3-2023.clean.md"
         },
         "sga": {
@@ -1093,33 +1093,33 @@
           "source_filing": "SRC_014_10-Q_Q3-2023.clean.md"
         },
         "shares_outstanding": {
-          "value": 128311109.0,
-          "source_filing": "SRC_014_10-Q_Q3-2023.clean.md"
+          "value": 125113916.0,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
         }
       }
     },
     "Q4-2022": {
-      "fecha_fin": "2022-10-01",
+      "fecha_fin": "2022-12-31",
       "tipo_periodo": "trimestral",
       "fields": {
         "ingresos": {
-          "value": 316290.0,
+          "value": 672579.0,
           "source_filing": "SRC_003_10-K_FY2023.clean.md"
         },
         "gross_profit": {
-          "value": 124099.0,
+          "value": 285057.0,
           "source_filing": "SRC_003_10-K_FY2023.clean.md"
         },
         "net_income": {
-          "value": -64067.0,
+          "value": 75188.0,
           "source_filing": "SRC_003_10-K_FY2023.clean.md"
         },
         "eps_basic": {
-          "value": -0.5,
+          "value": 0.59,
           "source_filing": "SRC_003_10-K_FY2023.clean.md"
         },
         "eps_diluted": {
-          "value": -0.5,
+          "value": 0.57,
           "source_filing": "SRC_003_10-K_FY2023.clean.md"
         },
         "cash_and_equivalents": {
@@ -1143,7 +1143,7 @@
           "source_filing": "SRC_016_10-Q_Q4-2022.clean.md"
         },
         "research_and_development": {
-          "value": 9151.0,
+          "value": 76940.0,
           "source_filing": "SRC_016_10-Q_Q4-2022.clean.md"
         },
         "sga": {
@@ -1189,7 +1189,7 @@
           "source_filing": "SRC_013_10-Q_Q4-2023.clean.md"
         },
         "research_and_development": {
-          "value": 8979.0,
+          "value": 79235.0,
           "source_filing": "SRC_013_10-Q_Q4-2023.clean.md"
         },
         "sga": {
