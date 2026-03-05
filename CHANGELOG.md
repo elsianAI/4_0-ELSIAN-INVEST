@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-03-08
+
+### [4.0] hotfix — BL-043 regressions (TEP, SOM, ACLS, 0327 alias collision)
+- **What:** Fixed 4 tickers failing after BL-043. Root causes: (1) BL-043 added sub-component D&A aliases without US-spelling priority, causing low-quality ROU sub-component to beat total D&A in non-additive mode (TEP). (2) Bare "basic"/"diluted" alias collision: moved from `shares_outstanding` to `eps_basic/eps_diluted` broke SOM (PDF uses bare "Basic: 55M" for shares count). (3) Rescaled iXBRL value (3.9M → 3900K) from 10-Q beating exact 8-K value for ACLS Q2-2024 D&A.
+- **Fix 1 — D&A priority US spelling (aliases.py):** Added `_PRIORITY_PATTERNS["depreciation_amortization"]` including US-spelling variants (`depreciation.{1,60}amortization`, `amortization.{1,60}depreciation`, `depletion.{1,60}amortization`) alongside existing UK/FR patterns. Total D&A rows now get priority=50–100, beating sub-component rows (priority=0). Fixes TEP: "Depreciation, amortization and related impairment losses" (266/293) wins over "Depreciation of right-of-use assets" (201/249).
+- **Fix 2 — Leading-en-dash normalization (aliases.py + field_aliases.json):** `_normalize()` now detects LEADING en-dash/em-dash BEFORE removing punctuation and re-prefixes normalized string with "–". This makes "– Basic" normalize to "–basic" (distinct from bare "Basic" → "basic"). Restored "– basic" to `eps_basic` and "– diluted" to `eps_diluted` aliases; bare "basic" stays only in `shares_outstanding`. Resolves the 0327 vs SOM collision: 0327's PDF "– Basic: 0.669" → eps_basic ✓; SOM's PDF "Basic: 55M" → shares_outstanding ✓.
+- **Fix 3 — Rescaled iXBRL quality override (merger.py):** When the existing candidate has `_ixbrl_was_rescaled=True` (imprecise round-millions value) and the incoming candidate has `_ixbrl_was_rescaled=False` (exact value), prefer the exact value even from a lower filing-type priority (e.g. 8-K vs 10-Q). Fixes ACLS Q2-2024/depreciation_amortization: 3861 (8-K exact) beats 3900 (10-Q rounded 3.9M).
+- **Files changed:** `elsian/normalize/aliases.py`, `config/field_aliases.json`, `elsian/merge/merger.py`.
+- **Tests:** 1169 passed, 0 failed.
+- **Regression:** eval --all: 14/15 PASS. SONO pre-existing curation issue (fiscal vs calendar quarter labels in expected.json), not caused by BL-043.
+
 ## 2026-03-07
 
 ### [4.0] BL-043 — 0327 (PAX Global Technology): 86.44% → 100% (59/59)

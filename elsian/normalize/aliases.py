@@ -272,6 +272,23 @@ _PRIORITY_PATTERNS: Dict[str, List[re.Pattern]] = {
     "eps_basic": [
         re.compile(r"\bincome\s+per\s+share\b", re.I),
     ],
+    # Comprehensive D&A labels (combining *both* depreciation AND
+    # amortisation/amortization) represent the total charge and must beat
+    # individual sub-component rows ("Depreciation of PPE",
+    # "Amortisation of intangible assets") when both exist in a filing.
+    # Sub-component aliases were added for HKFRS additive accumulation
+    # (0327/PAX Global) but must not win over the total in non-additive
+    # mode (TEP, SOM, ACLS, etc.).  Priority 50+ ensures the total wins.
+    "depreciation_amortization": [
+        re.compile(r"depreciation.{1,60}amortis[ae]tion", re.I),   # UK/FR spelling
+        re.compile(r"depreciation.{1,60}amortization", re.I),       # US spelling
+        re.compile(r"amortis[ae]tion.{1,60}depreciation", re.I),   # UK reverse
+        re.compile(r"amortization.{1,60}depreciation", re.I),       # US reverse
+        re.compile(r"^d[d]?&?a\b", re.I),          # "D&A" / "DD&A" abbreviations
+        re.compile(r"\bdd&a\b", re.I),              # "DD&A" spelled out
+        re.compile(r"depletion.{1,60}amortis[ae]tion", re.I),  # E&P "DD&A" UK/FR
+        re.compile(r"depletion.{1,60}amortization", re.I),      # E&P "DD&A" US
+    ],
 }
 
 
@@ -316,6 +333,12 @@ class AliasResolver:
     def _normalize(text: str) -> str:
         """Normalize a label for matching."""
         text = text.lower().strip()
+        # Detect a leading en-dash / em-dash BEFORE removing punctuation.
+        # Labels starting with "–" or "—" are sub-items in multi-level tables
+        # (e.g. "– Basic" under an "Earnings per share" heading).  Preserving
+        # a "–" prefix keeps "– basic" resolved to a DIFFERENT lookup key than
+        # bare "basic", so eps_basic and shares_outstanding don't collide.
+        _has_dash_prefix = text.startswith(("\u2014", "\u2013"))
         # Remove parenthetical qualifiers that add noise to financial labels.
         # E.g. "Net income (loss) per share" → "Net income  per share"
         text = re.sub(
@@ -334,6 +357,9 @@ class AliasResolver:
         text = re.sub(r"['\'\u02BC\u2018\u2019\u201C\u201D\",():/\u2014\u2013]", " ", text)
         # Collapse whitespace
         text = re.sub(r"\s+", " ", text).strip()
+        # Restore leading dash prefix so "– basic" and "basic" are distinct keys.
+        if _has_dash_prefix:
+            text = "\u2013" + text
         return text
 
     @staticmethod

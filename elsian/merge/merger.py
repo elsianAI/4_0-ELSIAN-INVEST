@@ -124,8 +124,25 @@ def merge_extractions(
                         fields_discarded += 1
                         discard_reasons.append("duplicate_conflict")
                     else:
-                        fields_discarded += 1
-                        discard_reasons.append("duplicate_conflict")
+                        # Normally keep existing (higher filing-type priority wins).
+                        # Exception: if existing is a rescaled iXBRL value (low precision,
+                        # e.g. 3.9M tag in a thousands-denominated filing → 3,900K) while
+                        # the new candidate is an exact (non-rescaled) value from a table or
+                        # narrative source, prefer the exact value even though it comes from a
+                        # lower-priority filing type (e.g. 8-K earnings table vs 10-Q iXBRL).
+                        existing_rescaled = getattr(
+                            existing, "_ixbrl_was_rescaled", False
+                        )
+                        new_rescaled = getattr(
+                            field_result, "_ixbrl_was_rescaled", False
+                        )
+                        if existing_rescaled and not new_rescaled:
+                            merged_periods[period_key][field_name] = field_result
+                            fields_discarded += 1
+                            discard_reasons.append("quality_override_rescaled")
+                        else:
+                            fields_discarded += 1
+                            discard_reasons.append("duplicate_conflict")
 
     # Build result
     result = ExtractionResult(

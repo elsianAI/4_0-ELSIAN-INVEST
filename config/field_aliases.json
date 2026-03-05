@@ -124,7 +124,6 @@
   },
   "eps_basic": {
     "aliases": [
-      "basic",
       "– basic",
       "basic earnings per share",
       "basic eps",
@@ -153,7 +152,6 @@
   },
   "eps_diluted": {
     "aliases": [
-      "diluted",
       "– diluted",
       "diluted earnings per share",
       "diluted eps",
@@ -352,7 +350,8 @@
       "basic weighted average shares of common stock",
       "basic weighted average common shares",
       "basic weighted shares outstanding",
-      "weighted average number of common shares outstanding"
+      "weighted average number of common shares outstanding",
+      "basic"
     ],
     "multiplier": null
   },
