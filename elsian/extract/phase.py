@@ -546,7 +546,20 @@ class ExtractPhase(PipelinePhase):
         if case_overrides and isinstance(case_overrides, dict):
             rules.update(case_overrides)
 
+        # Per-case additive_fields: temporarily promote specific canonical
+        # fields to additive accumulation for this case only.  This allows
+        # filings that report D&A as separate sub-components (PPE, ROU,
+        # intangibles) to sum them to the total without changing the global
+        # field_aliases.json setting (which would break tickers that have
+        # a single D&A row from multiple filing sections).
+        _case_additive = set(config.get("additive_fields", []))
+        _orig_additive = set(self._alias_resolver._additive)
+        if _case_additive:
+            self._alias_resolver._additive = _orig_additive | _case_additive
+
         if not filings_dir.exists() or not any(filings_dir.iterdir()):
+            if _case_additive:
+                self._alias_resolver._additive = _orig_additive
             return ExtractionResult(ticker=ticker, currency=currency, filings_used=0)
 
         audit = AuditLog()
@@ -670,6 +683,11 @@ class ExtractPhase(PipelinePhase):
         # extractor could not find (e.g. corrupted PDF sources). If the
         # extractor already produced a value, it always wins.
         self._apply_manual_overrides(config, result)
+
+        # Restore the alias resolver's original additive set before returning
+        # so that per-case additive_fields don't leak into subsequent cases.
+        if _case_additive:
+            self._alias_resolver._additive = _orig_additive
 
         # Update audit
         result.audit.fields_extracted += audit.accepted_count

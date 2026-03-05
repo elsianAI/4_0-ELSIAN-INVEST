@@ -1107,6 +1107,35 @@ _SECTION_HEADER_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Secondary section header pattern for HKFRS/HKEX annual report notes.
+# These follow the format "N  SECTION TITLE  N" (numbered note prefix).
+# Matching REQUIRES a 1-2 digit number at the very start of the stripped
+# line — this prevents false positives on SEC-style headers like
+# "NOTE 12 — Earnings Per Share" (which start with "NOTE", not a digit).
+_HKFRS_NOTE_HEADER_RE = re.compile(
+    r"^\d{1,2}\s+(?:SEGMENT\s+INFORMATION|EXPENSES?\s+BY\s+NATURE|"
+    r"EARNINGS\s+PER\s+SHARE|DIVIDENDS?)\b",
+    re.IGNORECASE,
+)
+
+# Regex that matches text-before-the-keyword that indicates a narrative sentence
+# rather than a true section header.  Used in the first-pass and second-pass
+# section detection to filter out lines like:
+#   "The consolidated income statement shows the following"     (prefix "The")
+#   "Group's consolidated balance sheet (…"                    (prefix "Group's")
+#   "産負債表、• the consolidated income statement …"           (CJK prefix)
+# The pattern matches:
+#   – Leading common articles / prepositions (the, in, of, from, at, …)
+#   – Company-reference words (group, our, its)
+#   – Any CJK / bullet character in the prefix
+_NARRATIVE_PREFIX_RE = re.compile(
+    r"^(?:the|in\s+the|of\s+the|to\s+the|from\s+the|from|"
+    r"a|an|in|on|at|for|by|our|its|"
+    r"group[\W]?s|group)(?:\s|$)|"
+    r"[\u2022\u25cf\u00b7\u25e6\u4e00-\u9fff\u3000-\u303f]",
+    re.IGNORECASE | re.UNICODE,
+)
+
 # Section-type detection for source_location tagging
 _IS_KEYWORDS = re.compile(
     r"INCOME\s+STATEMENTS?|STATEMENTS?\s+OF\s+(?:OPERATIONS|INCOME)|PROFIT\s+(?:AND|OR)\s+LOSS",
@@ -1452,13 +1481,69 @@ def _extract_space_aligned_table(
             if stripped and not stripped.startswith("---") and not stripped.startswith("==="):
                 # Strip trailing note references like "  6(a)"
                 clean = re.sub(r'\s+\d{1,2}\s*\([a-z]+\)\s*$', '', stripped)
-                if clean:
+                # Only update prev_text_line when the line contains English
+                # characters.  Bilingual PDFs (e.g. HKFRS annual reports) have
+                # interleaved Chinese-only lines that translate the preceding
+                # English label — they must NOT clobber the English fragment
+                # being accumulated for multi-line label assembly.
+                if clean and re.search(r'[a-zA-Z]', clean):
                     prev_text_line = clean
+                # else: Chinese-only line — keep prev_text_line unchanged
             continue
+
+        # HKFRS/bilingual annual report pattern: bare note integer at end of
+        # label line.  Example:
+        #   line:  "Depreciation of property, plant and equipment 14"
+        #   values: "(Note 14)                                   63,673 28,235"
+        # The "14" is a note cross-reference, not a data value.  Detect by:
+        #   – exactly one number on the line
+        #   – small integer 1–99
+        #   – ends well before the first column anchor (note ref, not data)
+        # Treat the line as text-only so prev_text_line is set correctly for
+        # the subsequent value line.
+        if (
+            note_col_end <= 0
+            and col_anchors
+            and len(num_matches) == 1
+        ):
+            m0 = num_matches[0]
+            raw0 = m0.group().replace(",", "")
+            try:
+                v0 = float(raw0)
+            except ValueError:
+                v0 = None
+            if (
+                v0 is not None
+                and 1 <= v0 <= 99
+                and v0 == int(v0)
+                and m0.end() < col_anchors[0] - 5
+            ):
+                # Bare note reference — treat line as text-only
+                if stripped and not stripped.startswith("---") and not stripped.startswith("==="):
+                    clean = re.sub(r'\s+\d{1,2}\s*\([a-z]+\)\s*$', '', stripped)
+                    clean = re.sub(r'\s+\d{1,2}\s*$', '', clean)  # strip trailing note integer
+                    if clean and re.search(r'[a-zA-Z]', clean):
+                        prev_text_line = clean
+                continue
 
         # The label is everything before the first number
         first_num_start = num_matches[0].start()
         label = line[:first_num_start].strip()
+
+        # HKFRS/bilingual pattern: label is a partial note reference "(Note".
+        # This happens when "14" in "(Note 14)" is the first_num in the line,
+        # so line[:pos].strip() gives "(Note" — an empty semantic label.
+        # Treat as empty so prev_text_line is used for multi-line assembly.
+        if note_col_end <= 0 and re.fullmatch(r'\(?notes?', label, re.IGNORECASE):
+            label = ""
+
+        # Strip trailing partial note references from the label.  This handles
+        # the bilingual HKFRS pattern where "(Note 14)" spans two lines and
+        # first_num_start falls on the digit, leaving the label truncated at
+        # "(Note".  Also handles the single-line form "(Note N" without ")".
+        # Examples:  "Depreciation of right-of-use assets (Note" → "…assets"
+        #            "(Note"                                       → ""
+        label = re.sub(r'\s*\(\s*note\b[^)]*$', '', label, flags=re.IGNORECASE).strip()
 
         # Multi-line label continuation: if label starts lowercase,
         # it's likely a continuation of the previous text-only line
@@ -1561,6 +1646,109 @@ def _extract_space_aligned_table(
     return results
 
 
+# ── HKFRS DPS narrative extractor ───────────────────────────────────────────
+# HKFRS bilingual annual reports state the total dividend per ordinary share
+# in a narrative sentence: "total dividend per ordinary share amounted to
+# HK$0.44 (2022: HK$0.36)".  Because the text is interleaved with Chinese
+# lines, the sentence spans several raw lines and cannot be matched by the
+# section-based table extractor.  We filter to English-dominant lines and
+# scan across them.
+
+_DPS_HKFRS_TRIGGER_RE = re.compile(
+    r"total\s+dividend\s+per\s+(?:ordinary\s+)?(?:common\s+)?share",
+    re.IGNORECASE,
+)
+_DPS_HKFRS_VALUE_RE = re.compile(
+    r"HK\$\s*(\d+\.\d+)\s*(?:\((\d{4})[:\s]+HK\$\s*(\d+\.\d+)\))?",
+    re.IGNORECASE,
+)
+_CJK_CHAR_RE = re.compile(
+    r"[\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF\u3000-\u303F]"
+)
+
+
+def _extract_hkfrs_dps_narrative(
+    text: str, source_filename: str = ""
+) -> List[TableField]:
+    """Extract total DPS from HKFRS bilingual annual report narrative text.
+
+    In bilingual (English + Chinese) HKFRS annual reports, the total dividend
+    per ordinary share is stated in narrative form across bilingual-interleaved
+    lines.  This function filters to English-dominant lines, joins them, and
+    extracts the current-year and (optionally) prior-year per-share amounts.
+
+    Args:
+        text: Full plain-text content of a filing.
+        source_filename: Filename used to infer the filing year (e.g.
+            "SRC_002_AR_FY2023.txt" → filing_year = 2023).
+
+    Returns:
+        List of TableField with label "total dividend per ordinary share",
+        one entry per detected year.
+    """
+    fy_m = re.search(r"FY(\d{4})", source_filename, re.IGNORECASE)
+    if not fy_m:
+        return []
+    filing_year = int(fy_m.group(1))
+
+    # Build list of English-dominant lines (skip lines that are mostly CJK)
+    english_lines: list[tuple[int, str]] = [
+        (i, ln)
+        for i, ln in enumerate(text.split("\n"))
+        if len(_CJK_CHAR_RE.findall(ln)) < 4
+    ]
+
+    results: List[TableField] = []
+    for ei, (li, line) in enumerate(english_lines):
+        if not _DPS_HKFRS_TRIGGER_RE.search(line):
+            continue
+        # Join this and up to 5 subsequent English lines to span across
+        # any bilingual interleaving.
+        window = " ".join(el for _, el in english_lines[ei : ei + 6])
+        m = _DPS_HKFRS_VALUE_RE.search(window)
+        if not m:
+            continue
+
+        current_period = f"FY{filing_year}"
+        loc = f"{source_filename}:dps_hkfrs_narrative:line{li}"
+        results.append(
+            TableField(
+                label="total dividend per ordinary share",
+                value=float(m.group(1)),
+                column_header=current_period,
+                source_location=loc,
+                raw_text=m.group(0),
+                col_label=current_period,
+                table_title="dividends_narrative",
+                row_idx=li,
+                col_idx=0,
+                table_index=999,
+            )
+        )
+
+        # Extract prior-year value from "(YYYY: HK$X.XX)" when present
+        if m.group(2) and m.group(3):
+            prior_period = f"FY{m.group(2)}"
+            results.append(
+                TableField(
+                    label="total dividend per ordinary share",
+                    value=float(m.group(3)),
+                    column_header=prior_period,
+                    source_location=f"{source_filename}:dps_hkfrs_narrative_comparative:line{li}",
+                    raw_text=m.group(0),
+                    col_label=prior_period,
+                    table_title="dividends_narrative",
+                    row_idx=li,
+                    col_idx=1,
+                    table_index=999,
+                )
+            )
+
+        break  # Only process the first match per filing
+
+    return results
+
+
 def extract_tables_from_text(
     text: str, source_filename: str = "",
 ) -> List[TableField]:
@@ -1579,16 +1767,32 @@ def extract_tables_from_text(
     # TOC entries (ending with a page number) are excluded.
     _PC_SECTION_RE = re.compile(
         r"^\d+\.\d+\.?\s+(?:parent\s+company|comptes\s+sociaux)"
-        r"|^Schedule\s+I[.\s\u2014\u2013-]",
+        r"|^Schedule\s+I[.\s\u2014\u2013-]"
+        # HK-style parent company standalone FS: a numbered note header
+        # whose title contains "BALANCE SHEET AND RESERVES" — this is
+        # characteristic of HK annual reports where section numbers are
+        # repeated at both the left and right margin of the header line
+        # (e.g. "34  BALANCE SHEET AND RESERVES MOVEMENT OF 34").
+        r"|^\d{1,2}\s+balance\s+sheet\s+and\s+reserves",
         re.IGNORECASE,
     )
     parent_company_zone_start = len(lines)  # default: no zone
     for i, line in enumerate(lines):
         stripped = line.strip()
         if _PC_SECTION_RE.match(stripped):
-            # Skip TOC entries that end with a page number
+            # Skip TOC entries that end with a page number.
+            # Exception: some PDF converters repeat the section number at
+            # the RIGHT margin of the header line (e.g. "34  BALANCE SHEET
+            # AND RESERVES MOVEMENT OF 34" where both "34"s are the section
+            # number, not a page number).  Detect this by comparing the
+            # leading digit(s) with the trailing digit(s).
             if re.search(r"\b\d{1,4}\s*$", stripped):
-                continue
+                m_start = re.match(r"^(\d+)", stripped)
+                m_end = re.search(r"\b(\d+)\s*$", stripped)
+                if m_start and m_end and m_start.group(1) == m_end.group(1):
+                    pass  # Section number repeated at right margin — not a page ref
+                else:
+                    continue
             # Skip TOC entries where the next 1-2 lines contain a page
             # reference like "F-\n43" (SEC filing index format).
             is_toc_entry = False
@@ -1628,16 +1832,43 @@ def extract_tables_from_text(
     for i, line in enumerate(lines):
         stripped = line.strip()
         m = _SECTION_HEADER_RE.search(stripped)
+        is_hkfrs_note = False
         if not m or len(stripped) > 120:
-            continue
-        # Require the match to start near the beginning of the line
-        # (real headers have the keyword within the first ~15 chars;
-        # notes paragraphs mention these terms much further in).
-        if m.start() > 15:
-            continue
+            # Secondary: check for HKFRS/HKEX numbered-note headers.
+            # These require a 1-2 digit number at the very start of the
+            # stripped line (e.g. "6  SEGMENT INFORMATION  6") to avoid
+            # matching SEC-style "NOTE 12 — Earnings Per Share".
+            if _HKFRS_NOTE_HEADER_RE.match(stripped) and len(stripped) <= 120:
+                is_hkfrs_note = True
+            else:
+                continue
+        if not is_hkfrs_note:
+            # Require the match to start near the beginning of the line
+            # (real headers have the keyword within the first ~15 chars;
+            # notes paragraphs mention these terms much further in).
+            if m.start() > 15:
+                continue
         # Skip narrative sentences that happen to contain section keywords
-        if stripped.endswith("."):
+        if stripped.endswith(".") or stripped[-1:] in (":", "\uff1a", "\u3002"):
             continue
+        # Skip lines that start with a lowercase letter — they are mid-sentence
+        # continuations, not section headers.  Real headers use Title Case or
+        # ALL CAPS (e.g. "Consolidated Income Statement", "BALANCE SHEET").
+        if stripped and stripped[0].islower():
+            continue
+        # Skip bullet-point list items that mention financial statement names.
+        if stripped[:1] in ("\u2022", "\u25cf", "\u00b7", "\u25e6", "\u2013", "\u2014"):
+            continue
+        # Skip narrative sentences where a common article/preposition appears
+        # before the section keyword (m.start() > 0 and prefix is a filler
+        # word like "the", "in", "from", "Group's", etc.).  Real section
+        # headers begin directly with the keyword or with a section number.
+        # Example: "The consolidated income statement shows the following"
+        #   → m.start()=4, prefix="The " → narrative sentence, skip.
+        if m is not None and m.start() > 0:
+            prefix = stripped[:m.start()].strip()
+            if _NARRATIVE_PREFIX_RE.search(prefix):
+                continue
         # Skip everything in the exclusion zones (notes + parent company)
         if i >= exclusion_zone_start:
             continue
@@ -1674,6 +1905,21 @@ def extract_tables_from_text(
                 continue
             m = _SECTION_HEADER_RE.search(combined_norm)
             if m and m.start() <= 15:
+                # Skip narrative lead-ins: ends with sentence-terminator or
+                # colon (incl. full-width variants used in bilingual filings);
+                # starts with lowercase; starts with a bullet character; or has
+                # a common narrative article/preposition before the keyword.
+                _cn_last = combined_norm[-1:]
+                if _cn_last in (".", ":", "\uff1a", "\u3002"):
+                    break
+                if combined_norm and combined_norm[0].islower():
+                    break
+                if combined_norm[:1] in ("\u2022", "\u25cf", "\u00b7"):
+                    break
+                if m.start() > 0:
+                    _pfx = combined_norm[:m.start()].strip()
+                    if _NARRATIVE_PREFIX_RE.search(_pfx):
+                        break
                 context_start = max(0, i - 21)
                 context = " ".join(
                     lines[j].lower() for j in range(context_start, i - 1)
@@ -1799,12 +2045,21 @@ def extract_tables_from_text(
                     if ym.start() > label_area_end
                 ]
                 if len(data_years) >= 2:
-                    header_end_positions = []
-                    for dy_idx, dy in enumerate(data_years):
-                        period_headers[dy_idx] = f"FY{dy.group(1)}"
-                        header_end_positions.append(dy.end())
-                    header_line_idx = j
-                    break
+                    # Guard: years that appear in a narrative sentence (e.g.
+                    # "For the years ended 31 December 2024 and 2023") must
+                    # not be treated as column headers.  A true column header
+                    # has only whitespace (or punctuation) between year tokens.
+                    _narrative_years = any(
+                        re.search(r"[a-zA-Z]", sline[data_years[k].end():data_years[k + 1].start()])
+                        for k in range(len(data_years) - 1)
+                    )
+                    if not _narrative_years:
+                        header_end_positions = []
+                        for dy_idx, dy in enumerate(data_years):
+                            period_headers[dy_idx] = f"FY{dy.group(1)}"
+                            header_end_positions.append(dy.end())
+                        header_line_idx = j
+                        break
 
         if not period_headers or header_line_idx < 0:
             # Try abbreviated date headers: "31 DEC 25  31 DEC 24"
@@ -1831,6 +2086,57 @@ def extract_tables_from_text(
                         break
 
         if not period_headers or header_line_idx < 0:
+            # HKFRS segment-information single-year path.  These sections
+            # have "Year ended 31 December YYYY" as a single-year header
+            # (one column per geographic segment + rightmost "Total" column).
+            # When the standard ≥2-year detection finds nothing, attempt to
+            # extract EBITDA/LBITDA rows by assigning the rightmost number
+            # (= the "Total" column) to the stated year.  This handles HKEX-
+            # listed companies that report segment-level EBITDA only in the
+            # notes, not in the consolidated IS or CF statement.
+            _is_seg = re.search(r"\bsegment\b.*\binformation\b", header_text, re.IGNORECASE)
+            if _is_seg:
+                _seg_year_str: Optional[str] = None
+                for _sl in section_lines[:12]:
+                    _ym = list(re.finditer(r'\b(20[12]\d)\b', _sl))
+                    _lae = len(_sl) // 3
+                    _dy = [m for m in _ym if m.start() > _lae]
+                    if len(_dy) == 1:
+                        _seg_year_str = _dy[0].group(1)
+                        break
+                if _seg_year_str:
+                    _seg_period = f"FY{_seg_year_str}"
+                    _EBITDA_LBITDA_RE = re.compile(r'\bEBITDA\b|\bLBITDA\b', re.IGNORECASE)
+                    for _ri, _sl in enumerate(section_lines):
+                        if not _EBITDA_LBITDA_RE.search(_sl):
+                            continue
+                        _nms = list(_NUM_TOKEN_RE.finditer(_sl))
+                        if not _nms:
+                            continue
+                        # Raw label: text to the left of the first number
+                        _raw_lbl = _sl[:_nms[0].start()].strip()
+                        # Rightmost number = "Total" column
+                        _rmost = _nms[-1]
+                        _val = parse_number(_rmost.group())
+                        if _val is None:
+                            continue
+                        _loc = (
+                            f"{source_filename}:table:segment_information:"
+                            f"tbl{global_tbl_idx}:row{_ri}:col0"
+                        )
+                        all_fields.append(TableField(
+                            label=_raw_lbl,
+                            value=_val,
+                            column_header=_seg_period,
+                            source_location=_loc,
+                            raw_text=_rmost.group(),
+                            col_label=_seg_period,
+                            table_title="segment_information",
+                            row_idx=_ri,
+                            col_idx=0,
+                            table_index=global_tbl_idx,
+                        ))
+                    global_tbl_idx += 1
             continue
 
         # Data lines start after the header line
@@ -1940,5 +2246,11 @@ def extract_tables_from_text(
         )
         global_tbl_idx += 1
         all_fields.extend(fields)
+
+    # HKFRS bilingual annual report: extract total dividend per ordinary share
+    # from narrative text.  This handles the case where the per-share total
+    # appears only in narrative form across bilingual-interleaved lines and
+    # cannot be found in any structured table.
+    all_fields.extend(_extract_hkfrs_dps_narrative(text, source_filename))
 
     return all_fields

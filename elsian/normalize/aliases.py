@@ -194,8 +194,11 @@ _REJECT_PATTERNS: Dict[str, List[re.Pattern]] = {
         re.compile(r"net\s+financial\s+interest", re.I),
     ],
     "depreciation_amortization": [
-        re.compile(r"right-of-use", re.I),
-        re.compile(r"right[\s-]?of[\s-]?use", re.I),
+        # Block "Right-of-use assets" (balance-sheet asset line) which is not
+        # a D&A charge.  Only block when the label STARTS with "right-of-use"
+        # so that "Depreciation of right-of-use assets" (a legitimate D&A
+        # component in HKFRS/IFRS expense-by-nature disclosures) is allowed.
+        re.compile(r"^right[\s-]?of[\s-]?use", re.I),
         re.compile(r"intangible\s+assets\s+acquired", re.I),
         # Reject the balance-sheet contra-asset row ("Accumulated depreciation,
         # depletion and amortization") — it carries a cumulative stock value,
@@ -319,6 +322,11 @@ class AliasResolver:
             r"\(\s*(?:loss|benefit(?:\s+from)?|deficit|expense|income|used\s+in)\s*\)",
             "", text,
         )
+        # Strip inter-statement cross-references like "(Note 7)" or "(Note 14)".
+        # These appear in HKFRS/IFRS annual report tables as footnote markers
+        # alongside otherwise clean labels (e.g. "Depreciation (Note 7)") and
+        # should not affect alias matching.
+        text = re.sub(r"\(\s*note\s+\d+\)\s*", "", text, flags=re.IGNORECASE)
         # Replace common punctuation with space (not just remove) so that
         # "share—basic" becomes "share basic" not "sharebasic".
         # Also normalise U+02BC (modifier letter apostrophe, used in SEC filings

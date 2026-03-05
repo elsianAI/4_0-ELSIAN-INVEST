@@ -60,7 +60,8 @@
       "ebitda",
       "adjusted ebitda",
       "operating ebitda",
-      "ebitda ajustado"
+      "ebitda ajustado",
+      "ebitda lbitda"
     ],
     "multiplier": null
   },
@@ -123,6 +124,8 @@
   },
   "eps_basic": {
     "aliases": [
+      "basic",
+      "– basic",
       "basic earnings per share",
       "basic eps",
       "earnings per share - basic",
@@ -150,6 +153,8 @@
   },
   "eps_diluted": {
     "aliases": [
+      "diluted",
+      "– diluted",
       "diluted earnings per share",
       "diluted eps",
       "earnings per share - diluted",
@@ -197,12 +202,10 @@
       "total liabilities",
       "total passif",
       "total pasivo",
-      "total debt and liabilities",
-      "total non-current liabilities",
-      "total current liabilities"
+      "total debt and liabilities"
     ],
     "multiplier": null,
-    "additive": true
+    "additive": false
   },
   "total_equity": {
     "aliases": [
@@ -316,7 +319,9 @@
       "dividend per share",
       "cash dividends per share",
       "dps",
-      "dividende par action"
+      "dividende par action",
+      "total dividend per ordinary share",
+      "total dividend per common share"
     ],
     "multiplier": null
   },
@@ -347,13 +352,13 @@
       "basic weighted average shares of common stock",
       "basic weighted average common shares",
       "basic weighted shares outstanding",
-      "weighted average number of common shares outstanding",
-      "basic"
+      "weighted average number of common shares outstanding"
     ],
     "multiplier": null
   },
   "research_and_development": {
     "aliases": [
+      "research and development costs",
       "research and development",
       "r&d",
       "r&d expense",
@@ -401,7 +406,12 @@
       "depreciation and amortisation",
       "depreciation & amortisation",
       "depreciation, depletion and amortisation",
-      "depreciation depletion and amortisation"
+      "depreciation depletion and amortisation",
+      "amortisation",
+      "depreciation of property, plant and equipment",
+      "depreciation of right-of-use assets",
+      "amortisation of intangible assets",
+      "amortization of intangible assets"
     ],
     "multiplier": null
   },
