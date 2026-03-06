@@ -1,7 +1,7 @@
 # ELSIAN 4.0 — Roles y Runtime Multiagente
 
 > Fuente de verdad versionada para los roles `director`, `engineer` y `auditor`.
-> El runtime multiagente de Codex es infraestructura, no un cuarto rol del dominio.
+> El `orchestrator` es infraestructura de runtime, no un cuarto rol del dominio.
 > Si este documento contradice `VISION.md` o `docs/project/DECISIONS.md`, prevalecen esos documentos.
 
 ## 1. Modelo del sistema
@@ -12,14 +12,10 @@ ELSIAN 4.0 usa tres roles de negocio:
 - `engineer`: implementa cambios tecnicos dentro del alcance permitido.
 - `auditor`: verifica de forma independiente y findings-first.
 
-El sistema puede ejecutarse en dos modos:
+El sistema puede usarse de dos formas:
 
-- **Orquestado**: un padre neutral de runtime clasifica la peticion, lanza hijos directos, ejecuta gates y agrega resultados.
-- **No orquestado**: Elsian invoca un rol concreto de forma directa.
-
-Ademas existe un entrypoint explicito de runtime:
-
-- **Kickoff**: briefing read-only de arranque de sesion. No es un rol de negocio y no sustituye al `director`.
+- **Orchestrator explicito**: entrypoint principal para briefing, planificacion o ejecucion end-to-end.
+- **Roles directos**: uso experto de `director`, `engineer`, `auditor` o `kickoff` cuando Elsian quiere controlar manualmente el flujo.
 
 Reglas estructurales:
 
@@ -28,9 +24,25 @@ Reglas estructurales:
 - Si `spawn_agent` falla porque no puede forkear el thread actual, el padre debe reintentar con un prompt standalone autosuficiente.
 - Los hijos no auto-orquestan. Preparan salida de rol. El padre decide el siguiente paso.
 
+### Orchestrator entrypoint
+
+`orchestrator` es la entrada principal del sistema. Puede operar en tres modos:
+
+- **Briefing**: usa `kickoff` internamente, devuelve contexto real del repo y termina sin mutar.
+- **Planificacion**: usa `kickoff` internamente y, si hace falta empaquetar mejor la siguiente tarea, puede invocar `director`. Sigue siendo read-only.
+- **Ejecucion**: hace preflight, decide la ruta segun este documento, y ejecuta `director -> engineer -> gates -> auditor` o la variante minima correcta.
+
+**Reglas**
+
+- No es un rol de negocio.
+- No redefine contratos, routing, gates ni Vision Enforcement.
+- No implementa codigo directamente ni sustituye el juicio del `auditor`.
+- En `briefing` y `planificacion` no muta nada.
+- En `ejecucion` puede mutar solo a traves de los hijos correctos y de los gates del padre.
+
 ### Kickoff entrypoint
 
-`kickoff` sirve para abrir una sesion nueva con contexto real del repo antes de ejecutar trabajo. Es explicito: solo se activa cuando Elsian pide briefing, preflight o estado de sesion.
+`kickoff` es un briefing read-only reutilizable por el `orchestrator` y tambien un comando experto para Elsian cuando quiere solo contexto, sin orquestacion ni ejecucion.
 
 **Lee siempre**
 
@@ -69,6 +81,7 @@ Reglas estructurales:
   - `engineer -> gates -> auditor`
   - `auditor`
 - `Prompt recomendado` debe ser copiable y coherente con la ruta recomendada.
+- Si `kickoff` se usa dentro de `orchestrator`, el prompt recomendado debe ser reutilizable por `orchestrator`, no por `kickoff`.
 
 ## 2. Contratos por rol
 
@@ -339,13 +352,14 @@ Los gates los ejecuta siempre el padre neutral, no los hijos.
   - trabajo actual: `docs/project/MODULE_1_ENGINEER_CONTEXT.md`
 - Las implementaciones operativas deben mantenerse coherentes con este documento:
   - skills locales de Codex en `$CODEX_HOME/skills/`;
-  - el kickoff explicito de Codex en `$CODEX_HOME/skills/elsian-kickoff/`;
+  - el orquestador explicito de Codex en `$CODEX_HOME/skills/elsian-orchestrator/`;
+  - el kickoff experto de Codex en `$CODEX_HOME/skills/elsian-kickoff/`;
   - agent files repo-tracked en `.github/agents/`;
-  - el kickoff de Copilot en `.github/agents/elsian-kickoff.agent.md`;
-  - el orquestador de Copilot en `.github/agents/elsian-orchestrator.agent.md`.
+  - el orquestador de Copilot en `.github/agents/elsian-orchestrator.agent.md`;
+  - el kickoff experto de Copilot en `.github/agents/elsian-kickoff.agent.md`.
 - Si `ROLES.md` cambia, hay que revisar consistencia antes de dar por bueno el sistema multiagente.
 - Asimetria valida de plataforma:
-  - Codex usa un padre neutral nativo del runtime; no necesita una skill `orchestrator`.
+  - Codex usa un padre neutral nativo del runtime; `elsian-orchestrator` es un wrapper fino de UX sobre ese runtime.
   - Copilot necesita un wrapper explicito de orquestacion para implementar el mismo flujo.
 
 ## 8. Wrapper policy y escalabilidad

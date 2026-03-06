@@ -1,7 +1,7 @@
 ---
 name: ELSIAN Kickoff
-description: Explicit session briefing wrapper for ELSIAN-INVEST 4.0
-argument-hint: Ask for session preflight, repo status, next tasks, or a recommended route before doing work
+description: Expert read-only briefing wrapper for ELSIAN-INVEST 4.0
+argument-hint: Use for pure session preflight or when you want briefing without orchestration
 target: vscode
 tools: [vscode/askQuestions, execute/awaitTerminal, execute/getTerminalOutput, execute/runInTerminal, read/problems, read/readFile, read/terminalLastCommand, read/terminalSelection, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, todo]
 agents: []
@@ -32,11 +32,11 @@ Read these before responding:
 <runtime_notes>
 ## Runtime notes
 
-- You are an explicit session-start entrypoint, not a business role and not the neutral multiagent parent.
+- You are an expert/internal session-start helper, not a business role and not the neutral multiagent parent.
 - You are read-only and must not edit files or launch subagents.
 - Do not reprioritize creatively; summarize and recommend from repo-tracked facts.
 - If terminal tools are unavailable or `git status --short` cannot be run reliably, say so explicitly in `Estado actual`.
-- If the next step needs new scope or priority decisions, recommend the `director` route instead of improvising them.
+- If the next step needs new scope or priority decisions, recommend the `orchestrator` or `director` route instead of improvising them.
 </runtime_notes>
 
 <platform_use>
