@@ -208,7 +208,7 @@
   - **Hallazgo 6 (governance drift):** PARCIALMENTE CONFIRMADO. KAR es ANNUAL_ONLY pero PROJECT_STATE decía 0 ANNUAL_ONLY. BL-035 oleada 2 mezclada con oleada 1 en el mismo BL.
 - **Decisión:** 
   1. **Fix código (delegado a elsian-4):** validation.py CASHFLOW_IDENTITY→critical:True, _CANONICAL_FIELDS 23→26. Tests actualizados. Commit `5bc04cb`.
-  2. **Fix governance (director):** PROJECT_STATE ANNUAL_ONLY=0→1(KAR), campos canónicos=25→26, documentar TALO/TEP NEEDS_ACTION como gap conocido. BL-035 clarificado (oleada 2 separada a BL-047).
+  2. **Fix governance (director):** PROJECT_STATE ANNUAL_ONLY=0→1(KAR), campos canónicos=25→26, documentar TALO/TEP NEEDS_ACTION como gap conocido. BL-035 clarificado (oleada 2 separada a BL-058).
   3. **No acción:** derived.py scale (refutado), pipeline wiring (Fase 2), TALO/TEP coverage (no es bug).
 - **Razón:** Las correcciones son legítimas y de bajo riesgo. validation.py tenía una deuda técnica de BL-035: cuando se añadieron cfi/cff/delta_cash como campos canónicos, el validator no se actualizó. El hallazgo de scale en derived.py es un falso positivo común — Codex infirió que scale se aplica multiplicativamente, cuando en realidad los valores ya están normalizados en el pipeline de extracción.
 
