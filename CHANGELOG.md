@@ -8,7 +8,7 @@
 - **Tests:** N/A (config change only)
 - **Regression:** 0327: PASS 100.0% (59/59, wrong=0)
 
-## 2026-03-09
+## 2026-03-05
 
 ### [4.0] fix(SONO) — align expected.json quarterly period values with pipeline calendar labels
 - **What:** Fixed 16 wrong fields in `cases/SONO/expected.json` that caused SONO: FAIL 94.86% (wrong=16). Root cause: SONO has a non-standard fiscal year ending late September/early October. Several quarterly periods in expected.json were curated using SONO's *fiscal* quarter dates and values, while the pipeline labels periods by *calendar* quarter (derived from iXBRL context end dates). No code changed.
@@ -20,7 +20,7 @@
 - **Tests:** N/A (no code changes)
 - **Regression:** SONO: FAIL 94.86% (wrong=16) → **PASS 100.00% (311/311, wrong=0)**. All other previously-passing tickers unchanged.
 
-## 2026-03-08
+## 2026-03-05
 
 ### [4.0] hotfix — BL-043 regressions (TEP, SOM, ACLS, 0327 alias collision)
 - **What:** Fixed 4 tickers failing after BL-043. Root causes: (1) BL-043 added sub-component D&A aliases without US-spelling priority, causing low-quality ROU sub-component to beat total D&A in non-additive mode (TEP). (2) Bare "basic"/"diluted" alias collision: moved from `shares_outstanding` to `eps_basic/eps_diluted` broke SOM (PDF uses bare "Basic: 55M" for shares count). (3) Rescaled iXBRL value (3.9M → 3900K) from 10-Q beating exact 8-K value for ACLS Q2-2024 D&A.
@@ -31,7 +31,7 @@
 - **Tests:** 1169 passed, 0 failed.
 - **Regression:** eval --all: 14/15 PASS. SONO pre-existing curation issue (fiscal vs calendar quarter labels in expected.json), not caused by BL-043.
 
-## 2026-03-07
+## 2026-03-05
 
 ### [4.0] BL-043 — 0327 (PAX Global Technology): 86.44% → 100% (59/59)
 - **What:** Fixed 8 missed fields for HKEX ticker 0327 (PAX Global, HKD, HKFRS bilingual annual reports). Five targeted fixes across D&A, EBITDA, and DPS extraction.

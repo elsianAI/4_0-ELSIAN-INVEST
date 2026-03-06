@@ -211,3 +211,62 @@
   2. **Fix governance (director):** PROJECT_STATE ANNUAL_ONLY=0→1(KAR), campos canónicos=25→26, documentar TALO/TEP NEEDS_ACTION como gap conocido. BL-035 clarificado (oleada 2 separada a BL-047).
   3. **No acción:** derived.py scale (refutado), pipeline wiring (Fase 2), TALO/TEP coverage (no es bug).
 - **Razón:** Las correcciones son legítimas y de bajo riesgo. validation.py tenía una deuda técnica de BL-035: cuando se añadieron cfi/cff/delta_cash como campos canónicos, el validator no se actualizó. El hallazgo de scale en derived.py es un falso positivo común — Codex infirió que scale se aplica multiplicativamente, cuando en realidad los valores ya están normalizados en el pipeline de extracción.
+
+## DEC-022 — SOM invalidado: expected.json es fraudulentamente débil, requiere rehacerse desde cero
+- **Fecha:** 2026-03-04
+- **Contexto:** SOM fue declarado VALIDATED 100% (36/36) en BL-042, pero auditoría del propio Elsian reveló 4 problemas graves:
+  1. **Solo 2 periodos cuando hay 16 disponibles.** El fichero descargado `SRC_003_INTERIM_H1_2025.txt` (líneas ~2219-2270) contiene la tabla "HISTORICAL RESULTS" con datos anuales de FY2009 a FY2024 (Revenue, Cost of Sales, Gross Profit, SG&A, Operating Income, Interest Expense, Tax, Net Income, Adjusted EBITDA, D&A, Capital Expenditures) en US$ Millions. El expected.json solo tiene FY2024 y FY2023.
+  2. **Campos recortados para inflar el score.** El pipeline extrae ~24 campos por periodo, pero expected.json solo tiene 18. Campos como `sga`, `cfi`, `cff`, `delta_cash` fueron omitidos — los 3 últimos son canónicos desde BL-035.
+  3. **Provenance vacía.** extraction_method="unknown" en todos los campos. Viola BL-006 (Provenance L2 al 100%) que se declaró DONE.
+  4. **Datos del Annual Report FY2024 (SRC_001) no explotados al máximo.** El AR tiene IS + BS + CF completos con FY2024/FY2023 en US$000. El expected.json debería tener ≥20 campos por periodo (incluyendo sga, cfi, cff, delta_cash, fcf), no 18.
+- **Decisión:** Revocar el estado VALIDATED de SOM. Reabrir BL-042 con alcance expandido: rehacer expected.json desde cero con ≥14 periodos (FY2009-FY2024 de SRC_003) + campos completos de FY2024/FY2023 del AR (SRC_001). El agente técnico debe corregir también la provenance (extraction_method debe ser table/narrative/pdf, no unknown). Target: ≥150 campos validados.
+- **Razón:** Un ticker al "100%" con solo 36 campos en 2 periodos cuando hay 16 años de datos disponibles en los propios ficheros descargados es un fraude estadístico. Viola DEC-006 (manual = bug: si recortas el expected para que encaje, no has validado nada). Viola DEC-015 (≥15 FULL 100% — un ticker ANNUAL_ONLY con 2 periodos no contribuye a la calidad del sistema). SOM es el cuarto mercado del proyecto (LSE/AIM) y merece un expected.json a la altura de KAR (49 campos, 3 periodos) como mínimo — y con 16 periodos disponibles, debería superar los 150 campos.
+- **Impacto:** Tickers validados bajan de 14 a 13 hasta que SOM se rehaga. SOM pasa de VALIDATED a WIP. El contador de "3,046 campos validados" baja en 36.
+
+## DEC-023 — Regresión TEP introducida por fix SOM: tercer incidente de scope sin control de regresiones
+- **Fecha:** 2026-03-04
+- **Contexto:** El agente técnico completó BL-042 (reconstrucción SOM DEC-022) con éxito: SOM 100% (179/179). Sin embargo, eval --all reportó TEP al 93.75% (antes 100%). El agente clasificó esto como "pre-existing, unrelated" en el CHANGELOG, pero la evidencia lo contradice: en la entrada anterior de CHANGELOG (BL-049 Truth Pack assembler, mismo día), eval --all mostraba 13/14 PASS con SOM como único FAIL — TEP estaba al 100%. Los cambios sospechosos son: (1) `_normalize_sign` en phase.py ahora examina `raw_text` para preservar signos negativos, (2) reject patterns en aliases.py para dividends_per_share, (3) alias SGA en field_aliases.json.
+- **Decisión:** Clasificar como regresión introducida por BL-042, no como pre-existente. Crear BL-046 (CRÍTICA) para investigar y corregir. El agente técnico debe resolver TEP sin romper SOM.
+- **Razón:** Tercer incidente de insuficiente control de regresiones (DEC-020 — CROX scope creep, DEC-021 — Codex, ahora TEP). Patrón recurrente: el agente aplica un fix para un ticker y no investiga a fondo las regresiones en otros tickers, o las descarta como "pre-existing". **Propuesta de guardrail:** el agente elsian-4 debería, ante cualquier FAIL en eval --all, (a) comparar con el último eval --all exitoso, (b) si el ticker fallaba antes → "pre-existing", (c) si el ticker pasaba antes → regresión, investigar y corregir antes de commitear.
+- **Impacto:** TEP pasa de VALIDATED a REGRESSED. Tickers al 100% bajan de 14 a 13 hasta que BL-046 se complete.
+
+## DEC-024 — Política oficial de manual_overrides: excepción temporal con límites estrictos
+- **Fecha:** 2026-03-05
+- **Contexto:** SOM usa 2 manual_overrides (dividends_per_share FY2024/FY2023) y TEP usa 6 (ingresos FY2022/FY2021, fcf FY2022/FY2021/FY2019, dividends_per_share FY2021). Total: 8 overrides sobre 3,189 campos validados (0.25% global). El mecanismo `_apply_manual_overrides` en phase.py solo inyecta cuando el extractor no produjo nada — es relleno de huecos, no sobreescritura. La pregunta: ¿es esto compatible con DEC-006 ("manual = bug") y con el principio de VISION.md ("sin intervención humana")?
+- **Decisión:** Los manual_overrides se **aceptan como excepción temporal documentada**, sujetos a 5 reglas:
+  1. **Cada override es un bug documentado.** No es una solución — es un workaround que reconoce una limitación del pipeline. DEC-006 sigue vigente: cada override es evidencia de un defecto.
+  2. **Documentación obligatoria.** Cada override en case.json debe incluir: `value` (numérico), `note` (obligatorio: por qué el extractor falla, no solo la fuente), y referencia al filing+página/tabla. Overrides sin `note` son deuda técnica a corregir.
+  3. **Límite por ticker: ≤5% de campos.** Un ticker con >5% de campos vía override no se reporta como "VALIDATED 100%" sino como "VALIDATED 100%†" con nota explícita. No cambia el estado formal (sigue en VALIDATED_TICKERS, no se degrada a WIP) pero la transparencia es obligatoria.
+  4. **Cada override genera una tarea de eliminación.** Al crear un override, debe existir (o crearse) una BL en BACKLOG para investigar su eliminación. Si la investigación concluye que el campo es intrínsecamente no-extraíble de forma determinista, se documenta como **permanent exception** con justificación técnica.
+  5. **DPS tiene excepción parcial.** `dividends_per_share` compuesto (interim + final + special) es intrínsecamente no-tabular en muchos mercados. Los overrides de DPS se documentan pero no generan presión de eliminación si se demuestra que el dato solo aparece en narrativa dispersa (no en ninguna tabla IS/BS/CF). Siguen contando hacia el 5%.
+- **Estado actual bajo esta política:**
+  - **SOM:** 2/179 = 1.1% → **CUMPLE.** Ambos overrides son DPS con documentación completa.
+  - **TEP:** 6/80 = 7.5% → **EXCEDE 5%.** TEP se reporta como "VALIDATED 100%†". Los 4 overrides non-DPS (ingresos ×2, fcf ×3) son campos fundamentales extraíbles de PDF — el pipeline debería cubrirlos. Además, los overrides de TEP carecen de `source_filing` y `extraction_method` → deuda técnica.
+- **Razón:** Prohibir overrides al 100% bloquearía el progreso en mercados no-SEC donde el pipeline PDF aún es inmaduro. Aceptarlos sin límites ni transparencia violaría DEC-006 y convertiría los scores en ficción. La solución intermedia: aceptar con documentación, límites, y plan de eliminación.
+- **Supersede:** Nada. Complementa DEC-006.
+
+## DEC-025 — SOM filings_sources aprobado bajo DEC-008; ir_crawler gap reconocido
+- **Fecha:** 2026-03-05
+- **Contexto:** SOM (LSE/AIM) usa `filings_sources` con 3 URLs hardcodeadas de investors.somero.com. DEC-008 dice que filings_sources es "exclusivo para mercados donde genuinamente no existe API automatizable". LSE/AIM no tiene API pública para annual reports. El ir_crawler está integrado (BL-013 DONE) pero descarga 0 documentos para SOM — el CDN de Somero IR requiere User-Agent específico y las URLs no son descubribles por el crawler actual. El `acquire SOM` funciona correctamente con las URLs manuales.
+- **Decisión:**
+  1. **SOM queda aprobado como excepción DEC-008.** LSE/AIM es exactamente el caso previsto: mercado sin API, empresa con IR website como única fuente. Las URLs fueron verificadas por humano y están documentadas en case.json con filename, filing_type y period_end.
+  2. **El gap del ir_crawler es reconocido pero NO prioritario.** El crawler falla para Somero porque (a) el CDN requiere User-Agent browser-like, (b) las URLs de descarga usan paths con hashes/media que no son descubribles por el patrón de crawling actual. Crear un LseFetcher dedicado o mejorar el crawler para manejar CDNs corporativos UK es trabajo de infraestructura válido pero no bloquea nada.
+  3. **BL para futuro:** Se crea BL-057 (prioridad BAJA) para investigar discovery automático de filings LSE/AIM. No es bloqueante. Si en el futuro se añaden más tickers LSE, la prioridad sube.
+- **Razón:** Exigir discovery automático para un solo ticker LSE sería over-engineering. El principio DEC-006 ("manual = bug") aplica a la **extracción** de datos, no a la **localización** de URLs de filings en mercados sin API. Cuando haya ≥3 tickers LSE, justificará construir un LseFetcher.
+
+## DEC-026 — Criterio "sin trampas" para Fase 1: qué es y qué no es "autónomo suficiente"
+- **Fecha:** 2026-03-05
+- **Contexto:** 14/14 tickers PASS 100%, 1193 tests, 3,189 campos validados. Pero 8 campos (0.25%) son vía manual_override (SOM 2, TEP 6). SOM usa filings_sources manuales (sin ir_crawler funcional). La pregunta: ¿entra esto en "autónomo suficiente" del Módulo 1 según VISION.md?
+- **Decisión:** **No.** 14/14 PASS 100% con overrides manuales NO constituye "autónomo suficiente" en el sentido de VISION.md ("Un ticker entra, datos verificados salen — sin intervención humana"). Es un hito intermedio significativo que demuestra la madurez del pipeline, pero con dos áreas de deuda:
+  1. **TEP (7.5% overrides):** El pipeline PDF no extrae revenue ni FCF de 3 annual reports. Esto es un defecto del extractor, no una limitación intrínseca. TEP necesita 0 overrides para considerarse autónomo.
+  2. **SOM filings_sources:** La localización de filings es manual. La extracción es autónoma — una vez descargados, el pipeline procesa 179/179 campos sin ayuda. Pero "ticker entra, datos salen" implica que el acquire también funciona sin URLs pre-configuradas. Para LSE esto es aceptable temporalmente (DEC-025).
+  3. **Criterio revisado de "autónomo suficiente":**
+     - **Extracción autónoma (strict):** 0 manual_overrides en todos los tickers. Cada campo se extrae del filing por el pipeline sin intervención.
+     - **Adquisición autónoma (gradual):** Para mercados con API (SEC, ASX): 100% automático. Para mercados sin API (LSE, Euronext manual): filings_sources aceptable con DEC-008 justificación documentada.
+     - **El score oficial se reporta con transparencia:** "14/14 PASS 100%" va acompañado siempre de "(8 overrides activos: SOM 2, TEP 6)". Sin asterisco, sin esconder.
+  4. **Para alcanzar "autónomo suficiente":**
+     - Eliminar los 6 overrides de TEP (BL-054)
+     - Eliminar o justificar como permanent exception los 2 overrides de SOM (BL-055)
+     - 14/14 PASS 100% con 0 overrides = autónomo suficiente para extracción
+- **Razón:** VISION.md es inequívoco: "Cada paso manual es un bug en el sistema, no una solución." Los 8 overrides son 8 bugs documentados. El pipeline es maduro, robusto, y cubre 4 mercados — pero honestamente no es autónomo al 100% todavía. Declarar prematuramente "autónomo suficiente" sería exactamente la trampa que Elsian quiere evitar.
+- **Impacto:** No cambia el estado del proyecto ni degrada ningún ticker. Establece el estándar de verdad: el 14/14 es real pero incompleto. El objetivo es llegar al 14/14 con 0 overrides.

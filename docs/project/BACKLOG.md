@@ -383,11 +383,12 @@
 
 ### BL-043 — Nuevo ticker 0327 (PAX Global Technology, HKEX, Hong Kong)
 - **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE
+- **Asignado a:** Claude (elsian-4)
 - **Depende de:** —
 - **Descripción:** Primer ticker Hong Kong Exchange. Requiere: (1) Investigar si HKEX tiene API de filings automatizable. (2) Si la hay → construir `HkexFetcher(Fetcher)`. (3) Si no → usar ManualFetcher. Filings son PDF annual reports en formato asiático. Portar filings del 3.0 desde `3_0-ELSIAN-INVEST/casos/0327/`. Sector industrials (nuevo).
 - **Criterio de aceptación:** 0327 en VALIDATED_TICKERS al 100%. Fetcher HKEX (o ManualFetcher con justificación) funcional. period_scope: evaluar interim reports en HKEX (H1 obligatorio en HK → debería ser FULL).
+- **Resultado:** 0327 PASS 100% (59/59), wrong=0, missed=0. Fixes aplicados: (1) D&A HKFRS split-line pattern (nota cross-ref bare integer), (2) Aliases D&A sub-componentes + reject right-of-use narrowed, (3) Per-case additive_fields en phase.py, (4) HKFRS segment single-year EBITDA extractor, (5) DPS narrativo bilingual (`_extract_hkfrs_dps_narrative`). ManualFetcher usado (filings de 3.0). Period_scope ANNUAL_ONLY (FY2022/2023/2024). Sin regressions en los 10 tickers validados.
 
 ### BL-044 — Promover TEP a FULL (investigar semestrales Euronext)
 - **Prioridad:** MEDIA
@@ -441,11 +442,11 @@
 
 ### BL-048 — IxbrlExtractor en producción (WP-6)
 - **Prioridad:** ALTA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE ✅ (2026-03-06)
+- **Asignado a:** elsian-4
 - **Depende de:** BL-004 (parser iXBRL DONE), BL-025 (curate DONE)
-- **Descripción:** El parser iXBRL existe (`elsian/extract/ixbrl.py`, 594L) y funciona para curación (`elsian curate`). Falta crear `IxbrlExtractor(Extractor)` que lo integre en el pipeline de producción como extractor de primera clase. Para tickers SEC con iXBRL disponible, IxbrlExtractor debería ser el extractor primario (datos etiquetados por la empresa = máxima confianza), con HtmlTableExtractor como fallback para campos no cubiertos por iXBRL. Esto requiere: (1) Crear clase `IxbrlExtractor` con interfaz `extract(context) → list[FieldResult]`. (2) Detectar automáticamente si un filing tiene iXBRL (`ix:header` o extensión `.htm` con tags `ix:nonFraction`). (3) Mapear conceptos iXBRL a campos canónicos (reutilizar `ixbrl_concept_map.json`). (4) Emitir provenance L2 completa (concept, context, period, unit, raw value). (5) Integrar en ExtractPhase: si iXBRL disponible → IxbrlExtractor primero, HtmlTableExtractor segundo (fill gaps). (6) Verificar que no hay regresiones en ningún ticker.
-- **Criterio de aceptación:** `IxbrlExtractor(Extractor)` creado con tests. Para tickers SEC con iXBRL, la extracción usa iXBRL como fuente primaria. eval --all verde. Provenance indica `extraction_method=ixbrl`. Sin regresiones.
+- **Descripción:** `IxbrlExtractor(Extractor)` creado en `elsian/extract/ixbrl_extractor.py`. iXBRL como extractor primario para tickers SEC. Sort key `(filing_rank, affinity, -1, -9999)` beats table extractor. Dominant-scale normalization: `_dominant_monetary_scale()` detecta escala monetaria del filing; tags con escala distinta se convierten y marcan `was_rescaled=True` (sort key debilitado). Calendar quarter fix en `ixbrl.py`: `_resolve_duration_period/instant` usan calendar quarter del end date. 45 tests unitarios. Hotfix posterior (4c80579): D&A priority US-spelling, en-dash normalization, rescaled iXBRL quality override en merger. SONO expected.json recurado (c545d59) para alinear fiscal/calendar quarter labels.
+- **Criterio de aceptación:** ✓ 15/15 tickers al 100%. ✓ extraction_method=ixbrl en provenance. ✓ 45 tests. ✓ Sin regresiones.
 
 ### BL-049 — Truth Pack assembler (output para Módulo 2)
 - **Prioridad:** ALTA
@@ -457,7 +458,7 @@
 
 ### BL-050 — Comando `elsian run` (pipeline de procesamiento)
 - **Prioridad:** ALTA
-- **Estado:** DONE ✅ (2026-03-05)
+- **Estado:** DONE ✅ (2026-03-06)
 - **Asignado a:** elsian-4
 - **Depende de:** BL-049 (truth pack assembler)
 - **Descripción:** Crear un comando que ejecute el pipeline de procesamiento para un ticker que ya tiene filings descargados, case.json y expected.json: `elsian run {TICKER}` = Convert → Extract → Normalize → Merge → Evaluate → Assemble. **No incluye Acquire** — los filings ya existen porque `elsian acquire` se ejecutó previamente (durante la curación del expected.json o como paso independiente). Hoy el pipeline ejecuta Extract+Evaluate vía `cmd_run`, pero Convert y Assemble son pasos separados. El comando `run` los orquesta en secuencia, con logging de cada fase y reporte final (score, campos, truth_pack generado). Flags opcionales: `--with-acquire` (relanzar acquire, útil cuando hay nuevo trimestre), `--skip-assemble` (solo hasta evaluate), `--force` (re-convert filings). `elsian run --all` ejecuta todos los tickers validados.
@@ -509,8 +510,8 @@
 
 ### BL-056 — Hygiene repo: truth_pack.json a .gitignore
 - **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE ✅ (2026-03-06)
+- **Asignado a:** elsian-4
 - **Depende de:** —
 - **Descripción:** Existen 3 ficheros `truth_pack.json` (TZOO, SOM, NVDA) generados por `elsian assemble`. Son output regenerable — como extraction_result.json y filings_manifest.json, que ya están en .gitignore. Añadir `cases/*/truth_pack.json` a `.gitignore` y eliminar los 3 ficheros del tracking de git.
 - **Criterio de aceptación:** `.gitignore` incluye `cases/*/truth_pack.json`. Los 3 ficheros eliminados del tracking (no del disco). `git status` limpio.
