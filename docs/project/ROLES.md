@@ -17,12 +17,58 @@ El sistema puede ejecutarse en dos modos:
 - **Orquestado**: un padre neutral de runtime clasifica la peticion, lanza hijos directos, ejecuta gates y agrega resultados.
 - **No orquestado**: Elsian invoca un rol concreto de forma directa.
 
+Ademas existe un entrypoint explicito de runtime:
+
+- **Kickoff**: briefing read-only de arranque de sesion. No es un rol de negocio y no sustituye al `director`.
+
 Reglas estructurales:
 
 - El padre neutral **no es** el `director`. No toma decisiones de producto ni arquitectura.
 - Solo se permiten **hijos directos del padre**. No se diseña ningun flujo que dependa de nietos.
 - Si `spawn_agent` falla porque no puede forkear el thread actual, el padre debe reintentar con un prompt standalone autosuficiente.
 - Los hijos no auto-orquestan. Preparan salida de rol. El padre decide el siguiente paso.
+
+### Kickoff entrypoint
+
+`kickoff` sirve para abrir una sesion nueva con contexto real del repo antes de ejecutar trabajo. Es explicito: solo se activa cuando Elsian pide briefing, preflight o estado de sesion.
+
+**Lee siempre**
+
+- `VISION.md`
+- `docs/project/ROLES.md`
+- `docs/project/KNOWLEDGE_BASE.md`
+- `docs/project/PROJECT_STATE.md`
+- `docs/project/BACKLOG.md`
+- `docs/project/DECISIONS.md`
+- `CHANGELOG.md`
+- `git status --short`
+
+**No puede**
+
+- mutar archivos;
+- lanzar subagentes;
+- redefinir prioridades fuera de lo ya documentado;
+- sustituir al `director` cuando haga falta tomar decisiones nuevas de alcance o prioridad.
+
+**Salida canonica**
+
+- `Estado actual`
+- `Trabajo activo`
+- `Riesgos o bloqueos`
+- `Top 3 siguientes tareas`
+- `Ruta recomendada`
+- `Prompt recomendado`
+
+**Reglas**
+
+- El `Estado actual` debe distinguir entre hechos de los documentos y estado real del worktree.
+- Si no se puede leer el worktree real, debe decirlo explicitamente en `Estado actual`.
+- `Top 3 siguientes tareas` salen del backlog y del estado real; no de repriorizacion creativa.
+- `Ruta recomendada` debe ser una de estas:
+  - `director -> engineer -> gates -> auditor`
+  - `engineer -> gates -> auditor`
+  - `auditor`
+- `Prompt recomendado` debe ser copiable y coherente con la ruta recomendada.
 
 ## 2. Contratos por rol
 
@@ -293,8 +339,14 @@ Los gates los ejecuta siempre el padre neutral, no los hijos.
   - trabajo actual: `docs/project/MODULE_1_ENGINEER_CONTEXT.md`
 - Las implementaciones operativas deben mantenerse coherentes con este documento:
   - skills locales de Codex en `$CODEX_HOME/skills/`;
-  - agent files repo-tracked en `.github/agents/`.
+  - el kickoff explicito de Codex en `$CODEX_HOME/skills/elsian-kickoff/`;
+  - agent files repo-tracked en `.github/agents/`;
+  - el kickoff de Copilot en `.github/agents/elsian-kickoff.agent.md`;
+  - el orquestador de Copilot en `.github/agents/elsian-orchestrator.agent.md`.
 - Si `ROLES.md` cambia, hay que revisar consistencia antes de dar por bueno el sistema multiagente.
+- Asimetria valida de plataforma:
+  - Codex usa un padre neutral nativo del runtime; no necesita una skill `orchestrator`.
+  - Copilot necesita un wrapper explicito de orquestacion para implementar el mismo flujo.
 
 ## 8. Wrapper policy y escalabilidad
 
