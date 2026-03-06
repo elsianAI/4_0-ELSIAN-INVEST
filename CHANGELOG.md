@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-03-06
+
+### TEP: add provenance metadata to manual_overrides (BL-054 subtask)
+- **What:** Added `source_filing` and `extraction_method: "manual"` to all 6 TEP manual_overrides. No value or note changes. Validated via Codex multiagent smoke test.
+- **Files changed:** `cases/TEP/case.json`
+- **Tests:** N/A (metadata addition only)
+
+### Fix BL-047 duplicate in BACKLOG.md
+- **What:** Renamed duplicate BL-047 (working capital oleada 2) to BL-058. Updated cross-reference in DECISIONS.md (DEC-020).
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/DECISIONS.md`
+
 ## 2026-03-05
 
 ### [Regression] Add 0327 to VALIDATED_TICKERS
