@@ -794,22 +794,45 @@ def cmd_source_map(args: argparse.Namespace) -> None:
         print(f"Case not found: {args.ticker}")
         sys.exit(1)
 
+    extraction_result_path = case_dir / "extraction_result.json"
+    if not extraction_result_path.exists():
+        print(
+            (
+                f"{args.ticker}: extraction_result.json no existe en {case_dir}. "
+                "Ejecuta `elsian extract TICKER` o `elsian run TICKER` antes de `source-map`."
+            ),
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     output_path = Path(args.output) if getattr(args, "output", None) else None
     builder = SourceMapBuilder()
     sm = builder.build(case_dir, output_path=output_path)
 
     out_path = output_path if output_path else case_dir / "source_map.json"
     summary = sm.get("summary", {})
-    print(f"{args.ticker}: SourceMap_v1 built")
+    resolved = summary.get("resolved_fields", 0)
+    total = summary.get("total_fields", 0)
+    if total and resolved == total:
+        status = "FULL"
+        exit_code = 0
+    elif resolved > 0:
+        status = "PARTIAL"
+        exit_code = 0
+    else:
+        status = "EMPTY"
+        exit_code = 1
+
+    stream = sys.stderr if exit_code else sys.stdout
+    print(f"{args.ticker}: SourceMap_v1 {status}", file=stream)
     print(
-        f"  Resolved: {summary.get('resolved_fields', 0)}/"
-        f"{summary.get('total_fields', 0)} "
-        f"({summary.get('resolution_pct', 0)}%)"
+        f"  Resolved: {resolved}/{total} ({summary.get('resolution_pct', 0)}%)",
+        file=stream,
     )
     by_kind = summary.get("by_pointer_kind", {})
     if by_kind:
         for kind, count in sorted(by_kind.items()):
-            print(f"  {kind}: {count}")
+            print(f"  {kind}: {count}", file=stream)
     sample_target = None
     periods = sm.get("periods", {})
     for period_data in periods.values():
@@ -820,8 +843,14 @@ def cmd_source_map(args: argparse.Namespace) -> None:
         if sample_target:
             break
     if sample_target:
-        print(f"  Sample click target: {sample_target}")
-    print(f"  Saved to {out_path}")
+        print(f"  Sample click target: {sample_target}", file=stream)
+    if status == "PARTIAL":
+        print("  Status: partial resolution; review unresolved fields before relying on the artifact.", file=stream)
+    elif status == "EMPTY":
+        print("  Status: no fields resolved; artifact written only for diagnosis.", file=stream)
+    print(f"  Saved to {out_path}", file=stream)
+    if exit_code:
+        sys.exit(exit_code)
 
 
 def cmd_dashboard(args: argparse.Namespace) -> None:

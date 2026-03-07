@@ -27,6 +27,7 @@ _CHAR_LOC_RE = re.compile(r":char(?P<char>\d+)")
 _IXBRL_NAME_RE = re.compile(r'\bname="(?P<name>[^"]+)"')
 _IXBRL_ID_RE = re.compile(r'\bid="(?P<id>[^"]+)"')
 _DASH_ONLY_RE = re.compile(r"^[\-\u2013\u2014]+$")
+_TEXT_NUM_TOKEN_RE = re.compile(r"\(?[\d,]+(?:\.\d+)?\)?")
 
 _VERTICAL_LABEL_PATTERNS: dict[str, re.Pattern[str]] = {
     "cash_and_equivalents": re.compile(
@@ -42,8 +43,12 @@ _VERTICAL_LABEL_PATTERNS: dict[str, re.Pattern[str]] = {
         re.IGNORECASE,
     ),
     "total_equity": re.compile(
-        r"^total\s+(?:stockholders['’]?|shareholders['’]?|members['’]?|owners['’]?|)"
+        r"^total\s+(?:stockholders['’ʼ]?|shareholders['’ʼ]?|members['’ʼ]?|owners['’ʼ]?|)"
         r"\s*equity\b",
+        re.IGNORECASE,
+    ),
+    "total_debt": re.compile(
+        r"^total debt\b",
         re.IGNORECASE,
     ),
 }
@@ -248,6 +253,69 @@ def _resolve_table_pointer(
     }
 
 
+def _resolve_text_table_pointer(
+    case_dir: Path,
+    source_path: Path,
+    field_data: dict[str, Any],
+) -> dict[str, Any] | None:
+    source_location = field_data.get("source_location", "") or ""
+    match = _TABLE_LOC_RE.search(source_location)
+    if not match:
+        return None
+
+    row_label = field_data.get("row_label", "") or ""
+    raw_text = field_data.get("raw_text", "") or ""
+    norm_label = _normalise_text(row_label)
+    norm_raw = _normalise_inline(raw_text)
+    if not norm_raw:
+        return None
+
+    lines = source_path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    candidates: list[tuple[int, int, str]] = []
+    target_row = int(match.group("row"))
+
+    for line_no, line in enumerate(lines, start=1):
+        norm_line_inline = _normalise_inline(line)
+        if norm_raw not in norm_line_inline:
+            continue
+
+        window_lines = lines[max(0, line_no - 3):line_no]
+        norm_line = _normalise_text(line)
+        norm_window = _normalise_text(" ".join(part.strip() for part in window_lines if part.strip()))
+        score = 0
+        if norm_label and norm_label in norm_line:
+            score += 4
+        elif norm_label and norm_label in f"{norm_window} {norm_line}".strip():
+            score += 3
+
+        tokens = [m.group() for m in _TEXT_NUM_TOKEN_RE.finditer(line)]
+        if raw_text in tokens:
+            score += 2
+        if score <= 0:
+            continue
+
+        row_hint_penalty = abs(target_row - len(tokens))
+        candidates.append((score * 10 - row_hint_penalty, line_no, line))
+
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda item: (-item[0], item[1]))
+    _score, line_no, snippet = candidates[0]
+    relative_path = source_path.relative_to(case_dir).as_posix()
+    return {
+        "kind": "text_table",
+        "path": relative_path,
+        "line_start": line_no,
+        "line_end": line_no,
+        "snippet": snippet[:400],
+        "click_target": f"{relative_path}#L{line_no}",
+        "source_table_hint": int(match.group("table")),
+        "source_row_hint": target_row,
+        "source_col_hint": int(match.group("col")),
+    }
+
+
 def _find_ixbrl_tag(
     text: str,
     *,
@@ -349,10 +417,13 @@ def _resolve_char_pointer(
 
     text = source_path.read_text(encoding="utf-8", errors="ignore")
     char_start = int(match.group("char"))
+    if char_start < 0 or char_start >= len(text):
+        return None
     raw_text = field_data.get("raw_text", "") or field_data.get("row_label", "") or ""
     char_end = min(len(text), char_start + max(len(raw_text), 1))
     line, column = _line_col_from_char(text, char_start)
-    line_text = text.splitlines()[line - 1] if text.splitlines() else ""
+    split_lines = text.splitlines()
+    line_text = split_lines[line - 1] if split_lines and line - 1 < len(split_lines) else ""
     relative_path = source_path.relative_to(case_dir).as_posix()
     return {
         "kind": "text_char",
@@ -400,7 +471,7 @@ class SourceMapBuilder:
         case_dir: Path,
         output_path: Path | None = None,
     ) -> dict[str, Any]:
-        case_dir = Path(case_dir)
+        case_dir = Path(case_dir).resolve()
         extraction_result = self._load_extraction_result(case_dir)
         source_map = self._build_source_map(extraction_result, case_dir)
 
@@ -531,6 +602,8 @@ class SourceMapBuilder:
             return _resolve_ixbrl_pointer(case_dir, source_path, field_data)
         if ":table:" in (field_data.get("source_location", "") or "") and suffix == ".md":
             return _resolve_table_pointer(case_dir, source_path, field_data)
+        if ":table:" in (field_data.get("source_location", "") or "") and suffix == ".txt":
+            return _resolve_text_table_pointer(case_dir, source_path, field_data)
         if ":vertical_bs:" in (field_data.get("source_location", "") or "") and suffix == ".txt":
             return _resolve_vertical_text_pointer(case_dir, source_path, field_name)
         if ":char" in (field_data.get("source_location", "") or ""):

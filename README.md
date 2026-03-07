@@ -62,6 +62,8 @@ python3 -m elsian.cli source-map TICKER
 python3 -m elsian.cli discover TICKER
 ```
 
+`source-map` sigue siendo un piloto L3 validado en `TZOO`. Requiere que el caso ya tenga `extraction_result.json` generado por `extract` o `run`. Por defecto escribe `source_map.json` dentro del case dir (ignorado por git); usa `--output` para revisar el artefacto fuera del repositorio o cuando quieras comparar resultados parciales.
+
 ## Ciclo de trabajo recomendado
 
 ### 1. Ponerte al día

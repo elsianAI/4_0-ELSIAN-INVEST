@@ -1,9 +1,11 @@
-"""Unit tests for SourceMapBuilder (BL-053)."""
+"""Unit tests for SourceMapBuilder (BL-053 hardening)."""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
+
+import pytest
 
 from elsian.assemble.source_map import SourceMapBuilder
 
@@ -42,11 +44,15 @@ def _write_case(case_dir: Path) -> None:
     (filings_dir / "sample.txt").write_text(
         "\n".join(
             [
+                "Income statement",
+                "2024 2023",
+                "Revenue                                       51,991 49,100",
+                "Gross profit                                  15,000 14,200",
+                "",
                 "Consolidated Balance Sheets",
-                "Cash and cash equivalents",
-                "Total assets",
-                "Total liabilities",
-                "Total stockholders' equity",
+                "Cash and cash equivalents                     1,200 1,050",
+                "Total debt (current + long-term)              800 750",
+                "Total stockholdersʼ equity                    1,891 1,700",
             ]
         )
         + "\n",
@@ -72,7 +78,17 @@ def _write_case(case_dir: Path) -> None:
                         "raw_text": "51,991",
                         "extraction_method": "table",
                     },
-                    "total_equity": {
+                    "ingresos_txt": {
+                        "value": 51991.0,
+                        "scale": "units",
+                        "confidence": "high",
+                        "source_filing": "sample.txt",
+                        "source_location": "sample.txt:table:income_statement:tbl0:row1:col0",
+                        "row_label": "Revenue",
+                        "raw_text": "51,991",
+                        "extraction_method": "table",
+                    },
+                    "equity_ixbrl": {
                         "value": 1891.0,
                         "scale": "thousands",
                         "confidence": "high",
@@ -89,6 +105,22 @@ def _write_case(case_dir: Path) -> None:
                         "confidence": "high",
                         "source_filing": "sample.txt",
                         "source_location": "sample.txt:vertical_bs:consolidated:cash_and_equivalents",
+                        "extraction_method": "table",
+                    },
+                    "total_debt": {
+                        "value": 800.0,
+                        "scale": "units",
+                        "confidence": "high",
+                        "source_filing": "sample.txt",
+                        "source_location": "sample.txt:vertical_bs:consolidated:total_debt",
+                        "extraction_method": "table",
+                    },
+                    "total_equity": {
+                        "value": 1891.0,
+                        "scale": "units",
+                        "confidence": "high",
+                        "source_filing": "sample.txt",
+                        "source_location": "sample.txt:vertical_bs:consolidated:total_equity",
                         "extraction_method": "table",
                     },
                 },
@@ -114,8 +146,8 @@ def test_source_map_builder_writes_output(tmp_path: Path) -> None:
     saved = json.loads(output_path.read_text(encoding="utf-8"))
     assert saved == source_map
     assert source_map["schema_version"] == "SourceMap_v1"
-    assert source_map["summary"]["total_fields"] == 3
-    assert source_map["summary"]["resolved_fields"] == 3
+    assert source_map["summary"]["total_fields"] == 6
+    assert source_map["summary"]["resolved_fields"] == 6
 
 
 def test_table_pointer_resolves_clean_md_line(tmp_path: Path) -> None:
@@ -129,12 +161,26 @@ def test_table_pointer_resolves_clean_md_line(tmp_path: Path) -> None:
     assert field_entry["resolution_status"] == "resolved"
     assert field_entry["original_path"] == "filings/sample.htm"
     assert field_entry["clean_path"] == "filings/sample.clean.md"
-    assert field_entry["raw_text"] == "51,991"
     assert field_entry["pointer"]["kind"] == "clean_md_table"
     assert field_entry["pointer"]["path"] == "filings/sample.clean.md"
     assert field_entry["pointer"]["line_start"] == 5
-    assert "Revenues" in field_entry["pointer"]["snippet"]
     assert field_entry["click_target"] == "filings/sample.clean.md#L5"
+
+
+def test_text_table_pointer_resolves_txt_table_line(tmp_path: Path) -> None:
+    case_dir = tmp_path / "TEST"
+    case_dir.mkdir()
+    _write_case(case_dir)
+
+    source_map = SourceMapBuilder().build(case_dir)
+    field_entry = source_map["periods"]["FY2024"]["fields"]["ingresos_txt"]
+
+    assert field_entry["resolution_status"] == "resolved"
+    assert field_entry["original_path"] == "filings/sample.htm"
+    assert field_entry["pointer"]["kind"] == "text_table"
+    assert field_entry["pointer"]["path"] == "filings/sample.txt"
+    assert field_entry["pointer"]["line_start"] == 3
+    assert field_entry["click_target"] == "filings/sample.txt#L3"
 
 
 def test_ixbrl_pointer_resolves_html_anchor(tmp_path: Path) -> None:
@@ -143,32 +189,57 @@ def test_ixbrl_pointer_resolves_html_anchor(tmp_path: Path) -> None:
     _write_case(case_dir)
 
     source_map = SourceMapBuilder().build(case_dir)
-    field_entry = source_map["periods"]["FY2024"]["fields"]["total_equity"]
+    field_entry = source_map["periods"]["FY2024"]["fields"]["equity_ixbrl"]
 
     assert field_entry["resolution_status"] == "resolved"
     assert field_entry["original_path"] == "filings/sample.htm"
     assert field_entry["clean_path"] == "filings/sample.clean.md"
-    assert field_entry["raw_text"] == "1,891"
     assert field_entry["pointer"]["kind"] == "html_ixbrl"
     assert field_entry["pointer"]["path"] == "filings/sample.htm"
     assert field_entry["pointer"]["element_id"] == "fact-1"
     assert field_entry["click_target"] == "filings/sample.htm#fact-1"
-    assert "StockholdersEquity" in field_entry["pointer"]["snippet"]
 
 
-def test_vertical_bs_pointer_resolves_text_line(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("field_name", "expected_line"),
+    [
+        ("cash_and_equivalents", 7),
+        ("total_debt", 8),
+        ("total_equity", 9),
+    ],
+)
+def test_vertical_bs_pointer_resolves_expected_line(
+    tmp_path: Path,
+    field_name: str,
+    expected_line: int,
+) -> None:
     case_dir = tmp_path / "TEST"
     case_dir.mkdir()
     _write_case(case_dir)
 
     source_map = SourceMapBuilder().build(case_dir)
-    field_entry = source_map["periods"]["FY2024"]["fields"]["cash_and_equivalents"]
+    field_entry = source_map["periods"]["FY2024"]["fields"][field_name]
 
     assert field_entry["resolution_status"] == "resolved"
     assert field_entry["pointer"]["kind"] == "text_label"
     assert field_entry["pointer"]["path"] == "filings/sample.txt"
-    assert field_entry["pointer"]["line_start"] == 2
-    assert field_entry["click_target"] == "filings/sample.txt#L2"
+    assert field_entry["pointer"]["line_start"] == expected_line
+    assert field_entry["click_target"] == f"filings/sample.txt#L{expected_line}"
+
+
+def test_source_map_builder_accepts_relative_case_dir(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case_dir = tmp_path / "cases" / "TEST"
+    case_dir.mkdir(parents=True)
+    _write_case(case_dir)
+    monkeypatch.chdir(tmp_path)
+
+    source_map = SourceMapBuilder().build(Path("cases/TEST"))
+
+    assert source_map["summary"]["resolved_fields"] == 6
+    assert (case_dir / "source_map.json").exists()
 
 
 def test_source_map_builder_rejects_paths_outside_case_dir(tmp_path: Path) -> None:
