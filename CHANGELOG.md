@@ -2,10 +2,10 @@
 
 ## 2026-03-07
 
-### [4.0] Governance reconciliation — strict DEC-015 tracking and BL-057 reprioritization
-- **What:** Reconciled `PROJECT_STATE.md` with the actual ticker state and with strict `DEC-015` reporting. The project now distinguishes between `15 tickers validados 100%`, `12 FULL 100%`, and `3 ANNUAL_ONLY 100%` (`KAR`, `SOM`, `0327`) instead of claiming `15 FULL`. Removed the operational claim that `DEC-015` is already achieved while those annual-only cases remain unresolved at governance level. Also returned `BL-057` to the conservative posture established by `DEC-025`: low priority, non-blocking, and behind `BL-058`, `BL-052`, and `BL-053` in both backlog and roadmap.
+### [4.0] Governance reconciliation — DEC-015 exception-aware reporting and BL-057 reprioritization
+- **What:** Reconciled `PROJECT_STATE.md` with the actual ticker state and with the current text of `DEC-015`. The project now distinguishes between `15 tickers validados 100%`, `13` that count operationally toward `DEC-015` (`12 FULL + KAR` as documented annual-only exception), and `2 ANNUAL_ONLY` still pendientes (`SOM`, `0327`). Removed the blanket "strict" interpretation that treated all annual-only tickers as non-counting even when `DEC-015` already documents a valid exception path. Also returned `BL-057` to the conservative posture established by `DEC-025`: low priority, non-blocking, and behind `BL-058`, `BL-052`, and `BL-053` in both backlog and roadmap.
 - **Files changed:** `docs/project/PROJECT_STATE.md`, `docs/project/BACKLOG.md`, `ROADMAP.md`, `CHANGELOG.md`
-- **Tests:** `python3 scripts/check_governance.py --format text` → clean repo/governance state aside from local workspace noise. Briefing-facing docs now agree on BL-057 ordering and no longer claim `15 FULL`.
+- **Tests:** `python3 scripts/check_governance.py --format text` → clean repo/governance state aside from local workspace noise. Briefing-facing docs now agree on BL-057 ordering and no longer conflate `KAR`, `SOM` and `0327` under a blanket non-counting rule.
 
 ## 2026-03-07
 

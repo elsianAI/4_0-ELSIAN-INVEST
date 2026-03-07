@@ -14,15 +14,16 @@ Ver ROADMAP.md para descripción completa de fases.
 | Métrica | Valor | Target Fase 1→2 | Fecha |
 |---|---|---|---|
 | Tickers validados 100% | **15** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, CROX, TEP, SOM, 0327, KAR) | — | 2026-03-07 |
-| Tickers FULL 100% (DEC-015 strict) | **12** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, CROX, TEP) | ≥15 | 2026-03-07 |
-| Tickers ANNUAL_ONLY 100% | 3 (KAR, SOM, 0327) | — | 2026-03-07 |
+| Tickers que cuentan para DEC-015 | **13** (12 FULL + KAR por excepción documentada) | ≥15 | 2026-03-07 |
+| Tickers FULL 100% | **12** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, CROX, TEP) | — | 2026-03-07 |
+| Tickers ANNUAL_ONLY 100% pendientes de promoción/cierre | 2 (SOM, 0327) | — | 2026-03-07 |
 | Tickers WIP | 0 | 0 | 2026-03-05 |
 | Total campos validados | 3,333 | — | 2026-03-07 |
 | Campos canónicos | 26 (23 originales + cfi, cff, delta_cash) | — | 2026-03-07 |
 | Tests pasando | 1267 passed, 5 skipped, 51 test files | — | 2026-03-07 |
 | Líneas de código (aprox.) | ~12,000 + ~6,500 tests | 2026-03-07 |
 
-*KAR, SOM y 0327 siguen reportándose como `ANNUAL_ONLY` en el tracking operativo. Aunque `DEC-015` contempla excepciones para mercados sin quarterly, este fichero mantiene criterio estricto y no los cuenta como `FULL` hasta que exista un cierre de governance explícito.
+*`DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies. `KAR` ya entra en esa excepción documentada (ASX). `SOM` y `0327` siguen en `ANNUAL_ONLY`, pero no cuentan todavía hacia el umbral de transición porque su tratamiento operativo no está cerrado como excepción equivalente a `FULL`.
 
 ## Tickers validados
 
@@ -98,7 +99,7 @@ No hay tickers WIP actualmente. Los 15 tickers están al 100%.
 
 ## Bloqueantes actuales
 
-No hay bloqueantes críticos. El pipeline es funcional end-to-end para los 15 tickers validados al 100%, pero el tracking estricto de `DEC-015` sigue en **12 FULL + 3 ANNUAL_ONLY**. La deuda actual ya no es de overrides ni de calidad base, sino de cómo cerrar el criterio de transición sin mezclar excepciones implícitas.
+No hay bloqueantes críticos. El pipeline es funcional end-to-end para los 15 tickers validados al 100%, pero el tracking operativo de `DEC-015` sigue en **13/15**: **12 FULL + KAR por excepción documentada**. La deuda actual ya no es de overrides ni de calidad base, sino de cómo promover o cerrar el tratamiento de `SOM` y `0327` sin mezclar excepciones implícitas.
 
 **Gaps pendientes (no bloqueantes):**
 1. **BL-035 Oleada 2 pendiente** — accounts_receivable, inventories, accounts_payable (required por producto, no critical).
@@ -157,10 +158,10 @@ Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC
 - ✅ **BL-051 (Auto-discovery)** — DONE. elsian discover funcional. 38 tests.
 - ✅ **BL-043 (0327)** — DONE. HKEX, primer ticker asiático. 3A, 59/59, 100%.
 
-**Tracking estricto de DEC-015:**
-- FULL hoy: **12** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, CROX, TEP)
-- ANNUAL_ONLY hoy: **3** (KAR, SOM, 0327)
-- **DEC-015 target aún no se declara alcanzado** mientras no exista promoción adicional a FULL o una decisión explícita que cierre el tratamiento operativo de las excepciones.
+**Tracking operativo de DEC-015:**
+- Cuentan hoy: **13/15** (12 FULL + KAR por excepción documentada)
+- ANNUAL_ONLY pendientes: **2** (SOM, 0327)
+- **DEC-015 target aún no se declara alcanzado** mientras no exista promoción adicional o cierre explícito para `SOM` y `0327`.
 
 **WP-6** — IxbrlExtractor en producción. **DONE** (BL-048).
 
