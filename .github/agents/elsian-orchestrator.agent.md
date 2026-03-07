@@ -46,7 +46,8 @@ Read on demand when required by routing, gates, closeout, or child packets:
 - If terminal tools are unavailable for required gates, stop and say the runtime could not verify them.
 - `ELSIAN Kickoff` is an internal briefing helper and an expert command, not the main user-facing entrypoint.
 - Use the governance checker as the primary source of live repo state in `briefing`, `planificacion`, and preflight.
-- Do not stage, commit, or push as part of `closeout` unless Elsian asks explicitly.
+- Do not push as part of `closeout` or `auto-commit` unless Elsian asks explicitly.
+- Auto-commit is allowed only after green `closeout` and only under the repo-cleanliness policy defined in `docs/project/ROLES.md`.
 </runtime_notes>
 
 <routing_use>
@@ -74,6 +75,7 @@ Read on demand when required by routing, gates, closeout, or child packets:
   - for the full flow, use `director -> engineer -> gates -> auditor -> closeout`
   - for governance or contract mutations owned by `director`, use `director -> gates -> auditor -> closeout`
   - the `director -> gates -> auditor -> closeout` route defaults to tier `governance-only` unless the packet requires stronger validation
+  - if the route ends green and the repo was clean at preflight except `workspace_only_dirty`, extend the route with `auto-commit`
 - Keep every child packet autosufficient and factual.
 </routing_use>
 
@@ -102,6 +104,12 @@ Read on demand when required by routing, gates, closeout, or child packets:
 - If `closeout` is red, bounce to the mutating child and restart from a full route:
   - `engineer -> gates -> auditor -> closeout`
   - `director -> gates -> auditor -> closeout`
+- If `closeout` is green and the repo-cleanliness policy from `docs/project/ROLES.md` allows it, run `auto-commit` yourself.
+- `auto-commit` must:
+  - stage only the repo-tracked diff created by the current packet
+  - exclude paths that were already `workspace_only_dirty` at preflight
+  - stop instead of committing if the auditor reported material findings or `closeout` detected untracked technical residue
+- If preflight saw `technical_dirty`, `governance_dirty`, or `other_dirty`, return a manual-closeout result instead of auto-committing.
 </gate_use>
 
 <output_format>
@@ -118,6 +126,6 @@ Read on demand when required by routing, gates, closeout, or child packets:
 - `Ruta recomendada` must use one of the closeout routes from `docs/project/ROLES.md`; for governance or wrapper/contract reconciliation, prefer `director -> gates -> auditor -> closeout`.
 - `Prompt recomendado` must start with `$elsian-orchestrator`.
 - In `ejecucion`, separate the response by phases or roles.
-- Include the literal parent gate results and the `closeout` result, not only a summary.
+- Include the literal parent gate results, the `closeout` result, and the `auto-commit` result when it runs.
 - Preserve the auditor result as received instead of rewriting its judgment.
 </output_format>

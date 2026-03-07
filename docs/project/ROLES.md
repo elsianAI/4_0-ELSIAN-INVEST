@@ -30,7 +30,7 @@ Reglas estructurales:
 
 - **Briefing**: usa `kickoff` internamente, devuelve contexto real del repo y termina sin mutar.
 - **Planificacion**: usa `kickoff` internamente y, si hace falta empaquetar mejor la siguiente tarea, puede invocar `director`. Sigue siendo read-only.
-- **Ejecucion**: hace preflight, decide la ruta segun este documento, y ejecuta `director -> engineer -> gates -> auditor` o la variante minima correcta.
+- **Ejecucion**: hace preflight, decide la ruta segun este documento, ejecuta la ruta mutante correcta y, si el cierre queda plenamente verde y el repo estaba limpio al inicio salvo ruido de workspace, puede rematar con `auto-commit`.
 
 **Reglas**
 
@@ -41,6 +41,13 @@ Reglas estructurales:
 - En `ejecucion` puede mutar solo a traves de los hijos correctos y de los gates del padre.
 - En `briefing` y `planificacion` debe usar `python3 scripts/check_governance.py --format json` como fuente primaria de estado vivo.
 - Si detecta trabajo tecnico repo-tracked pendiente, no recomienda por defecto abrir una BL nueva; primero recomienda reconciliacion del trabajo local.
+- Nunca hace `push` automaticamente.
+- Solo puede hacer `auto-commit` despues de `closeout` verde y solo si el preflight detecto:
+  - `technical_dirty = false`
+  - `governance_dirty = false`
+  - `other_dirty = false`
+  - `workspace_only_dirty` permitido
+- Si el repo ya tenia cambios repo-tracked al empezar, puede ejecutar la tarea si Elsian lo pide, pero no puede cerrar con `auto-commit`.
 
 ### Kickoff entrypoint
 
@@ -87,8 +94,9 @@ Reglas estructurales:
   - `engineer -> gates -> auditor -> closeout`
   - `director -> gates -> auditor -> closeout`
   - `auditor`
+- Si la recomendacion es una ruta mutante y el repo esta limpio salvo `workspace_only_dirty`, `Ruta recomendada` puede ampliar la ruta con `-> auto-commit`.
 - Si el checker detecta trabajo tecnico repo-tracked pendiente, `Ruta recomendada` debe priorizar reconciliacion y no una BL nueva.
-- `Prompt recomendado` debe ser copiable, coherente con la ruta recomendada y empezar por `$elsian-orchestrator`.
+- `Prompt recomendado` debe ser copiable, coherente con la ruta recomendada, empezar por `$elsian-orchestrator`, y pedir `auto-commit` solo cuando el estado inicial permita ese cierre.
 - Si `kickoff` se usa dentro de `orchestrator`, el prompt recomendado debe ser reutilizable por `orchestrator`, no por `kickoff`.
 
 ### State sensing y reconciliacion operativa
@@ -173,6 +181,7 @@ Decidir que trabajo pertenece a Modulo 1, en que orden debe hacerse, con que lim
 
 - Si el `director` muta governance o contrato, debe cerrar con el bloque `Post-mutation summary` definido en este documento.
 - Toda mutacion del `director` debe mapearse a una unica BL o a `none`.
+- El uso directo de `director` nunca auto-commitea; ese cierre final pertenece solo al `orchestrator`.
 
 ### 2.2 `engineer`
 
@@ -226,6 +235,7 @@ Implementar la minima solucion correcta dentro del alcance permitido, sin absorb
 
 - Toda tarea mutante del `engineer` debe cerrar con el bloque `Post-mutation summary` definido en este documento.
 - Toda mutacion del `engineer` debe mapearse a una unica BL o a `none`.
+- El uso directo de `engineer` nunca auto-commitea; ese cierre final pertenece solo al `orchestrator`.
 
 ### 2.3 `auditor`
 
@@ -290,6 +300,10 @@ El orquestador neutral decide que hijo lanzar segun la intencion y el posible bl
 - Flujo tecnico local: `engineer -> gates -> auditor -> closeout`
 - Flujo mutante de governance: `director -> gates -> auditor -> closeout`
 - Flujo de review: `auditor`
+
+**Extension de runtime**
+
+- Cuando el `orchestrator` posee la ejecucion y el cierre cumple la politica de repo limpio inicial, puede ampliar cualquier flujo mutante verde con `-> auto-commit`.
 
 **Regla**
 
@@ -499,6 +513,32 @@ Cuando el diff toca `docs/project/ROLES.md`, cambia routing, cambia el contrato 
 - Si el runtime bajo cierre es `Codex`, la ausencia de una skill requerida deja `closeout` rojo.
 - Si el runtime bajo cierre no depende de esos mirrors locales, la ausencia se registra como `not_applicable`.
 - En esta oleada no hace falta incluir al `auditor` entre los mirrors obligatorios.
+
+### 5.7 `auto-commit`
+
+`auto-commit` es un paso opcional y bloqueado del `orchestrator` que solo puede ocurrir despues de `closeout` verde.
+
+**Reglas**
+
+- Solo aplica al `orchestrator`. Los roles directos (`director`, `engineer`, `auditor`, `kickoff`) nunca auto-commitean.
+- Solo corre en `ejecucion`. `briefing` y `planificacion` no pueden commitear.
+- Requiere simultaneamente:
+  - gates verdes;
+  - `auditor` sin findings materiales;
+  - `closeout` verde;
+  - repo limpio al inicio salvo `workspace_only_dirty`.
+- Si el preflight inicial detecta `technical_dirty`, `governance_dirty` u `other_dirty`, el `orchestrator` puede ejecutar la tarea, pero `auto-commit` queda deshabilitado y el cierre pasa a ser manual.
+- El commit automatico debe incluir solo el diff repo-tracked creado por el paquete actual.
+- Los archivos que ya estaban clasificados como `workspace_only_dirty` al inicio, como `.code-workspace`, nunca entran en el commit automatico.
+- Si despues de `closeout` siguen existiendo archivos tecnicos sin trackear, no hay `auto-commit`.
+- Nunca hace `push` automatico.
+
+**Mensaje de commit**
+
+- Si el packet o handoff esta ligado a una BL y `claimed_bl_status: done`, usar `Complete BL-XXX <titulo corto normalizado>`.
+- Si es mutacion de governance ligada a una BL, usar `Reconcile governance for BL-XXX <titulo corto>`.
+- Si el trabajo esta ligado a `none`, usar `Apply runtime/governance reconciliation`.
+- El mensaje se genera en el padre a partir del packet o handoff, no en el hijo mutante.
 
 ## 6. Retry, failure y limites del runtime
 

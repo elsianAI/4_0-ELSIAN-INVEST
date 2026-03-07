@@ -7,10 +7,6 @@ target: vscode
 tools: [vscode/extensions, vscode/getProjectSetupInfo, vscode/installExtension, vscode/memory, vscode/newWorkspace, vscode/openIntegratedBrowser, vscode/runCommand, vscode/vscodeAPI, vscode/askQuestions, execute/getTerminalOutput, execute/runInTerminal, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/problems, read/readFile, agent/runSubagent, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/searchSubagent, search/usages, web/fetch, vscode.mermaid-chat-features/renderMermaidDiagram, todo]
 agents: []
 handoffs:
-  - label: Commit
-    agent: agent
-    prompt: 'Stage all modified files and commit with descriptive message'
-    send: false
   - label: Run Tests
     agent: agent
     prompt: 'Run the full 4.0 test suite: python3 -m pytest 4_0-ELSIAN-INVEST/tests/ -v'
@@ -51,6 +47,7 @@ Read `docs/project/DECISIONS.md` when the task depends on an explicit prior deci
 - If the task is outside Module 1 or the packet opens shared-core without clear authorization, stop and escalate.
 - When a real code change modifies stable Module 1 doctrine, update `docs/project/MODULE_1_ENGINEER_CONTEXT.md` instead of duplicating rules elsewhere.
 - Any mutating task must end with the exact `Post-mutation summary` block from `docs/project/ROLES.md` and map the mutation to a single BL or `none`.
+- Direct use of this role never auto-commits; only the neutral `orchestrator` may auto-commit after green `closeout`.
 </runtime_notes>
 
 <platform_use>

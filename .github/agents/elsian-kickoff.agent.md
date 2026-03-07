@@ -58,8 +58,9 @@ Read these before responding:
   - `engineer -> gates -> auditor -> closeout`
   - `director -> gates -> auditor -> closeout`
   - `auditor`
+- When the checker shows a clean repo except `workspace_only_dirty`, `Ruta recomendada` may append `-> auto-commit` for mutating execution routes driven by `orchestrator`.
 - `Estado actual` must separate `Estado documentado` from `Estado real del worktree`.
 - `Trabajo activo` must surface `Trabajo local pendiente` when the checker reports `technical_dirty`.
 - If `Ruta recomendada` is `director -> gates -> auditor -> closeout`, treat it as `governance-only` by default unless the request explicitly requires stronger technical validation.
-- `Prompt recomendado` must start with `$elsian-orchestrator`.
+- `Prompt recomendado` must start with `$elsian-orchestrator` and request `auto-commit` only when the initial repo state allows it.
 </platform_use>
