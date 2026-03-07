@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-03-07
+
+### [4.0] Backlog hygiene + opportunities lane + repo entry docs rewrite
+- **What:** Split the operational backlog from the historical archive. `docs/project/BACKLOG.md` now contains only live work (`BL-058`, `BL-057`, `BL-052`, `BL-053`, `BL-047`, `BL-005`) with an explicit task template including module and validation tier. Historical DONE items now live in `docs/project/BACKLOG_DONE.md`, and `docs/project/OPPORTUNITIES.md` was added as a separate lane for medium/long-term ideas that should not compete with executable Module 1 work. Rewrote `README.md` as the real entry guide for the repo, and rewrote `ROADMAP.md` so it reflects the current Module 1-first horizon instead of the old commercial/bootstrap framing.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/OPPORTUNITIES.md`, `README.md`, `ROADMAP.md`
+- **Tests:** `python3 scripts/check_governance.py --format text` (backlog duplicates = none). `git diff --check` → clean.
+
+### [4.0] Process hardening: Python contract, CI layers and pre-commit duplicate check
+- **What:** Aligned `pyproject.toml` with the real runtime contract (`requires-python >=3.11`) and updated the package description to match the actual Module 1 product. Reworked GitHub Actions into layered jobs: governance checker, pytest (not network) and full `eval --all` on pushes to `main`/`master`. Hardened `.githooks/pre-commit` so it now fails on duplicate backlog IDs and warns when technical changes are staged without syncing `PROJECT_STATE.md` or `BACKLOG.md`, while preserving the existing `CHANGELOG.md` requirement for code changes.
+- **Files changed:** `pyproject.toml`, `.github/workflows/ci.yml`, `.githooks/pre-commit`, `CHANGELOG.md`
+- **Tests:** `python3 -m pytest -q tests/unit/test_check_governance.py` → 4 passed. `python3 -m ruff check scripts/check_governance.py tests/unit/test_check_governance.py` → clean. `git diff --check` → clean.
+
 ## 2026-03-06
 
 ### [4.0] Governance checker + kickoff/orchestrator sensing

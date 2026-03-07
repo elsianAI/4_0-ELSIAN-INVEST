@@ -1,9 +1,37 @@
 #!/bin/bash
-# Pre-commit hook: ensures CHANGELOG.md is staged when code changes.
+# Pre-commit hook: enforces minimum repo hygiene for technical changes.
 
 STAGED=$(git diff --cached --name-only)
 
-CODE_CHANGED=$(echo "$STAGED" | grep -E "^(elsian/|tests/|config/|cases/)" || true)
+CODE_CHANGED=$(echo "$STAGED" | grep -E "^(elsian/|tests/|config/|cases/|scripts/)" || true)
+
+if [ -f "docs/project/BACKLOG.md" ]; then
+    DUPLICATES=$(python3 - <<'PY'
+import re
+from collections import defaultdict
+from pathlib import Path
+
+backlog = Path("docs/project/BACKLOG.md")
+pattern = re.compile(r"^###\s+(BL-\d+)\b")
+seen = defaultdict(list)
+
+for lineno, line in enumerate(backlog.read_text().splitlines(), start=1):
+    match = pattern.match(line)
+    if match:
+        seen[match.group(1)].append(lineno)
+
+dups = {k: v for k, v in seen.items() if len(v) > 1}
+if dups:
+    print(dups)
+PY
+)
+
+    if [ -n "$DUPLICATES" ]; then
+        echo "ERROR: Duplicate backlog IDs detected in docs/project/BACKLOG.md"
+        echo "$DUPLICATES"
+        exit 1
+    fi
+fi
 
 if [ -n "$CODE_CHANGED" ]; then
     CHANGELOG_STAGED=$(echo "$STAGED" | grep "^CHANGELOG.md$" || true)
@@ -14,5 +42,11 @@ if [ -n "$CODE_CHANGED" ]; then
         echo ""
         echo "Add CHANGELOG.md: git add CHANGELOG.md"
         exit 1
+    fi
+
+    GOVERNANCE_SYNC_STAGED=$(echo "$STAGED" | grep -E "^(docs/project/PROJECT_STATE.md|docs/project/BACKLOG.md)$" || true)
+    if [ -z "$GOVERNANCE_SYNC_STAGED" ]; then
+        echo "WARNING: Technical files changed without staging PROJECT_STATE.md or BACKLOG.md."
+        echo "If this closes work or changes project status, sync governance docs before commit."
     fi
 fi

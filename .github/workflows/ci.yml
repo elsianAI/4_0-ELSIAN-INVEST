@@ -5,9 +5,42 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
 
 jobs:
-  test:
+  governance:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run governance checker
+        run: python scripts/check_governance.py --format text
+
+      - name: Fail on duplicate backlog IDs
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+
+          payload = subprocess.run(
+              ["python", "scripts/check_governance.py", "--format", "json"],
+              check=True,
+              capture_output=True,
+              text=True,
+          )
+          report = json.loads(payload.stdout)
+          duplicates = report["backlog"]["duplicate_ids"]
+          if duplicates:
+              raise SystemExit(f"Duplicate backlog IDs detected: {duplicates}")
+          PY
+
+  pytest:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,7 +54,28 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install . pytest
+          pip install -e ".[dev]"
 
-      - name: Run tests
+      - name: Run pytest (not network)
         run: python -m pytest --tb=short -q -m "not network"
+
+  eval-all:
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    needs: [governance, pytest]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run full regression
+        run: python -m elsian.cli eval --all
