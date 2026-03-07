@@ -30,17 +30,6 @@
 
 ## Tareas activas
 
-### BL-058 — Expandir campos canónicos: oleada 2 (working capital)
-- **Prioridad:** ALTA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** BL-035 (oleada 1 DONE)
-- **Referencias:** DEC-021
-- **Descripción:** Añadir `accounts_receivable`, `inventories` y `accounts_payable` como campos canónicos para completar el bloque de working capital. Seguir el mismo patrón de la oleada 1: ampliar `field_aliases.json` e `ixbrl_concept_map.json`, pilotar primero en TZOO y NVDA, y después expandir al resto de tickers donde exista representación clara en el filing.
-- **Criterio de aceptación:** Los 3 campos nuevos existen en la configuración canónica, al menos dos tickers piloto quedan curados y validados con ellos, `eval --all` sigue verde y hay tests nuevos o ampliados para el patrón exacto de working capital.
-
 ### BL-052 — Auto-curate para tickers no-SEC (expected.json desde PDF)
 - **Prioridad:** MEDIA
 - **Estado:** TODO

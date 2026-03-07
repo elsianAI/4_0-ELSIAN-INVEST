@@ -504,7 +504,19 @@ class TestGateDataCompleteness:
         assert result["status"] == "WARNING"
 
     def test_canonical_count(self):
-        assert len(_CANONICAL_FIELDS) == 26
+        assert len(_CANONICAL_FIELDS) == 29
+
+    def test_working_capital_fields_count_toward_completeness(self):
+        er = _make_er(_fy(
+            2024,
+            accounts_receivable=100,
+            inventories=200,
+            accounts_payable=300,
+        ))
+        result = _gate_data_completeness(er)
+        assert result["status"] == "WARNING"
+        assert result["completeness_pct"] == 10.3
+        assert "3/29" in result["note"]
 
 
 # ---------------------------------------------------------------------------

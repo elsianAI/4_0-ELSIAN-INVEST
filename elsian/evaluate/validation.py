@@ -82,7 +82,7 @@ _GATE_DEFS: list[dict[str, Any]] = [
     {"name": "DATA_COMPLETENESS",  "critical": False},
 ]
 
-# The 26 canonical fields used for DATA_COMPLETENESS
+# The 29 canonical fields used for DATA_COMPLETENESS
 _CANONICAL_FIELDS: tuple[str, ...] = (
     "ingresos", "cost_of_revenue", "gross_profit", "ebitda", "ebit",
     "net_income", "eps_basic", "eps_diluted", "total_assets", "total_liabilities",
@@ -90,6 +90,7 @@ _CANONICAL_FIELDS: tuple[str, ...] = (
     "dividends_per_share", "shares_outstanding", "research_and_development",
     "sga", "depreciation_amortization", "interest_expense", "income_tax",
     "cfi", "cff", "delta_cash",
+    "accounts_receivable", "inventories", "accounts_payable",
 )
 
 

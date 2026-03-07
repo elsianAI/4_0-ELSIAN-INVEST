@@ -532,6 +532,17 @@
 
 ---
 
+### BL-058 — Expandir campos canónicos: oleada 2 (working capital)
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-07)
+- **Asignado a:** Codex (elsian-engineer)
+- **Depende de:** BL-035 (oleada 1 DONE)
+- **Descripción:** Añadir `accounts_receivable`, `inventories` y `accounts_payable` como campos canónicos para cerrar la oleada 2 de Field Dependency Matrix. La implementación amplía aliases y concept map, endurece la selección para preferir ending balances de balance sheet sobre movement tables y pilota la curación anual en TZOO y NVDA. El cierre de la tarea también reconcilia `PROJECT_STATE.md`, `BACKLOG.md`, `ROADMAP.md`, `MODULE_1_ENGINEER_CONTEXT.md` y `FIELD_DEPENDENCY_*` con el nuevo set canónico.
+- **Criterio de aceptación:** ✓ Los 3 campos existen en la configuración canónica. ✓ TZOO y NVDA quedan curados y validados con ellos. ✓ `eval --all` sigue verde. ✓ Hay tests de patrón para aliases, selection y validation. ✓ BL-058 sale del backlog activo.
+- **Resultado:** Completado con 3 nuevos campos canónicos (26→29) y +30 campos validados en los pilotos (TZOO 288→300, NVDA 336→354). Validaciones reportadas: `python3 -m pytest -q tests/unit/test_working_capital_fields.py tests/unit/test_validation.py` → 122 passed; `python3 -m elsian eval TZOO` → PASS 100.0% (300/300); `python3 -m elsian eval NVDA` → PASS 100.0% (354/354); `python3 -m elsian eval --all` → 15/15 PASS 100%; `python3 -m pytest -q` → 1285 passed, 5 skipped, 1 warning.
+
+---
+
 ## Nota
 
 - Este archivo preserva el historial técnico y de governance sin cargar el backlog operativo diario.

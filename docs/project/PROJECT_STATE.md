@@ -1,7 +1,7 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
 > Última actualización: 2026-03-07
-> Actualizado por: Codex (elsian-engineer, reconciliación post-BL-054/055 + sensing)
+> Actualizado por: Codex (BL-058 closeout + reconciliación canónica)
 
 ---
 
@@ -18,9 +18,9 @@ Ver ROADMAP.md para descripción completa de fases.
 | Tickers FULL 100% | **12** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, CROX, TEP) | — | 2026-03-07 |
 | Tickers ANNUAL_ONLY 100% pendientes de promoción/cierre | 2 (SOM, 0327) | — | 2026-03-07 |
 | Tickers WIP | 0 | 0 | 2026-03-05 |
-| Total campos validados | 3,333 | — | 2026-03-07 |
-| Campos canónicos | 26 (23 originales + cfi, cff, delta_cash) | — | 2026-03-07 |
-| Tests pasando | 1267 passed, 5 skipped, 51 test files | — | 2026-03-07 |
+| Total campos validados | 3,278 | — | 2026-03-07 |
+| Campos canónicos | 29 (26 previos + accounts_receivable, inventories, accounts_payable) | — | 2026-03-07 |
+| Tests pasando | 1285 passed, 5 skipped, 52 test files | — | 2026-03-07 |
 | Líneas de código (aprox.) | ~12,000 + ~6,500 tests | 2026-03-07 |
 
 *`DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies. `KAR` ya entra en esa excepción documentada (ASX). `SOM` y `0327` siguen en `ANNUAL_ONLY`, pero no cuentan todavía hacia el umbral de transición porque su tratamiento operativo no está cerrado como excepción equivalente a `FULL`.
@@ -29,14 +29,14 @@ Ver ROADMAP.md para descripción completa de fases.
 
 | Ticker | Campos | Mercado | Formato | Estado |
 |---|---|---|---|---|
-| TZOO | 288 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
+| TZOO | 300 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
 | GCT | 252 | SEC (US) | 20-F→10-K HTML | ✅ VALIDATED (FULL: 6A+9Q) |
 | IOSP | 338 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 5A+17Q) |
 | NEXN | 153 | SEC (US) | 20-F/6-K HTML | ✅ VALIDATED (FULL: 4A+6Q) |
 | SONO | 311 | SEC (US) | 10-K HTML | ✅ VALIDATED (FULL: 6A+12Q) |
 | TEP | 80 | Euronext (FR) | PDF (IFRS, EUR) | ✅ VALIDATED (FULL: 6A+2H) |
 | TALO | 183 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 5A+7Q) |
-| NVDA | 336 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
+| NVDA | 354 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
 | KAR | 49 | ASX (AU) | PDF (IFRS, USD) | ✅ VALIDATED (DEC-015 excepción: no quarterly en ASX) |
 | PR | 141 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 3A+6Q) |
 | ACLS | 375 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+15Q) |
@@ -81,7 +81,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | Sanity Checks post-extracción | ✅ Implementado | capex sign, revenue neg, gp>revenue, YoY >10x. BL-016 DONE |
 | Autonomous Validator | ✅ Implementado | 9 quality gates intrínsecos (BS identity, CF identity, units 1000x, EV, margins, TTM, recency, completeness). BL-020 DONE |
 | validate_expected.py | ✅ Implementado | 8 reglas + 2 sanity warnings. Pre-check en evaluate(). BL-017 DONE |
-| Field Dependency Matrix | ✅ Publicado + Oleada 1 DONE | 26 campos analizados (8 critical, 12 required, 6 optional). 3 campos críticos añadidos: cfi, cff, delta_cash (BL-035 DONE). 7 faltan. |
+| Field Dependency Matrix | ✅ Publicado + Oleadas 1/2 DONE | 26 campos analizados (8 critical, 12 required, 6 optional). 22 ya existen en 4.0; quedan 4 gaps no bloqueantes (`fx_effect_cash`, `other_cash_adjustments`, `market_cap`, `price`). |
 
 ## Manual overrides activos (DEC-024)
 
@@ -89,7 +89,7 @@ Ver ROADMAP.md para descripción completa de fases.
 |---|---|---|---|---|
 | Ninguno | 0 | 0.0% | — | ✅ Sin overrides activos |
 
-**Total:** 0 overrides / 3,333 campos = 0.00% global. TEP y SOM ya no tienen overrides activos tras BL-054 y BL-055.
+**Total:** 0 overrides / 3,278 campos = 0.00% global. TEP y SOM ya no tienen overrides activos tras BL-054 y BL-055.
 
 **Estado "autónomo suficiente" (DEC-026):** ALCANZADO para extracción autónoma strict. Los 15 tickers validados pasan al 100% con 0 overrides activos. La adquisición sigue teniendo limitaciones conocidas y transparentes en mercados sin API pública (ver DEC-025), pero la deuda de extracción manual ya está cerrada.
 
@@ -102,11 +102,13 @@ No hay tickers WIP actualmente. Los 15 tickers están al 100%.
 No hay bloqueantes críticos. El pipeline es funcional end-to-end para los 15 tickers validados al 100%, pero el tracking operativo de `DEC-015` sigue en **13/15**: **12 FULL + KAR por excepción documentada**. La deuda actual ya no es de overrides ni de calidad base, sino de cómo promover o cerrar el tratamiento de `SOM` y `0327` sin mezclar excepciones implícitas.
 
 **Gaps pendientes (no bloqueantes):**
-1. **BL-035 Oleada 2 pendiente** — accounts_receivable, inventories, accounts_payable (required por producto, no critical).
+1. **Residual field-dependency gaps** — `fx_effect_cash`, `other_cash_adjustments`, `market_cap` y `price` siguen fuera del set canónico. Son opcionales o de market data; no bloquean validación ni BL-058.
 2. **TALO y TEP sin filings_manifest.json** — adquisición manual (ManualFetcher / EuRegulatorsFetcher). Coverage audit retorna NEEDS_ACTION. Limitación conocida, no bug.
 3. **Adquisición no-SEC aún gradual** — TALO, TEP y SOM mantienen rutas de acquire con limitaciones conocidas (coverage `NEEDS_ACTION` o `filings_sources` documentados). No bloquea extracción, pero sí la autonomía completa de acquire.
 
 ## Hitos recientes
+
+- ✅ **BL-058 completado (2026-03-07)** — Oleada 2 de working capital cerrada. `accounts_receivable`, `inventories` y `accounts_payable` entran en el set canónico compartido y quedan pilotados en TZOO y NVDA. TZOO sube a 300/300 y NVDA a 354/354; `eval --all` vuelve a pasar 15/15 al 100% y `pytest -q` queda en 1285 passed, 5 skipped. La governance derivada (`BACKLOG`, `PROJECT_STATE`, `FIELD_DEPENDENCY_*`, `ROADMAP`, `MODULE_1_ENGINEER_CONTEXT`) queda reconciliada con 29 campos canónicos y 3,278 campos validados.
 
 - ✅ **BL-055 completado (2026-03-06)** — SOM eliminó sus 2 manual_overrides de DPS mediante extracción determinista desde `FINANCIAL HIGHLIGHTS 2024` en el annual report FY2024. SOM se mantiene en 100% (179/179) con 0 overrides. eval SOM PASS 100.0%, eval --all 15/15 PASS 100%, pytest -q 1267 passed, 5 skipped.
 
@@ -118,7 +120,7 @@ No hay bloqueantes críticos. El pipeline es funcional end-to-end para los 15 ti
   - **BL-043 0327 HKEX completado:** PAX Global Technology. 3 periodos (FY2022-FY2024), 59/59 100%. D&A additive, EBITDA segment, DPS narrative. Primer ticker asiático.
   - **BL-056 truth_pack .gitignore:** Limpieza de 3 ficheros del tracking.
   - **Hotfix regresiones:** TEP/SOM/ACLS restaurados a 100% (aliases scoped, rescaled iXBRL quality). SONO curado (calendar vs fiscal quarter labels).
-- 15/15 PASS 100%, 1258 tests (5 skipped), 3,333 campos validados.
+- 15/15 PASS 100%, 1258 tests (5 skipped), 3,248 campos validados.
 - ✅ **Oleada 1 cierre Módulo 1 (2026-03-04)** — 3 tareas en paralelo completadas:
   - **BL-042 SOM completado:** 16 periodos (FY2009-FY2024), 179/179 100%. DEC-022 resuelto. Regresión TEP corregida en mismo commit.
   - **BL-049 Truth Pack assembler verificado:** TruthPackAssembler (296L, 45 tests). CLI `elsian assemble`. TZOO piloto: 51 periodos, 792 campos, quality PASS.

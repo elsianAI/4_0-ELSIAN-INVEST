@@ -74,6 +74,9 @@ _FIELD_SECTION_MAP: dict[str, str] = {
     "total_liabilities": "balance_sheet",
     "total_equity": "balance_sheet",
     "cash_and_equivalents": "balance_sheet",
+    "accounts_receivable": "balance_sheet",
+    "inventories": "balance_sheet",
+    "accounts_payable": "balance_sheet",
     "total_debt": "balance_sheet",
     # Cash Flow
     "cfo": "cash_flow",
@@ -363,6 +366,15 @@ def _section_bonus(source_location: str, rules: Optional[Dict] = None,
         if ":income_statement:" in loc_lower and ":net_income:" in loc_lower:
             base = min(base, severe_penalty)
 
+    # Working-capital balance-sheet lines can also appear in "changes in
+    # operating assets and liabilities" cash-flow tables nested under
+    # a net-income heading. Those rows are movement components, not the
+    # balance-sheet ending balances we want for canonical BS fields.
+    if canonical in {"accounts_receivable", "inventories", "accounts_payable"}:
+        loc_lower = source_location.lower()
+        if ":income_statement:" in loc_lower and ":net_income:" in loc_lower:
+            base = min(base, severe_penalty)
+
     return base
 
 
@@ -424,13 +436,15 @@ def _parse_stable_order(source_filing: str, source_location: str,
     return (source_filing, tbl_sign * tbl_num, row_sign * row_num, col_sign * col_num)
 
 
-# Fields where stock-splits / reverse-splits cause the SAME line item to
-# change value across filings.  For these, prefer the PRIMARY filing
-# (the one whose FY tag matches the period) to honour "as-reported".
+# Fields that must prefer the PRIMARY filing (the one whose FY tag matches
+# the period) to honour "as-reported" semantics. This started with split-
+# sensitive per-share fields and also covers working-capital balance-sheet
+# lines where newer comparative filings can mix in note/cash-flow variants.
 # For all other fields, prefer the NEWEST filing (lowest SRC number) so
 # that implicit restatements / reclassifications are picked up.
 _SPLIT_SENSITIVE_FIELDS: set = {
     "eps_basic", "eps_diluted", "shares_outstanding", "dividends_per_share",
+    "accounts_receivable", "inventories", "accounts_payable",
 }
 
 

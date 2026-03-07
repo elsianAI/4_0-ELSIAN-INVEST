@@ -135,9 +135,9 @@
     "gates_impacted": ["CASHFLOW_IDENTITY (critical)"],
     "metrics_impacted": ["TTM_semestral"],
     "justification": "Direct component of cash bridge. Without it, CASHFLOW_IDENTITY FAIL → overall FAIL. Needed for 4.0.",
-    "canonical_4_0": null,
-    "exists_in_4_0": false,
-    "suggested_canonical": "cfi"
+    "canonical_4_0": "cfi",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
   },
   {
     "field_name": "cff_usd",
@@ -156,9 +156,9 @@
     "gates_impacted": ["CASHFLOW_IDENTITY (critical)"],
     "metrics_impacted": ["TTM_semestral"],
     "justification": "Direct component of cash bridge. Without it, CASHFLOW_IDENTITY FAIL → overall FAIL. Needed for 4.0.",
-    "canonical_4_0": null,
-    "exists_in_4_0": false,
-    "suggested_canonical": "cff"
+    "canonical_4_0": "cff",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
   },
   {
     "field_name": "delta_cash_usd",
@@ -176,9 +176,9 @@
     "gates_impacted": ["CASHFLOW_IDENTITY (critical, SKIP→FAIL via _overall_status L734)"],
     "metrics_impacted": ["TTM_semestral"],
     "justification": "Without delta_cash, CASHFLOW_IDENTITY returns SKIP. As critical gate, SKIP → overall FAIL. Needed for 4.0.",
-    "canonical_4_0": null,
-    "exists_in_4_0": false,
-    "suggested_canonical": "delta_cash"
+    "canonical_4_0": "delta_cash",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
   },
   {
     "field_name": "ebit_usd",
@@ -476,9 +476,9 @@
     "gates_impacted": [],
     "metrics_impacted": ["working_capital"],
     "justification": "Only affects working capital, which has limited impact in 3.0 (feeds no gate or standard derived metric).",
-    "canonical_4_0": null,
-    "exists_in_4_0": false,
-    "suggested_canonical": "accounts_receivable"
+    "canonical_4_0": "accounts_receivable",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
   },
   {
     "field_name": "inventarios_usd",
@@ -493,9 +493,9 @@
     "gates_impacted": [],
     "metrics_impacted": ["working_capital"],
     "justification": "Only affects working capital.",
-    "canonical_4_0": null,
-    "exists_in_4_0": false,
-    "suggested_canonical": "inventories"
+    "canonical_4_0": "inventories",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
   },
   {
     "field_name": "cuentas_por_pagar_usd",
@@ -510,9 +510,9 @@
     "gates_impacted": [],
     "metrics_impacted": ["working_capital"],
     "justification": "Only affects working capital.",
-    "canonical_4_0": null,
-    "exists_in_4_0": false,
-    "suggested_canonical": "accounts_payable"
+    "canonical_4_0": "accounts_payable",
+    "exists_in_4_0": true,
+    "suggested_canonical": null
   },
   {
     "field_name": "price",

@@ -1,7 +1,7 @@
 {
   "_version": "1.0",
   "_description": "Maps US-GAAP iXBRL concept names to ELSIAN canonical field names. Discovered from TZOO and NVDA 10-K filings.",
-  "_fields_covered": 25,
+  "_fields_covered": 28,
   "mapping": {
     "us-gaap:Revenues": "ingresos",
     "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax": "ingresos",
@@ -35,6 +35,10 @@
     "us-gaap:StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "total_equity",
 
     "us-gaap:CashAndCashEquivalentsAtCarryingValue": "cash_and_equivalents",
+
+    "us-gaap:AccountsReceivableNetCurrent": "accounts_receivable",
+    "us-gaap:InventoryNet": "inventories",
+    "us-gaap:AccountsPayableCurrent": "accounts_payable",
 
     "us-gaap:LongTermDebt": "total_debt",
     "us-gaap:LongTermDebtAndCapitalLeaseObligations": "total_debt",
@@ -110,6 +114,15 @@
       "us-gaap:LongTermDebtNoncurrent",
       "us-gaap:LongTermDebtAndCapitalLeaseObligations",
       "us-gaap:LongTermDebt"
+    ],
+    "accounts_receivable": [
+      "us-gaap:AccountsReceivableNetCurrent"
+    ],
+    "inventories": [
+      "us-gaap:InventoryNet"
+    ],
+    "accounts_payable": [
+      "us-gaap:AccountsPayableCurrent"
     ],
     "depreciation_amortization": [
       "us-gaap:DepreciationDepletionAndAmortization",

@@ -125,6 +125,9 @@ Policy: **as reported unless explicit restatement**.
 - `total_liabilities`
 - `total_equity`
 - `cash_and_equivalents`
+- `accounts_receivable`
+- `inventories`
+- `accounts_payable`
 - `total_debt`
 
 ### Cash flow
@@ -223,6 +226,7 @@ Port validated knowledge first; do not reinvent unless the old approach is prove
 - fiscal vs calendar quarter mismatch
 - generic aliases defeating better labels
 - component line defeating total line
+- working-capital movement rows beating ending-balance rows
 - rescaled iXBRL values beating exact values
 - local selection or sort fixes causing cross-ticker regressions
 
@@ -231,6 +235,7 @@ Port validated knowledge first; do not reinvent unless the old approach is prove
 - `coverage` -> fetcher path, manifests, source hints
 - period mismatch -> expected truth vs fiscal/calendar labeling
 - missing cash flow identity fields -> field dependency matrix, aliases, validator
+- wrong working-capital ending balance -> balance sheet rows, movement-table penalties, primary-filing preference
 - bad PDF values -> PDF tables, extract phase wiring, units hints, reject patterns
 - incomplete provenance -> field model and extractor creation points
 - one ticker improves and others regress -> aliases, selection rules, merge, compare against last green sweep

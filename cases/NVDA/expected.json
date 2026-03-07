@@ -70,6 +70,18 @@
           "value": 10605,
           "source_filing": "SRC_001_10-K_FY2026.clean.md"
         },
+        "accounts_receivable": {
+          "value": 38466,
+          "source_filing": "SRC_001_10-K_FY2026.clean.md"
+        },
+        "inventories": {
+          "value": 21403,
+          "source_filing": "SRC_001_10-K_FY2026.clean.md"
+        },
+        "accounts_payable": {
+          "value": 9812,
+          "source_filing": "SRC_001_10-K_FY2026.clean.md"
+        },
         "total_debt": {
           "value": 7469,
           "source_filing": "SRC_001_10-K_FY2026.clean.md"
@@ -162,6 +174,18 @@
         },
         "cash_and_equivalents": {
           "value": 8589,
+          "source_filing": "SRC_002_10-K_FY2025.clean.md"
+        },
+        "accounts_receivable": {
+          "value": 23065,
+          "source_filing": "SRC_002_10-K_FY2025.clean.md"
+        },
+        "inventories": {
+          "value": 10080,
+          "source_filing": "SRC_002_10-K_FY2025.clean.md"
+        },
+        "accounts_payable": {
+          "value": 6310,
           "source_filing": "SRC_002_10-K_FY2025.clean.md"
         },
         "total_debt": {
@@ -258,6 +282,18 @@
           "value": 7280,
           "source_filing": "SRC_003_10-K_FY2024.clean.md"
         },
+        "accounts_receivable": {
+          "value": 9999,
+          "source_filing": "SRC_003_10-K_FY2024.clean.md"
+        },
+        "inventories": {
+          "value": 5282,
+          "source_filing": "SRC_003_10-K_FY2024.clean.md"
+        },
+        "accounts_payable": {
+          "value": 2699,
+          "source_filing": "SRC_003_10-K_FY2024.clean.md"
+        },
         "total_debt": {
           "value": 8459,
           "source_filing": "SRC_003_10-K_FY2024.clean.md"
@@ -350,6 +386,18 @@
         },
         "cash_and_equivalents": {
           "value": 3389,
+          "source_filing": "SRC_004_10-K_FY2023.clean.md"
+        },
+        "accounts_receivable": {
+          "value": 3827,
+          "source_filing": "SRC_004_10-K_FY2023.clean.md"
+        },
+        "inventories": {
+          "value": 5159,
+          "source_filing": "SRC_004_10-K_FY2023.clean.md"
+        },
+        "accounts_payable": {
+          "value": 1193,
           "source_filing": "SRC_004_10-K_FY2023.clean.md"
         },
         "total_debt": {
@@ -446,6 +494,18 @@
           "value": 1990,
           "source_filing": "SRC_005_10-K_FY2022.clean.md"
         },
+        "accounts_receivable": {
+          "value": 4650,
+          "source_filing": "SRC_005_10-K_FY2022.clean.md"
+        },
+        "inventories": {
+          "value": 2605,
+          "source_filing": "SRC_005_10-K_FY2022.clean.md"
+        },
+        "accounts_payable": {
+          "value": 1783,
+          "source_filing": "SRC_005_10-K_FY2022.clean.md"
+        },
         "total_debt": {
           "value": 10946,
           "source_filing": "SRC_005_10-K_FY2022.clean.md"
@@ -538,6 +598,18 @@
         },
         "cash_and_equivalents": {
           "value": 847,
+          "source_filing": "SRC_006_10-K_FY2021.clean.md"
+        },
+        "accounts_receivable": {
+          "value": 2429,
+          "source_filing": "SRC_006_10-K_FY2021.clean.md"
+        },
+        "inventories": {
+          "value": 1826,
+          "source_filing": "SRC_006_10-K_FY2021.clean.md"
+        },
+        "accounts_payable": {
+          "value": 1201,
           "source_filing": "SRC_006_10-K_FY2021.clean.md"
         },
         "total_debt": {

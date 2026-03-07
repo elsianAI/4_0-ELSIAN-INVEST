@@ -2,11 +2,12 @@
 
 > **BL-034** — Análisis exhaustivo de campos financieros consumidos por `tp_validator.py` y `tp_calculator.py` del 3.0, con mapping a campos canónicos del 4.0.
 >
-> Generado: 2026-03-03  
+> Generado: 2026-03-03
+> Última reconciliación: 2026-03-07 (BL-035 + BL-058)
 > Fuentes analizadas:
 > - `3_0-ELSIAN-INVEST/scripts/runners/tp_validator.py` (791 líneas)
 > - `3_0-ELSIAN-INVEST/scripts/runners/tp_calculator.py` (807 líneas)
-> - `4_0-ELSIAN-INVEST/config/field_aliases.json` (23 campos canónicos, v1.0)
+> - `4_0-ELSIAN-INVEST/config/field_aliases.json` (29 campos canónicos, reconciliado a 2026-03-07)
 
 ---
 
@@ -18,8 +19,8 @@
 | Clasificación `critical` | **8** |
 | Clasificación `required` | **12** |
 | Clasificación `optional` | **6** |
-| Ya existen en 4.0 | **16** |
-| Faltan en 4.0 (filing fields) | **8** |
+| Ya existen en 4.0 | **22** |
+| Faltan en 4.0 (filing fields) | **2** |
 | Faltan en 4.0 (market data) | **2** |
 
 ---
@@ -35,9 +36,9 @@
 | 3 | `pasivos_totales_usd` | `total_liabilities` ✅ | ambos | BALANCE_IDENTITY (critical), DATA_COMPLETENESS | (balance identity) |
 | 4 | `patrimonio_usd` | `total_equity` ✅ | ambos | BALANCE_IDENTITY (critical), DATA_COMPLETENESS | ROE, BV/share, invested capital |
 | 5 | `cfo_usd` | `cfo` ✅ | ambos | CASHFLOW_IDENTITY (critical), UNIDADES_SANITY, DATA_COMPLETENESS | FCF, FCF margin, FCF yield, FCF/share, TTM |
-| 6 | `cfi_usd` | ❌ **MISSING** | ambos | CASHFLOW_IDENTITY (critical) | TTM semestral |
-| 7 | `cff_usd` | ❌ **MISSING** | ambos | CASHFLOW_IDENTITY (critical) | TTM semestral |
-| 8 | `delta_cash_usd` | ❌ **MISSING** | ambos | CASHFLOW_IDENTITY (critical, SKIP→FAIL) | TTM semestral |
+| 6 | `cfi_usd` | `cfi` ✅ | ambos | CASHFLOW_IDENTITY (critical) | TTM semestral |
+| 7 | `cff_usd` | `cff` ✅ | ambos | CASHFLOW_IDENTITY (critical) | TTM semestral |
+| 8 | `delta_cash_usd` | `delta_cash` ✅ | ambos | CASHFLOW_IDENTITY (critical, SKIP→FAIL) | TTM semestral |
 
 ### 2.2 Required (12 campos)
 
@@ -62,9 +63,9 @@
 |---|-----------|-------------|--------|-------------------|---------------------|
 | 21 | `fx_effect_cash_usd` | ❌ **MISSING** | ambos | CASHFLOW_IDENTITY (mejora precisión, default=0) | TTM semestral |
 | 22 | `otros_ajustes_caja_usd` | ❌ **MISSING** | validator | CASHFLOW_IDENTITY (mejora precisión, default=0) | — |
-| 23 | `cuentas_por_cobrar_usd` | ❌ **MISSING** | calculator | — | Working capital |
-| 24 | `inventarios_usd` | ❌ **MISSING** | calculator | — | Working capital |
-| 25 | `cuentas_por_pagar_usd` | ❌ **MISSING** | calculator | — | Working capital |
+| 23 | `cuentas_por_cobrar_usd` | `accounts_receivable` ✅ | calculator | — | Working capital |
+| 24 | `inventarios_usd` | `inventories` ✅ | calculator | — | Working capital |
+| 25 | `cuentas_por_pagar_usd` | `accounts_payable` ✅ | calculator | — | Working capital |
 | 26 | `price` | ❌ **MISSING** (market data) | calculator | — | Market data enrichment |
 
 ---
@@ -168,7 +169,7 @@
 ### 3.6 `cfi_usd` — CRITICAL
 
 - **Clasificación**: `critical`
-- **4.0 canónico**: ❌ **NO EXISTE** — sugerido: `cfi` (cash from investing activities)
+- **4.0 canónico**: `cfi` ✅
 - **Aliases 3.0**: `cfi_usd`
 - **source_file**: ambos
 - **Funciones — validator**:
@@ -179,12 +180,12 @@
   - `_ttm_semestral` (línea 519) — incluido en _TTM_FIELDS
 - **Gates impactados**: CASHFLOW_IDENTITY (critical=True, FAIL)
 - **Métricas impactadas**: TTM semestral
-- **Justificación**: Componente directo del cash bridge. Sin él, CASHFLOW_IDENTITY FAIL → overall FAIL. **Necesario para 4.0.**
+- **Justificación**: Componente directo del cash bridge. Ya está implementado en 4.0 desde BL-035 como campo crítico del bridge de cash flow.
 
 ### 3.7 `cff_usd` — CRITICAL
 
 - **Clasificación**: `critical`
-- **4.0 canónico**: ❌ **NO EXISTE** — sugerido: `cff` (cash from financing activities)
+- **4.0 canónico**: `cff` ✅
 - **Aliases 3.0**: `cff_usd`
 - **source_file**: ambos
 - **Funciones — validator**:
@@ -195,12 +196,12 @@
   - `_ttm_semestral` (línea 519) — incluido en _TTM_FIELDS
 - **Gates impactados**: CASHFLOW_IDENTITY (critical=True, FAIL)
 - **Métricas impactadas**: TTM semestral
-- **Justificación**: Componente directo del cash bridge. Sin él, CASHFLOW_IDENTITY FAIL → overall FAIL. **Necesario para 4.0.**
+- **Justificación**: Componente directo del cash bridge. Ya está implementado en 4.0 desde BL-035 como campo crítico del bridge de cash flow.
 
 ### 3.8 `delta_cash_usd` — CRITICAL
 
 - **Clasificación**: `critical`
-- **4.0 canónico**: ❌ **NO EXISTE** — sugerido: `delta_cash` (net change in cash and equivalents)
+- **4.0 canónico**: `delta_cash` ✅
 - **Aliases 3.0**: `delta_cash_usd`, `cambio_caja_usd`
 - **source_file**: ambos
 - **Funciones — validator**:
@@ -210,7 +211,7 @@
   - `_ttm_semestral` (línea 519) — incluido en _TTM_FIELDS
 - **Gates impactados**: CASHFLOW_IDENTITY (critical=True, SKIP→overall FAIL vía `_overall_status` línea 734)
 - **Métricas impactadas**: TTM semestral
-- **Justificación**: Sin delta_cash, CASHFLOW_IDENTITY retorna SKIP. Dado que es gate critical, SKIP provoca overall FAIL. **Necesario para 4.0.**
+- **Justificación**: Cross-check del cash bridge. Ya está implementado en 4.0 desde BL-035 para evitar que CASHFLOW_IDENTITY quede en SKIP por ausencia del campo.
 
 ### 3.9 `ebit_usd` — REQUIRED
 
@@ -427,38 +428,38 @@
 ### 3.23 `cuentas_por_cobrar_usd` — OPTIONAL
 
 - **Clasificación**: `optional`
-- **4.0 canónico**: ❌ **NO EXISTE** — sugerido: `accounts_receivable`
+- **4.0 canónico**: `accounts_receivable` ✅
 - **Aliases 3.0**: `cuentas_por_cobrar_usd`, `accounts_receivable_usd`
 - **source_file**: calculator
 - **Funciones — calculator**:
   - `_working_capital` (línea 718) — componente de current assets
 - **Gates impactados**: —
 - **Métricas impactadas**: Working capital
-- **Justificación**: Solo afecta working capital, que en 3.0 tiene impacto limitado (no alimenta ningún gate ni métrica derivada estándar).
+- **Justificación**: Solo afecta working capital, que en 3.0 tiene impacto limitado (no alimenta ningún gate ni métrica derivada estándar). Ya está implementado en 4.0 desde BL-058.
 
 ### 3.24 `inventarios_usd` — OPTIONAL
 
 - **Clasificación**: `optional`
-- **4.0 canónico**: ❌ **NO EXISTE** — sugerido: `inventories`
+- **4.0 canónico**: `inventories` ✅
 - **Aliases 3.0**: `inventarios_usd`, `inventories_usd`
 - **source_file**: calculator
 - **Funciones — calculator**:
   - `_working_capital` (línea 719) — componente de current assets
 - **Gates impactados**: —
 - **Métricas impactadas**: Working capital
-- **Justificación**: Solo afecta working capital.
+- **Justificación**: Solo afecta working capital. Ya está implementado en 4.0 desde BL-058.
 
 ### 3.25 `cuentas_por_pagar_usd` — OPTIONAL
 
 - **Clasificación**: `optional`
-- **4.0 canónico**: ❌ **NO EXISTE** — sugerido: `accounts_payable`
+- **4.0 canónico**: `accounts_payable` ✅
 - **Aliases 3.0**: `cuentas_por_pagar_usd`, `accounts_payable_usd`
 - **source_file**: calculator
 - **Funciones — calculator**:
   - `_working_capital` (línea 720) — componente de current liabilities
 - **Gates impactados**: —
 - **Métricas impactadas**: Working capital
-- **Justificación**: Solo afecta working capital.
+- **Justificación**: Solo afecta working capital. Ya está implementado en 4.0 desde BL-058.
 
 ### 3.26 `price` — OPTIONAL (market data)
 
@@ -477,13 +478,11 @@
 
 ## 4. Campos faltantes en 4.0 — Recomendación de expansión
 
+BL-035 y BL-058 ya cerraron los 6 filing fields más prioritarios detectados por esta matriz (`cfi`, `cff`, `delta_cash`, `accounts_receivable`, `inventories`, `accounts_payable`). A día de hoy solo quedan 4 gaps no bloqueantes.
+
 ### 4.1 Prioridad ALTA (Critical — necesarios para gates)
 
-| Campo sugerido 4.0 | Campo 3.0 | Clasificación | Justificación |
-|---------------------|-----------|---------------|---------------|
-| `cfi` | `cfi_usd` | critical | Componente de CASHFLOW_IDENTITY. Sin él, gate critical FAIL. |
-| `cff` | `cff_usd` | critical | Componente de CASHFLOW_IDENTITY. Sin él, gate critical FAIL. |
-| `delta_cash` | `delta_cash_usd` | critical | Cross-check de CASHFLOW_IDENTITY. Sin él, gate critical SKIP→FAIL. |
+No quedan campos `critical` pendientes en 4.0.
 
 ### 4.2 Prioridad MEDIA (Required — degradan métricas)
 
@@ -497,9 +496,6 @@
 |---------------------|-----------|---------------|---------------|
 | `fx_effect_cash` | `fx_effect_cash_usd` | optional | Mejora precisión de cash bridge. Default=0. |
 | `other_cash_adjustments` | `otros_ajustes_caja_usd` | optional | Mejora precisión de cash bridge. Default=0. |
-| `accounts_receivable` | `cuentas_por_cobrar_usd` | optional | Working capital. |
-| `inventories` | `inventarios_usd` | optional | Working capital. |
-| `accounts_payable` | `cuentas_por_pagar_usd` | optional | Working capital. |
 | `price` | `price` | optional | Market data enrichment. |
 
 ### 4.4 Campos en 4.0 NO consumidos por 3.0

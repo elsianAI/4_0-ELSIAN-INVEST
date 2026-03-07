@@ -235,6 +235,33 @@
     ],
     "multiplier": null
   },
+  "accounts_receivable": {
+    "aliases": [
+      "accounts receivable, net",
+      "accounts receivable net",
+      "accounts receivable, less allowance for doubtful accounts",
+      "accounts receivable less allowance for doubtful accounts",
+      "trade receivables, net",
+      "trade receivables net",
+      "trade receivables"
+    ],
+    "multiplier": null
+  },
+  "inventories": {
+    "aliases": [
+      "inventories",
+      "inventories, net",
+      "inventory, net"
+    ],
+    "multiplier": null
+  },
+  "accounts_payable": {
+    "aliases": [
+      "accounts payable",
+      "trade payables"
+    ],
+    "multiplier": null
+  },
   "total_debt": {
     "aliases": [
       "total debt",
