@@ -42,3 +42,4 @@ _run_*.py
 
 # Generated analysis output
 cases/*/truth_pack.json
+cases/*/source_map.json

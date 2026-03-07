@@ -30,17 +30,6 @@
 
 ## Tareas activas
 
-### BL-053 — Provenance Level 3 (source_map.json)
-- **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Module 1
-- **Validation tier:** targeted
-- **Depende de:** BL-006 (Provenance L2 DONE)
-- **Referencias:** DEC-024
-- **Descripción:** Añadir el mapeo inverso desde cada dato validado a la posición exacta en el documento original (HTML/PDF). Esto implica generar `source_map.json` o artefacto equivalente con offsets, páginas o líneas, manteniendo la separación entre el pipeline determinista y futuros visores/productos.
-- **Criterio de aceptación:** Al menos un ticker genera artefactos de provenance L3 trazables, con tests unitarios y una demostración clara de “click to source” a nivel técnico.
-
 ### BL-047 — Mejorar HTML table extractor: interest_income + capex
 - **Prioridad:** MEDIA
 - **Estado:** TODO

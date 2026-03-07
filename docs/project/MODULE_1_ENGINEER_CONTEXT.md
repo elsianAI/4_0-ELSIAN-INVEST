@@ -62,6 +62,15 @@ Every extracted value must carry useful provenance.
 - **Level 2**: coordinates inside the normalized document
 - **Level 3**: link back to the original HTML/PDF position
 
+### Current implementation note
+
+- The current Level 3 pilot is a post-extraction artifact, not a new extractor.
+- `elsian source-map {TICKER}` builds `source_map.json` from `extraction_result.json`.
+- In the current pilot, deterministic anchors on equivalent normalized artifacts
+  (`.clean.md`, `.txt`) count as valid click targets as long as the original
+  filing path is still preserved in the artifact.
+- Level 3 must not change extraction winners, merge logic, or TruthPack schema.
+
 ### Rule
 
 Do not extract values without provenance coordinates when the extractor can provide them. Provenance is part of the data contract, not optional metadata.

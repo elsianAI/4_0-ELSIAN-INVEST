@@ -322,7 +322,6 @@ def _run_pipeline_for_ticker(
             assembler = TruthPackAssembler()
             tp = assembler.assemble(case_dir)
             truth_pack_path = case_dir / "truth_pack.json"
-            fd = tp.get("financial_data", {})
             meta = tp.get("metadata", {})
             dm = tp.get("derived_metrics", {})
             derived_count = sum(
@@ -769,7 +768,6 @@ def cmd_assemble(args: argparse.Namespace) -> None:
     tp = assembler.assemble(case_dir)
 
     # Print summary
-    fd = tp.get("financial_data", {})
     meta = tp.get("metadata", {})
     quality = tp.get("quality", {})
     dm = tp.get("derived_metrics", {})
@@ -785,6 +783,45 @@ def cmd_assemble(args: argparse.Namespace) -> None:
     print(f"  Market data: {'YES' if has_market else 'NO'}")
     print(f"  Derived periodo_base: {dm.get('periodo_base', 'N/A')}")
     print(f"  Saved to {case_dir / 'truth_pack.json'}")
+
+
+def cmd_source_map(args: argparse.Namespace) -> None:
+    """Build a SourceMap_v1 artifact for a ticker."""
+    from elsian.assemble.source_map import SourceMapBuilder
+
+    case_dir = _find_case_dir(args.ticker)
+    if not case_dir:
+        print(f"Case not found: {args.ticker}")
+        sys.exit(1)
+
+    output_path = Path(args.output) if getattr(args, "output", None) else None
+    builder = SourceMapBuilder()
+    sm = builder.build(case_dir, output_path=output_path)
+
+    out_path = output_path if output_path else case_dir / "source_map.json"
+    summary = sm.get("summary", {})
+    print(f"{args.ticker}: SourceMap_v1 built")
+    print(
+        f"  Resolved: {summary.get('resolved_fields', 0)}/"
+        f"{summary.get('total_fields', 0)} "
+        f"({summary.get('resolution_pct', 0)}%)"
+    )
+    by_kind = summary.get("by_pointer_kind", {})
+    if by_kind:
+        for kind, count in sorted(by_kind.items()):
+            print(f"  {kind}: {count}")
+    sample_target = None
+    periods = sm.get("periods", {})
+    for period_data in periods.values():
+        for field_data in period_data.get("fields", {}).values():
+            if field_data.get("resolution_status") == "resolved":
+                sample_target = field_data.get("click_target")
+                break
+        if sample_target:
+            break
+    if sample_target:
+        print(f"  Sample click target: {sample_target}")
+    print(f"  Saved to {out_path}")
 
 
 def cmd_dashboard(args: argparse.Namespace) -> None:
@@ -850,7 +887,7 @@ def cmd_discover(args: argparse.Namespace) -> None:
     if result.web_ir:
         print(f"  Web IR:     {result.web_ir}")
     if result.warnings:
-        print(f"  Warnings:")
+        print("  Warnings:")
         for w in result.warnings:
             print(f"    - {w}")
     print(f"  Saved to {case_file}")
@@ -918,6 +955,18 @@ def main() -> None:
     p_assemble = sub.add_parser("assemble", help="Assemble TruthPack_v1 for a ticker")
     p_assemble.add_argument("ticker")
     p_assemble.set_defaults(func=cmd_assemble)
+
+    p_source_map = sub.add_parser(
+        "source-map",
+        help="Build SourceMap_v1 provenance artifact for a ticker",
+    )
+    p_source_map.add_argument("ticker")
+    p_source_map.add_argument(
+        "--output",
+        default=None,
+        help="Write source_map.json to this path instead of cases/<TICKER>/source_map.json",
+    )
+    p_source_map.set_defaults(func=cmd_source_map)
 
     p_discover = sub.add_parser("discover", help="Auto-discover ticker metadata → case.json")
     p_discover.add_argument("ticker", help="Ticker symbol (e.g. AAPL, TEP.PA, KAR.AX)")

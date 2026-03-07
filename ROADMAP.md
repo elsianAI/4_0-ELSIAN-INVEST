@@ -16,9 +16,9 @@ ELSIAN 4.0 avanza por capas, pero el orden no es negociable:
 
 Trabajo prioritario una vez el repo esté limpio y sincronizado:
 
-1. **BL-053** — Provenance Level 3
-2. **BL-047** — mejoras reutilizables del extractor HTML
-3. **BL-057** — discovery automático de filings LSE/AIM
+1. **BL-047** — mejoras reutilizables del extractor HTML
+2. **BL-057** — discovery automático de filings LSE/AIM
+3. **BL-005** — ampliar cobertura de tickers por diversidad real
 
 Objetivos de esta fase:
 
@@ -37,7 +37,7 @@ Cuando el Módulo 1 sea suficientemente estable y la operación diaria sea prede
 - API de lectura para datos y provenance;
 - scheduler de refresco;
 - artefactos de consumo más cómodos que JSON en disco;
-- soporte técnico de “click to source” sobre provenance Level 3.
+- soporte de producto sobre el `source_map.json` ya pilotado para “click to source”.
 
 Esto sigue siendo infraestructura de producto, no un cambio de foco. No debe competir con el backlog activo mientras el Módulo 1 siga cerrando gaps de extracción/adquisición.
 

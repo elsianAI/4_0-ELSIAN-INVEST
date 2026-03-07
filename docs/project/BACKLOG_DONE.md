@@ -9,6 +9,16 @@
 
 ---
 
+### BL-053 — Provenance Level 3 (source_map.json)
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-07)
+- **Asignado a:** elsian-orchestrator
+- **Depende de:** BL-006 (Provenance L2 DONE)
+- **Descripción:** Se implementó un piloto mínimo y cerrable de provenance L3 sin reabrir el pipeline de extracción. `elsian source-map {TICKER}` genera `source_map.json` a partir de `extraction_result.json` y resuelve el salto técnico hasta la fuente usando la provenance L2 ya existente: facts iXBRL apuntan al `.htm` original mediante offsets/caracteres y `id` DOM cuando existe, tablas HTML apuntan a la fila exacta en `.clean.md`, y los casos `vertical_bs` en `.txt` quedan anclados por línea. El piloto validado es `TZOO`, con 851/851 campos resueltos y targets de click-to-source trazables para `table`, `ixbrl` y `text_label`.
+- **Criterio de aceptación:** ✓ `elsian source-map TZOO --output <tmp>` genera un artefacto `SourceMap_v1` válido. ✓ El piloto TZOO resuelve 851/851 campos. ✓ `python3 -m pytest -q tests/unit/test_source_map.py tests/integration/test_source_map.py` pasa (5 passed). ✓ `python3 -m elsian eval TZOO` sigue en PASS 100.0% (300/300). ✓ La demo técnica de click-to-source queda demostrada con targets a `.htm#id...`, `.clean.md#L...` y `.txt#L...`.
+
+---
+
 ### BL-052 — Auto-curate para tickers no-SEC (expected.json desde PDF)
 - **Prioridad:** MEDIA
 - **Estado:** DONE ✅ (2026-03-07)
