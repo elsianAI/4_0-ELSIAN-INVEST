@@ -155,6 +155,8 @@ Decidir que trabajo pertenece a Modulo 1, en que orden debe hacerse, con que lim
 - `docs/project/DECISIONS.md`
 - `docs/project/KNOWLEDGE_BASE.md`
 - `docs/project/ROLES.md`
+- `docs/project/OPPORTUNITIES.md`
+- `ROADMAP.md`
 - `CHANGELOG.md`
 
 **No puede tocar**

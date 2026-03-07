@@ -34,6 +34,10 @@
 - Endurecimiento adicional de CI cuando el coste de ejecución sea estable y asumible.
 - Detección más rica de drift documental o operativo si aparece fricción real en el uso diario.
 
+## Operación y releases
+
+- Lane de experimentos y releases para desacoplar pruebas, validación y promoción a runtime estable sin contaminar el backlog ejecutable de Module 1.
+
 ## Cobertura y fuentes
 
 - Más tickers solo cuando cubran gaps reales de mercado, regulador o formato.

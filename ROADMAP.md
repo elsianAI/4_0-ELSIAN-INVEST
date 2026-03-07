@@ -16,7 +16,8 @@ ELSIAN 4.0 avanza por capas, pero el orden no es negociable:
 
 Trabajo prioritario una vez el repo esté limpio y sincronizado:
 
-1. **BL-005** — ampliar cobertura de tickers por diversidad real
+1. **Oleada estructural filtrada (`T01–T15` válidas)** para endurecer contratos, CI, fronteras internas, adquisición, onboarding, diagnosis y DX del Módulo 1.
+2. **BL-005** — ampliar cobertura de tickers por diversidad real, subordinada a `BL-067` (`T09 — Factoría de onboarding`)
 
 Objetivos de esta fase:
 

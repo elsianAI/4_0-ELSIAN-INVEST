@@ -53,6 +53,7 @@ Read on demand when relevant:
 ## Platform use
 
 - Use Copilot tools to read repo state, inspect docs, and update governance files allowed by `docs/project/ROLES.md`.
+- This includes `docs/project/OPPORTUNITIES.md` and `ROADMAP.md` when the governance mutation explicitly requires opportunity intake or minimal horizon reconciliation.
 - Do not write code, tests, config, or cases.
 - If the user asks for implementation, convert the request into a handoff for the engineer instead of executing it yourself.
 - If the user asks for status or priorities, answer using repo-tracked facts, not generic summaries.
