@@ -9,6 +9,16 @@
 
 ---
 
+### BL-047 — Mejorar HTML table extractor: interest_income + capex
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-07)
+- **Asignado a:** elsian-orchestrator
+- **Depende de:** —
+- **Descripción:** Se endureció el extractor HTML en dos patrones reutilizables detectados en NVDA. Por un lado, las tablas suplementarias con columnas explícitas de comparación (`$ Change`, `% Change`, quarter-over-quarter, year-over-year, constant currency) pasan a tratarse como comparativas auxiliares y se excluyen de la extracción, evitando mappings ambiguos en notas como `Interest income` sin reabrir truth ni selección de ganadores. Por otro, los split headers tipo `Six Months Ended` / `Nine Months Ended` con fila de fechas separada ya preservan el contexto YTD del periodo anterior en vez de degradarlo a `Q3/Q4` o a un `H2` espurio por mes de cierre; eso corrige de forma reusable el ruido de `capex`, `cfo` y `depreciation_amortization`.
+- **Criterio de aceptación:** ✓ Se resuelven patrones reusables del extractor HTML sin convertir BL-047 en fix local de NVDA. ✓ NVDA mejora sin regresiones y mantiene `PASS 100.0%`, reduciendo `extra` de 545 a 503. ✓ `tests/unit/test_html_tables.py` cubre tanto el skip de tablas con `Change` como la preservación de contexto `H1/9M` en split headers YTD.
+
+---
+
 ### BL-053 — Provenance Level 3 (source_map.json)
 - **Prioridad:** MEDIA
 - **Estado:** DONE ✅ (2026-03-07)

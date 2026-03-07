@@ -16,9 +16,8 @@ ELSIAN 4.0 avanza por capas, pero el orden no es negociable:
 
 Trabajo prioritario una vez el repo esté limpio y sincronizado:
 
-1. **BL-047** — mejoras reutilizables del extractor HTML
-2. **BL-057** — discovery automático de filings LSE/AIM
-3. **BL-005** — ampliar cobertura de tickers por diversidad real
+1. **BL-057** — discovery automático de filings LSE/AIM
+2. **BL-005** — ampliar cobertura de tickers por diversidad real
 
 Objetivos de esta fase:
 

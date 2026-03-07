@@ -4,9 +4,7 @@ from elsian.extract.html_tables import (
     parse_number,
     extract_from_markdown_table,
     extract_tables_from_clean_md,
-    extract_tables_from_text,
     _identify_period_columns,
-    _parse_markdown_table,
     _collapse_split_parentheticals,
 )
 
@@ -370,6 +368,82 @@ def test_dollar_pct_annotation_row_does_not_suppress_normal_is_table():
     assert by_period.get(("Service revenues", "Q1-2024")) == 67415.0
     assert by_period.get(("Service revenues", "Q1-2023")) == 35096.0
     assert by_period.get(("Operating income", "Q1-2024")) == 34817.0
+
+
+# ── BL-047: comparison/delta column tables are supplemental ────────────────
+
+def test_change_column_table_skipped():
+    """Tables with explicit delta columns are skipped as supplemental.
+
+    NVDA note tables under "Interest income" include actual period values plus
+    "$ Change" columns. The mixed layout can produce duplicated / wrong period
+    assignments, while the primary income statement already exposes the real
+    values. Those comparison tables should not be extracted at all.
+    """
+    table = (
+        "|  | Three Months Ended |  | Nine Months Ended |  |  |  |  |  |  |  |  |  |\n"
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n"
+        "|  | Oct 26, 2025 |  | Oct 27, 2024 |  | $ Change |  | Oct 26, 2025 |  | Oct 27, 2024 |  | $ Change |  |\n"
+        "|  | ($ in millions) |  |  |  |  |  |  |  |  |  |  |  |\n"
+        "| Interest income | $ | 624 |  |  | $ | 472 |  |  | $ | 152 |  |  |\n"
+        "| Interest expense | (61) |  |  | (61) |  |  | (186) |  |  | (186) |  |  |\n"
+        "| Total other income, net | $ | 1,926 |  |  | $ | 447 |  |  | $ | 1,479 |  |  |\n"
+    )
+    fields = extract_from_markdown_table(table, filing_type="10-Q")
+    assert fields == []
+
+
+def test_change_row_label_does_not_skip_primary_cash_flow_table():
+    """A row containing 'Net change' must not trigger the comparison-table filter."""
+    table = (
+        "|  | 2024 | 2023 |\n"
+        "| --- | --- | --- |\n"
+        "| Net cash provided by operating activities | 150 | 130 |\n"
+        "| Net change in cash and cash equivalents | 40 | 25 |\n"
+    )
+    fields = extract_from_markdown_table(table, filing_type="10-K")
+    by_period = {(f.label, f.column_header): f.value for f in fields}
+    assert by_period.get(("Net cash provided by operating activities", "FY2024")) == 150.0
+    assert by_period.get(("Net change in cash and cash equivalents", "FY2024")) == 40.0
+
+
+def test_split_nine_months_date_row_preserves_9m_context():
+    """A prior-period bare date must inherit the nearby 'Nine Months Ended' context."""
+    table = (
+        "|  | Nine Months Ended |  |  |  |  |  |  |\n"
+        "| --- | --- | --- | --- | --- | --- | --- | --- |\n"
+        "|  | Oct 26, 2025 |  | Oct 27, 2024 |  |  |  |  |\n"
+        "| Net cash provided by operating activities | 66,530 |  |  | 47,460 |  |  |  |\n"
+        "| Purchases related to property and equipment and intangible assets | ( 4,758 ) |  |  | ( 2,159 ) |  |  |  |\n"
+    )
+    fields = extract_from_markdown_table(table, filing_type="10-Q")
+    by_period = {(f.label, f.column_header): f.value for f in fields}
+    assert by_period.get(("Net cash provided by operating activities", "9M-2025")) == 66530.0
+    assert by_period.get(("Net cash provided by operating activities", "9M-2024")) == 47460.0
+    assert by_period.get(
+        ("Purchases related to property and equipment and intangible assets", "9M-2024")
+    ) == -2159.0
+    assert ("Net cash provided by operating activities", "Q4-2024") not in by_period
+
+
+def test_split_six_months_date_row_preserves_h1_context():
+    """A six-month split header must stay H1 even when the period-end month is July."""
+    table = (
+        "|  | Six Months Ended |  |  |  |  |  |  |\n"
+        "| --- | --- | --- | --- | --- | --- | --- | --- |\n"
+        "|  | Jul 28, 2024 |  | Jul 30, 2023 |  |  |  |  |\n"
+        "| Net cash provided by operating activities | 29,833 |  |  | 9,259 |  |  |  |\n"
+        "| Purchases related to property and equipment and intangible assets | ( 1,346 ) |  |  | ( 537 ) |  |  |  |\n"
+    )
+    fields = extract_from_markdown_table(table, filing_type="10-Q")
+    by_period = {(f.label, f.column_header): f.value for f in fields}
+    assert by_period.get(("Net cash provided by operating activities", "H1-2024")) == 29833.0
+    assert by_period.get(("Net cash provided by operating activities", "H1-2023")) == 9259.0
+    assert by_period.get(
+        ("Purchases related to property and equipment and intangible assets", "H1-2024")
+    ) == -1346.0
+    assert ("Net cash provided by operating activities", "H2-2024") not in by_period
+    assert ("Net cash provided by operating activities", "Q3-2023") not in by_period
 
 
 # ── NEXN 6-K: 4-column table with reversed group order (9M then Q) ───────────

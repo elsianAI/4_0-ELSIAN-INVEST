@@ -8,7 +8,7 @@ Parses markdown tables (from .clean.md files) and space-aligned tables
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 
@@ -104,6 +104,21 @@ _SCALE_NOTE_RE = re.compile(
 _PERIOD_TYPE_HDR_RE = re.compile(
     r"(?:three|six|nine|twelve)\s+months?\s+ended"
     r"|years?\s+ended|fiscal\s+year|quarters?\s+ended",
+    re.IGNORECASE,
+)
+
+# Comparison / delta columns turn many investor-relations note tables into
+# ambiguous hybrids (actual periods + "$ Change" / "% Change"). Those tables
+# are supplemental and tend to inject spurious period assignments into the
+# extractor; the primary statement tables in the same filing carry the real
+# values already.
+_COMPARISON_HEADER_RE = re.compile(
+    r"[$%]\s*change\b"
+    r"|quarter[-\s]+over[-\s]+quarter\s+change"
+    r"|year[-\s]+over[-\s]+year\s+change"
+    r"|constant\s+currency\s+%\s*change"
+    r"|change\s+favorable"
+    r"|change\s+unfavorable",
     re.IGNORECASE,
 )
 
@@ -396,6 +411,35 @@ def _date_to_period(month_num: int, year: str,
     return f"Q{q}-{year}"
 
 
+def _period_from_left_context(
+    headers: List[str], idx: int, month_num: int, year: str
+) -> Optional[str]:
+    """Infer a period label from the nearest explicit period-type header.
+
+    Split markdown headers often leave the prior-period column as a bare date
+    (e.g. "Oct 27, 2024") while the current-period column still carries the
+    real context ("Nine Months Ended Oct 26, 2025").  Reuse that nearby
+    context instead of degrading the prior date to a quarter label.
+    """
+    for prev_idx in range(idx - 1, -1, -1):
+        prev = headers[prev_idx].strip()
+        if not prev:
+            continue
+        if re.search(r"nine\s+months?\s+ended", prev, re.IGNORECASE):
+            return f"9M-{year}"
+        if re.search(r"six\s+months?\s+ended", prev, re.IGNORECASE):
+            return f"H1-{year}"
+        if re.search(
+            r"three\s+months?\s+ended|quarters?\s+ended", prev, re.IGNORECASE
+        ):
+            q = (month_num - 1) // 3 + 1
+            return f"Q{q}-{year}"
+        if re.search(r"year\s+ended|fiscal\s+year", prev, re.IGNORECASE):
+            return f"FY{year}"
+        break
+    return None
+
+
 def _identify_period_columns(
     headers: List[str],
     fiscal_year_end_month: int = 12,
@@ -464,11 +508,11 @@ def _identify_period_columns(
             re.IGNORECASE,
         )
         if m:
-            month_num = _resolve_month(m.group(1))
-            if month_num:
-                half = 1 if month_num <= 6 else 2
-                period_map[idx] = f"H{half}-{m.group(2)}"
-                continue
+            # "Six Months Ended" in quarterly/YTD filings denotes the
+            # first-half aggregate regardless of the calendar month of the
+            # fiscal period end (e.g. Jul 28, 2024 still maps to H1-2024).
+            period_map[idx] = f"H1-{m.group(2)}"
+            continue
 
         # "1st half-year 2025", "2nd half-year 2024" (Euronext/European format)
         m = re.search(
@@ -511,8 +555,9 @@ def _identify_period_columns(
         if m:
             month_num = _resolve_month(m.group(1))
             if month_num:
-                period_map[idx] = _date_to_period(
-                    month_num, m.group(2), fiscal_year_end_month
+                period_map[idx] = (
+                    _period_from_left_context(headers, idx, month_num, m.group(2))
+                    or _date_to_period(month_num, m.group(2), fiscal_year_end_month)
                 )
                 continue
 
@@ -584,6 +629,13 @@ def extract_from_markdown_table(
     """
     headers, rows = _parse_markdown_table(table_text)
     if not headers or not rows:
+        return []
+
+    # Supplemental comparison tables with explicit delta columns ("$ Change",
+    # "% Change", QoQ/YoY change, constant-currency deltas) are not primary
+    # financial statements. Their mixed layout causes misleading period maps,
+    # while the same filing already contains the actual statement table.
+    if any(_COMPARISON_HEADER_RE.search(h) for h in headers if h):
         return []
 
     period_map = _identify_period_columns(headers, filing_type=filing_type)

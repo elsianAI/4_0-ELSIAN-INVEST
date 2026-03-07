@@ -30,17 +30,6 @@
 
 ## Tareas activas
 
-### BL-047 — Mejorar HTML table extractor: interest_income + capex
-- **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** —
-- **Referencias:** —
-- **Descripción:** NVDA sigue marcando gaps reutilizables del extractor HTML: `interest_income`, `capex` y un caso de `total_debt` con row selection incorrecta. Tratarlo como mejora de patrón y no como un fix exclusivo de NVDA.
-- **Criterio de aceptación:** Al menos uno de los patrones se resuelve de forma reusable, NVDA mejora o se mantiene al máximo posible sin regresiones, y hay tests de patrón o de ticker que reproduzcan el bug corregido.
-
 ### BL-057 — Discovery automático de filings LSE/AIM (DEC-025)
 - **Prioridad:** BAJA
 - **Estado:** TODO
