@@ -41,17 +41,6 @@
 - **Descripción:** Crear la capa de contratos versionados para los artefactos principales del sistema (`case.json`, `expected.json`, manifests, extraction results, truth pack y source map) y validar que prompts y tooling usen el set canónico real actual sin drift.
 - **Criterio de aceptación:** Existen esquemas versionados y una validación centralizada que cubre los artefactos activos; los casos reales validan contra contrato y desaparecen referencias obsoletas al set canónico o a rutas legacy.
 
-### BL-060 — T02 — Hardening de CI (scope filtrado restante)
-- **Prioridad:** ALTA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** —
-- **Referencias:** T02-parcial, docs/project/PLAN_IMPLEMENTACION_FILTRADO.md
-- **Descripción:** Completar el hardening pendiente de CI separando jobs, añadiendo seguridad y dependencia controlada de Actions, sin rehacer la base ya implantada en oleadas previas.
-- **Criterio de aceptación:** CI queda separada por responsabilidades, con dependabot y security checks activos, Actions pinneadas y permisos mínimos documentados.
-
 ### BL-061 — T03 — Task manifests y core protegido
 - **Prioridad:** MEDIA
 - **Estado:** TODO

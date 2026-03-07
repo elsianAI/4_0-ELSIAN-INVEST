@@ -9,6 +9,16 @@
 
 ---
 
+### BL-060 — T02 — Hardening de CI (scope filtrado restante)
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-07)
+- **Asignado a:** elsian-orchestrator
+- **Depende de:** —
+- **Descripción:** Se endureció la CI restante sin reabrir runtime code ni depender de BL-059. El workflow principal ahora queda separado en `governance`, `lint`, `typecheck`, `pytest`, `security` y `eval-all`, con `actions/checkout` y `actions/setup-python` pinneadas por SHA, `permissions: contents: read`, `timeout-minutes` por job e instalación consistente de tooling. Se añadió `.github/dependabot.yml` para `pip` y `github-actions`. El cierre se hizo con una baseline conservadora: `ruff` pasa a ser gate real con selección mínima utilizable sobre el repo actual y `mypy` queda activado sobre `elsian/models/*`, sin vender todavía typecheck completo del runtime.
+- **Criterio de aceptación:** ✓ CI separada por responsabilidades. ✓ Dependabot activo para `pip` y `github-actions`. ✓ Security checks activos. ✓ Actions pinneadas por SHA y permisos mínimos. ✓ El paquete cierra sin tocar código funcional ni depender del wiring de contratos de BL-059.
+
+---
+
 ### BL-057 — Discovery automático de filings LSE/AIM (DEC-025)
 - **Prioridad:** BAJA
 - **Estado:** DONE ✅ (2026-03-07)

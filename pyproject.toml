@@ -23,6 +23,8 @@ dev = [
     "pytest>=7.4",
     "pytest-cov>=4.1",
     "ruff>=0.12",
+    "mypy>=1.19",
+    "pip-audit>=2.9",
 ]
 
 [tool.pytest.ini_options]
@@ -36,3 +38,18 @@ markers = [
 [tool.ruff]
 target-version = "py311"
 line-length = 99
+exclude = ["tests"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+ignore = ["F401", "F841", "E741"]
+
+[tool.mypy]
+python_version = "3.11"
+files = [
+    "elsian/models/case.py",
+    "elsian/models/field.py",
+    "elsian/models/filing.py",
+    "elsian/models/result.py",
+]
+pretty = false
