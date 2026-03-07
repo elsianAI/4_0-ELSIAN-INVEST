@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://elsian.local/schemas/v1/extraction_result.schema.json",
+  "title": "ELSIAN extraction_result.json contract",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "ticker",
+    "currency",
+    "extraction_date",
+    "filings_used",
+    "periods",
+    "audit"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "2.0"
+    },
+    "ticker": {
+      "$ref": "common.schema.json#/$defs/ticker"
+    },
+    "currency": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "extraction_date": {
+      "$ref": "common.schema.json#/$defs/isoDate"
+    },
+    "filings_used": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "periods": {
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^[A-Za-z0-9][A-Za-z0-9._-]*$": {
+          "type": "object",
+          "required": [
+            "fecha_fin",
+            "tipo_periodo",
+            "fields"
+          ],
+          "properties": {
+            "fecha_fin": {
+              "type": "string"
+            },
+            "tipo_periodo": {
+              "$ref": "common.schema.json#/$defs/resultPeriodType"
+            },
+            "fields": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "common.schema.json#/$defs/canonicalFieldName"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "required": [
+                  "value",
+                  "source_filing"
+                ],
+                "properties": {
+                  "value": {
+                    "$ref": "common.schema.json#/$defs/numericValue"
+                  },
+                  "scale": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "confidence": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "source_filing": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "source_location": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "table_index": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "table_title": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "row_label": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "col_label": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "row": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "col": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "raw_text": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "extraction_method": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "preflight_currency": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "preflight_standard": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "preflight_units_hint": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "audit": {
+      "type": "object",
+      "required": [
+        "fields_extracted",
+        "fields_discarded",
+        "discarded_reasons"
+      ],
+      "properties": {
+        "fields_extracted": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fields_discarded": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "discarded_reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

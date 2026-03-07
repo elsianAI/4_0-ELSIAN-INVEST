@@ -5,11 +5,11 @@ description: Generate or update expected.json ground truth for any ticker
 TICKER="${input:ticker}"
 PERIOD_SCOPE="${input:period_scope|ANNUAL_ONLY}"
 
-Quiero que generes/actualices el ground truth de este caso en deterministic, sin tocar código.
+Quiero que generes/actualices el ground truth de este caso en ELSIAN 4.0, sin tocar código.
 
 ## Objetivo
 
-Crear/actualizar `deterministic/cases/${TICKER}/expected.json` — la fuente de verdad curada manualmente contra la que el pipeline evalúa su extracción.
+Crear/actualizar `cases/${TICKER}/expected.json` — la fuente de verdad curada manualmente contra la que el pipeline evalúa su extracción.
 
 ## Parámetro: PERIOD_SCOPE
 
@@ -18,11 +18,11 @@ Crear/actualizar `deterministic/cases/${TICKER}/expected.json` — la fuente de 
 
 ## Fuentes (leer en este orden)
 
-1. `deterministic/cases/${TICKER}/case.json` — ticker, currency, source_hint
-2. `deterministic/cases/${TICKER}/filings_manifest.json` — qué filings se descargaron
-3. `deterministic/config/field_aliases.json` — los 22 campos canónicos válidos (claves que no empiezan por `_`)
-4. `deterministic/cases/${TICKER}/filings/*.clean.md` — PRIORIDAD. Tablas markdown extraídas de los filings
-5. `deterministic/cases/${TICKER}/filings/*.txt` — FALLBACK. Texto plano del filing
+1. `cases/${TICKER}/case.json` — ticker, currency, source_hint
+2. `cases/${TICKER}/filings_manifest.json` — qué filings se descargaron
+3. `config/field_aliases.json` — los 29 campos canónicos válidos (claves que no empiezan por `_`)
+4. `cases/${TICKER}/filings/*.clean.md` — PRIORIDAD. Tablas markdown extraídas de los filings
+5. `cases/${TICKER}/filings/*.txt` — FALLBACK. Texto plano del filing
 
 ## Restricciones absolutas
 
@@ -77,15 +77,15 @@ No uses otros formatos (ni `2024`, ni `Q3 2024` con espacio, ni `FY 2024` con es
 
 **En ambos casos:** mejor 2 periodos perfectos que 6 con errores.
 
-## Los 22 campos canónicos
+## Los 29 campos canónicos
 
-Intenta cubrir TODOS los que estén disponibles en los filings. Los 22 son:
+Intenta cubrir TODOS los que estén disponibles en los filings. Los 29 son:
 
 **Income Statement:** ingresos, cost_of_revenue, gross_profit, ebitda, ebit, net_income, eps_basic, eps_diluted, research_and_development, sga, depreciation_amortization, interest_expense, income_tax
 
-**Balance Sheet:** total_assets, total_liabilities, total_equity, cash_and_equivalents, total_debt
+**Balance Sheet:** total_assets, total_liabilities, total_equity, cash_and_equivalents, accounts_receivable, inventories, accounts_payable, total_debt
 
-**Cash Flow:** cfo, capex, fcf
+**Cash Flow:** cfo, capex, fcf, cfi, cff, delta_cash
 
 **Per-share / Shares:** dividends_per_share, shares_outstanding
 
@@ -125,7 +125,7 @@ Si un campo NO existe en los filings (por ejemplo, la empresa no reporta ebitda 
 
 **TRAMPA IMPORTANTE — 20-F y paréntesis:** Algunos filings (especialmente 20-F de foreign private issuers) muestran gastos entre paréntesis como convención de formato. Esto NO significa que el valor sea negativo. Si el 20-F muestra `(200,362)` para cost_of_revenue, guardar `200362` (positivo), porque en la presentación estándar de un income statement los gastos son positivos.
 
-**Caso de duda:** consultar `deterministic/cases/TZOO/expected.json` como referencia (score 100%).
+**Caso de duda:** consultar `cases/TZOO/expected.json` como referencia (score 100%).
 
 ### Confusiones frecuentes
 - `net_income` ≠ EPS. Si la fila dice "per share" o "per diluted share", es EPS, no net_income.
@@ -170,7 +170,7 @@ Estos triggers deben aparecer en la cabecera de columna comparativa, en una nota
     "applied": true,
     "trigger": "reclassified",
     "evidence_text": "reclassified as discontinued operations",
-    "restated_in_filing": "SRC_005_10-K_FY2020.clean.md",
+    "evidence_filing": "SRC_005_10-K_FY2020.clean.md",
     "original_source_filing": "SRC_006_10-K_FY2019.clean.md",
     "original_value": 10863
   }
@@ -185,8 +185,8 @@ Si NO hay restatement, el campo queda limpio: solo `value` y `source_filing`.
 1. Si ya existe `expected.json`, crear backup: `cp expected.json expected.prev.json`
 2. Leer los filings (.clean.md primero, .txt como fallback) y extraer los valores.
 3. Escribir `expected.json` con la estructura obligatoria.
-4. Validar que el JSON es parseable: `python3 -c "import json; json.load(open('deterministic/cases/${TICKER}/expected.json'))"`
-5. Ejecutar evaluación: `python3 -m deterministic.cli eval ${TICKER}`
+4. Validar que el JSON es parseable: `python3 -c "import json; json.load(open('cases/${TICKER}/expected.json'))"`
+5. Ejecutar evaluación: `python3 -m elsian eval ${TICKER}`
 
 ## Entrega (texto breve al final)
 

@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://elsian.local/schemas/v1/expected.schema.json",
+  "title": "ELSIAN expected.json contract",
+  "type": "object",
+  "required": [
+    "version",
+    "ticker",
+    "currency",
+    "scale",
+    "periods"
+  ],
+  "properties": {
+    "version": {
+      "const": "1.0"
+    },
+    "ticker": {
+      "$ref": "common.schema.json#/$defs/ticker"
+    },
+    "currency": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "period_scope": {
+      "type": "string",
+      "enum": [
+        "ANNUAL_ONLY",
+        "FULL"
+      ]
+    },
+    "restatement_policy": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "scale": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "scale_notes": {
+      "type": "string"
+    },
+    "periods": {
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^[A-Za-z0-9][A-Za-z0-9._-]*$": {
+          "type": "object",
+          "required": [
+            "fecha_fin",
+            "tipo_periodo",
+            "fields"
+          ],
+          "properties": {
+            "fecha_fin": {
+              "$ref": "common.schema.json#/$defs/isoDate"
+            },
+            "tipo_periodo": {
+              "$ref": "common.schema.json#/$defs/expectedPeriodType"
+            },
+            "fields": {
+              "type": "object",
+              "minProperties": 1,
+              "propertyNames": {
+                "$ref": "common.schema.json#/$defs/canonicalFieldName"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "required": [
+                  "value",
+                  "source_filing"
+                ],
+                "properties": {
+                  "value": {
+                    "$ref": "common.schema.json#/$defs/numericValue"
+                  },
+                  "source_filing": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "restatement": {
+                    "type": "object",
+                    "required": [
+                      "applied",
+                      "trigger",
+                      "evidence_filing",
+                      "evidence_text",
+                      "original_source_filing",
+                      "original_value"
+                    ],
+                    "properties": {
+                      "applied": {
+                        "type": "boolean"
+                      },
+                      "trigger": {
+                        "$ref": "common.schema.json#/$defs/nonEmptyString"
+                      },
+                      "evidence_filing": {
+                        "$ref": "common.schema.json#/$defs/nonEmptyString"
+                      },
+                      "evidence_text": {
+                        "$ref": "common.schema.json#/$defs/nonEmptyString"
+                      },
+                      "original_source_filing": {
+                        "$ref": "common.schema.json#/$defs/nonEmptyString"
+                      },
+                      "original_value": {
+                        "$ref": "common.schema.json#/$defs/numericValue"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "patternProperties": {
+            "^_NOTE_[A-Za-z0-9_]+$": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

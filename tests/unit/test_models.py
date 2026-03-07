@@ -1,5 +1,7 @@
 """Tests for data models."""
 
+import json
+
 from elsian.models.field import Provenance, FieldCandidate, FieldResult
 from elsian.models.filing import Filing, FilingMetadata
 from elsian.models.case import CaseConfig
@@ -79,3 +81,47 @@ def test_case_config_defaults():
     assert c.source_hint == "sec"
     assert c.period_scope == "ANNUAL_ONLY"
     assert c.fiscal_year_end_month == 12
+
+
+def test_case_config_from_file_reads_extended_contract_keys(tmp_path):
+    case_dir = tmp_path / "TEST"
+    case_dir.mkdir()
+    (case_dir / "case.json").write_text(
+        json.dumps(
+            {
+                "ticker": "TEST",
+                "company_name": "Test Corp",
+                "source_hint": "eu_manual",
+                "currency": "EUR",
+                "market": "Euronext Paris",
+                "country": "FR",
+                "accounting_standard": "IFRS",
+                "period_scope": "FULL",
+                "fiscal_year_end_month": 12,
+                "filings_expected_count": 3,
+                "filings_sources": [
+                    {
+                        "url": "https://example.com/report.pdf",
+                        "filename": "report.pdf",
+                        "filing_type": "ANNUAL_REPORT",
+                    }
+                ],
+                "selection_overrides": {"stable_tiebreaker": {"tbl_order": "ascending_table_number"}},
+                "config_overrides": {"prefer_ixbrl": False},
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    case = CaseConfig.from_file(case_dir)
+
+    assert case.company_name == "Test Corp"
+    assert case.market == "Euronext Paris"
+    assert case.country == "FR"
+    assert case.accounting_standard == "IFRS"
+    assert case.filings_expected_count == 3
+    assert case.filings_sources[0]["filename"] == "report.pdf"
+    assert case.selection_overrides["stable_tiebreaker"]["tbl_order"] == "ascending_table_number"
+    assert case.config_overrides["prefer_ixbrl"] is False
+    assert case.extra == {}

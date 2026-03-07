@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://elsian.local/schemas/v1/common.schema.json",
+  "title": "ELSIAN v1 common definitions",
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ticker": {
+      "type": "string",
+      "pattern": "^[A-Z0-9][A-Z0-9.-]*$"
+    },
+    "nullableString": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "isoDate": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "periodKey": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "expectedPeriodType": {
+      "type": "string",
+      "enum": [
+        "anual",
+        "trimestral",
+        "semestral"
+      ]
+    },
+    "resultPeriodType": {
+      "type": "string",
+      "enum": [
+        "anual",
+        "trimestral",
+        "semestral",
+        "unknown"
+      ]
+    },
+    "canonicalFieldName": {
+      "type": "string",
+      "enum": [
+        "ingresos",
+        "cost_of_revenue",
+        "gross_profit",
+        "ebitda",
+        "ebit",
+        "net_income",
+        "eps_basic",
+        "eps_diluted",
+        "total_assets",
+        "total_liabilities",
+        "total_equity",
+        "cash_and_equivalents",
+        "accounts_receivable",
+        "inventories",
+        "accounts_payable",
+        "total_debt",
+        "cfo",
+        "capex",
+        "fcf",
+        "dividends_per_share",
+        "shares_outstanding",
+        "research_and_development",
+        "sga",
+        "depreciation_amortization",
+        "interest_expense",
+        "income_tax",
+        "cfi",
+        "cff",
+        "delta_cash"
+      ]
+    },
+    "numericValue": {
+      "type": "number"
+    }
+  }
+}

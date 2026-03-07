@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://elsian.local/schemas/v1/case.schema.json",
+  "title": "ELSIAN case.json contract",
+  "type": "object",
+  "required": [
+    "ticker",
+    "currency",
+    "source_hint",
+    "period_scope"
+  ],
+  "properties": {
+    "ticker": {
+      "$ref": "common.schema.json#/$defs/ticker"
+    },
+    "company_name": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "exchange": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "market": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "country": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "currency": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "cik": {
+      "$ref": "common.schema.json#/$defs/nullableString"
+    },
+    "source_hint": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "period_scope": {
+      "type": "string",
+      "enum": [
+        "ANNUAL_ONLY",
+        "FULL"
+      ]
+    },
+    "filings_expected_count": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "fiscal_year_end_month": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 12
+    },
+    "accounting_standard": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "sector": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "raw_filings_dir": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "web_ir": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "use_ixbrl_override": {
+      "type": "boolean"
+    },
+    "additive_fields": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/canonicalFieldName"
+      },
+      "uniqueItems": true
+    },
+    "filings_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "url",
+          "filename"
+        ],
+        "properties": {
+          "url": {
+            "$ref": "common.schema.json#/$defs/nonEmptyString"
+          },
+          "filename": {
+            "$ref": "common.schema.json#/$defs/nonEmptyString"
+          },
+          "filing_type": {
+            "$ref": "common.schema.json#/$defs/nonEmptyString"
+          },
+          "period_end": {
+            "$ref": "common.schema.json#/$defs/isoDate"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "selection_overrides": {
+      "type": "object"
+    },
+    "config_overrides": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

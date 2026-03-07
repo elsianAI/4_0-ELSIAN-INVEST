@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://elsian.local/schemas/v1/source_map.schema.json",
+  "title": "ELSIAN source_map.json contract",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "ticker",
+    "generated_at",
+    "source_basis",
+    "summary",
+    "periods"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "SourceMap_v1"
+    },
+    "ticker": {
+      "$ref": "common.schema.json#/$defs/ticker"
+    },
+    "generated_at": {
+      "$ref": "common.schema.json#/$defs/isoDate"
+    },
+    "source_basis": {
+      "type": "object"
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "total_fields",
+        "resolved_fields",
+        "unresolved_fields",
+        "resolution_pct",
+        "by_method",
+        "by_pointer_kind"
+      ],
+      "properties": {
+        "total_fields": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "resolved_fields": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unresolved_fields": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "resolution_pct": {
+          "type": "number"
+        },
+        "by_method": {
+          "type": "object"
+        },
+        "by_pointer_kind": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    "periods": {
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^[A-Za-z0-9][A-Za-z0-9._-]*$": {
+          "type": "object",
+          "required": [
+            "fecha_fin",
+            "tipo_periodo",
+            "fields"
+          ],
+          "properties": {
+            "fecha_fin": {
+              "type": "string"
+            },
+            "tipo_periodo": {
+              "$ref": "common.schema.json#/$defs/resultPeriodType"
+            },
+            "fields": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "common.schema.json#/$defs/canonicalFieldName"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "required": [
+                  "value",
+                  "source_filing",
+                  "source_location",
+                  "extraction_method",
+                  "field_name",
+                  "resolution_status"
+                ],
+                "properties": {
+                  "value": {
+                    "$ref": "common.schema.json#/$defs/numericValue"
+                  },
+                  "scale": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "confidence": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "source_filing": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "source_location": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "extraction_method": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "field_name": {
+                    "$ref": "common.schema.json#/$defs/canonicalFieldName"
+                  },
+                  "row_label": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "col_label": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "raw_text": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "original_path": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "clean_path": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "click_target": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "resolution_status": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "resolution_reason": {
+                    "$ref": "common.schema.json#/$defs/nonEmptyString"
+                  },
+                  "pointer": {
+                    "type": "object"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

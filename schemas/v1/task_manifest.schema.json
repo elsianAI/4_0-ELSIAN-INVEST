@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://elsian.local/schemas/v1/task_manifest.schema.json",
+  "title": "ELSIAN task_manifest contract",
+  "type": "object",
+  "required": [
+    "task_id",
+    "title",
+    "kind",
+    "validation_tier",
+    "claimed_bl_status",
+    "write_set"
+  ],
+  "properties": {
+    "task_id": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "title": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "technical",
+        "governance",
+        "mixed"
+      ]
+    },
+    "validation_tier": {
+      "type": "string",
+      "enum": [
+        "targeted",
+        "shared-core",
+        "governance-only"
+      ]
+    },
+    "claimed_bl_status": {
+      "type": "string",
+      "enum": [
+        "none",
+        "in_progress",
+        "blocked",
+        "done"
+      ]
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/nonEmptyString"
+      }
+    },
+    "write_set": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "common.schema.json#/$defs/nonEmptyString"
+      }
+    },
+    "blocked_surfaces": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/nonEmptyString"
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

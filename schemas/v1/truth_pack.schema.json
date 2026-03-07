@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://elsian.local/schemas/v1/truth_pack.schema.json",
+  "title": "ELSIAN truth_pack.json contract",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "ticker",
+    "currency",
+    "assembly_date",
+    "sources",
+    "financial_data",
+    "derived_metrics",
+    "market_data",
+    "quality",
+    "metadata"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "TruthPack_v1"
+    },
+    "ticker": {
+      "$ref": "common.schema.json#/$defs/ticker"
+    },
+    "currency": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "assembly_date": {
+      "$ref": "common.schema.json#/$defs/isoDate"
+    },
+    "sources": {
+      "type": "object",
+      "required": [
+        "extraction_result",
+        "market_data",
+        "case_config"
+      ],
+      "properties": {
+        "extraction_result": {
+          "$ref": "common.schema.json#/$defs/nonEmptyString"
+        },
+        "market_data": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "case_config": {
+          "$ref": "common.schema.json#/$defs/nonEmptyString"
+        }
+      },
+      "additionalProperties": false
+    },
+    "financial_data": {
+      "type": "object"
+    },
+    "derived_metrics": {
+      "type": "object",
+      "required": [
+        "ttm",
+        "fcf",
+        "ev",
+        "margins",
+        "returns",
+        "multiples",
+        "per_share",
+        "net_debt",
+        "periodo_base"
+      ],
+      "properties": {
+        "ttm": {
+          "type": "object"
+        },
+        "fcf": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "ev": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "margins": {
+          "type": "object"
+        },
+        "returns": {
+          "type": "object"
+        },
+        "multiples": {
+          "type": "object"
+        },
+        "per_share": {
+          "type": "object"
+        },
+        "net_debt": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "periodo_base": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "market_data": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "quality": {
+      "type": "object",
+      "required": [
+        "validation_status",
+        "confidence_score",
+        "gates_summary",
+        "warnings",
+        "campos_faltantes_criticos"
+      ],
+      "properties": {
+        "validation_status": {
+          "$ref": "common.schema.json#/$defs/nonEmptyString"
+        },
+        "confidence_score": {
+          "type": "number"
+        },
+        "gates_summary": {
+          "type": "object"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "campos_faltantes_criticos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "total_periods",
+        "total_fields",
+        "period_scope",
+        "source_hint",
+        "fiscal_year_end_month"
+      ],
+      "properties": {
+        "total_periods": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_fields": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "period_scope": {
+          "type": "string",
+          "enum": [
+            "ANNUAL_ONLY",
+            "FULL"
+          ]
+        },
+        "source_hint": {
+          "$ref": "common.schema.json#/$defs/nonEmptyString"
+        },
+        "fiscal_year_end_month": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

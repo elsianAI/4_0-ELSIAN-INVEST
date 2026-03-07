@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://elsian.local/schemas/v1/filings_manifest.schema.json",
+  "title": "ELSIAN filings_manifest.json contract",
+  "type": "object",
+  "required": [
+    "ticker",
+    "source",
+    "cik",
+    "filings_downloaded",
+    "filings_failed",
+    "filings_coverage_pct",
+    "coverage",
+    "gaps",
+    "notes",
+    "download_date"
+  ],
+  "properties": {
+    "ticker": {
+      "$ref": "common.schema.json#/$defs/ticker"
+    },
+    "source": {
+      "$ref": "common.schema.json#/$defs/nonEmptyString"
+    },
+    "cik": {
+      "$ref": "common.schema.json#/$defs/nullableString"
+    },
+    "filings_downloaded": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "filings_failed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "filings_coverage_pct": {
+      "type": "number"
+    },
+    "coverage": {
+      "type": "object"
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string"
+    },
+    "download_date": {
+      "$ref": "common.schema.json#/$defs/isoDate"
+    }
+  },
+  "additionalProperties": false
+}
