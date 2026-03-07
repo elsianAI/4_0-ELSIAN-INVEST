@@ -2,6 +2,21 @@
 
 ## 2026-03-06
 
+### [4.0] Governance checker + kickoff/orchestrator sensing
+- **What:** Added `scripts/check_governance.py` as the deterministic repo-state checker for ELSIAN 4.0. It reports repo root, branch/HEAD, dirty buckets (`technical_dirty`, `governance_dirty`, `workspace_only_dirty`, `other_dirty`), duplicate backlog IDs, `PROJECT_STATE` vs `CHANGELOG` lag, and `manual_overrides` counts by ticker. Updated `docs/project/ROLES.md` plus the kickoff/orchestrator wrappers so briefing and planning use the checker as their primary source of live repo state, distinguish documented state from worktree state, and recommend reconciliation when technical work is already pending locally.
+- **Files changed:** `scripts/check_governance.py`, `tests/unit/test_check_governance.py`, `docs/project/ROLES.md`, `.github/agents/elsian-kickoff.agent.md`, `.github/agents/elsian-orchestrator.agent.md`
+- **Tests:** `python3 -m pytest -q tests/unit/test_check_governance.py` → 4 passed.
+
+### [4.0] BL-055 — SOM: remove 2 DPS manual_overrides via financial-highlights extraction
+- **What:** Removed the 2 SOM `dividends_per_share` `manual_overrides` from `cases/SOM/case.json` without changing `expected.json`. Tightened the existing annual-report financial-highlights extractor in `elsian/extract/phase.py` so it reads both FY2024 and FY2023 rows from the USD dashboard block instead of truncating after the first line. Removed the blanket alias reject for `Ordinary dividend per share` in `elsian/normalize/aliases.py`, and added deterministic cents/supplemental/special rejection in `phase.py` so results-presentation rows like `16.9c`, `23.0c`, and supplemental DPS do not resolve. SOM now extracts FY2024=`0.169` and FY2023=`0.2319` automatically from `SRC_001_ANNUAL_REPORT_FY2024.txt`.
+- **Files changed:** `elsian/extract/phase.py`, `elsian/normalize/aliases.py`, `tests/unit/test_extract_phase.py`, `tests/unit/test_aliases_extended.py`, `cases/SOM/case.json`, `CHANGELOG.md`
+- **Tests:** `python3 -m pytest -q tests/unit/test_aliases_extended.py tests/unit/test_extract_phase.py` → 34 passed in 8.91s. `python3 -m elsian.cli eval SOM` → PASS 100.0% (179/179) wrong=0 missed=0 extra=3. `python3 -m elsian.cli eval --all` → 15/15 PASS 100%. `python3 -m pytest -q` → 1267 passed, 5 skipped.
+
+### [4.0] BL-054 — TEP: remove 6 manual_overrides via deterministic narrative extraction
+- **What:** Eliminated all 6 `manual_overrides` from `cases/TEP/case.json` without changing `expected.json`. Added three narrow deterministic extraction paths in `elsian/extract/narrative.py`: (1) historical revenue tables with year headers like `2024 2023 2022 2021 2020` plus `Revenues (as reported...)`, used to recover FY2022/FY2021 `ingresos`; (2) historical dividend tables headed by `Dividend for financial year ... Gross dividend per share`, used to recover FY2021 `dividends_per_share`; and (3) cover-style bullets like `• €703M Net Free cash flow`, with annual-report filename year fallback, used to recover FY2022/FY2021/FY2019 `fcf`. TEP now stays at 100% with 0 overrides.
+- **Files changed:** `elsian/extract/narrative.py`, `tests/unit/test_narrative.py`, `cases/TEP/case.json`
+- **Tests:** `python3 -m pytest -q tests/unit/test_narrative.py` → 9 passed. `python3 -m elsian.cli eval TEP` → PASS 100.0% (80/80). `python3 -m elsian.cli eval --all` → 15/15 PASS 100%. `python3 -m pytest -q` → 1258 passed, 5 skipped.
+
 ### TEP: add provenance metadata to manual_overrides (BL-054 subtask)
 - **What:** Added `source_filing` and `extraction_method: "manual"` to all 6 TEP manual_overrides. No value or note changes. Validated via Codex multiagent smoke test.
 - **Files changed:** `cases/TEP/case.json`

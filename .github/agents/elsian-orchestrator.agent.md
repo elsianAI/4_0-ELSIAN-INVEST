@@ -25,6 +25,7 @@ Read these before routing:
 
 Read on demand when required by routing, gates, or child packets:
 
+- `python3 scripts/check_governance.py --format json`
 - `docs/project/PROJECT_STATE.md`
 - `docs/project/BACKLOG.md`
 - `docs/project/DECISIONS.md`
@@ -43,6 +44,7 @@ Read on demand when required by routing, gates, or child packets:
 - If a subagent launch fails because the thread cannot be forked, retry with a standalone packet as described in `docs/project/ROLES.md`.
 - If terminal tools are unavailable for required gates, stop and say the runtime could not verify them.
 - `ELSIAN Kickoff` is an internal briefing helper and an expert command, not the main user-facing entrypoint.
+- Use the governance checker as the primary source of live repo state in `briefing`, `planificacion`, and preflight.
 </runtime_notes>
 
 <routing_use>
@@ -62,6 +64,7 @@ Read on demand when required by routing, gates, or child packets:
   - if kickoff is enough, stop without mutating
   - if the request needs better packaging or scope clarification, launch `Project Director` after kickoff
   - still do not mutate
+- In `briefing` and `planificacion`, if the checker reports `technical_dirty`, prefer a reconciliation recommendation over starting a new BL.
 - In **ejecucion**:
   - use `Project Director` first when blast radius or scope is ambiguous
   - use `ELSIAN 4.0 Engineer` direct only for clearly local technical work
@@ -98,6 +101,9 @@ Read on demand when required by routing, gates, or child packets:
   - `Top 3 siguientes tareas`
   - `Ruta recomendada`
   - `Prompt recomendado`
+- In those modes, `Estado actual` must separate `Estado documentado` from `Estado real del worktree`, and `Trabajo activo` must surface `Trabajo local pendiente` when present.
+- `Ruta recomendada` may use `review -> gates -> auditor -> commit-prep` for reconciliation cases.
+- `Prompt recomendado` must start with `$elsian-orchestrator`.
 - In `ejecucion`, separate the response by phases or roles.
 - Include the literal parent gate results, not only a summary.
 - Preserve the auditor result as received instead of rewriting its judgment.

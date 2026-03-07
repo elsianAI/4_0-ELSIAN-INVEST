@@ -39,6 +39,8 @@ Reglas estructurales:
 - No implementa codigo directamente ni sustituye el juicio del `auditor`.
 - En `briefing` y `planificacion` no muta nada.
 - En `ejecucion` puede mutar solo a traves de los hijos correctos y de los gates del padre.
+- En `briefing` y `planificacion` debe usar `python3 scripts/check_governance.py --format json` como fuente primaria de estado vivo.
+- Si detecta trabajo tecnico repo-tracked pendiente, no recomienda por defecto abrir una BL nueva; primero recomienda reconciliacion del trabajo local.
 
 ### Kickoff entrypoint
 
@@ -53,7 +55,8 @@ Reglas estructurales:
 - `docs/project/BACKLOG.md`
 - `docs/project/DECISIONS.md`
 - `CHANGELOG.md`
-- `git status --short`
+- `python3 scripts/check_governance.py --format json`
+- `git status --short` solo como fallback si el checker no puede ejecutarse
 
 **No puede**
 
@@ -73,15 +76,50 @@ Reglas estructurales:
 
 **Reglas**
 
-- El `Estado actual` debe distinguir entre hechos de los documentos y estado real del worktree.
+- El `Estado actual` debe distinguir entre:
+  - `Estado documentado`
+  - `Estado real del worktree`
+- `Trabajo activo` debe distinguir explicitamente si existe `Trabajo local pendiente`.
 - Si no se puede leer el worktree real, debe decirlo explicitamente en `Estado actual`.
 - `Top 3 siguientes tareas` salen del backlog y del estado real; no de repriorizacion creativa.
 - `Ruta recomendada` debe ser una de estas:
   - `director -> engineer -> gates -> auditor`
   - `engineer -> gates -> auditor`
   - `auditor`
-- `Prompt recomendado` debe ser copiable y coherente con la ruta recomendada.
+  - `review -> gates -> auditor -> commit-prep`
+- Si el checker detecta trabajo tecnico repo-tracked pendiente, `Ruta recomendada` debe priorizar reconciliacion y no una BL nueva.
+- `Prompt recomendado` debe ser copiable, coherente con la ruta recomendada y empezar por `$elsian-orchestrator`.
 - Si `kickoff` se usa dentro de `orchestrator`, el prompt recomendado debe ser reutilizable por `orchestrator`, no por `kickoff`.
+
+### State sensing y reconciliacion operativa
+
+El estado vivo del sistema se obtiene de forma determinista con:
+
+- `python3 scripts/check_governance.py --format json`
+
+Este checker es la fuente comun de verdad operativa para `kickoff` y `orchestrator`.
+
+**Debe informar como minimo**
+
+- root real del repo tecnico;
+- branch y HEAD actuales;
+- estado del worktree repo-tracked;
+- clasificacion del dirty state:
+  - `technical_dirty`
+  - `governance_dirty`
+  - `workspace_only_dirty`
+- IDs BL duplicados en `BACKLOG.md`;
+- fecha/huella de `PROJECT_STATE.md`;
+- fecha/huella de `CHANGELOG.md`;
+- desfase `PROJECT_STATE` vs `CHANGELOG`;
+- conteo de `manual_overrides` por ticker.
+
+**Reglas**
+
+- `workspace_only_dirty` se reporta como ruido operativo y no bloquea por si solo trabajo tecnico.
+- `technical_dirty` se considera trabajo local pendiente y bloquea por defecto la recomendacion de una BL nueva.
+- `governance_dirty` no bloquea siempre, pero debe reflejarse explicitamente en el briefing.
+- Si `CHANGELOG.md` refleja una solucion local y `BACKLOG.md` o `PROJECT_STATE.md` no, el sistema debe recomendar reconciliacion documental, no actuar como si el repo siguiera en el estado anterior.
 
 ## 2. Contratos por rol
 
@@ -238,6 +276,7 @@ El orquestador neutral decide que hijo lanzar segun la intencion y el posible bl
 - Flujo completo estandar: `director -> engineer -> gates -> auditor`
 - Flujo tecnico local: `engineer -> gates -> auditor`
 - Flujo de review: `auditor`
+- Flujo de reconciliacion: `review -> gates -> auditor -> commit-prep`
 
 ## 4. Packets y handoff
 
@@ -350,6 +389,7 @@ Los gates los ejecuta siempre el padre neutral, no los hijos.
 - `docs/project/KNOWLEDGE_BASE.md` es onboarding transversal y orientacion del repo; no sustituye ni `VISION.md` ni `DECISIONS.md`.
 - Cada modulo tiene su propio manual tecnico.
   - trabajo actual: `docs/project/MODULE_1_ENGINEER_CONTEXT.md`
+- `scripts/check_governance.py` es la referencia canónica de estado operativo determinista para briefing y planificacion.
 - Las implementaciones operativas deben mantenerse coherentes con este documento:
   - skills locales de Codex en `$CODEX_HOME/skills/`;
   - el orquestador explicito de Codex en `$CODEX_HOME/skills/elsian-orchestrator/`;

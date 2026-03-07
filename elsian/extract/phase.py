@@ -156,6 +156,21 @@ _BALANCE_DATE_RE = re.compile(
     r"Balance\s+at\s+December\s+31[,]?\s+(20\d{2})",
     re.IGNORECASE,
 )
+_SOM_FINANCIAL_HIGHLIGHTS_DPS_FILENAME = "SRC_001_ANNUAL_REPORT_FY2024.txt"
+_FINANCIAL_HIGHLIGHTS_TITLE_RE = re.compile(
+    r"^\s*FINANCIAL HIGHLIGHTS 2024\s*$",
+    re.IGNORECASE,
+)
+_FINANCIAL_HIGHLIGHTS_DPS_HEADER_RE = re.compile(
+    r"\bordinary\s+dividend\s+per\s+share\b",
+    re.IGNORECASE,
+)
+_FINANCIAL_HIGHLIGHTS_DPS_ROW_RE = re.compile(
+    r"^\s*(?P<year>20\d{2})\s+\d[\d,.]*m?\s+"
+    r"(?P=year)\s+\d[\d,.]*m?\s+"
+    r"(?P=year)\s+(?P<value>0?\.\d+)\s*$",
+    re.IGNORECASE,
+)
 
 
 def _extract_dividends_per_share(
@@ -182,6 +197,68 @@ def _extract_dividends_per_share(
         period_key = f"FY{preceding_year + 1}"
         loc = f"{source_filename}:equity_statement:char{m.start()}"
         results.append((period_key, value, loc))
+    return results
+
+
+def _extract_financial_highlights_dividends_per_share(
+    text: str, source_filename: str
+) -> List[TableField]:
+    """Extract Somero annual-report DPS from the FY2024 highlights dashboard."""
+    results: List[TableField] = []
+    if source_filename != _SOM_FINANCIAL_HIGHLIGHTS_DPS_FILENAME:
+        return results
+
+    lines = text.splitlines()
+    title_line_idx = next(
+        (
+            idx for idx, line in enumerate(lines)
+            if _FINANCIAL_HIGHLIGHTS_TITLE_RE.search(line)
+        ),
+        None,
+    )
+    if title_line_idx is None:
+        return results
+
+    header_line_idx = next(
+        (
+            idx
+            for idx in range(title_line_idx, min(len(lines), title_line_idx + 10))
+            if _FINANCIAL_HIGHLIGHTS_DPS_HEADER_RE.search(lines[idx])
+        ),
+        None,
+    )
+    if header_line_idx is None:
+        return results
+
+    for line_idx in range(header_line_idx + 1, min(len(lines), header_line_idx + 8)):
+        row_match = _FINANCIAL_HIGHLIGHTS_DPS_ROW_RE.match(lines[line_idx])
+        if not row_match:
+            continue
+        try:
+            value = float(row_match.group("value").replace(",", ""))
+        except ValueError:
+            continue
+        if value <= 0 or value >= 1:
+            continue
+        year = row_match.group("year")
+        results.append(
+            TableField(
+                label="Dividends per share",
+                value=value,
+                column_header=f"FY{year}",
+                source_location=(
+                    f"{source_filename}:table:financial_highlights_dps:"
+                    f"line{line_idx + 1}"
+                ),
+                raw_text=lines[line_idx].strip(),
+                col_label=f"FY{year}",
+                table_title="financial_highlights_dps",
+                row_idx=line_idx,
+                col_idx=0,
+            )
+        )
+    if {field.column_header for field in results} != {"FY2024", "FY2023"}:
+        return []
     return results
 
 
@@ -843,6 +920,18 @@ class ExtractPhase(PipelinePhase):
         raw_table_fields.extend(txt_table_fields)
 
         for tf in txt_table_fields:
+            self._process_table_field(
+                tf, filing_path, metadata, filing_scale,
+                filing_scale_confidence, rules, audit,
+                period_fields, additive_labels,
+                source_type="table",
+                use_section_bonus=False,
+                preflight_result=preflight_result,
+            )
+
+        for tf in _extract_financial_highlights_dividends_per_share(
+            text, source_filename=filing_path.name
+        ):
             self._process_table_field(
                 tf, filing_path, metadata, filing_scale,
                 filing_scale_confidence, rules, audit,

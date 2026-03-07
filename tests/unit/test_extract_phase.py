@@ -1,6 +1,9 @@
 """Tests for ExtractPhase sign normalization and helper functions."""
 
+from pathlib import Path
+
 from elsian.extract.phase import (
+    ExtractPhase,
     _normalize_sign,
     _section_bonus,
     _filing_rank,
@@ -8,7 +11,14 @@ from elsian.extract.phase import (
     _period_affinity,
     compute_sort_key,
     _make_field_result,
+    _extract_financial_highlights_dividends_per_share,
 )
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _som_filing_text(filename: str) -> str:
+    return (_REPO_ROOT / "cases" / "SOM" / "filings" / filename).read_text()
 
 
 # ── Sign normalization ───────────────────────────────────────────────
@@ -146,3 +156,48 @@ def test_make_field_result_provenance():
     assert fr.provenance.source_location == "tbl1:row3"
     assert fr.scale == "thousands"
     assert fr.confidence == "high"
+
+
+def test_extract_financial_highlights_dividends_per_share():
+    fields = _extract_financial_highlights_dividends_per_share(
+        _som_filing_text("SRC_001_ANNUAL_REPORT_FY2024.txt"),
+        source_filename="SRC_001_ANNUAL_REPORT_FY2024.txt",
+    )
+
+    assert [(field.column_header, field.value) for field in fields] == [
+        ("FY2024", 0.169),
+        ("FY2023", 0.2319),
+    ]
+    assert [field.source_location for field in fields] == [
+        "SRC_001_ANNUAL_REPORT_FY2024.txt:table:financial_highlights_dps:line141",
+        "SRC_001_ANNUAL_REPORT_FY2024.txt:table:financial_highlights_dps:line142",
+    ]
+
+
+def test_extract_financial_highlights_dividends_per_share_ignores_presentation_cents():
+    fields = _extract_financial_highlights_dividends_per_share(
+        _som_filing_text("SRC_002_RESULTS_PRESENTATION_FY2024.txt"),
+        source_filename="SRC_002_RESULTS_PRESENTATION_FY2024.txt",
+    )
+
+    assert fields == []
+
+
+def test_extract_phase_som_dividends_per_share_from_annual_report():
+    case_dir = _REPO_ROOT / "cases" / "SOM"
+
+    result = ExtractPhase().extract(str(case_dir))
+
+    fy2024 = result.periods["FY2024"].fields["dividends_per_share"]
+    fy2023 = result.periods["FY2023"].fields["dividends_per_share"]
+
+    assert fy2024.value == 0.169
+    assert fy2024.provenance.source_filing == "SRC_001_ANNUAL_REPORT_FY2024.txt"
+    assert fy2024.provenance.extraction_method == "table"
+    assert "financial_highlights_dps" in fy2024.provenance.source_location
+
+    assert fy2023.value == 0.2319
+    assert fy2023.provenance.source_filing == "SRC_001_ANNUAL_REPORT_FY2024.txt"
+    assert fy2023.provenance.extraction_method == "table"
+    assert "financial_highlights_dps" in fy2023.provenance.source_location
+    assert {fy2024.value, fy2023.value}.isdisjoint({4.1, 7.4, 16.9, 23.0})

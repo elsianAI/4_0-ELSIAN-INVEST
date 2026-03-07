@@ -57,3 +57,15 @@ def test_reject_income_tax_deferred():
     resolver = AliasResolver()
     assert resolver.resolve("Deferred income tax") is None
     assert resolver.resolve("Income tax expense") == "income_tax"
+
+
+def test_resolve_ordinary_dividend_but_reject_special_dividends():
+    resolver = AliasResolver()
+    assert resolver.resolve("Ordinary dividend per share") == "dividends_per_share"
+    assert resolver.resolve("Supplemental dividend per share") is None
+    assert resolver.resolve("Special dividend per share") is None
+
+
+def test_reject_supplemental_dividend_per_share():
+    resolver = AliasResolver()
+    assert resolver.resolve("Supplemental dividend per share") is None

@@ -56,13 +56,6 @@
 - **Descripción:** Añadir NVIDIA como ticker SEC large-cap. **Completado:** case.json ✅, acquire ✅ (28 filings descargados). expected.json ✅ (2 anni, 19 campos/período = 38 total cubriendo IS+BS+CF). **Extraction:** 100% — 38/38 matched.
 - **Criterio de aceptación:** ✓ NVDA 100% (38/38). ✓ expected.json con 19 campos por período. ✓ filings/ con 28 archivos (6 annual, 12 quarterly, 10 earnings). ✓ Regresión 7/7 @ 100% (sin cambios en otros tickers). ✓ NVDA añadido a VALIDATED_TICKERS.
 
-### BL-003 — Wire ExtractPhase a PipelinePhase.run(context)
-- **Prioridad:** ALTA
-- **Estado:** DONE ✅ (2026-03-03) — ver sección "Tareas completadas"
-- **Asignado a:** elsian-4
-- **Depende de:** —
-- **Resultado:** Implementado. Todas las fases heredan PipelinePhase con run(context). Pipeline orquesta correctamente. cmd_run usa Pipeline([ExtractPhase(), EvaluatePhase()]). +6 tests nuevos. 346 tests pasando.
-
 ### BL-004 — Parser iXBRL determinístico (módulo reutilizable)
 - **Prioridad:** CRÍTICA
 - **Estado:** DONE ✅ (2026-03-02)
@@ -494,19 +487,21 @@
 
 ### BL-054 — Eliminar manual_overrides de TEP (target: 0 overrides)
 - **Prioridad:** ALTA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE ✅ (2026-03-06)
+- **Asignado a:** elsian-4
 - **Depende de:** —
-- **Descripción:** TEP tiene 6 manual_overrides (7.5% de 80 campos), superando el límite de 5% de DEC-024. Los overrides son: `ingresos` FY2022/FY2021, `fcf` FY2022/FY2021/FY2019, `dividends_per_share` FY2021. Las notas de los overrides referencian páginas concretas de los PDF anuales (tp_ri_2022 p.1, SRC_005 p.50, tp-annual-report-2019 p.1), lo que confirma que los datos **existen** en los filings — el pipeline PDF simplemente no los extrae. Diagnóstico probable: PdfTableExtractor + narrative no cubren los formatos de tabla/KPI dashboard de los annual reports franceses. Adicionalmente, los overrides carecen de `source_filing` y `extraction_method` — deuda de documentación que debe corregirse inmediatamente, tanto si los overrides se eliminan como si no.
-- **Criterio de aceptación:** TEP 100% (80/80) con 0 manual_overrides. Campos ingresos, fcf y dividends_per_share extraídos automáticamente del pipeline. eval --all verde. Si algún override resulta ineliminable, clasificar como permanent exception con justificación técnica.
+- **Descripción:** TEP tenía 6 manual_overrides (7.5% de 80 campos), superando el límite de 5% de DEC-024. El paquete local activo cerró esta deuda sin tocar expected.json: la extracción determinista narrativa ya cubre ingresos FY2022/FY2021, dividends_per_share FY2021 y fcf FY2022/FY2021/FY2019 en los formatos PDF/KPI específicos de TEP.
+- **Criterio de aceptación:** ✓ TEP 100% (80/80) con 0 manual_overrides. ✓ Campos ingresos, fcf y dividends_per_share extraídos automáticamente del pipeline. ✓ eval --all verde.
+- **Resultado:** Completado en el worktree local y documentado en CHANGELOG 2026-03-06. Validaciones reportadas: `python3 -m pytest -q tests/unit/test_narrative.py` → 9 passed; `python3 -m elsian.cli eval TEP` → PASS 100.0% (80/80); `python3 -m elsian.cli eval --all` → 15/15 PASS 100%; `python3 -m pytest -q` → 1258 passed, 5 skipped.
 
 ### BL-055 — Clasificar overrides SOM DPS: permanent exception o fixable
 - **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** DONE ✅ (2026-03-06)
+- **Asignado a:** elsian-4
 - **Depende de:** —
-- **Descripción:** SOM tiene 2 manual_overrides de `dividends_per_share` (FY2024: $0.169, FY2023: $0.2319). El override existe porque: (1) SRC_002 presenta DPS en US cents (16.9c) no dólares, (2) DPS es compuesto (interim $0.080 + final $0.089 = $0.169 en FY2024), (3) SRC_001 menciona DPS en narrativa dispersa (no en tabla IS/BS/CF). DEC-024 regla 5 da excepción parcial a DPS si se demuestra que el dato solo aparece en narrativa dispersa. Investigar: (a) si el narrative extractor puede componer interim+final+supplemental automáticamente, (b) si el dato aparece en alguna tabla (no solo narrativa), (c) si la escala cents vs dollars es detectable automáticamente. Si (a), (b), (c) son todos negativos → clasificar como permanent exception.
-- **Criterio de aceptación:** Decisión documentada: fixable (con BL de fix asociada) o permanent exception (con justificación técnica en case.json `notes`). Si fixable: SOM 100% con 0 overrides.
+- **Descripción:** SOM tenía 2 manual_overrides de `dividends_per_share` (FY2024: $0.169, FY2023: $0.2319). La investigación confirmó que no hacía falta excepción permanente: el dato aparece de forma determinista en la tabla `FINANCIAL HIGHLIGHTS 2024` del annual report FY2024. El fix estrecho en `elsian/extract/phase.py` recupera ambas filas FY2024/FY2023 desde ese bloque y evita falsos positivos de presentaciones con importes en centavos o dividendos supplemental/special.
+- **Criterio de aceptación:** ✓ SOM 100% (179/179) con 0 manual_overrides. ✓ `expected.json` intacto. ✓ eval --all verde.
+- **Resultado:** Completado en el worktree local y documentado en CHANGELOG 2026-03-06. Validaciones reportadas: `python3 -m pytest -q tests/unit/test_aliases_extended.py tests/unit/test_extract_phase.py` → 34 passed; `python3 -m elsian.cli eval SOM` → PASS 100.0% (179/179); `python3 -m elsian.cli eval --all` → 15/15 PASS 100%; `python3 -m pytest -q` → 1267 passed, 5 skipped.
 
 ### BL-056 — Hygiene repo: truth_pack.json a .gitignore
 - **Prioridad:** MEDIA
@@ -530,5 +525,3 @@
 
 - Las prioridades las establece el director según el estado del proyecto y el ROADMAP.
 - Si un agente técnico descubre una tarea nueva durante su trabajo, la añade al final con prioridad MEDIA y estado TODO. El director la reordenará en la siguiente sesión.
-
-

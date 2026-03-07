@@ -208,6 +208,156 @@ _COMPARATIVE_CONTEXT = re.compile(
 )
 
 
+_FILING_YEAR_RE = re.compile(
+    r"(?:ANNUAL_REPORT_|annual-report-)(20\d{2})",
+    re.IGNORECASE,
+)
+
+_YEAR_HEADER_RE = re.compile(r"^\s*((?:20\d{2}\s+){3,}20\d{2})\s*$", re.MULTILINE)
+
+_HISTORICAL_REVENUE_ROW_RE = re.compile(
+    r"^\s*Revenues?\s+\(as\s+reported[^)]*\)\s+"
+    r"(?P<values>(?:\d[\d,]*\s+){3,}\d[\d,]*)\s*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+_DIVIDEND_HISTORY_HEADER_RE = re.compile(
+    r"Dividend\s+for\s+financial\s+year\*?\s+Gross\s+dividend\s+per\s+share",
+    re.IGNORECASE,
+)
+
+_DIVIDEND_HISTORY_ROW_RE = re.compile(
+    r"^\s*(?P<year>20\d{2})\s+€?\s*(?P<value>[\d.,]+)",
+    re.MULTILINE,
+)
+
+_FCF_BULLET_RE = re.compile(
+    r"[•\-\u2022]\s*"
+    r"(?P<currency>[$€£¥])\s*"
+    r"(?P<value>[\d,.]+)\s*"
+    r"(?P<scale>billion|billions|bn|million|millions|mn|thousand|thousands|[MBK])"
+    r"\s*"
+    r"(?P<label>Net\s+Free\s+cash\s+flow|Free\s+cash\s+flow)\b",
+    re.IGNORECASE,
+)
+
+
+def _default_period_from_source(source_filename: str) -> str:
+    """Infer FY period from annual-report style filenames."""
+    m = _FILING_YEAR_RE.search(source_filename or "")
+    if m:
+        return f"FY{m.group(1)}"
+    return ""
+
+
+def _extract_historical_revenue_table(
+    text: str, source_filename: str = "",
+) -> List[NarrativeField]:
+    """Extract multi-year revenue rows from historical performance tables."""
+    results: List[NarrativeField] = []
+
+    for year_match in _YEAR_HEADER_RE.finditer(text):
+        years = re.findall(r"20\d{2}", year_match.group(1))
+        if len(years) < 4:
+            continue
+
+        block = text[year_match.end():year_match.end() + 600]
+        row_match = _HISTORICAL_REVENUE_ROW_RE.search(block)
+        if not row_match:
+            continue
+
+        values = re.findall(r"\d[\d,]*", row_match.group("values"))
+        if len(values) < len(years):
+            continue
+
+        for year, raw_value in zip(years, values):
+            value = _parse_narrative_number(raw_value)
+            if value is None:
+                continue
+            results.append(
+                NarrativeField(
+                    label="Revenues",
+                    value=value,
+                    currency="EUR",
+                    scale="millions",
+                    period_hint=f"FY{year}",
+                    source_location=(
+                        f"{source_filename}:historical_revenue_table:char"
+                        f"{year_match.start()}"
+                    ),
+                    confidence="high",
+                )
+            )
+        break
+
+    return results
+
+
+def _extract_dividend_history_table(
+    text: str, source_filename: str = "",
+) -> List[NarrativeField]:
+    """Extract dividend-per-share rows from historical dividend tables."""
+    results: List[NarrativeField] = []
+
+    header_match = _DIVIDEND_HISTORY_HEADER_RE.search(text)
+    if not header_match:
+        return results
+
+    block = text[header_match.end():header_match.end() + 800]
+    for row_match in _DIVIDEND_HISTORY_ROW_RE.finditer(block):
+        value = _parse_narrative_number(row_match.group("value"))
+        if value is None:
+            continue
+        year = row_match.group("year")
+        results.append(
+            NarrativeField(
+                label="Gross dividend per share",
+                value=value,
+                currency="EUR",
+                scale="raw",
+                period_hint=f"FY{year}",
+                source_location=(
+                    f"{source_filename}:dividend_history_table:char"
+                    f"{header_match.start()}"
+                ),
+                confidence="high",
+            )
+        )
+
+    return results
+
+
+def _extract_fcf_bullets(
+    text: str, source_filename: str = "",
+) -> List[NarrativeField]:
+    """Extract cover-style FCF KPIs from annual-report bullets."""
+    results: List[NarrativeField] = []
+    default_period = _default_period_from_source(source_filename)
+
+    for match in _FCF_BULLET_RE.finditer(text):
+        value = _parse_narrative_number(match.group("value"))
+        if value is None:
+            continue
+
+        period = _detect_surrounding_period(text, match.start()) or default_period
+        if not period:
+            continue
+
+        results.append(
+            NarrativeField(
+                label=match.group("label").strip(),
+                value=value,
+                currency=_resolve_currency(match.group("currency") or ""),
+                scale=_resolve_scale(match.group("scale") or ""),
+                period_hint=period,
+                source_location=f"{source_filename}:fcf_bullet:char{match.start()}",
+                confidence="high",
+            )
+        )
+
+    return results
+
+
 def extract_from_narrative(
     text: str, source_filename: str = ""
 ) -> List[NarrativeField]:
@@ -264,6 +414,10 @@ def extract_from_narrative(
                 confidence="medium",
             )
         )
+
+    results.extend(_extract_historical_revenue_table(text, source_filename))
+    results.extend(_extract_dividend_history_table(text, source_filename))
+    results.extend(_extract_fcf_bullets(text, source_filename))
 
     return results
 
