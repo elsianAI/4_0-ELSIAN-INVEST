@@ -1,0 +1,659 @@
+# Auditoría expected.json — 2026-03-07
+
+## Resumen ejecutivo
+- Tickers auditados: 16/16
+- Tickers sin issues críticos: 13
+- Issues críticos totales: 14
+- Issues menores totales: 122
+
+## Hallazgos sistémicos
+- BL-035: `delta_cash` ausente como MISSING_EXPECTED en 15 tickers (114 periodos): 0327, ACLS, ADTN, CROX, GCT, INMD, IOSP, KAR, NEXN, NVDA, PR, SOM, SONO, TALO, TEP.
+- BL-035: `cff` ausente como MISSING_EXPECTED en 14 tickers (106 periodos): 0327, ACLS, CROX, GCT, INMD, IOSP, KAR, NEXN, NVDA, PR, SOM, SONO, TALO, TEP.
+- BL-035: `cfi` ausente como MISSING_EXPECTED en 14 tickers (106 periodos): 0327, ACLS, CROX, GCT, INMD, IOSP, KAR, NEXN, NVDA, PR, SOM, SONO, TALO, TEP.
+- BL-058: `accounts_payable` ausente como MISSING_EXPECTED en 16 tickers (161 periodos): 0327, ACLS, ADTN, CROX, GCT, INMD, IOSP, KAR, NEXN, NVDA, PR, SOM, SONO, TALO, TEP, TZOO.
+- BL-058: `accounts_receivable` ausente como MISSING_EXPECTED en 16 tickers (161 periodos): 0327, ACLS, ADTN, CROX, GCT, INMD, IOSP, KAR, NEXN, NVDA, PR, SOM, SONO, TALO, TEP, TZOO.
+- BL-058: `inventories` ausente como MISSING_EXPECTED en 7 tickers (88 periodos): 0327, ACLS, ADTN, CROX, INMD, IOSP, SONO.
+- SPARSE_PERIOD: afecta a 14 tickers (99 periodos) con cobertura inferior al umbral: 0327, ACLS, CROX, GCT, INMD, IOSP, KAR, NEXN, PR, SOM, SONO, TALO, TEP, TZOO.
+- MISSING_EXPECTED `fcf`: 15 tickers (110 periodos): 0327, ACLS, ADTN, CROX, GCT, INMD, IOSP, NEXN, NVDA, PR, SOM, SONO, TALO, TEP, TZOO.
+- MISSING_EXPECTED `ebitda`: 14 tickers (148 periodos): ACLS, ADTN, CROX, GCT, INMD, IOSP, NEXN, NVDA, PR, SOM, SONO, TALO, TEP, TZOO.
+- MISSING_EXPECTED `shares_outstanding`: 4 tickers (41 periodos): CROX, NEXN, NVDA, TEP.
+- BS_IDENTITY_FAIL: aparece en 3 tickers (10 periodos): ADTN, GCT, TZOO.
+
+## Detalle por ticker
+
+### 0327 — HKEX/HK
+- Periodos: 3 anuales + 0 trimestrales
+- Campos por periodo: min 19, max 20
+- **Issues críticos:**
+Ninguno
+- **Issues menores:**
+- SPARSE_PERIOD: FY2024: 19 campos (<20)
+- **Campos faltantes esperados:**
+- MISSING_EXPECTED:
+  - accounts_payable: FY2022, FY2023, FY2024. debería existir cuando hay contexto de balance sheet
+  - accounts_receivable: FY2022, FY2023, FY2024. debería existir cuando hay contexto de balance sheet
+  - cff: FY2022, FY2023, FY2024. debería existir cuando hay contexto de cash flow statement
+  - cfi: FY2022, FY2023, FY2024. debería existir cuando hay contexto de cash flow statement
+  - delta_cash: FY2022, FY2023, FY2024. debería existir cuando hay contexto de cash flow statement
+  - fcf: FY2022, FY2023, FY2024. calculable como cfo - abs(capex)
+  - inventories: FY2022, FY2023, FY2024. debería existir por contexto de balance sheet y negocio inventory-bearing
+- MISSING_JUSTIFIED:
+  - dividends_per_share: FY2024. ausencia compatible con empresa sin dividendos
+  - sga: FY2022, FY2023, FY2024. campo no universal o no inferible desde campos vecinos
+  - total_debt: FY2022, FY2023, FY2024. campo no universal o no inferible desde campos vecinos
+
+### ACLS — NASDAQ/N/A
+- Periodos: 6 anuales + 15 trimestrales
+- Campos por periodo: min 12, max 20
+- **Issues críticos:**
+Ninguno
+- **Issues menores:**
+- SPARSE_PERIOD: Q2-2021: 12 campos (<15)
+- SPARSE_PERIOD: Q3-2021: 12 campos (<15)
+- SPARSE_PERIOD: FY2021: 19 campos (<20)
+- SPARSE_PERIOD: FY2022: 19 campos (<20)
+- SPARSE_PERIOD: FY2023: 19 campos (<20)
+- DERIVED_INCONSISTENT (ebitda): Q1-2024: ebitda=64,545 vs ebit+depreciation_amortization=60,314 (diff=7.0%)
+- DERIVED_INCONSISTENT (ebitda): Q2-2024: ebitda=63,568 vs ebit+depreciation_amortization=56,671 (diff=12.2%)
+- DERIVED_INCONSISTENT (ebitda): Q3-2024: ebitda=59,674 vs ebit+depreciation_amortization=50,819 (diff=17.4%)
+- SPARSE_PERIOD: FY2024: 19 campos (<20)
+- DERIVED_INCONSISTENT (ebitda): Q1-2025: ebitda=39,520 vs ebit+depreciation_amortization=33,468 (diff=18.1%)
+- DERIVED_INCONSISTENT (ebitda): Q2-2025: ebitda=38,872 vs ebit+depreciation_amortization=33,480 (diff=16.1%)
+- DERIVED_INCONSISTENT (ebitda): Q3-2025: ebitda=43,202 vs ebit+depreciation_amortization=29,348 (diff=47.2%)
+- SPARSE_PERIOD: FY2025: 19 campos (<20)
+- [INFO] SPARSE_PERIOD: FY2020: 19 campos (<20) histórico temprano
+- **Campos faltantes esperados:**
+- MISSING_EXPECTED:
+  - accounts_payable: FY2020, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir cuando hay contexto de balance sheet
+  - accounts_receivable: FY2020, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir cuando hay contexto de balance sheet
+  - cff: FY2020, Q1-2021, FY2021, Q1-2022, FY2022, Q1-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir cuando hay contexto de cash flow statement
+  - cfi: FY2020, Q1-2021, FY2021, Q1-2022, FY2022, Q1-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir cuando hay contexto de cash flow statement
+  - delta_cash: FY2020, Q1-2021, FY2021, Q1-2022, FY2022, Q1-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir cuando hay contexto de cash flow statement
+  - ebitda: FY2020, Q1-2021, FY2021, Q1-2022, FY2022, Q1-2023, FY2023, FY2024, FY2025. calculable como ebit + depreciation_amortization
+  - fcf: FY2020, Q1-2021, FY2021, Q1-2022, FY2022, Q1-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. calculable como cfo - abs(capex)
+  - inventories: FY2020, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir por contexto de balance sheet y negocio inventory-bearing
+- MISSING_JUSTIFIED:
+  - accounts_payable: Q1-2021, Q2-2021, Q3-2021. campo no universal o no inferible desde campos vecinos
+  - accounts_receivable: Q1-2021, Q2-2021, Q3-2021. campo no universal o no inferible desde campos vecinos
+  - capex: Q2-2021, Q3-2021, Q2-2022, Q3-2022, Q2-2023, Q3-2023. campo no universal o no inferible desde campos vecinos
+  - cash_and_equivalents: Q1-2021, Q2-2021, Q3-2021. campo no universal o no inferible desde campos vecinos
+  - cff: Q2-2021, Q3-2021, Q2-2022, Q3-2022, Q2-2023, Q3-2023. campo no universal o no inferible desde campos vecinos
+  - cfi: Q2-2021, Q3-2021, Q2-2022, Q3-2022, Q2-2023, Q3-2023. campo no universal o no inferible desde campos vecinos
+  - cfo: Q2-2021, Q3-2021, Q2-2022, Q3-2022, Q2-2023, Q3-2023. campo no universal o no inferible desde campos vecinos
+  - delta_cash: Q2-2021, Q3-2021, Q2-2022, Q3-2022, Q2-2023, Q3-2023. campo no universal o no inferible desde campos vecinos
+  - depreciation_amortization: Q2-2021, Q3-2021, Q2-2022, Q3-2022, Q2-2023, Q3-2023. campo no universal o no inferible desde campos vecinos
+  - dividends_per_share: FY2020, Q1-2021, Q2-2021, Q3-2021, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. ausencia compatible con empresa sin dividendos
+  - ebitda: Q2-2021, Q3-2021, Q2-2022, Q3-2022, Q2-2023, Q3-2023. campo no universal o no inferible desde campos vecinos
+  - fcf: Q2-2021, Q3-2021, Q2-2022, Q3-2022, Q2-2023, Q3-2023. campo no universal o no inferible desde campos vecinos
+  - inventories: Q1-2021, Q2-2021, Q3-2021. empresa asset-light / servicios / plataforma / E&P o no claramente inventory-bearing
+  - total_assets: Q1-2021, Q2-2021, Q3-2021. campo no universal o no inferible desde campos vecinos
+  - total_debt: FY2020, Q1-2021, Q2-2021, Q3-2021, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. campo no universal o no inferible desde campos vecinos
+  - total_equity: Q1-2021, Q2-2021, Q3-2021. campo no universal o no inferible desde campos vecinos
+  - total_liabilities: Q1-2021, Q2-2021, Q3-2021. campo no universal o no inferible desde campos vecinos
+
+### ADTN — NASDAQ/US
+- Periodos: 8 anuales + 0 trimestrales
+- Campos por periodo: min 19, max 26
+- **Issues críticos:**
+- BS_IDENTITY_FAIL: FY2023: total_assets=1,682,512 vs total_liabilities+total_equity=1,240,788 (diff=35.6%)
+- BS_IDENTITY_FAIL: FY2024: total_assets=1,171,419 vs total_liabilities+total_equity=748,476 (diff=56.5%)
+- BS_IDENTITY_FAIL: FY2025: total_assets=1,204,493 vs total_liabilities+total_equity=831,165 (diff=44.9%)
+- **Issues menores:**
+- [INFO] SPARSE_PERIOD: FY2018: 19 campos (<20) histórico temprano
+- **Campos faltantes esperados:**
+- MISSING_EXPECTED:
+  - accounts_payable: FY2018. debería existir cuando hay contexto de balance sheet
+  - accounts_receivable: FY2018. debería existir cuando hay contexto de balance sheet
+  - delta_cash: FY2018, FY2019, FY2020, FY2021, FY2022, FY2023, FY2024, FY2025. debería existir cuando hay contexto de cash flow statement
+  - ebitda: FY2018, FY2019, FY2020, FY2021, FY2022, FY2023, FY2024, FY2025. calculable como ebit + depreciation_amortization
+  - fcf: FY2018, FY2019, FY2020, FY2021, FY2022, FY2023, FY2024, FY2025. calculable como cfo - abs(capex)
+  - inventories: FY2018. debería existir por contexto de balance sheet y negocio inventory-bearing
+- MISSING_JUSTIFIED:
+  - cash_and_equivalents: FY2018. campo no universal o no inferible desde campos vecinos
+  - dividends_per_share: FY2024, FY2025. ausencia compatible con empresa sin dividendos
+  - total_assets: FY2018. campo no universal o no inferible desde campos vecinos
+  - total_debt: FY2018, FY2020, FY2021, FY2022, FY2023, FY2024, FY2025. campo no universal o no inferible desde campos vecinos
+  - total_liabilities: FY2018. campo no universal o no inferible desde campos vecinos
+
+### CROX — NASDAQ/US
+- Periodos: 6 anuales + 12 trimestrales
+- Campos por periodo: min 14, max 19
+- **Issues críticos:**
+Ninguno
+- **Issues menores:**
+- SPARSE_PERIOD: Q2-2022: 14 campos (<15)
+- SPARSE_PERIOD: Q3-2022: 14 campos (<15)
+- SPARSE_PERIOD: FY2022: 19 campos (<20)
+- SPARSE_PERIOD: Q2-2023: 14 campos (<15)
+- SPARSE_PERIOD: Q3-2023: 14 campos (<15)
+- SPARSE_PERIOD: FY2023: 19 campos (<20)
+- SPARSE_PERIOD: Q2-2024: 14 campos (<15)
+- SPARSE_PERIOD: Q3-2024: 14 campos (<15)
+- SPARSE_PERIOD: FY2024: 19 campos (<20)
+- SPARSE_PERIOD: Q2-2025: 14 campos (<15)
+- SPARSE_PERIOD: Q3-2025: 14 campos (<15)
+- SPARSE_PERIOD: FY2025: 19 campos (<20)
+- [INFO] SPARSE_PERIOD: FY2020: 19 campos (<20) histórico temprano
+- [INFO] SPARSE_PERIOD: FY2021: 19 campos (<20) histórico temprano
+- **Campos faltantes esperados:**
+- MISSING_EXPECTED:
+  - accounts_payable: FY2020, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir cuando hay contexto de balance sheet
+  - accounts_receivable: FY2020, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir cuando hay contexto de balance sheet
+  - cff: FY2020, FY2021, Q1-2022, FY2022, Q1-2023, FY2023, Q1-2024, FY2024, Q1-2025, FY2025. debería existir cuando hay contexto de cash flow statement
+  - cfi: FY2020, FY2021, Q1-2022, FY2022, Q1-2023, FY2023, Q1-2024, FY2024, Q1-2025, FY2025. debería existir cuando hay contexto de cash flow statement
+  - delta_cash: FY2020, FY2021, Q1-2022, FY2022, Q1-2023, FY2023, Q1-2024, FY2024, Q1-2025, FY2025. debería existir cuando hay contexto de cash flow statement
+  - ebitda: FY2020, FY2021, Q1-2022, FY2022, Q1-2023, FY2023, Q1-2024, FY2024, Q1-2025, FY2025. calculable como ebit + depreciation_amortization
+  - fcf: FY2020, FY2021, Q1-2022, FY2022, Q1-2023, FY2023, Q1-2024, FY2024, Q1-2025, FY2025. calculable como cfo - abs(capex)
+  - inventories: FY2020, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir por contexto de balance sheet y negocio inventory-bearing
+  - shares_outstanding: Q1-2022, Q2-2022, Q3-2022, Q1-2023, Q2-2023, Q3-2023, Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. debería existir cuando hay EPS reportado
+- MISSING_JUSTIFIED:
+  - capex: Q2-2022, Q3-2022, Q2-2023, Q3-2023, Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cff: Q2-2022, Q3-2022, Q2-2023, Q3-2023, Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cfi: Q2-2022, Q3-2022, Q2-2023, Q3-2023, Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cfo: Q2-2022, Q3-2022, Q2-2023, Q3-2023, Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - delta_cash: Q2-2022, Q3-2022, Q2-2023, Q3-2023, Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - depreciation_amortization: Q2-2022, Q3-2022, Q2-2023, Q3-2023, Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - dividends_per_share: FY2020, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. ausencia compatible con empresa sin dividendos
+  - ebitda: Q2-2022, Q3-2022, Q2-2023, Q3-2023, Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - fcf: Q2-2022, Q3-2022, Q2-2023, Q3-2023, Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - research_and_development: FY2020, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. I+D no universal en filings
+  - total_debt: Q1-2022, Q2-2022, Q3-2022, Q1-2023, Q2-2023, Q3-2023, Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+
+### GCT — NASDAQ/KY
+- Periodos: 6 anuales + 9 trimestrales
+- Campos por periodo: min 13, max 19
+- **Issues críticos:**
+- BS_IDENTITY_FAIL: FY2021: total_assets=186,777 vs total_liabilities+total_equity=160,125 (diff=16.6%)
+- SCALE_INCONSISTENT (depreciation_amortization): depreciation_amortization: salto de escala Q1-2023->Q2-2023 (380 -> 0.01, ratio=38,000x)
+- SCALE_INCONSISTENT (depreciation_amortization): depreciation_amortization: salto de escala Q3-2023->FY2023 (0.01 -> 2,873, ratio=287,300x)
+- SCALE_INCONSISTENT (depreciation_amortization): depreciation_amortization: salto de escala Q1-2025->Q2-2025 (2,049 -> 0.06, ratio=34,150x)
+- SCALE_INCONSISTENT (depreciation_amortization): depreciation_amortization: salto de escala Q3-2025->FY2025 (0.06 -> 8,332, ratio=138,867x)
+- **Issues menores:**
+- DERIVED_INCONSISTENT (ebitda): FY2020: ebitda=45,490 vs ebit+depreciation_amortization=44,411 (diff=2.4%)
+- DERIVED_INCONSISTENT (ebitda): FY2021: ebitda=47,953 vs ebit+depreciation_amortization=40,128 (diff=19.5%)
+- SPARSE_PERIOD: FY2022: 19 campos (<20)
+- DERIVED_INCONSISTENT (ebitda): FY2022: ebitda=41,842 vs ebit+depreciation_amortization=36,409 (diff=14.9%)
+- SPARSE_PERIOD: Q2-2023: 13 campos (<15)
+- SPARSE_PERIOD: Q3-2023: 13 campos (<15)
+- SPARSE_PERIOD: FY2023: 19 campos (<20)
+- DERIVED_INCONSISTENT (ebitda): FY2023: ebitda=118,307 vs ebit+depreciation_amortization=112,951 (diff=4.7%)
+- SPARSE_PERIOD: FY2024: 19 campos (<20)
+- DERIVED_INCONSISTENT (ebitda): FY2024: ebitda=156,942 vs ebit+depreciation_amortization=139,146 (diff=12.8%)
+- SPARSE_PERIOD: FY2025: 19 campos (<20)
+- DERIVED_INCONSISTENT (ebitda): FY2025: ebitda=162,944 vs ebit+depreciation_amortization=153,308 (diff=6.3%)
+- [INFO] SPARSE_PERIOD: FY2020: 14 campos (<20) histórico temprano
+- [INFO] SPARSE_PERIOD: FY2021: 18 campos (<20) histórico temprano
+- **Campos faltantes esperados:**
+- MISSING_EXPECTED:
+  - accounts_payable: FY2021, FY2022, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir cuando hay contexto de balance sheet
+  - accounts_receivable: FY2021, FY2022, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir cuando hay contexto de balance sheet
+  - cff: FY2020, FY2021, FY2022, Q1-2023, FY2023, Q1-2024, FY2024, Q1-2025, FY2025. debería existir cuando hay contexto de cash flow statement
+  - cfi: FY2020, FY2021, FY2022, Q1-2023, FY2023, Q1-2024, FY2024, Q1-2025, FY2025. debería existir cuando hay contexto de cash flow statement
+  - delta_cash: FY2020, FY2021, FY2022, Q1-2023, FY2023, Q1-2024, FY2024, Q1-2025, FY2025. debería existir cuando hay contexto de cash flow statement
+  - ebitda: Q1-2023, Q2-2023, Q3-2023, Q1-2025, Q2-2025, Q3-2025. calculable como ebit + depreciation_amortization
+  - fcf: FY2020, FY2021, FY2022, Q1-2023, FY2023, Q1-2024, FY2024, Q1-2025, FY2025. calculable como cfo - abs(capex)
+- MISSING_JUSTIFIED:
+  - accounts_payable: FY2020, Q1-2023, Q2-2023, Q3-2023. campo no universal o no inferible desde campos vecinos
+  - accounts_receivable: FY2020, Q1-2023, Q2-2023, Q3-2023. campo no universal o no inferible desde campos vecinos
+  - capex: Q2-2023, Q3-2023, Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cash_and_equivalents: FY2020, Q1-2023, Q2-2023, Q3-2023. campo no universal o no inferible desde campos vecinos
+  - cff: Q2-2023, Q3-2023, Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cfi: Q2-2023, Q3-2023, Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cfo: Q2-2023, Q3-2023, Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - delta_cash: Q2-2023, Q3-2023, Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - depreciation_amortization: Q1-2024, Q2-2024, Q3-2024. campo no universal o no inferible desde campos vecinos
+  - dividends_per_share: FY2020, FY2021, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. ausencia compatible con empresa sin dividendos
+  - ebitda: Q1-2024, Q2-2024, Q3-2024. campo no universal o no inferible desde campos vecinos
+  - fcf: Q2-2023, Q3-2023, Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - inventories: FY2020, FY2021, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. empresa asset-light / servicios / plataforma / E&P o no claramente inventory-bearing
+  - research_and_development: FY2020, FY2021. I+D no universal en filings
+  - sga: FY2020, FY2021, FY2022, FY2023, FY2024, FY2025. campo no universal o no inferible desde campos vecinos
+  - total_assets: FY2020, Q1-2023, Q2-2023, Q3-2023. campo no universal o no inferible desde campos vecinos
+  - total_debt: FY2020, FY2021, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. campo no universal o no inferible desde campos vecinos
+  - total_equity: FY2020, Q1-2023, Q2-2023, Q3-2023. campo no universal o no inferible desde campos vecinos
+  - total_liabilities: FY2020, Q1-2023, Q2-2023, Q3-2023. campo no universal o no inferible desde campos vecinos
+
+### INMD — NASDAQ/IL
+- Periodos: 6 anuales + 6 trimestrales
+- Campos por periodo: min 15, max 18
+- **Issues críticos:**
+Ninguno
+- **Issues menores:**
+- SPARSE_PERIOD: FY2022: 18 campos (<20)
+- SPARSE_PERIOD: FY2023: 18 campos (<20)
+- SPARSE_PERIOD: FY2024: 18 campos (<20)
+- SPARSE_PERIOD: FY2025: 18 campos (<20)
+- [INFO] SPARSE_PERIOD: FY2020: 18 campos (<20) histórico temprano
+- [INFO] SPARSE_PERIOD: FY2021: 18 campos (<20) histórico temprano
+- **Campos faltantes esperados:**
+- MISSING_EXPECTED:
+  - accounts_payable: FY2020, FY2021, FY2022, FY2023, Q3-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, Q3-2025, FY2025, Q4-2025. debería existir cuando hay contexto de balance sheet
+  - accounts_receivable: FY2020, FY2021, FY2022, FY2023, Q3-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, Q3-2025, FY2025, Q4-2025. debería existir cuando hay contexto de balance sheet
+  - cff: FY2020, FY2021, FY2022, FY2023, Q3-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, Q3-2025, FY2025, Q4-2025. debería existir cuando hay contexto de cash flow statement
+  - cfi: FY2020, FY2021, FY2022, FY2023, Q3-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, Q3-2025, FY2025, Q4-2025. debería existir cuando hay contexto de cash flow statement
+  - delta_cash: FY2020, FY2021, FY2022, FY2023, Q3-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, Q3-2025, FY2025, Q4-2025. debería existir cuando hay contexto de cash flow statement
+  - ebitda: FY2020, FY2021, FY2022, FY2023, Q3-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, Q3-2025, FY2025, Q4-2025. calculable como ebit + depreciation_amortization
+  - fcf: FY2020, FY2021, FY2022, FY2023, Q3-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, Q3-2025, FY2025, Q4-2025. calculable como cfo - abs(capex)
+  - inventories: FY2020, FY2021, FY2022, FY2023, Q3-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, Q3-2025, FY2025, Q4-2025. debería existir por contexto de balance sheet y negocio inventory-bearing
+- MISSING_JUSTIFIED:
+  - dividends_per_share: FY2020, FY2021, FY2022, FY2023, Q3-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, Q3-2025, FY2025, Q4-2025. ausencia compatible con empresa sin dividendos
+  - interest_expense: FY2020, FY2021, FY2022, FY2023, Q3-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, Q3-2025, FY2025, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - total_assets: Q4-2024, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - total_debt: FY2020, FY2021, FY2022, FY2023, Q3-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, Q3-2025, FY2025, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - total_equity: Q4-2024, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - total_liabilities: Q4-2024, Q4-2025. campo no universal o no inferible desde campos vecinos
+
+### IOSP — NASDAQ/US
+- Periodos: 5 anuales + 17 trimestrales
+- Campos por periodo: min 11, max 19
+- **Issues críticos:**
+Ninguno
+- **Issues menores:**
+- SPARSE_PERIOD: Q3-2021: 11 campos (<15)
+- SPARSE_PERIOD: FY2021: 19 campos (<20)
+- SPARSE_PERIOD: FY2022: 19 campos (<20)
+- SPARSE_PERIOD: Q3-2023: 14 campos (<15)
+- SPARSE_PERIOD: FY2023: 19 campos (<20)
+- SPARSE_PERIOD: Q4-2023: 12 campos (<15)
+- SPARSE_PERIOD: Q2-2024: 14 campos (<15)
+- SPARSE_PERIOD: Q3-2024: 14 campos (<15)
+- SPARSE_PERIOD: FY2024: 19 campos (<20)
+- SPARSE_PERIOD: Q4-2024: 12 campos (<15)
+- SPARSE_PERIOD: Q2-2025: 14 campos (<15)
+- SPARSE_PERIOD: Q3-2025: 14 campos (<15)
+- SPARSE_PERIOD: FY2025: 19 campos (<20)
+- [INFO] SPARSE_PERIOD: Q2-2021: 11 campos (<15) histórico temprano
+- **Campos faltantes esperados:**
+- MISSING_EXPECTED:
+  - accounts_payable: Q1-2021, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir cuando hay contexto de balance sheet
+  - accounts_receivable: Q1-2021, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir cuando hay contexto de balance sheet
+  - cff: Q1-2021, FY2021, Q1-2022, FY2022, Q1-2023, FY2023, Q1-2024, FY2024, Q1-2025, FY2025. debería existir cuando hay contexto de cash flow statement
+  - cfi: Q1-2021, FY2021, Q1-2022, FY2022, Q1-2023, FY2023, Q1-2024, FY2024, Q1-2025, FY2025. debería existir cuando hay contexto de cash flow statement
+  - delta_cash: Q1-2021, FY2021, Q1-2022, FY2022, Q1-2023, FY2023, Q1-2024, FY2024, Q1-2025, FY2025. debería existir cuando hay contexto de cash flow statement
+  - ebitda: Q1-2021, FY2021, Q1-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q4-2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, Q3-2025, FY2025. calculable como ebit + depreciation_amortization
+  - fcf: Q1-2021, FY2021, Q1-2022, FY2022, Q1-2023, FY2023, Q1-2024, FY2024, Q1-2025, FY2025. calculable como cfo - abs(capex)
+  - inventories: Q1-2021, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir por contexto de balance sheet y negocio inventory-bearing
+- MISSING_JUSTIFIED:
+  - accounts_payable: Q2-2021, Q3-2021, Q4-2023, Q4-2024. campo no universal o no inferible desde campos vecinos
+  - accounts_receivable: Q2-2021, Q3-2021, Q4-2023, Q4-2024. campo no universal o no inferible desde campos vecinos
+  - capex: Q2-2021, Q3-2021, Q2-2022, Q3-2022, Q2-2023, Q3-2023, Q4-2023, Q2-2024, Q3-2024, Q4-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cash_and_equivalents: Q2-2021, Q3-2021, Q4-2023, Q4-2024. campo no universal o no inferible desde campos vecinos
+  - cff: Q2-2021, Q3-2021, Q2-2022, Q3-2022, Q2-2023, Q3-2023, Q4-2023, Q2-2024, Q3-2024, Q4-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cfi: Q2-2021, Q3-2021, Q2-2022, Q3-2022, Q2-2023, Q3-2023, Q4-2023, Q2-2024, Q3-2024, Q4-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cfo: Q2-2021, Q3-2021, Q2-2022, Q3-2022, Q2-2023, Q3-2023, Q4-2023, Q2-2024, Q3-2024, Q4-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - delta_cash: Q2-2021, Q3-2021, Q2-2022, Q3-2022, Q2-2023, Q3-2023, Q4-2023, Q2-2024, Q3-2024, Q4-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - depreciation_amortization: Q2-2021, Q3-2021, Q2-2022, Q3-2022. campo no universal o no inferible desde campos vecinos
+  - dividends_per_share: Q1-2021, Q2-2021, Q3-2021, Q1-2022, Q2-2022, Q3-2022, Q1-2023, Q2-2023, Q3-2023, Q4-2023, Q1-2024, Q2-2024, Q3-2024, Q4-2024, Q1-2025, Q2-2025, Q3-2025. ausencia compatible con empresa sin dividendos
+  - ebitda: Q2-2021, Q3-2021, Q2-2022, Q3-2022. campo no universal o no inferible desde campos vecinos
+  - fcf: Q2-2021, Q3-2021, Q2-2022, Q3-2022, Q2-2023, Q3-2023, Q4-2023, Q2-2024, Q3-2024, Q4-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - interest_expense: Q1-2021, Q2-2021, Q3-2021, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q4-2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, Q3-2025, FY2025. campo no universal o no inferible desde campos vecinos
+  - inventories: Q2-2021, Q3-2021, Q4-2023, Q4-2024. empresa asset-light / servicios / plataforma / E&P o no claramente inventory-bearing
+  - total_assets: Q1-2021, Q2-2021, Q3-2021, Q4-2023, Q4-2024. campo no universal o no inferible desde campos vecinos
+  - total_debt: Q1-2021, Q2-2021, Q3-2021, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q4-2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, Q3-2025, FY2025. campo no universal o no inferible desde campos vecinos
+  - total_equity: Q1-2021, Q2-2021, Q3-2021, Q1-2023, Q3-2023, Q4-2023, Q1-2024, Q2-2024, Q3-2024, Q4-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - total_liabilities: Q1-2021, Q2-2021, Q3-2021, Q1-2023, Q3-2023, Q4-2023, Q1-2024, Q2-2024, Q3-2024, Q4-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+
+### KAR — ASX (Australian Securities Exchange)/N/A
+- Periodos: 3 anuales + 0 trimestrales
+- Campos por periodo: min 15, max 17
+- **Issues críticos:**
+Ninguno
+- **Issues menores:**
+- SPARSE_PERIOD: FY2025: 17 campos (<20)
+- [INFO] SPARSE_PERIOD: FY2023: 15 campos (<20) histórico temprano
+- [INFO] SPARSE_PERIOD: FY2024: 17 campos (<20) histórico temprano
+- **Campos faltantes esperados:**
+- MISSING_EXPECTED:
+  - accounts_payable: FY2023, FY2024, FY2025. debería existir cuando hay contexto de balance sheet
+  - accounts_receivable: FY2023, FY2024, FY2025. debería existir cuando hay contexto de balance sheet
+  - cff: FY2023, FY2024, FY2025. debería existir cuando hay contexto de cash flow statement
+  - cfi: FY2023, FY2024, FY2025. debería existir cuando hay contexto de cash flow statement
+  - delta_cash: FY2023, FY2024, FY2025. debería existir cuando hay contexto de cash flow statement
+- MISSING_JUSTIFIED:
+  - capex: FY2023, FY2024, FY2025. campo no universal o no inferible desde campos vecinos
+  - depreciation_amortization: FY2023. campo no universal o no inferible desde campos vecinos
+  - dividends_per_share: FY2023, FY2024, FY2025. ausencia compatible con empresa sin dividendos
+  - ebit: FY2023, FY2024, FY2025. campo no universal o no inferible desde campos vecinos
+  - ebitda: FY2023. campo no universal o no inferible desde campos vecinos
+  - fcf: FY2023, FY2024, FY2025. campo no universal o no inferible desde campos vecinos
+  - inventories: FY2023, FY2024, FY2025. empresa asset-light / servicios / plataforma / E&P o no claramente inventory-bearing
+  - research_and_development: FY2023, FY2024, FY2025. I+D no universal en filings
+  - sga: FY2023, FY2024, FY2025. campo no universal o no inferible desde campos vecinos
+
+### NEXN — NASDAQ/IL
+- Periodos: 4 anuales + 6 trimestrales
+- Campos por periodo: min 10, max 19
+- **Issues críticos:**
+Ninguno
+- **Issues menores:**
+- DERIVED_INCONSISTENT (gross_profit): FY2021: gross_profit=253,689 vs ingresos-cost_of_revenue=270,294 (diff=6.1%)
+- DERIVED_INCONSISTENT (gross_profit): FY2022: gross_profit=249,138 vs ingresos-cost_of_revenue=274,505 (diff=9.2%)
+- SPARSE_PERIOD: FY2023: 19 campos (<20)
+- DERIVED_INCONSISTENT (gross_profit): FY2023: gross_profit=218,898 vs ingresos-cost_of_revenue=269,723 (diff=18.8%)
+- SPARSE_PERIOD: Q1-2024: 13 campos (<15)
+- SPARSE_PERIOD: Q2-2024: 10 campos (<15)
+- SPARSE_PERIOD: Q3-2024: 10 campos (<15)
+- SPARSE_PERIOD: FY2024: 19 campos (<20)
+- DERIVED_INCONSISTENT (gross_profit): FY2024: gross_profit=257,085 vs ingresos-cost_of_revenue=304,457 (diff=15.6%)
+- SPARSE_PERIOD: Q2-2025: 14 campos (<15)
+- SPARSE_PERIOD: Q3-2025: 14 campos (<15)
+- [INFO] SPARSE_PERIOD: FY2021: 19 campos (<20) histórico temprano
+- [INFO] SPARSE_PERIOD: FY2022: 19 campos (<20) histórico temprano
+- **Campos faltantes esperados:**
+- MISSING_EXPECTED:
+  - accounts_payable: FY2021, FY2022, FY2023, Q1-2024, FY2024, Q1-2025, Q2-2025, Q3-2025. debería existir cuando hay contexto de balance sheet
+  - accounts_receivable: FY2021, FY2022, FY2023, Q1-2024, FY2024, Q1-2025, Q2-2025, Q3-2025. debería existir cuando hay contexto de balance sheet
+  - cff: FY2021, FY2022, FY2023, Q1-2024, FY2024, Q1-2025. debería existir cuando hay contexto de cash flow statement
+  - cfi: FY2021, FY2022, FY2023, Q1-2024, FY2024, Q1-2025. debería existir cuando hay contexto de cash flow statement
+  - delta_cash: FY2021, FY2022, FY2023, Q1-2024, FY2024, Q1-2025. debería existir cuando hay contexto de cash flow statement
+  - ebitda: FY2021, FY2022, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025. calculable como ebit + depreciation_amortization
+  - fcf: FY2021, FY2022, FY2023, Q1-2024, FY2024, Q1-2025. calculable como cfo - abs(capex)
+  - shares_outstanding: Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. debería existir cuando hay EPS reportado
+- MISSING_JUSTIFIED:
+  - accounts_payable: Q2-2024, Q3-2024. campo no universal o no inferible desde campos vecinos
+  - accounts_receivable: Q2-2024, Q3-2024. campo no universal o no inferible desde campos vecinos
+  - capex: Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cash_and_equivalents: Q2-2024, Q3-2024. campo no universal o no inferible desde campos vecinos
+  - cff: Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cfi: Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cfo: Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - delta_cash: Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - dividends_per_share: FY2021, FY2022, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025. ausencia compatible con empresa sin dividendos
+  - fcf: Q2-2024, Q3-2024, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - gross_profit: Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - interest_expense: FY2021, FY2022, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - inventories: FY2021, FY2022, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025. empresa asset-light / servicios / plataforma / E&P o no claramente inventory-bearing
+  - total_assets: Q1-2024, Q2-2024, Q3-2024. campo no universal o no inferible desde campos vecinos
+  - total_debt: Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - total_equity: Q1-2024, Q2-2024, Q3-2024. campo no universal o no inferible desde campos vecinos
+  - total_liabilities: Q1-2024, Q2-2024, Q3-2024. campo no universal o no inferible desde campos vecinos
+
+### NVDA — NASDAQ/US
+- Periodos: 6 anuales + 12 trimestrales
+- Campos por periodo: min 16, max 25
+- **Issues críticos:**
+Ninguno
+- **Issues menores:**
+Ninguno
+- **Campos faltantes esperados:**
+- MISSING_EXPECTED:
+  - accounts_payable: Q2-2022, Q3-2022, Q4-2022, Q2-2023, Q3-2023, Q4-2023, Q2-2024, Q3-2024, Q4-2024, Q2-2025, Q3-2025, Q4-2025. debería existir cuando hay contexto de balance sheet
+  - accounts_receivable: Q2-2022, Q3-2022, Q4-2022, Q2-2023, Q3-2023, Q4-2023, Q2-2024, Q3-2024, Q4-2024, Q2-2025, Q3-2025, Q4-2025. debería existir cuando hay contexto de balance sheet
+  - cff: Q2-2022, Q2-2023, Q2-2024, Q2-2025. debería existir cuando hay contexto de cash flow statement
+  - cfi: Q2-2022, Q2-2023, Q2-2024, Q2-2025. debería existir cuando hay contexto de cash flow statement
+  - delta_cash: Q2-2022, Q2-2023, Q2-2024, Q2-2025. debería existir cuando hay contexto de cash flow statement
+  - ebitda: FY2021, FY2022, Q2-2022, FY2023, Q2-2023, FY2024, Q2-2024, FY2025, Q2-2025, FY2026. calculable como ebit + depreciation_amortization
+  - fcf: FY2021, FY2022, Q2-2022, FY2023, Q2-2023, FY2024, Q2-2024, FY2025, Q2-2025, FY2026. calculable como cfo - abs(capex)
+  - shares_outstanding: FY2021, FY2022, Q2-2022, Q3-2022, Q4-2022, FY2023, Q2-2023, Q3-2023, Q4-2023, FY2024, Q2-2024, Q3-2024, Q4-2024, FY2025, Q2-2025, Q3-2025, Q4-2025, FY2026. debería existir cuando hay EPS reportado
+- MISSING_JUSTIFIED:
+  - capex: Q3-2022, Q4-2022, Q3-2023, Q4-2023, Q3-2024, Q4-2024, Q3-2025, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - cff: Q3-2022, Q4-2022, Q3-2023, Q4-2023, Q3-2024, Q4-2024, Q3-2025, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - cfi: Q3-2022, Q4-2022, Q3-2023, Q4-2023, Q3-2024, Q4-2024, Q3-2025, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - cfo: Q3-2022, Q4-2022, Q3-2023, Q4-2023, Q3-2024, Q4-2024, Q3-2025, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - delta_cash: Q3-2022, Q4-2022, Q3-2023, Q4-2023, Q3-2024, Q4-2024, Q3-2025, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - depreciation_amortization: Q3-2022, Q4-2022, Q3-2023, Q4-2023, Q3-2024, Q4-2024, Q3-2025, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - dividends_per_share: FY2021, FY2022, Q2-2022, Q3-2022, Q4-2022, FY2023, Q2-2023, Q3-2023, Q4-2023, FY2024, Q2-2024, Q3-2024, Q4-2024, FY2025, Q2-2025, Q3-2025, Q4-2025, FY2026. ausencia compatible con empresa sin dividendos
+  - ebitda: Q3-2022, Q4-2022, Q3-2023, Q4-2023, Q3-2024, Q4-2024, Q3-2025, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - fcf: Q3-2022, Q4-2022, Q3-2023, Q4-2023, Q3-2024, Q4-2024, Q3-2025, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - inventories: Q2-2022, Q3-2022, Q4-2022, Q2-2023, Q3-2023, Q4-2023, Q2-2024, Q3-2024, Q4-2024, Q2-2025, Q3-2025, Q4-2025. empresa asset-light / servicios / plataforma / E&P o no claramente inventory-bearing
+
+### PR — NYSE/US
+- Periodos: 3 anuales + 6 trimestrales
+- Campos por periodo: min 15, max 17
+- **Issues críticos:**
+Ninguno
+- **Issues menores:**
+- SPARSE_PERIOD: FY2024: 17 campos (<20)
+- SPARSE_PERIOD: FY2025: 17 campos (<20)
+- [INFO] SPARSE_PERIOD: FY2023: 17 campos (<20) histórico temprano
+- **Campos faltantes esperados:**
+- MISSING_EXPECTED:
+  - accounts_payable: FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir cuando hay contexto de balance sheet
+  - accounts_receivable: FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir cuando hay contexto de balance sheet
+  - cff: FY2023, FY2024, FY2025. debería existir cuando hay contexto de cash flow statement
+  - cfi: FY2023, FY2024, FY2025. debería existir cuando hay contexto de cash flow statement
+  - delta_cash: FY2023, FY2024, FY2025. debería existir cuando hay contexto de cash flow statement
+  - ebitda: FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. calculable como ebit + depreciation_amortization
+  - fcf: FY2023, FY2024, FY2025. calculable como cfo - abs(capex)
+- MISSING_JUSTIFIED:
+  - capex: Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cff: Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cfi: Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cfo: Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cost_of_revenue: FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. campo no universal o no inferible desde campos vecinos
+  - delta_cash: Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - dividends_per_share: FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. ausencia compatible con empresa sin dividendos
+  - fcf: Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - gross_profit: FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. campo no universal o no inferible desde campos vecinos
+  - inventories: FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. empresa asset-light / servicios / plataforma / E&P o no claramente inventory-bearing
+  - research_and_development: FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. I+D no universal en filings
+
+### SOM — LSE (AIM)/GB
+- Periodos: 16 anuales + 0 trimestrales
+- Campos por periodo: min 9, max 23
+- **Issues críticos:**
+Ninguno
+- **Issues menores:**
+- SPARSE_PERIOD: FY2011: 9 campos (<20)
+- SPARSE_PERIOD: FY2012: 10 campos (<20)
+- SPARSE_PERIOD: FY2013: 10 campos (<20)
+- SPARSE_PERIOD: FY2014: 10 campos (<20)
+- SPARSE_PERIOD: FY2015: 10 campos (<20)
+- SPARSE_PERIOD: FY2016: 10 campos (<20)
+- SPARSE_PERIOD: FY2017: 10 campos (<20)
+- SPARSE_PERIOD: FY2018: 10 campos (<20)
+- SPARSE_PERIOD: FY2019: 9 campos (<20)
+- SPARSE_PERIOD: FY2020: 9 campos (<20)
+- SPARSE_PERIOD: FY2021: 9 campos (<20)
+- SPARSE_PERIOD: FY2022: 9 campos (<20)
+- DERIVED_INCONSISTENT (delta_cash): FY2023: delta_cash=-388 vs cfo+cfi+cff=130 (diff=398.5%)
+- DERIVED_INCONSISTENT (delta_cash): FY2024: delta_cash=-3,825 vs cfo+cfi+cff=-4,148 (diff=7.8%)
+- [INFO] SPARSE_PERIOD: FY2009: 9 campos (<20) histórico temprano
+- [INFO] SPARSE_PERIOD: FY2010: 9 campos (<20) histórico temprano
+- **Campos faltantes esperados:**
+- MISSING_EXPECTED:
+  - accounts_payable: FY2023, FY2024. debería existir cuando hay contexto de balance sheet
+  - accounts_receivable: FY2023, FY2024. debería existir cuando hay contexto de balance sheet
+  - cff: FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022. debería existir cuando hay contexto de cash flow statement
+  - cfi: FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022. debería existir cuando hay contexto de cash flow statement
+  - delta_cash: FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022. debería existir cuando hay contexto de cash flow statement
+  - ebitda: FY2009, FY2010, FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022, FY2023, FY2024. calculable como ebit + depreciation_amortization
+  - fcf: FY2023, FY2024. calculable como cfo - abs(capex)
+- MISSING_JUSTIFIED:
+  - accounts_payable: FY2009, FY2010, FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - accounts_receivable: FY2009, FY2010, FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - capex: FY2009, FY2010. campo no universal o no inferible desde campos vecinos
+  - cash_and_equivalents: FY2009, FY2010, FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - cff: FY2009, FY2010. campo no universal o no inferible desde campos vecinos
+  - cfi: FY2009, FY2010. campo no universal o no inferible desde campos vecinos
+  - cfo: FY2009, FY2010, FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - delta_cash: FY2009, FY2010. campo no universal o no inferible desde campos vecinos
+  - dividends_per_share: FY2009, FY2010, FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022. ausencia compatible con empresa sin dividendos
+  - eps_basic: FY2009, FY2010, FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - eps_diluted: FY2009, FY2010, FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - fcf: FY2009, FY2010, FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - income_tax: FY2011. campo no universal o no inferible desde campos vecinos
+  - interest_expense: FY2019, FY2020, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - inventories: FY2009, FY2010, FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022, FY2023, FY2024. empresa asset-light / servicios / plataforma / E&P o no claramente inventory-bearing
+  - research_and_development: FY2009, FY2010, FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022. I+D no universal en filings
+  - shares_outstanding: FY2009, FY2010, FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - total_assets: FY2009, FY2010, FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - total_debt: FY2009, FY2010, FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022, FY2023, FY2024. campo no universal o no inferible desde campos vecinos
+  - total_equity: FY2009, FY2010, FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - total_liabilities: FY2009, FY2010, FY2011, FY2012, FY2013, FY2014, FY2015, FY2016, FY2017, FY2018, FY2019, FY2020, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+
+### SONO — NASDAQ/N/A
+- Periodos: 6 anuales + 12 trimestrales
+- Campos por periodo: min 14, max 20
+- **Issues críticos:**
+Ninguno
+- **Issues menores:**
+- SPARSE_PERIOD: FY2022: 19 campos (<20)
+- SPARSE_PERIOD: FY2023: 19 campos (<20)
+- DERIVED_INCONSISTENT (gross_profit): Q3-2023: gross_profit=128,054 vs ingresos-cost_of_revenue=103,553 (diff=23.7%)
+- SPARSE_PERIOD: Q4-2023: 14 campos (<15)
+- SPARSE_PERIOD: FY2024: 19 campos (<20)
+- SPARSE_PERIOD: Q4-2024: 14 campos (<15)
+- SPARSE_PERIOD: FY2025: 19 campos (<20)
+- SPARSE_PERIOD: Q4-2025: 14 campos (<15)
+- **Campos faltantes esperados:**
+- MISSING_EXPECTED:
+  - accounts_payable: FY2020, FY2021, Q2-2022, Q3-2022, FY2022, Q4-2022, Q2-2023, FY2023, Q3-2023, Q4-2023, Q1-2024, Q2-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, FY2025, Q4-2025. debería existir cuando hay contexto de balance sheet
+  - accounts_receivable: FY2020, FY2021, Q2-2022, Q3-2022, FY2022, Q4-2022, Q2-2023, FY2023, Q3-2023, Q4-2023, Q1-2024, Q2-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, FY2025, Q4-2025. debería existir cuando hay contexto de balance sheet
+  - cff: FY2020, FY2021, FY2022, FY2023, FY2024, FY2025. debería existir cuando hay contexto de cash flow statement
+  - cfi: FY2020, FY2021, FY2022, FY2023, FY2024, FY2025. debería existir cuando hay contexto de cash flow statement
+  - delta_cash: FY2020, FY2021, FY2022, FY2023, FY2024, FY2025. debería existir cuando hay contexto de cash flow statement
+  - ebitda: FY2020, FY2021, Q2-2022, Q3-2022, FY2022, Q4-2022, Q2-2023, FY2023, Q3-2023, Q4-2023, Q1-2024, Q2-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, FY2025, Q4-2025. calculable como ebit + depreciation_amortization
+  - fcf: FY2020, FY2021, FY2022, FY2023, FY2024, FY2025. calculable como cfo - abs(capex)
+  - inventories: FY2020, FY2021, Q2-2022, Q3-2022, FY2022, Q4-2022, Q2-2023, FY2023, Q3-2023, Q4-2023, Q1-2024, Q2-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, FY2025, Q4-2025. debería existir por contexto de balance sheet y negocio inventory-bearing
+- MISSING_JUSTIFIED:
+  - capex: Q2-2022, Q3-2022, Q4-2022, Q2-2023, Q3-2023, Q4-2023, Q1-2024, Q2-2024, Q4-2024, Q1-2025, Q2-2025, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - cash_and_equivalents: Q4-2023, Q4-2024, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - cff: Q2-2022, Q3-2022, Q4-2022, Q2-2023, Q3-2023, Q4-2023, Q1-2024, Q2-2024, Q4-2024, Q1-2025, Q2-2025, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - cfi: Q2-2022, Q3-2022, Q4-2022, Q2-2023, Q3-2023, Q4-2023, Q1-2024, Q2-2024, Q4-2024, Q1-2025, Q2-2025, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - cfo: Q2-2022, Q3-2022, Q4-2022, Q2-2023, Q3-2023, Q4-2023, Q1-2024, Q2-2024, Q4-2024, Q1-2025, Q2-2025, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - delta_cash: Q2-2022, Q3-2022, Q4-2022, Q2-2023, Q3-2023, Q4-2023, Q1-2024, Q2-2024, Q4-2024, Q1-2025, Q2-2025, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - dividends_per_share: FY2020, FY2021, Q2-2022, Q3-2022, FY2022, Q4-2022, Q2-2023, FY2023, Q3-2023, Q4-2023, Q1-2024, Q2-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, FY2025, Q4-2025. ausencia compatible con empresa sin dividendos
+  - fcf: Q2-2022, Q3-2022, Q4-2022, Q2-2023, Q3-2023, Q4-2023, Q1-2024, Q2-2024, Q4-2024, Q1-2025, Q2-2025, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - total_assets: Q4-2023, Q4-2024, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - total_debt: Q2-2022, Q3-2022, FY2022, Q4-2022, Q2-2023, FY2023, Q3-2023, Q4-2023, Q1-2024, Q2-2024, FY2024, Q4-2024, Q1-2025, Q2-2025, FY2025, Q4-2025. campo no universal o no inferible desde campos vecinos
+  - total_liabilities: Q4-2023, Q4-2024, Q4-2025. campo no universal o no inferible desde campos vecinos
+
+### TALO — NYSE/US
+- Periodos: 5 anuales + 7 trimestrales
+- Campos por periodo: min 13, max 17
+- **Issues críticos:**
+Ninguno
+- **Issues menores:**
+- SPARSE_PERIOD: Q2-2022: 13 campos (<15)
+- SPARSE_PERIOD: Q3-2022: 14 campos (<15)
+- SPARSE_PERIOD: FY2022: 17 campos (<20)
+- SPARSE_PERIOD: FY2023: 17 campos (<20)
+- SPARSE_PERIOD: Q3-2024: 14 campos (<15)
+- SPARSE_PERIOD: FY2024: 17 campos (<20)
+- SPARSE_PERIOD: Q1-2025: 14 campos (<15)
+- SPARSE_PERIOD: Q2-2025: 14 campos (<15)
+- SPARSE_PERIOD: Q3-2025: 14 campos (<15)
+- SPARSE_PERIOD: FY2025: 17 campos (<20)
+- [INFO] SPARSE_PERIOD: FY2021: 17 campos (<20) histórico temprano
+- **Campos faltantes esperados:**
+- MISSING_EXPECTED:
+  - accounts_payable: FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, FY2023, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir cuando hay contexto de balance sheet
+  - accounts_receivable: FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, FY2023, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. debería existir cuando hay contexto de balance sheet
+  - cff: FY2021, FY2022, FY2023, FY2024, FY2025. debería existir cuando hay contexto de cash flow statement
+  - cfi: FY2021, FY2022, FY2023, FY2024, FY2025. debería existir cuando hay contexto de cash flow statement
+  - delta_cash: FY2021, FY2022, FY2023, FY2024, FY2025. debería existir cuando hay contexto de cash flow statement
+  - ebitda: FY2021, Q1-2022, Q3-2022, FY2022, FY2023, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. calculable como ebit + depreciation_amortization
+  - fcf: FY2021, FY2022, FY2023, FY2024, FY2025. calculable como cfo - abs(capex)
+- MISSING_JUSTIFIED:
+  - capex: Q1-2022, Q2-2022, Q3-2022, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cff: Q1-2022, Q2-2022, Q3-2022, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cfi: Q1-2022, Q2-2022, Q3-2022, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cfo: Q1-2022, Q2-2022, Q3-2022, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cost_of_revenue: FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, FY2023, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. campo no universal o no inferible desde campos vecinos
+  - delta_cash: Q1-2022, Q2-2022, Q3-2022, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - depreciation_amortization: Q2-2022. campo no universal o no inferible desde campos vecinos
+  - dividends_per_share: FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, FY2023, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. ausencia compatible con empresa sin dividendos
+  - ebitda: Q2-2022. campo no universal o no inferible desde campos vecinos
+  - fcf: Q1-2022, Q2-2022, Q3-2022, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - gross_profit: FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, FY2023, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. campo no universal o no inferible desde campos vecinos
+  - ingresos: Q2-2022, Q3-2022, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - inventories: FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, FY2023, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. empresa asset-light / servicios / plataforma / E&P o no claramente inventory-bearing
+  - research_and_development: FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, FY2023, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025, FY2025. I+D no universal en filings
+
+### TEP — Euronext Paris/N/A
+- Periodos: 6 anuales + 0 trimestrales + 2 semestrales
+- Campos por periodo: min 2, max 16
+- **Issues críticos:**
+Ninguno
+- **Issues menores:**
+- SPARSE_PERIOD: FY2022: 2 campos (<20)
+- SPARSE_PERIOD: FY2023: 16 campos (<20)
+- SPARSE_PERIOD: H1-2024: 10 campos (<15)
+- SPARSE_PERIOD: FY2024: 16 campos (<20)
+- SPARSE_PERIOD: FY2025: 16 campos (<20)
+- [INFO] SPARSE_PERIOD: FY2019: 2 campos (<20) histórico temprano
+- [INFO] SPARSE_PERIOD: FY2021: 3 campos (<20) histórico temprano
+- **Campos faltantes esperados:**
+- MISSING_EXPECTED:
+  - accounts_payable: FY2023, FY2024, H1-2025, FY2025. debería existir cuando hay contexto de balance sheet
+  - accounts_receivable: FY2023, FY2024, H1-2025, FY2025. debería existir cuando hay contexto de balance sheet
+  - cff: FY2019, FY2021, FY2022, FY2023, H1-2024, FY2024, H1-2025, FY2025. debería existir cuando hay contexto de cash flow statement
+  - cfi: FY2019, FY2021, FY2022, FY2023, H1-2024, FY2024, H1-2025, FY2025. debería existir cuando hay contexto de cash flow statement
+  - delta_cash: FY2019, FY2021, FY2022, FY2023, H1-2024, FY2024, H1-2025, FY2025. debería existir cuando hay contexto de cash flow statement
+  - ebitda: FY2023, H1-2024, FY2024, H1-2025, FY2025. calculable como ebit + depreciation_amortization
+  - fcf: FY2023, H1-2024, FY2024, H1-2025, FY2025. calculable como cfo - abs(capex)
+  - shares_outstanding: FY2023, H1-2024, FY2024, H1-2025, FY2025. debería existir cuando hay EPS reportado
+- MISSING_JUSTIFIED:
+  - accounts_payable: FY2019, FY2021, FY2022, H1-2024. campo no universal o no inferible desde campos vecinos
+  - accounts_receivable: FY2019, FY2021, FY2022, H1-2024. campo no universal o no inferible desde campos vecinos
+  - capex: FY2019, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - cash_and_equivalents: FY2019, FY2021, FY2022, H1-2024. campo no universal o no inferible desde campos vecinos
+  - cfo: FY2019, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - cost_of_revenue: FY2019, FY2021, FY2022, FY2023, H1-2024, FY2024, H1-2025, FY2025. campo no universal o no inferible desde campos vecinos
+  - depreciation_amortization: FY2019, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - dividends_per_share: FY2019, FY2022, H1-2024, H1-2025. ausencia compatible con empresa sin dividendos
+  - ebit: FY2019, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - ebitda: FY2019, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - eps_basic: FY2019, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - eps_diluted: FY2019, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - gross_profit: FY2019, FY2021, FY2022, FY2023, H1-2024, FY2024, H1-2025, FY2025. campo no universal o no inferible desde campos vecinos
+  - income_tax: FY2019, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - interest_expense: FY2019, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - inventories: FY2019, FY2021, FY2022, FY2023, H1-2024, FY2024, H1-2025, FY2025. empresa asset-light / servicios / plataforma / E&P o no claramente inventory-bearing
+  - net_income: FY2019, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - research_and_development: FY2019, FY2021, FY2022, FY2023, H1-2024, FY2024, H1-2025, FY2025. I+D no universal en filings
+  - sga: FY2019, FY2021, FY2022, FY2023, H1-2024, FY2024, H1-2025, FY2025. campo no universal o no inferible desde campos vecinos
+  - shares_outstanding: FY2019, FY2021, FY2022. campo no universal o no inferible desde campos vecinos
+  - total_assets: FY2019, FY2021, FY2022, H1-2024. campo no universal o no inferible desde campos vecinos
+  - total_debt: FY2019, FY2021, FY2022, H1-2024. campo no universal o no inferible desde campos vecinos
+  - total_equity: FY2019, FY2021, FY2022, H1-2024. campo no universal o no inferible desde campos vecinos
+  - total_liabilities: FY2019, FY2021, FY2022, H1-2024. campo no universal o no inferible desde campos vecinos
+
+### TZOO — NASDAQ/US
+- Periodos: 6 anuales + 12 trimestrales
+- Campos por periodo: min 14, max 22
+- **Issues críticos:**
+- BS_IDENTITY_FAIL: FY2020: total_assets=102,400 vs total_liabilities+total_equity=97,791 (diff=4.7%)
+- BS_IDENTITY_FAIL: FY2021: total_assets=99,727 vs total_liabilities+total_equity=95,127 (diff=4.8%)
+- BS_IDENTITY_FAIL: Q1-2022: total_assets=92,883 vs total_liabilities+total_equity=88,279 (diff=5.2%)
+- BS_IDENTITY_FAIL: Q2-2022: total_assets=78,480 vs total_liabilities+total_equity=73,846 (diff=6.3%)
+- BS_IDENTITY_FAIL: Q3-2022: total_assets=68,320 vs total_liabilities+total_equity=63,684 (diff=7.3%)
+- BS_IDENTITY_FAIL: Q1-2023: total_assets=66,267 vs total_liabilities+total_equity=61,664 (diff=7.5%)
+- **Issues menores:**
+- DERIVED_INCONSISTENT (delta_cash): FY2019: delta_cash=1,249 vs cfo+cfi+cff=983 (diff=27.1%)
+- SPARSE_PERIOD: Q1-2022: 14 campos (<15)
+- SPARSE_PERIOD: Q2-2022: 14 campos (<15)
+- SPARSE_PERIOD: Q3-2022: 14 campos (<15)
+- DERIVED_INCONSISTENT (delta_cash): FY2022: delta_cash=-25,611 vs cfo+cfi+cff=-23,154 (diff=10.6%)
+- SPARSE_PERIOD: Q1-2023: 14 campos (<15)
+- SPARSE_PERIOD: Q2-2023: 14 campos (<15)
+- SPARSE_PERIOD: Q3-2023: 14 campos (<15)
+- DERIVED_INCONSISTENT (delta_cash): FY2023: delta_cash=-2,989 vs cfo+cfi+cff=-3,514 (diff=14.9%)
+- SPARSE_PERIOD: Q1-2024: 14 campos (<15)
+- SPARSE_PERIOD: Q2-2024: 14 campos (<15)
+- SPARSE_PERIOD: Q3-2024: 14 campos (<15)
+- DERIVED_INCONSISTENT (delta_cash): FY2024: delta_cash=1,351 vs cfo+cfi+cff=1,950 (diff=30.7%)
+- SPARSE_PERIOD: Q1-2025: 14 campos (<15)
+- SPARSE_PERIOD: Q2-2025: 14 campos (<15)
+- SPARSE_PERIOD: Q3-2025: 14 campos (<15)
+- **Campos faltantes esperados:**
+- MISSING_EXPECTED:
+  - accounts_payable: Q1-2022, Q2-2022, Q3-2022, Q1-2023, Q2-2023, Q3-2023, Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. debería existir cuando hay contexto de balance sheet
+  - accounts_receivable: Q1-2022, Q2-2022, Q3-2022, Q1-2023, Q2-2023, Q3-2023, Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. debería existir cuando hay contexto de balance sheet
+  - ebitda: FY2019, FY2020, FY2021, FY2022, FY2023, FY2024. calculable como ebit + depreciation_amortization
+  - fcf: FY2019, FY2020, FY2021, FY2022, FY2023, FY2024. calculable como cfo - abs(capex)
+- MISSING_JUSTIFIED:
+  - capex: Q1-2022, Q2-2022, Q3-2022, Q1-2023, Q2-2023, Q3-2023, Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cff: Q1-2022, Q2-2022, Q3-2022, Q1-2023, Q2-2023, Q3-2023, Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cfi: Q1-2022, Q2-2022, Q3-2022, Q1-2023, Q2-2023, Q3-2023, Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - cfo: Q1-2022, Q2-2022, Q3-2022, Q1-2023, Q2-2023, Q3-2023, Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - delta_cash: Q1-2022, Q2-2022, Q3-2022, Q1-2023, Q2-2023, Q3-2023, Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - depreciation_amortization: Q1-2022, Q2-2022, Q3-2022, Q1-2023, Q2-2023, Q3-2023, Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - dividends_per_share: FY2019, FY2020, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025. ausencia compatible con empresa sin dividendos
+  - ebitda: Q1-2022, Q2-2022, Q3-2022, Q1-2023, Q2-2023, Q3-2023, Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - fcf: Q1-2022, Q2-2022, Q3-2022, Q1-2023, Q2-2023, Q3-2023, Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - interest_expense: FY2019, FY2020, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - inventories: FY2019, FY2020, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025. empresa asset-light / servicios / plataforma / E&P o no claramente inventory-bearing
+  - sga: FY2019, FY2020, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
+  - total_debt: FY2019, FY2020, FY2021, Q1-2022, Q2-2022, Q3-2022, FY2022, Q1-2023, Q2-2023, Q3-2023, FY2023, Q1-2024, Q2-2024, Q3-2024, FY2024, Q1-2025, Q2-2025, Q3-2025. campo no universal o no inferible desde campos vecinos
