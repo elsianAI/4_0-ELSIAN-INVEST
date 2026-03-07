@@ -2,6 +2,13 @@
 
 ## 2026-03-07
 
+### [4.0] Governance reconciliation — strict DEC-015 tracking and BL-057 reprioritization
+- **What:** Reconciled `PROJECT_STATE.md` with the actual ticker state and with strict `DEC-015` reporting. The project now distinguishes between `15 tickers validados 100%`, `12 FULL 100%`, and `3 ANNUAL_ONLY 100%` (`KAR`, `SOM`, `0327`) instead of claiming `15 FULL`. Removed the operational claim that `DEC-015` is already achieved while those annual-only cases remain unresolved at governance level. Also returned `BL-057` to the conservative posture established by `DEC-025`: low priority, non-blocking, and behind `BL-058`, `BL-052`, and `BL-053` in both backlog and roadmap.
+- **Files changed:** `docs/project/PROJECT_STATE.md`, `docs/project/BACKLOG.md`, `ROADMAP.md`, `CHANGELOG.md`
+- **Tests:** `python3 scripts/check_governance.py --format text` → clean repo/governance state aside from local workspace noise. Briefing-facing docs now agree on BL-057 ordering and no longer claim `15 FULL`.
+
+## 2026-03-07
+
 ### [4.0] Backlog hygiene + opportunities lane + repo entry docs rewrite
 - **What:** Split the operational backlog from the historical archive. `docs/project/BACKLOG.md` now contains only live work (`BL-058`, `BL-057`, `BL-052`, `BL-053`, `BL-047`, `BL-005`) with an explicit task template including module and validation tier. Historical DONE items now live in `docs/project/BACKLOG_DONE.md`, and `docs/project/OPPORTUNITIES.md` was added as a separate lane for medium/long-term ideas that should not compete with executable Module 1 work. Rewrote `README.md` as the real entry guide for the repo, and rewrote `ROADMAP.md` so it reflects the current Module 1-first horizon instead of the old commercial/bootstrap framing.
 - **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/OPPORTUNITIES.md`, `README.md`, `ROADMAP.md`

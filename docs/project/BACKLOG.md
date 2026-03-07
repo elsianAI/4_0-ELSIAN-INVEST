@@ -41,17 +41,6 @@
 - **Descripción:** Añadir `accounts_receivable`, `inventories` y `accounts_payable` como campos canónicos para completar el bloque de working capital. Seguir el mismo patrón de la oleada 1: ampliar `field_aliases.json` e `ixbrl_concept_map.json`, pilotar primero en TZOO y NVDA, y después expandir al resto de tickers donde exista representación clara en el filing.
 - **Criterio de aceptación:** Los 3 campos nuevos existen en la configuración canónica, al menos dos tickers piloto quedan curados y validados con ellos, `eval --all` sigue verde y hay tests nuevos o ampliados para el patrón exacto de working capital.
 
-### BL-057 — Discovery automático de filings LSE/AIM (DEC-025)
-- **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** BL-013 (IR crawler DONE)
-- **Referencias:** DEC-025
-- **Descripción:** Cerrar la limitación conocida de adquisición en LSE/AIM. El `ir_crawler` integrado sigue sin descubrir automáticamente ciertos paths CDN/media de compañías como SOM. Evaluar la ruta mínima correcta: mejorar el crawler actual para esos patrones, introducir un fetcher dedicado para LSE/AIM, o documentar con evidencia que el problema no merece solución todavía.
-- **Criterio de aceptación:** `elsian acquire SOM` funciona sin `filings_sources` hardcodeados en `case.json`, o queda documentado con evidencia técnica verificable por qué no es factible aún.
-
 ### BL-052 — Auto-curate para tickers no-SEC (expected.json desde PDF)
 - **Prioridad:** MEDIA
 - **Estado:** TODO
@@ -73,6 +62,17 @@
 - **Referencias:** DEC-024
 - **Descripción:** Añadir el mapeo inverso desde cada dato validado a la posición exacta en el documento original (HTML/PDF). Esto implica generar `source_map.json` o artefacto equivalente con offsets, páginas o líneas, manteniendo la separación entre el pipeline determinista y futuros visores/productos.
 - **Criterio de aceptación:** Al menos un ticker genera artefactos de provenance L3 trazables, con tests unitarios y una demostración clara de “click to source” a nivel técnico.
+
+### BL-057 — Discovery automático de filings LSE/AIM (DEC-025)
+- **Prioridad:** BAJA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Módulo:** Module 1
+- **Validation tier:** shared-core
+- **Depende de:** BL-013 (IR crawler DONE)
+- **Referencias:** DEC-025
+- **Descripción:** Cerrar la limitación conocida de adquisición en LSE/AIM. El `ir_crawler` integrado sigue sin descubrir automáticamente ciertos paths CDN/media de compañías como SOM. Sigue siendo una mejora válida, pero no bloqueante y subordinada a que exista masa crítica LSE/AIM o un trigger claro que justifique invertir en esa infraestructura.
+- **Criterio de aceptación:** `elsian acquire SOM` funciona sin `filings_sources` hardcodeados en `case.json`, o queda documentado con evidencia técnica verificable por qué no es factible aún.
 
 ### BL-047 — Mejorar HTML table extractor: interest_income + capex
 - **Prioridad:** MEDIA

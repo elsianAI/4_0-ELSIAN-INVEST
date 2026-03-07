@@ -17,9 +17,8 @@ ELSIAN 4.0 avanza por capas, pero el orden no es negociable:
 Trabajo prioritario una vez el repo esté limpio y sincronizado:
 
 1. **BL-058** — working capital wave 2 (`accounts_receivable`, `inventories`, `accounts_payable`)
-2. **BL-057** — auto-discovery de filings LSE/AIM
-3. **BL-052** — auto-curate para tickers no-SEC
-4. **BL-053** — Provenance Level 3
+2. **BL-052** — auto-curate para tickers no-SEC
+3. **BL-053** — Provenance Level 3
 
 Objetivos de esta fase:
 
@@ -27,6 +26,8 @@ Objetivos de esta fase:
 - seguir reduciendo manualidad residual fuera del core de extracción;
 - ampliar cobertura funcional del pipeline sin degradar provenance;
 - hacer que añadir un ticker o un campo nuevo siga siendo un cambio local y verificable.
+
+La mejora `BL-057` (auto-discovery LSE/AIM) sigue existiendo, pero vuelve a una postura conservadora: no bloquea el avance inmediato y solo debe subir de prioridad si aparece masa crítica LSE/AIM o un trigger claro de adquisición no-SEC.
 
 ## Horizonte siguiente: infraestructura para servir Módulo 1
 
