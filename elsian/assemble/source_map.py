@@ -64,17 +64,44 @@ def _line_col_from_char(text: str, char_index: int) -> tuple[int, int]:
     return line, column
 
 
-def _resolve_source_path(case_dir: Path, source_filing: str) -> Path:
-    direct = case_dir / source_filing
-    if direct.exists():
-        return direct
-    return case_dir / "filings" / source_filing
+def _is_within(root: Path, candidate: Path) -> bool:
+    try:
+        candidate.relative_to(root)
+        return True
+    except ValueError:
+        return False
+
+
+def _resolve_source_path(case_dir: Path, source_filing: str) -> Path | None:
+    if not source_filing:
+        return None
+
+    filing_path = Path(source_filing)
+    if filing_path.is_absolute():
+        return None
+
+    case_root = case_dir.resolve()
+    for candidate in (
+        case_root / filing_path,
+        case_root / "filings" / filing_path,
+    ):
+        resolved = candidate.resolve()
+        if _is_within(case_root, resolved) and resolved.exists():
+            return resolved
+
+    return None
 
 
 def _relative_to_case_dir(case_dir: Path, path: Path | None) -> str | None:
     if path is None or not path.exists():
         return None
-    return path.relative_to(case_dir).as_posix()
+
+    case_root = case_dir.resolve()
+    resolved = path.resolve()
+    if not _is_within(case_root, resolved):
+        return None
+
+    return resolved.relative_to(case_root).as_posix()
 
 
 def _derive_source_variants(
@@ -82,7 +109,7 @@ def _derive_source_variants(
     source_filing: str,
 ) -> tuple[str | None, str | None]:
     source_path = _resolve_source_path(case_dir, source_filing)
-    if not source_path.exists():
+    if source_path is None:
         return None, None
 
     original_path: Path | None = None
@@ -495,7 +522,7 @@ class SourceMapBuilder:
             return None
 
         source_path = _resolve_source_path(case_dir, source_filing)
-        if not source_path.exists():
+        if source_path is None:
             return None
 
         extraction_method = field_data.get("extraction_method", "") or ""

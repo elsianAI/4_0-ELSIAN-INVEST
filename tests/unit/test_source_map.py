@@ -169,3 +169,36 @@ def test_vertical_bs_pointer_resolves_text_line(tmp_path: Path) -> None:
     assert field_entry["pointer"]["path"] == "filings/sample.txt"
     assert field_entry["pointer"]["line_start"] == 2
     assert field_entry["click_target"] == "filings/sample.txt#L2"
+
+
+def test_source_map_builder_rejects_paths_outside_case_dir(tmp_path: Path) -> None:
+    case_dir = tmp_path / "TEST"
+    case_dir.mkdir()
+    _write_case(case_dir)
+
+    outside = tmp_path / "outside.txt"
+    outside.write_text("sneaky\n", encoding="utf-8")
+
+    extraction_result = json.loads(
+        (case_dir / "extraction_result.json").read_text(encoding="utf-8")
+    )
+    extraction_result["periods"]["FY2024"]["fields"]["sneaky"] = {
+        "value": 1.0,
+        "scale": "raw",
+        "confidence": "high",
+        "source_filing": "../outside.txt",
+        "source_location": "../outside.txt:char0",
+        "raw_text": "sneaky",
+        "extraction_method": "narrative",
+    }
+    (case_dir / "extraction_result.json").write_text(
+        json.dumps(extraction_result, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+    source_map = SourceMapBuilder().build(case_dir)
+    field_entry = source_map["periods"]["FY2024"]["fields"]["sneaky"]
+
+    assert field_entry["resolution_status"] == "unresolved"
+    assert field_entry["original_path"] is None
+    assert field_entry["clean_path"] is None

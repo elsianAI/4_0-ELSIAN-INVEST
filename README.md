@@ -58,6 +58,7 @@ python3 -m elsian.cli eval --all
 python3 -m elsian.cli curate TICKER
 python3 -m elsian.cli coverage --all
 python3 -m elsian.cli assemble TICKER
+python3 -m elsian.cli source-map TICKER
 python3 -m elsian.cli discover TICKER
 ```
 

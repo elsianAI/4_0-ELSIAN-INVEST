@@ -20,7 +20,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | Tickers WIP | 0 | 0 | 2026-03-05 |
 | Total campos validados | 3,278 | — | 2026-03-07 |
 | Campos canónicos | 29 (26 previos + accounts_receivable, inventories, accounts_payable) | — | 2026-03-07 |
-| Tests pasando | 1285 passed, 5 skipped (último sweep completo) + BL-053 targeted 5 passed | — | 2026-03-07 |
+| Tests pasando | 1285 passed, 5 skipped (último sweep completo) + BL-053 targeted 6 passed | — | 2026-03-07 |
 | Líneas de código (aprox.) | ~12,000 + ~6,500 tests | 2026-03-07 |
 
 *`DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies. `KAR` ya entra en esa excepción documentada (ASX). `SOM` y `0327` siguen en `ANNUAL_ONLY`, pero no cuentan todavía hacia el umbral de transición porque su tratamiento operativo no está cerrado como excepción equivalente a `FULL`.
@@ -76,7 +76,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | Sources compiler | ✅ Implementado | Merge multi-fetcher, dedup, SourcesPack_v1. CLI `elsian compile`. BL-023 DONE |
 | IR Website Crawling | ✅ Implementado + Integrado | ir_crawler.py portado completo (~600 líneas). Integrado en EuRegulatorsFetcher como fallback automático (BL-013 DONE). |
 | Provenance Level 2 | ✅ Completo | BL-006 DONE. Todos los extractores emiten L2 completo (table_title, row_label, col_label, raw_text, row, col, table_index, extraction_method). 100% completitud. |
-| Provenance Level 3 | 🟡 Pilotado | `elsian/assemble/source_map.py` + CLI `elsian source-map`. Piloto TZOO validado con `SourceMap_v1`: 851/851 campos resueltos (`html_ixbrl`, `clean_md_table`, `text_label`). El piloto acepta anchors equivalentes en `.clean.md`/`.txt` manteniendo la ruta al filing original; queda pendiente convertirlo en soporte general de producto/UI. |
+| Provenance Level 3 | 🟡 Pilotado | `elsian/assemble/source_map.py` + CLI `elsian source-map`. Piloto TZOO validado con `SourceMap_v1`: 851/851 campos resueltos (`html_ixbrl`, `clean_md_table`, `text_label`). El piloto acepta anchors equivalentes en `.clean.md`/`.txt` manteniendo la ruta al filing original; el builder además confina `source_filing` al caso. Queda pendiente convertirlo en soporte general de producto/UI. |
 | CI GitHub Actions | ✅ Implementado | Workflow ci.yml en .github/workflows/. pytest en Python 3.11. WP-5 DONE |
 | Sanity Checks post-extracción | ✅ Implementado | capex sign, revenue neg, gp>revenue, YoY >10x. BL-016 DONE |
 | Autonomous Validator | ✅ Implementado | 9 quality gates intrínsecos (BS identity, CF identity, units 1000x, EV, margins, TTM, recency, completeness). BL-020 DONE |
@@ -108,7 +108,7 @@ No hay bloqueantes críticos. El pipeline es funcional end-to-end para los 15 ti
 
 ## Hitos recientes
 
-- ✅ **BL-053 completado (2026-03-07)** — Provenance Level 3 queda pilotado sin reabrir el pipeline de extracción. Nuevo builder `elsian/assemble/source_map.py` + CLI `elsian source-map` generan `SourceMap_v1` desde `extraction_result.json` y resuelven click targets sobre `.htm`, `.clean.md` y `.txt`. Piloto TZOO validado con 851/851 campos resueltos. Validación targeted: `tests/unit/test_source_map.py` → 4 passed; `tests/integration/test_source_map.py` → 1 passed; demo `python3 -m elsian source-map TZOO --output <tmp>` → 851/851 resueltos.
+- ✅ **BL-053 completado (2026-03-07)** — Provenance Level 3 queda pilotado sin reabrir el pipeline de extracción. Nuevo builder `elsian/assemble/source_map.py` + CLI `elsian source-map` generan `SourceMap_v1` desde `extraction_result.json` y resuelven targets trazables sobre `.htm`, `.clean.md` y `.txt`. Piloto TZOO validado con 851/851 campos resueltos. Validación targeted: `tests/unit/test_source_map.py` + `tests/integration/test_source_map.py` → 6 passed; `ruff` limpio; `python3 -m elsian eval TZOO` → PASS 100.0% (300/300); demo `python3 -m elsian source-map TZOO --output <tmp>` → 851/851 resueltos.
 
 - ✅ **BL-058 completado (2026-03-07)** — Oleada 2 de working capital cerrada. `accounts_receivable`, `inventories` y `accounts_payable` entran en el set canónico compartido y quedan pilotados en TZOO y NVDA. TZOO sube a 300/300 y NVDA a 354/354; `eval --all` vuelve a pasar 15/15 al 100% y `pytest -q` queda en 1285 passed, 5 skipped. La governance derivada (`BACKLOG`, `PROJECT_STATE`, `FIELD_DEPENDENCY_*`, `ROADMAP`, `MODULE_1_ENGINEER_CONTEXT`) queda reconciliada con 29 campos canónicos y 3,278 campos validados.
 
