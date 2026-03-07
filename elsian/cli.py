@@ -445,7 +445,11 @@ def cmd_eval(args: argparse.Namespace) -> None:
 
 
 def cmd_curate(args: argparse.Namespace) -> None:
-    """Generate expected_draft.json from iXBRL data in .htm filings."""
+    """Generate expected_draft.json from iXBRL or deterministic PDF/text extraction."""
+    from elsian.curate_draft import (
+        build_expected_draft_from_extraction,
+        compare_draft_vs_expected,
+    )
     from elsian.extract.ixbrl import (
         parse_ixbrl_filing,
         deduplicate_facts,
@@ -464,23 +468,95 @@ def cmd_curate(args: argparse.Namespace) -> None:
     # Find .htm files
     htm_files = sorted(filings_dir.glob("*.htm")) if filings_dir.exists() else []
     if not htm_files:
-        # Generate skeleton for tickers without iXBRL files
-        print(f"{args.ticker}: No iXBRL (.htm) files found. Generating skeleton.")
-        skeleton = {
-            "version": "1.0",
-            "ticker": case.ticker or args.ticker,
-            "currency": case.currency,
-            "scale": "mixed",
-            "scale_notes": "SKELETON — no iXBRL files available. Curate manually from PDF/other sources.",
-            "_generated_by": "elsian curate (skeleton)",
-            "periods": {},
-        }
-        out_path = case_dir / "expected_draft.json"
-        out_path.write_text(
-            json.dumps(skeleton, indent=2, ensure_ascii=False),
+        from elsian.extract.phase import ExtractPhase
+
+        print(
+            f"{args.ticker}: No iXBRL (.htm) files found. "
+            "Falling back to deterministic PDF/text curate."
+        )
+
+        conv_stats = _convert_filings(case_dir, force=False)
+        print(
+            f"  Convert: {conv_stats['converted']} new, "
+            f"{conv_stats['skipped']} cached, {conv_stats['failed']} failed"
+        )
+
+        phase = ExtractPhase()
+        result = phase.extract(str(case_dir))
+        extraction_out_path = case_dir / "extraction_result.json"
+        extraction_out_path.write_text(
+            json.dumps(result.to_dict(), indent=2, ensure_ascii=False),
             encoding="utf-8",
         )
-        print(f"  Saved skeleton to {out_path}")
+
+        expected_path = case_dir / "expected.json"
+        expected = None
+        if expected_path.exists():
+            expected = json.loads(expected_path.read_text(encoding="utf-8"))
+
+        draft = build_expected_draft_from_extraction(
+            result,
+            ticker=case.ticker or args.ticker,
+            currency=result.currency or case.currency,
+            expected=expected,
+        )
+
+        out_path = case_dir / "expected_draft.json"
+        out_path.write_text(
+            json.dumps(draft, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+
+        periods = draft.get("periods", {})
+        validation = draft.get("_validation")
+        if validation:
+            print(
+                f"  Periods: {len(periods)} "
+                f"(validation={validation['status']}, "
+                f"confidence={validation['confidence_score']:.1f})"
+            )
+        else:
+            print(f"  Periods: {len(periods)}")
+        for plabel in sorted(periods.keys()):
+            pdata = periods[plabel]
+            fields = pdata.get("fields", {})
+            gap_info = pdata.get("_gaps", {})
+            conf_info = pdata.get("_confidence", {})
+            print(
+                f"    {plabel}: {len(fields)} fields, "
+                f"not_auto_populated={len(gap_info.get('missing_canonicals', []))}, "
+                f"confidence={conf_info}"
+            )
+        if periods:
+            print(
+                "  Gap note: missing_canonicals = global canonical fields not "
+                "auto-populated by the deterministic draft for that period; "
+                "it is not proof that the filing must contain them."
+            )
+
+        if expected is not None:
+            comparison = compare_draft_vs_expected(draft, expected)
+            print(
+                f"  vs expected.json ({len(comparison['common_periods'])} common periods): "
+                f"coverage={comparison['coverage_fields']}/{comparison['total_expected_fields']} "
+                f"({comparison['coverage_pct']:.0f}%), "
+                f"value_match={comparison['matched_fields']}/{comparison['total_expected_fields']} "
+                f"({comparison['value_match_pct']:.0f}%)"
+            )
+            if comparison["missing_periods"]:
+                print(f"  Missing periods vs expected: {', '.join(comparison['missing_periods'])}")
+            if comparison["extra_periods"]:
+                print(f"  Extra periods vs expected: {', '.join(comparison['extra_periods'])}")
+
+        warnings = draft.get("_validation", {}).get("warnings", [])
+        if warnings:
+            print(f"  Validation warnings: {len(warnings)}")
+            for warning in warnings:
+                print(f"    ⚠ {warning}")
+        elif validation:
+            print("  Validation warnings: none")
+
+        print(f"  Saved to {out_path}")
         return
 
     # Parse all .htm files
@@ -535,50 +611,20 @@ def cmd_curate(args: argparse.Namespace) -> None:
     expected_path = case_dir / "expected.json"
     if expected_path.exists():
         expected = json.loads(expected_path.read_text(encoding="utf-8"))
-        _compare_draft_vs_expected(draft, expected)
+        comparison = compare_draft_vs_expected(draft, expected)
+        print(
+            f"  vs expected.json ({len(comparison['common_periods'])} common periods): "
+            f"coverage={comparison['coverage_fields']}/{comparison['total_expected_fields']} "
+            f"({comparison['coverage_pct']:.0f}%), "
+            f"value_match={comparison['matched_fields']}/{comparison['total_expected_fields']} "
+            f"({comparison['value_match_pct']:.0f}%)"
+        )
+        if comparison["missing_periods"]:
+            print(f"  Missing periods vs expected: {', '.join(comparison['missing_periods'])}")
+        if comparison["extra_periods"]:
+            print(f"  Extra periods vs expected: {', '.join(comparison['extra_periods'])}")
 
     print(f"  Saved to {out_path}")
-
-
-def _compare_draft_vs_expected(
-    draft: dict,
-    expected: dict,
-) -> None:
-    """Print comparison of draft vs existing expected.json."""
-    exp_periods = expected.get("periods", {})
-    draft_periods = draft.get("periods", {})
-
-    common_periods = set(exp_periods.keys()) & set(draft_periods.keys())
-    if not common_periods:
-        print("  Coverage: no overlapping periods with expected.json")
-        return
-
-    total_exp = 0
-    covered = 0
-    matched = 0
-    for plabel in sorted(common_periods):
-        exp_fields = exp_periods[plabel].get("fields", {})
-        draft_fields = draft_periods[plabel].get("fields", {})
-        for fname, fdata in exp_fields.items():
-            total_exp += 1
-            if fname in draft_fields:
-                covered += 1
-                exp_val = fdata.get("value")
-                draft_val = draft_fields[fname].get("value")
-                if exp_val is not None and draft_val is not None:
-                    if exp_val == 0:
-                        if draft_val == 0:
-                            matched += 1
-                    elif abs(exp_val - draft_val) / abs(exp_val) <= 0.01:
-                        matched += 1
-
-    cov_pct = (covered / total_exp * 100) if total_exp else 0
-    match_pct = (matched / total_exp * 100) if total_exp else 0
-    print(
-        f"  vs expected.json ({len(common_periods)} common periods): "
-        f"coverage={covered}/{total_exp} ({cov_pct:.0f}%), "
-        f"value_match={matched}/{total_exp} ({match_pct:.0f}%)"
-    )
 
 
 def cmd_market(args: argparse.Namespace) -> None:
@@ -840,7 +886,10 @@ def main() -> None:
     p_eval.add_argument("--all", action="store_true")
     p_eval.set_defaults(func=cmd_eval)
 
-    p_curate = sub.add_parser("curate", help="Generate expected_draft.json from iXBRL")
+    p_curate = sub.add_parser(
+        "curate",
+        help="Generate expected_draft.json from iXBRL or deterministic extraction",
+    )
     p_curate.add_argument("ticker")
     p_curate.set_defaults(func=cmd_curate)
 

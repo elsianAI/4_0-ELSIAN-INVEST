@@ -9,6 +9,16 @@
 
 ---
 
+### BL-052 — Auto-curate para tickers no-SEC (expected.json desde PDF)
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-07)
+- **Asignado a:** elsian-orchestrator
+- **Depende de:** BL-007 (PdfTableExtractor DONE)
+- **Descripción:** `elsian curate` ya no depende solo de iXBRL. Cuando un caso no tiene `.htm`, el comando convierte PDFs si hace falta, reutiliza `ExtractPhase.extract()` y genera `expected_draft.json` determinista desde `ExtractionResult` en vez de caer a un esqueleto vacío. La ruta no-SEC expone `_confidence`, `_gaps`, `_confidence_summary`, `_gap_policy`, `_validation` y `_comparison_to_expected`; excluye campos de `manual_overrides` para no reciclar verdad manual como si fuera salida del pipeline; y mantiene intacta la ruta SEC/iXBRL existente.
+- **Criterio de aceptación:** ✓ `elsian curate TEP` genera draft útil con cobertura 80/80 (100%) y gaps/confianza explícitos. ✓ `elsian curate KAR` genera draft útil con cobertura 49/49 (100%) y gaps/confianza explícitos. ✓ `elsian curate TZOO` sigue funcionando por iXBRL sin regresión. ✓ Tests unitarios e integración de `curate` pasan, incluida la batería lenta sobre TEP/KAR/TZOO.
+
+---
+
 ### BL-008 — Reescribir AsxFetcher con endpoint por compañía
 - **Prioridad:** CRÍTICA
 - **Estado:** DONE ✅

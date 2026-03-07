@@ -150,6 +150,7 @@ Aliases belong in config and map into these canonical names only.
 ### Core rules
 
 - Never weaken `expected.json` to match a pipeline bug.
+- `elsian curate` is only a draft generator: use iXBRL where available and deterministic PDF/text extraction otherwise, but never treat `expected_draft.json` as ground truth without review.
 - Never calculate derived fields unless the filing explicitly reports them.
 - Omit truly absent fields rather than writing fake zeroes.
 - Use real evidence from the filing for every expected value.
