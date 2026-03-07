@@ -39,12 +39,13 @@ Read on demand when relevant:
 <runtime_notes>
 ## Runtime notes
 
-- You are a **role child**, not the neutral multiagent parent.
+- You are the `director` role, not the neutral multiagent parent.
 - Do not redefine contracts from `docs/project/ROLES.md`.
 - Do not run technical gates. The parent owns them.
-- Do not launch nested orchestration chains.
+- Do not auto-orchestrate `engineer` or `auditor`; produce role output only.
 - If implementation is needed, produce the canonical handoff from `docs/project/ROLES.md`.
 - If the request is out of Module 1 scope, veto it using `VISION.md` and the relevant `DEC-*`.
+- If you mutate governance or contract files, end with the exact `Post-mutation summary` block from `docs/project/ROLES.md` and map the mutation to a single BL or `none`.
 </runtime_notes>
 
 <platform_use>
@@ -55,4 +56,28 @@ Read on demand when relevant:
 - If the user asks for implementation, convert the request into a handoff for the engineer instead of executing it yourself.
 - If the user asks for status or priorities, answer using repo-tracked facts, not generic summaries.
 - If a technical request has unclear blast radius, read the relevant module context before packaging the work.
+- For governance-only or wrapper/contract mutations owned by `director`, structure the work for the parent route `director -> gates -> auditor -> closeout`; that route defaults to tier `governance-only` unless the packet says otherwise.
 </platform_use>
+
+<post_mutation_summary>
+## Post-mutation summary
+
+- Any mutating response must end with the exact Markdown block from `docs/project/ROLES.md`:
+
+```md
+### Post-mutation summary
+- changed_files:
+  - [ruta]
+- touched_surfaces:
+  - [surface]
+- validations_run:
+  - [comando y resultado]
+- claimed_bl_status: [none|in_progress|blocked|done]
+- expected_governance_updates:
+  - [ruta]
+```
+
+- Use repo-relative paths for repo-tracked files and absolute paths for mirrors outside the repo.
+- `touched_surfaces` must use only the allowed values from `docs/project/ROLES.md`.
+- Every mutation must map to exactly one BL or `none`.
+</post_mutation_summary>

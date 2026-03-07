@@ -83,10 +83,10 @@ Reglas estructurales:
 - Si no se puede leer el worktree real, debe decirlo explicitamente en `Estado actual`.
 - `Top 3 siguientes tareas` salen del backlog y del estado real; no de repriorizacion creativa.
 - `Ruta recomendada` debe ser una de estas:
-  - `director -> engineer -> gates -> auditor`
-  - `engineer -> gates -> auditor`
+  - `director -> engineer -> gates -> auditor -> closeout`
+  - `engineer -> gates -> auditor -> closeout`
+  - `director -> gates -> auditor -> closeout`
   - `auditor`
-  - `review -> gates -> auditor -> commit-prep`
 - Si el checker detecta trabajo tecnico repo-tracked pendiente, `Ruta recomendada` debe priorizar reconciliacion y no una BL nueva.
 - `Prompt recomendado` debe ser copiable, coherente con la ruta recomendada y empezar por `$elsian-orchestrator`.
 - Si `kickoff` se usa dentro de `orchestrator`, el prompt recomendado debe ser reutilizable por `orchestrator`, no por `kickoff`.
@@ -113,6 +113,8 @@ Este checker es la fuente comun de verdad operativa para `kickoff` y `orchestrat
 - fecha/huella de `CHANGELOG.md`;
 - desfase `PROJECT_STATE` vs `CHANGELOG`;
 - conteo de `manual_overrides` por ticker.
+- `untracked_technical_files`
+- `untracked_test_files`
 
 **Reglas**
 
@@ -145,6 +147,7 @@ Decidir que trabajo pertenece a Modulo 1, en que orden debe hacerse, con que lim
 - `docs/project/DECISIONS.md`
 - `docs/project/KNOWLEDGE_BASE.md`
 - `docs/project/ROLES.md`
+- `CHANGELOG.md`
 
 **No puede tocar**
 
@@ -165,6 +168,11 @@ Decidir que trabajo pertenece a Modulo 1, en que orden debe hacerse, con que lim
 - Preflight de sesion: comprobar que el trabajo activo sigue dentro de Modulo 1.
 - Veto documentado: cualquier peticion fuera de foco se difiere con referencia a `VISION.md` y a las `DEC-*` relevantes.
 - Post-oleada: responder explicitamente si todo lo ejecutado sigue siendo Modulo 1.
+
+**Post-mutation summary**
+
+- Si el `director` muta governance o contrato, debe cerrar con el bloque `Post-mutation summary` definido en este documento.
+- Toda mutacion del `director` debe mapearse a una unica BL o a `none`.
 
 ### 2.2 `engineer`
 
@@ -213,6 +221,11 @@ Implementar la minima solucion correcta dentro del alcance permitido, sin absorb
 - Rechazar trabajo fuera de Modulo 1 aunque venga empaquetado por otro rol.
 - Si aparece scope nuevo, parar y devolver follow-up al `director`.
 - No presentar overrides o expected debilitado como solucion arquitectonica.
+
+**Post-mutation summary**
+
+- Toda tarea mutante del `engineer` debe cerrar con el bloque `Post-mutation summary` definido en este documento.
+- Toda mutacion del `engineer` debe mapearse a una unica BL o a `none`.
 
 ### 2.3 `auditor`
 
@@ -273,10 +286,14 @@ El orquestador neutral decide que hijo lanzar segun la intencion y el posible bl
 
 ### Flujos validos
 
-- Flujo completo estandar: `director -> engineer -> gates -> auditor`
-- Flujo tecnico local: `engineer -> gates -> auditor`
+- Flujo completo estandar: `director -> engineer -> gates -> auditor -> closeout`
+- Flujo tecnico local: `engineer -> gates -> auditor -> closeout`
+- Flujo mutante de governance: `director -> gates -> auditor -> closeout`
 - Flujo de review: `auditor`
-- Flujo de reconciliacion: `review -> gates -> auditor -> commit-prep`
+
+**Regla**
+
+- Toda tarea mutante debe mapearse a una unica BL o a `none`. Si un cambio afecta materialmente a varias BL, el `director` debe partir el paquete antes de ejecucion.
 
 ## 4. Packets y handoff
 
@@ -291,7 +308,10 @@ Incluye:
 - formato de salida obligatorio;
 - recordatorio de Vision Enforcement.
 
-Salida esperada: un handoff ejecutable por `engineer`.
+Salida esperada:
+
+- un handoff ejecutable por `engineer` cuando el `director` solo empaqueta trabajo tecnico; o
+- una mutacion de governance cerrable por la ruta `director -> gates -> auditor -> closeout` cuando el `director` es el hijo mutante.
 
 ### 4.2 `engineer packet`
 
@@ -309,12 +329,58 @@ Debe ser **evidence-only** e incluir:
 
 - diff o lista factual de cambios;
 - salida de gates del padre;
-- resumen factual del engineer;
+- resumen factual del hijo mutante;
 - documentos de referencia a leer.
 
 No debe incluir framing favorable del `director`.
 
-### 4.4 Formato canonico de handoff
+### 4.4 `Post-mutation summary`
+
+Todo hijo mutante (`engineer` o `director`) debe terminar con este bloque Markdown:
+
+```md
+### Post-mutation summary
+- changed_files:
+  - [ruta]
+- touched_surfaces:
+  - [surface]
+- validations_run:
+  - [comando y resultado]
+- claimed_bl_status: [none|in_progress|blocked|done]
+- expected_governance_updates:
+  - [ruta]
+```
+
+**Reglas**
+
+- `changed_files` y `expected_governance_updates` usan rutas:
+  - relativas al repo para archivos repo-tracked, por ejemplo `docs/project/PROJECT_STATE.md`
+  - absolutas para mirrors fuera del repo, por ejemplo `/Users/ismaelsanchezgarcia/.codex/skills/elsian-orchestrator/SKILL.md`
+- `touched_surfaces` solo admite:
+  - `code`
+  - `config`
+  - `cases`
+  - `tests`
+  - `canonicals`
+  - `field_dependency`
+  - `changelog`
+  - `backlog`
+  - `project_state`
+  - `decisions`
+  - `roles`
+  - `knowledge_base`
+  - `module_context`
+  - `wrappers`
+  - `skills`
+- `claimed_bl_status` solo admite:
+  - `none`
+  - `in_progress`
+  - `blocked`
+  - `done`
+- `expected_governance_updates` debe listar rutas concretas o `none`.
+- El handoff o packet sigue siendo la fuente de verdad del BL; el summary solo declara el estado final reclamado.
+
+### 4.5 Formato canonico de handoff
 
 ```md
 ## Tarea
@@ -372,8 +438,67 @@ Los gates los ejecuta siempre el padre neutral, no los hijos.
 ### 5.4 Politica por defecto con gate rojo
 
 - No lanzar `auditor`.
-- Devolver packet + salida de gates al `engineer`.
+- Devolver packet + salida de gates al hijo mutante correspondiente.
 - Solo auditar con gates rojos si Elsian lo pide explicitamente.
+
+### 5.5 `closeout`
+
+`closeout` corre siempre despues de `auditor` en cualquier flujo mutante.
+
+**Reglas**
+
+- `closeout` pertenece al padre neutral. No es un cuarto rol.
+- `closeout` usa estas fuentes con esta precedencia:
+  1. checker factual para estado vivo y archivos untracked
+  2. `Post-mutation summary` para disparar los gates esperados
+  3. diff como fallback autoritativo y anti-fraude
+- Si el diff muestra una superficie omitida en el summary, esa superficie cuenta como real.
+- Si el summary declara una superficie que el diff no toca, no se inventa cambio, pero hay inconsistencia.
+- Todo mismatch material `summary vs diff` deja `closeout` rojo y rebota al hijo que emitio el summary.
+- `closeout` solo corre en flujos mutantes. `briefing` y `planificacion` no lo ejecutan.
+
+**`closeout` rebota a `engineer` si detecta**
+
+- archivos sin trackear en `tests/`, `cases/`, `config/`, `elsian/`, `scripts/`;
+- cambio tecnico sin `CHANGELOG.md`;
+- cambio de superficie canonica sin actualizar:
+  - `docs/project/FIELD_DEPENDENCY_MATRIX.md`
+  - `docs/project/field_dependency_matrix.json`
+
+**`closeout` rebota a `director` si detecta**
+
+- BL declarada `done` en summary o changelog pero aun viva en `docs/project/BACKLOG.md`;
+- cambio que altera el estado vivo y `docs/project/PROJECT_STATE.md` no esta reconciliado;
+- cambio de contrato o proceso sin reconciliar `docs/project/ROLES.md` y sus mirrors operativos requeridos.
+
+**Tier por defecto**
+
+- La ruta `director -> gates -> auditor -> closeout` usa por defecto tier `governance-only`.
+- En esa ruta no se ejecutan `eval --all` ni `pytest -q` salvo que el packet lo pida explicitamente.
+
+### 5.6 Mirrors operativos y politica de ausencia
+
+Cuando el diff toca `docs/project/ROLES.md`, cambia routing, cambia el contrato del summary, o toca wrappers o skills de runtime, `closeout` debe verificar mirrors operativos.
+
+**Mirrors bloqueantes repo-tracked**
+
+- `.github/agents/elsian-orchestrator.agent.md`
+- `.github/agents/elsian-kickoff.agent.md`
+- `.github/agents/project-director.agent.md`
+- `.github/agents/elsian-4.agent.md`
+
+**Mirrors bloqueantes Codex local**
+
+- `/Users/ismaelsanchezgarcia/.codex/skills/elsian-orchestrator/SKILL.md`
+- `/Users/ismaelsanchezgarcia/.codex/skills/elsian-kickoff/SKILL.md`
+- `/Users/ismaelsanchezgarcia/.codex/skills/elsian-director/SKILL.md`
+- `/Users/ismaelsanchezgarcia/.codex/skills/elsian-engineer/SKILL.md`
+
+**Politica de ausencia**
+
+- Si el runtime bajo cierre es `Codex`, la ausencia de una skill requerida deja `closeout` rojo.
+- Si el runtime bajo cierre no depende de esos mirrors locales, la ausencia se registra como `not_applicable`.
+- En esta oleada no hace falta incluir al `auditor` entre los mirrors obligatorios.
 
 ## 6. Retry, failure y limites del runtime
 
@@ -382,6 +507,9 @@ Los gates los ejecuta siempre el padre neutral, no los hijos.
 - No depender de subagentes anidados.
 - Si un hijo detecta que necesita decisiones nuevas, devuelve follow-up al padre; no improvisa expansion.
 - Si el `engineer` entrega un cambio fuera de alcance permitido, el padre lo trata como gate rojo de scope.
+- Si `closeout` rebota a un hijo mutante, el reintento siempre vuelve a una ruta completa:
+  - `engineer -> gates -> auditor -> closeout`
+  - `director -> gates -> auditor -> closeout`
 
 ## 7. Consistencia y mantenimiento
 

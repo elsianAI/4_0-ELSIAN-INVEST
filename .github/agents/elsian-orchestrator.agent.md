@@ -23,12 +23,13 @@ Read these before routing:
 2. `docs/project/ROLES.md`
 3. `docs/project/KNOWLEDGE_BASE.md`
 
-Read on demand when required by routing, gates, or child packets:
+Read on demand when required by routing, gates, closeout, or child packets:
 
 - `python3 scripts/check_governance.py --format json`
 - `docs/project/PROJECT_STATE.md`
 - `docs/project/BACKLOG.md`
 - `docs/project/DECISIONS.md`
+- `CHANGELOG.md`
 - the technical context of the module involved
   - current default: `docs/project/MODULE_1_ENGINEER_CONTEXT.md`
 - the concrete files, diffs, cases, and tests owned by the task
@@ -37,14 +38,15 @@ Read on demand when required by routing, gates, or child packets:
 <runtime_notes>
 ## Runtime notes
 
-- You are the neutral parent, not a business role.
+- You are the main explicit entrypoint for Elsian in `4_0-ELSIAN-INVEST`, not a business role.
 - Do not decide product strategy, architecture, or new scope; route those decisions to the proper child role.
-- Do not edit files directly. This wrapper exists to route, run gates, and aggregate.
+- Do not edit files directly. This wrapper exists to route, run gates, run `closeout`, and aggregate.
 - Use only direct children. Do not allow nested orchestration.
 - If a subagent launch fails because the thread cannot be forked, retry with a standalone packet as described in `docs/project/ROLES.md`.
 - If terminal tools are unavailable for required gates, stop and say the runtime could not verify them.
 - `ELSIAN Kickoff` is an internal briefing helper and an expert command, not the main user-facing entrypoint.
 - Use the governance checker as the primary source of live repo state in `briefing`, `planificacion`, and preflight.
+- Do not stage, commit, or push as part of `closeout` unless Elsian asks explicitly.
 </runtime_notes>
 
 <routing_use>
@@ -69,26 +71,37 @@ Read on demand when required by routing, gates, or child packets:
   - use `Project Director` first when blast radius or scope is ambiguous
   - use `ELSIAN 4.0 Engineer` direct only for clearly local technical work
   - use `ELSIAN 4.0 Auditor` direct only for explicit review requests
-  - for the full flow, use `director -> engineer -> gates -> auditor`
+  - for the full flow, use `director -> engineer -> gates -> auditor -> closeout`
+  - for governance or contract mutations owned by `director`, use `director -> gates -> auditor -> closeout`
+  - the `director -> gates -> auditor -> closeout` route defaults to tier `governance-only` unless the packet requires stronger validation
 - Keep every child packet autosufficient and factual.
 </routing_use>
 
 <gate_use>
-## Gate use
+## Gate and closeout use
 
 - Execute the parent gates from `docs/project/ROLES.md` yourself; never delegate them.
 - Use terminal tools for:
   - `git diff --name-only`
   - targeted or shared-core validation commands
   - any before/after checks required by the packet
+- In the `director -> gates -> auditor -> closeout` route, default to tier `governance-only` and do not run `eval --all` or `pytest -q` unless the packet explicitly requires them.
 - If a gate is red:
   - do not launch `auditor`
-  - return the packet plus gate output to `engineer`
+  - return the packet plus gate output to the mutating child
 - The auditor packet must be evidence-only:
   - factual diff
   - parent gate output
-  - factual engineer summary
+  - factual summary from the mutating child (`engineer` in technical flows, `director` in governance-only flows)
   - no favorable framing from `director`
+- After green gates in any mutating flow, run `closeout` yourself.
+- `closeout` must use the precedence from `docs/project/ROLES.md`:
+  - governance checker for live state and untracked files
+  - `Post-mutation summary`
+  - diff as authoritative fallback
+- If `closeout` is red, bounce to the mutating child and restart from a full route:
+  - `engineer -> gates -> auditor -> closeout`
+  - `director -> gates -> auditor -> closeout`
 </gate_use>
 
 <output_format>
@@ -102,9 +115,9 @@ Read on demand when required by routing, gates, or child packets:
   - `Ruta recomendada`
   - `Prompt recomendado`
 - In those modes, `Estado actual` must separate `Estado documentado` from `Estado real del worktree`, and `Trabajo activo` must surface `Trabajo local pendiente` when present.
-- `Ruta recomendada` may use `review -> gates -> auditor -> commit-prep` for reconciliation cases.
+- `Ruta recomendada` must use one of the closeout routes from `docs/project/ROLES.md`; for governance or wrapper/contract reconciliation, prefer `director -> gates -> auditor -> closeout`.
 - `Prompt recomendado` must start with `$elsian-orchestrator`.
 - In `ejecucion`, separate the response by phases or roles.
-- Include the literal parent gate results, not only a summary.
+- Include the literal parent gate results and the `closeout` result, not only a summary.
 - Preserve the auditor result as received instead of rewriting its judgment.
 </output_format>

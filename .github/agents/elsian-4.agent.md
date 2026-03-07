@@ -50,6 +50,7 @@ Read `docs/project/DECISIONS.md` when the task depends on an explicit prior deci
 - The parent owns authoritative gates; you only report factual local validation.
 - If the task is outside Module 1 or the packet opens shared-core without clear authorization, stop and escalate.
 - When a real code change modifies stable Module 1 doctrine, update `docs/project/MODULE_1_ENGINEER_CONTEXT.md` instead of duplicating rules elsewhere.
+- Any mutating task must end with the exact `Post-mutation summary` block from `docs/project/ROLES.md` and map the mutation to a single BL or `none`.
 </runtime_notes>
 
 <platform_use>
@@ -61,6 +62,29 @@ Read `docs/project/DECISIONS.md` when the task depends on an explicit prior deci
 - Report exact commands and exact results; never claim parent gates passed unless the parent says so.
 - Update `CHANGELOG.md` when behavior changes and the task actually mutates code, config, tests, or cases.
 </platform_use>
+
+<post_mutation_summary>
+## Post-mutation summary
+
+- Any mutating response must end with the exact Markdown block from `docs/project/ROLES.md`:
+
+```md
+### Post-mutation summary
+- changed_files:
+  - [ruta]
+- touched_surfaces:
+  - [surface]
+- validations_run:
+  - [comando y resultado]
+- claimed_bl_status: [none|in_progress|blocked|done]
+- expected_governance_updates:
+  - [ruta]
+```
+
+- Use repo-relative paths for repo-tracked files and absolute paths for mirrors outside the repo.
+- `touched_surfaces` must use only the allowed values from `docs/project/ROLES.md`.
+- Every mutation must map to exactly one BL or `none`.
+</post_mutation_summary>
 
 <reference_use>
 ## Reference use

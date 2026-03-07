@@ -54,11 +54,12 @@ Read these before responding:
   - `Ruta recomendada`
   - `Prompt recomendado`
 - `Ruta recomendada` must be one of:
-  - `director -> engineer -> gates -> auditor`
-  - `engineer -> gates -> auditor`
+  - `director -> engineer -> gates -> auditor -> closeout`
+  - `engineer -> gates -> auditor -> closeout`
+  - `director -> gates -> auditor -> closeout`
   - `auditor`
-- `review -> gates -> auditor -> commit-prep`
 - `Estado actual` must separate `Estado documentado` from `Estado real del worktree`.
 - `Trabajo activo` must surface `Trabajo local pendiente` when the checker reports `technical_dirty`.
+- If `Ruta recomendada` is `director -> gates -> auditor -> closeout`, treat it as `governance-only` by default unless the request explicitly requires stronger technical validation.
 - `Prompt recomendado` must start with `$elsian-orchestrator`.
 </platform_use>

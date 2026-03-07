@@ -78,6 +78,7 @@ def test_build_report_detects_dirty_buckets_and_state_lag(tmp_path: Path, monkey
                 [
                     " M CHANGELOG.md",
                     " M cases/AAA/case.json",
+                    "?? tests/unit/test_new.py",
                     " M 4_0-ELSIAN-INVEST.code-workspace",
                 ]
             )
@@ -89,9 +90,14 @@ def test_build_report_detects_dirty_buckets_and_state_lag(tmp_path: Path, monkey
 
     assert report["branch"] == "main"
     assert report["head"] == "abc1234"
-    assert report["worktree"]["technical_dirty"] == ["cases/AAA/case.json"]
+    assert report["worktree"]["technical_dirty"] == [
+        "cases/AAA/case.json",
+        "tests/unit/test_new.py",
+    ]
     assert report["worktree"]["governance_dirty"] == ["CHANGELOG.md"]
     assert report["worktree"]["workspace_only_dirty"] == ["4_0-ELSIAN-INVEST.code-workspace"]
+    assert report["worktree"]["untracked_technical_files"] == ["tests/unit/test_new.py"]
+    assert report["worktree"]["untracked_test_files"] == ["tests/unit/test_new.py"]
     assert report["document_sync"]["project_state_lags_changelog"] is True
     assert report["backlog"]["duplicate_ids"] == [{"id": "BL-054", "lines": [1, 2], "count": 2}]
     assert report["manual_overrides"]["nonzero_by_ticker"] == {"AAA": 1}

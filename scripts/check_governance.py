@@ -159,8 +159,14 @@ def build_report(repo_root: Path, status_output: str | None = None) -> dict[str,
         "workspace_only_dirty": [],
         "other_dirty": [],
     }
+    untracked_technical_files: list[str] = []
+    untracked_test_files: list[str] = []
     for entry in entries:
         grouped[entry["category"]].append(entry["path"])
+        if not entry["tracked"] and entry["category"] == "technical_dirty":
+            untracked_technical_files.append(entry["path"])
+            if entry["path"].startswith("tests/"):
+                untracked_test_files.append(entry["path"])
 
     project_state_path = repo_root / "docs/project/PROJECT_STATE.md"
     changelog_path = repo_root / "CHANGELOG.md"
@@ -187,6 +193,8 @@ def build_report(repo_root: Path, status_output: str | None = None) -> dict[str,
             "governance_dirty": grouped["governance_dirty"],
             "workspace_only_dirty": grouped["workspace_only_dirty"],
             "other_dirty": grouped["other_dirty"],
+            "untracked_technical_files": untracked_technical_files,
+            "untracked_test_files": untracked_test_files,
         },
         "backlog": {
             "duplicate_ids": parse_duplicate_backlog_ids(backlog_path),
@@ -218,6 +226,8 @@ def build_report(repo_root: Path, status_output: str | None = None) -> dict[str,
             "workspace_noise_present": bool(grouped["workspace_only_dirty"]),
             "duplicate_backlog_ids_present": bool(parse_duplicate_backlog_ids(backlog_path)),
             "project_state_lags_changelog": project_state_lags,
+            "untracked_technical_files_present": bool(untracked_technical_files),
+            "untracked_test_files_present": bool(untracked_test_files),
         },
     }
 
@@ -231,6 +241,8 @@ def format_text(report: dict[str, Any]) -> str:
         f"technical_dirty: {', '.join(report['worktree']['technical_dirty']) or '-'}",
         f"governance_dirty: {', '.join(report['worktree']['governance_dirty']) or '-'}",
         f"workspace_only_dirty: {', '.join(report['worktree']['workspace_only_dirty']) or '-'}",
+        f"untracked_technical_files: {', '.join(report['worktree']['untracked_technical_files']) or '-'}",
+        f"untracked_test_files: {', '.join(report['worktree']['untracked_test_files']) or '-'}",
         f"backlog.duplicate_ids: {report['backlog']['duplicate_ids'] or '-'}",
         f"project_state.last_updated: {report['project_state']['last_updated'] or '-'}",
         f"changelog.latest_date: {report['changelog']['latest_date'] or '-'}",
