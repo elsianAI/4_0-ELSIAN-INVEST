@@ -9,25 +9,6 @@
   "web_ir": "https://investors.somero.com",
   "period_scope": "ANNUAL_ONLY",
   "fiscal_year_end_month": 12,
-  "filings_sources": [
-    {
-      "url": "https://investors.somero.com/~/media/Files/S/Somero-IR/documents/2024/annual-report-2024.pdf",
-      "filename": "SRC_001_ANNUAL_REPORT_FY2024.pdf",
-      "filing_type": "ANNUAL_REPORT",
-      "period_end": "2024-12-31"
-    },
-    {
-      "url": "https://investors.somero.com/~/media/Files/S/Somero-IR/reports-and-presentations/somero-2024-final-results-presentation.pdf",
-      "filename": "SRC_002_RESULTS_PRESENTATION_FY2024.pdf",
-      "filing_type": "INVESTOR_PRESENTATION",
-      "period_end": "2024-12-31"
-    },
-    {
-      "url": "https://investors.somero.com/~/media/Files/S/Somero-IR/reports-and-presentations/somero-2025-interim-investor-presentation.pdf",
-      "filename": "SRC_003_INTERIM_H1_2025.pdf",
-      "filing_type": "INVESTOR_PRESENTATION",
-      "period_end": "2025-06-30"
-    }
-  ],
-  "notes": "US company listed on AIM London. Reports in USD under US-GAAP. Filings are PDF annual reports and investor presentations from IR website. No SEC EDGAR. Annual Report 2024 covers FY2024+FY2023 (US$000). H1 2025 Interim Presentation has historical results table FY2009-FY2024 (US$ millions). filings_sources URLs verified from investors.somero.com."
+  "filings_expected_count": 6,
+  "notes": "US company listed on AIM London. Reports in USD under US-GAAP. Filings are PDF annual reports and investor presentations from the IR website. No SEC EDGAR. Annual Report 2024 covers FY2024+FY2023 (US$000). H1 2025 Interim Presentation has historical results table FY2009-FY2024 (US$ millions). Acquire path uses conservative IR auto-discovery from investors.somero.com; the tracked filings/ directory keeps the existing canonical source filenames."
 }

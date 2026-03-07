@@ -56,6 +56,9 @@ LOCAL_FILING_NEGATIVE: tuple[str, ...] = (
     "linkedin",
     "twitter.com",
     "facebook.com",
+    "corporate governance",
+    "governance statement",
+    "modern slavery",
 )
 
 

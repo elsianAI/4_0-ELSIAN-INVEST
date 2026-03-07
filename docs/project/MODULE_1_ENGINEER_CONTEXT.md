@@ -15,6 +15,7 @@ Active flow:
 ### Phase responsibilities
 
 - **Acquire**: obtain filings and source artifacts from the correct fetcher or manifest.
+  For `eu_manual` / IR-only cases, prefer deterministic discovery through the existing fetcher path before normalizing permanent `filings_sources`.
 - **Convert**: transform raw filings into clean, parseable inputs.
 - **Extract**: produce field candidates from iXBRL, HTML tables, PDF tables, or narrative patterns.
 - **Normalize**: resolve canonical fields, units, signs, and provenance.
@@ -66,6 +67,7 @@ Every extracted value must carry useful provenance.
 
 - The current Level 3 pilot is a post-extraction artifact, not a new extractor.
 - `elsian source-map {TICKER}` builds `source_map.json` from `extraction_result.json`.
+- The CLI reports `FULL`, `PARTIAL`, or `EMPTY` resolution explicitly; missing `extraction_result.json` is a user-facing precondition error, not a traceback path.
 - In the current pilot, deterministic anchors on equivalent normalized artifacts
   (`.clean.md`, `.txt`) count as valid click targets as long as the original
   filing path is still preserved in the artifact.
@@ -256,7 +258,7 @@ When adding a ticker, treat it as a pipeline capability test.
 
 1. Create a correct `case.json`.
 2. Acquire filings through the pipeline.
-3. If acquisition fails because the market is unsupported, build or adapt the fetcher rather than normalizing manual work.
+3. If acquisition fails because the market is unsupported, build or adapt the fetcher rather than normalizing manual work. For LSE/AIM-style IR websites, prefer a conservative crawler improvement that can recover a minimal stable document set before falling back to hardcoded URLs.
 4. Verify the filing quality and presence of core statements.
 5. Curate `expected.json` from filings as truth.
 6. Start in `ANNUAL_ONLY`.

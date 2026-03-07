@@ -174,6 +174,22 @@ def test_extract_financial_highlights_dividends_per_share():
     ]
 
 
+def test_extract_financial_highlights_dividends_per_share_accepts_auto_discovered_filename():
+    fields = _extract_financial_highlights_dividends_per_share(
+        _som_filing_text("SRC_001_ANNUAL_REPORT_FY2024.txt"),
+        source_filename="annual-report-2024.txt",
+    )
+
+    assert [(field.column_header, field.value) for field in fields] == [
+        ("FY2024", 0.169),
+        ("FY2023", 0.2319),
+    ]
+    assert [field.source_location for field in fields] == [
+        "annual-report-2024.txt:table:financial_highlights_dps:line141",
+        "annual-report-2024.txt:table:financial_highlights_dps:line142",
+    ]
+
+
 def test_extract_financial_highlights_dividends_per_share_ignores_presentation_cents():
     fields = _extract_financial_highlights_dividends_per_share(
         _som_filing_text("SRC_002_RESULTS_PRESENTATION_FY2024.txt"),

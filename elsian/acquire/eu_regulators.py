@@ -40,6 +40,26 @@ from elsian.models.result import AcquisitionResult
 logger = logging.getLogger(__name__)
 
 _TEXT_SUFFIXES = {".md", ".txt", ".htm", ".html", ".pdf"}
+_CRAWLER_DOWNLOADABLE_SUFFIXES = {
+    ".pdf",
+    ".htm",
+    ".html",
+    ".doc",
+    ".docx",
+    ".xls",
+    ".xlsx",
+    ".zip",
+    ".ppt",
+    ".pptx",
+}
+_LSE_AIM_FALLBACK_PER_TYPE = {
+    "ANNUAL_REPORT": 1,
+    "INTERIM_REPORT": 1,
+    "REGULATORY_FILING": 1,
+    "IR_NEWS": 0,
+    "OTHER": 0,
+    "_default": 0,
+}
 
 # ── HTTP client ──────────────────────────────────────────────────────
 
@@ -58,20 +78,49 @@ _TIMEOUT = 60
 _RATE_LIMIT = 0.5
 
 
+def _uses_lse_aim_limits(exchange: str) -> bool:
+    low = str(exchange or "").lower()
+    return "lse" in low or "aim" in low
+
+
+def _tilde_media_fallback_url(url: str) -> Optional[str]:
+    """Return an Investis-style /~/media fallback URL when applicable."""
+    parsed = urlparse(url)
+    path = parsed.path or ""
+    if "/~/media/" in path or "/media/" not in path:
+        return None
+    alt_path = path.replace("/media/", "/~/media/", 1)
+    if alt_path == path:
+        return None
+    return parsed._replace(path=alt_path).geturl()
+
+
 def _http_get(url: str, retries: int = 2) -> Optional[bytes]:
     """Download url and return raw bytes, or None on failure."""
-    for attempt in range(retries + 1):
-        try:
-            resp = requests.get(
-                url, headers=_HEADERS, timeout=_TIMEOUT, allow_redirects=True
-            )
-            resp.raise_for_status()
-            return resp.content
-        except requests.RequestException as exc:
-            if attempt == retries:
-                logger.warning("Download failed: %s — %s", url, exc)
-                return None
-            time.sleep(1.0)
+    candidates = [url]
+    alt_url = _tilde_media_fallback_url(url)
+    if alt_url and alt_url not in candidates:
+        candidates.append(alt_url)
+
+    last_exc: Optional[Exception] = None
+    for candidate_url in candidates:
+        for attempt in range(retries + 1):
+            try:
+                resp = requests.get(
+                    candidate_url,
+                    headers=_HEADERS,
+                    timeout=_TIMEOUT,
+                    allow_redirects=True,
+                )
+                resp.raise_for_status()
+                return resp.content
+            except requests.RequestException as exc:
+                last_exc = exc
+                if attempt == retries:
+                    break
+                time.sleep(1.0)
+
+    logger.warning("Download failed: %s — %s", url, last_exc)
     return None
 
 
@@ -234,12 +283,23 @@ class EuRegulatorsFetcher(Fetcher):
         # Step 1.5: IR Crawler fallback
         # If no filings_sources declared AND case.json has web_ir, auto-discover.
         ir_downloaded = 0
-        has_existing_after_sources = any(
+        existing_after_sources_count = sum(
             f.is_file() and f.suffix in _TEXT_SUFFIXES
             for f in filings_dir.iterdir()
         ) if filings_dir.exists() else False
 
-        if not sources and not has_existing_after_sources:
+        needs_ir_backfill = (
+            not sources
+            and (
+                existing_after_sources_count == 0
+                or (
+                    expected_count > 0
+                    and existing_after_sources_count < expected_count
+                )
+            )
+        )
+
+        if needs_ir_backfill:
             web_ir: str = case_config.get("web_ir", "")
             if web_ir:
                 exchange = case_config.get("market", "")
@@ -415,7 +475,12 @@ class EuRegulatorsFetcher(Fetcher):
         )
 
         # 4. Select best candidates
-        selected = select_fallback_candidates(list(all_candidates.values()))
+        use_lse_aim_limits = _uses_lse_aim_limits(exchange)
+        selected = select_fallback_candidates(
+            list(all_candidates.values()),
+            max_total=3 if use_lse_aim_limits else 12,
+            per_type=_LSE_AIM_FALLBACK_PER_TYPE if use_lse_aim_limits else None,
+        )
 
         # 5. Download selected filings
         filings_dir.mkdir(parents=True, exist_ok=True)
@@ -429,6 +494,9 @@ class EuRegulatorsFetcher(Fetcher):
             parsed = urlparse(url)
             raw_name = Path(parsed.path).name
             if not raw_name:
+                continue
+            suffix = Path(raw_name).suffix.lower()
+            if suffix not in _CRAWLER_DOWNLOADABLE_SUFFIXES:
                 continue
             # Sanitize filename
             filename = re.sub(r"[^\w.\-]", "_", raw_name)

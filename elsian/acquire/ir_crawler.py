@@ -84,6 +84,15 @@ HEADERS = {
     "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
 }
 
+_GENERIC_CTA_TEXTS = {
+    "read more",
+    "read more...",
+    "learn more",
+    "view more",
+    "click here",
+    "find out more",
+}
+
 _WEAK_STATUS = {403, 429}
 _VALID_STATUS = {200, 403, 429}
 
@@ -242,6 +251,22 @@ def _local_event_registration_penalty(context_norm: str, full_url: str) -> float
     if re.search(r"\bevents?\b", ctx):
         penalty -= 1.0
     return penalty
+
+
+def _local_presentation_priority_adjustment(context_norm: str) -> float:
+    """Prefer investor presentations over generic results releases."""
+    delta = 0.0
+    if "presentation" in context_norm:
+        delta += 2.5
+        if "investor presentation" in context_norm or "results presentation" in context_norm:
+            delta += 0.5
+    if (
+        "press release" in context_norm
+        or "news release" in context_norm
+        or "results release" in context_norm
+    ):
+        delta -= 1.5
+    return delta
 
 
 # ── Embedded PDF helpers (ported from sec_fetcher_v2_runner.py) ───────
@@ -406,6 +431,7 @@ def _extract_embedded_pdf_candidates(
             selection_score += 2.0
         elif filing_type == "IR_NEWS":
             selection_score += 1.0
+        selection_score += _local_presentation_priority_adjustment(context_norm)
         if date_guess:
             selection_score += 0.5
         selection_score += _local_event_registration_penalty(context_norm, full_url)
@@ -423,9 +449,10 @@ def _extract_embedded_pdf_candidates(
             "selection_score": selection_score,
             "discovered_via": "embedded_pdf",
         }
-        prev = by_url.get(full_url)
+        url_key = _normalize_candidate_url_key(full_url)
+        prev = by_url.get(url_key)
         if prev is None or _prefer_new_candidate(prev, candidate):
-            by_url[full_url] = candidate
+            by_url[url_key] = candidate
 
     return list(by_url.values())
 
@@ -472,6 +499,20 @@ def normalize_web_ir(url: Optional[str]) -> Optional[str]:
     if not candidate.startswith(("http://", "https://")):
         candidate = f"https://{candidate}"
     return candidate.rstrip("/")
+
+
+def _normalize_candidate_url_key(url: str) -> str:
+    """Return a stable key for filing-candidate deduplication."""
+    parsed = urlparse(str(url or ""))
+    path = parsed.path or ""
+    if "/media/" in path and "/~/media/" not in path:
+        path = path.replace("/media/", "/~/media/", 1)
+    return parsed._replace(path=path, fragment="").geturl()
+
+
+def _is_generic_cta_text(text: str) -> bool:
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip().lower()
+    return normalized in _GENERIC_CTA_TEXTS
 
 
 # ── IR URL resolver (ported from ir_url_resolver.py) ──────────────────
@@ -779,6 +820,20 @@ def extract_filing_candidates(
         full_url = urljoin(base_url, href)
         if not full_url.startswith(("http://", "https://")):
             continue
+        low_url = full_url.lower()
+        is_direct_doc = bool(
+            re.search(
+                r"\.(pdf|doc|docx|xls|xlsx|zip|ppt|pptx|htm|html)(?:$|[?#])",
+                low_url,
+            )
+        )
+        is_regulatory_story = (
+            "regulatory-story.aspx" in low_url or "newsid=" in low_url
+        )
+        base_no_fragment = urlparse(base_url)._replace(fragment="").geturl()
+        full_no_fragment = urlparse(full_url)._replace(fragment="").geturl()
+        if full_no_fragment == base_no_fragment:
+            continue
 
         text = re.sub(r"\s+", " ", a.get_text(" ", strip=True)).strip()
         parent = a.find_parent(["li", "tr", "div", "section", "article"])
@@ -787,19 +842,71 @@ def extract_filing_candidates(
             if parent
             else text
         )
+        basename_hint = unquote(
+            Path(urlparse(full_url).path).name
+        ).replace("+", " ")
+        use_basename_context = is_direct_doc and _is_generic_cta_text(text)
+        filing_context = basename_hint if use_basename_context else row_text
 
         context_raw = f"{text} {row_text} {full_url}"
         context = context_raw.lower()
         context_norm = re.sub(r"[-_/]+", " ", context)
+        has_non_doc_filing_signal = any(
+            signal in context_norm
+            for signal in (
+                "announcement",
+                "trading update",
+                "press release",
+                "news release",
+                "annual report",
+                "interim report",
+                "half year",
+                "half year results",
+                "rns",
+            )
+        )
+        has_direct_presentation_filing_signal = (
+            is_direct_doc
+            and any(token in context_norm for token in ("presentation", "deck", "slides"))
+            and any(
+                token in context_norm
+                for token in (
+                    "annual",
+                    "interim",
+                    "results",
+                    "half year",
+                    "full year",
+                    "fy",
+                    "h1",
+                    "h2",
+                    "q1",
+                    "q2",
+                    "q3",
+                    "q4",
+                )
+            )
+        )
+
+        # Generic CTA anchors ("Read more", "Learn more") should not turn
+        # navigation pages into filing candidates. Keep them only when they
+        # point directly to a downloadable document or a known regulatory
+        # story endpoint.
+        if _is_generic_cta_text(text) and not is_direct_doc and not is_regulatory_story:
+            continue
+        if not is_direct_doc and not is_regulatory_story and not has_non_doc_filing_signal:
+            continue
 
         # Negative filters
         if any(neg in context for neg in LOCAL_FILING_NEGATIVE):
             continue
         if event_register_re.search(f"{context} {full_url.lower()}"):
             continue
-        if "presentation" in context_norm or "deck" in context_norm or "slides" in context_norm:
+        if (
+            ("presentation" in context_norm or "deck" in context_norm or "slides" in context_norm)
+            and not is_direct_doc
+        ):
             continue
-        if not any(kw in context_norm for kw in kws):
+        if not any(kw in context_norm for kw in kws) and not has_direct_presentation_filing_signal:
             continue
 
         # Score
@@ -811,12 +918,16 @@ def extract_filing_candidates(
         if "rns" in context or "hkex" in context or "asx" in context:
             score += 2
 
-        title = text or urlparse(full_url).path.rsplit("/", 1)[-1] or "Local filing"
-        filing_type = classify_filing_type(title, full_url, row_text)
+        title = (
+            basename_hint
+            if use_basename_context and basename_hint
+            else text or urlparse(full_url).path.rsplit("/", 1)[-1] or "Local filing"
+        )
+        filing_type = classify_filing_type(title, full_url, filing_context)
 
         # Date resolution
         date_guess, date_source, date_estimated = _resolve_local_candidate_date(
-            text, row_text, full_url,
+            title, filing_context, full_url,
         )
         if not date_guess and page_date:
             date_guess = page_date
@@ -832,6 +943,11 @@ def extract_filing_candidates(
             selection_score += 2.0
         elif filing_type == "IR_NEWS":
             selection_score += 1.0
+        selection_score += _local_presentation_priority_adjustment(context_norm)
+        if is_direct_doc:
+            selection_score += 1.0
+        elif not is_regulatory_story:
+            selection_score -= 1.5
         if date_guess:
             selection_score += 0.5
         # Event registration penalty
@@ -849,9 +965,10 @@ def extract_filing_candidates(
             "selection_score": selection_score,
         }
 
-        prev = by_url.get(full_url)
+        url_key = _normalize_candidate_url_key(full_url)
+        prev = by_url.get(url_key)
         if prev is None or _prefer_new_candidate(prev, candidate):
-            by_url[full_url] = candidate
+            by_url[url_key] = candidate
 
     # Merge embedded PDF candidates
     for emb_cand in _extract_embedded_pdf_candidates(
@@ -862,9 +979,10 @@ def extract_filing_candidates(
         page_date_source=page_date_source,
     ):
         emb_url = emb_cand["url"]
-        prev = by_url.get(emb_url)
+        emb_key = _normalize_candidate_url_key(emb_url)
+        prev = by_url.get(emb_key)
         if prev is None or _prefer_new_candidate(prev, emb_cand):
-            by_url[emb_url] = emb_cand
+            by_url[emb_key] = emb_cand
 
     candidates = sorted(
         by_url.values(),

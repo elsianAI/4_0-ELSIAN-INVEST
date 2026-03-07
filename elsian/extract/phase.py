@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from elsian.models.field import FieldResult, Provenance
-from elsian.models.result import ExtractionResult, PeriodResult, AuditRecord, PhaseResult
+from elsian.models.result import ExtractionResult, PeriodResult, PhaseResult
 from elsian.extract.detect import analyze_filing
 from elsian.analyze.preflight import preflight as _run_preflight, PreflightResult
 from elsian.extract.html_tables import (
@@ -26,7 +26,7 @@ from elsian.extract.html_tables import (
     TableField,
 )
 from elsian.extract.vertical import extract_vertical_bs
-from elsian.extract.narrative import extract_from_narrative, NarrativeField
+from elsian.extract.narrative import extract_from_narrative
 from elsian.extract.pdf_tables import extract_tables_from_pdf
 from elsian.normalize.aliases import AliasResolver
 from elsian.normalize.scale import infer_scale_cascade, validate_scale_sanity
@@ -159,7 +159,6 @@ _BALANCE_DATE_RE = re.compile(
     r"Balance\s+at\s+December\s+31[,]?\s+(20\d{2})",
     re.IGNORECASE,
 )
-_SOM_FINANCIAL_HIGHLIGHTS_DPS_FILENAME = "SRC_001_ANNUAL_REPORT_FY2024.txt"
 _FINANCIAL_HIGHLIGHTS_TITLE_RE = re.compile(
     r"^\s*FINANCIAL HIGHLIGHTS 2024\s*$",
     re.IGNORECASE,
@@ -208,8 +207,6 @@ def _extract_financial_highlights_dividends_per_share(
 ) -> List[TableField]:
     """Extract Somero annual-report DPS from the FY2024 highlights dashboard."""
     results: List[TableField] = []
-    if source_filename != _SOM_FINANCIAL_HIGHLIGHTS_DPS_FILENAME:
-        return results
 
     lines = text.splitlines()
     title_line_idx = next(

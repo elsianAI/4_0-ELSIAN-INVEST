@@ -1,7 +1,5 @@
 """Tests for elsian.acquire.classify — filing classification and quality."""
 
-import pytest
-
 from elsian.acquire.classify import (
     classify_annual_extractability,
     classify_filing_type,
@@ -54,6 +52,22 @@ class TestClassifyFilingType:
 
     def test_rapport_annuel(self) -> None:
         assert classify_filing_type("Rapport annuel 2024", "https://x.com/ra.pdf", "") == "ANNUAL_REPORT"
+
+    def test_hyphenated_annual_report_url(self) -> None:
+        result = classify_filing_type(
+            "Read More",
+            "https://investors.example.com/~/media/Files/X/example/annual-report-2024.pdf",
+            "",
+        )
+        assert result == "ANNUAL_REPORT"
+
+    def test_hyphenated_interim_url(self) -> None:
+        result = classify_filing_type(
+            "Read More",
+            "https://investors.example.com/~/media/Files/X/example/h1-2025-interim-investor-presentation.pdf",
+            "",
+        )
+        assert result == "INTERIM_REPORT"
 
 
 # ── financial_signal_hits ─────────────────────────────────────────────

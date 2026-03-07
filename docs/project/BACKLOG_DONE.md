@@ -9,6 +9,16 @@
 
 ---
 
+### BL-057 — Discovery automático de filings LSE/AIM (DEC-025)
+- **Prioridad:** BAJA
+- **Estado:** DONE ✅ (2026-03-07)
+- **Asignado a:** elsian-orchestrator
+- **Depende de:** BL-013 (IR crawler DONE)
+- **Descripción:** Se cerró el gap reconocido en `DEC-025` sin convertirlo en un crawler nuevo ni en infraestructura LSE general. `EuRegulatorsFetcher` ahora usa un modo conservador para LSE/AIM: deduplica variantes `/media` y `/~/media`, descarta documentos no financieros tipo `corporate governance`/`modern slavery`, no descarga endpoints no convertibles como `regulatory-story.aspx`, y limita la selección a un set mínimo estable de annual/interim/regulatory documents. En paralelo, el extractor de DPS de SOM dejó de depender del filename `SRC_001_*` exacto, con lo que la ruta auto-discovered ya no rompe la extracción determinista. El piloto principal queda resuelto en SOM: un caso temporal sin `filings_sources` descarga exactamente annual report 2024 + final results presentation 2024 + interim investor presentation 2025 y evalúa 179/179 al 100%.
+- **Criterio de aceptación:** ✓ `elsian acquire SOM` ya no requiere `filings_sources` hardcodeados en `case.json`. ✓ El piloto temporal sin `filings_sources` descarga 3 documentos núcleo (6 artefactos con `.txt`) y `eval SOM` queda en 100%. ✓ Se añaden tests reutilizables para hyphenated URLs, fallback `/~/media`, poda de CTA genéricas, dedup `/media` vs `/~/media`, filtrado de documentos no financieros y skip de endpoints `.aspx` no convertibles.
+
+---
+
 ### BL-047 — Mejorar HTML table extractor: interest_income + capex
 - **Prioridad:** MEDIA
 - **Estado:** DONE ✅ (2026-03-07)

@@ -1,7 +1,7 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
 > Última actualización: 2026-03-07
-> Actualizado por: Codex (BL-053 pilot + closeout canónico)
+> Actualizado por: Codex (BL-057 closeout)
 
 ---
 
@@ -91,7 +91,7 @@ Ver ROADMAP.md para descripción completa de fases.
 
 **Total:** 0 overrides / 3,278 campos = 0.00% global. TEP y SOM ya no tienen overrides activos tras BL-054 y BL-055.
 
-**Estado "autónomo suficiente" (DEC-026):** ALCANZADO para extracción autónoma strict. Los 15 tickers validados pasan al 100% con 0 overrides activos. La adquisición sigue teniendo limitaciones conocidas y transparentes en mercados sin API pública (ver DEC-025), pero la deuda de extracción manual ya está cerrada.
+**Estado "autónomo suficiente" (DEC-026):** ALCANZADO para extracción autónoma strict. Los 15 tickers validados pasan al 100% con 0 overrides activos. La adquisición sigue teniendo limitaciones conocidas y transparentes en algunos mercados sin API pública, pero la deuda de extracción manual ya está cerrada y SOM ya no depende de `filings_sources` hardcodeados.
 
 ## Tickers WIP
 
@@ -104,9 +104,11 @@ No hay bloqueantes críticos. El pipeline es funcional end-to-end para los 15 ti
 **Gaps pendientes (no bloqueantes):**
 1. **Residual field-dependency gaps** — `fx_effect_cash`, `other_cash_adjustments`, `market_cap` y `price` siguen fuera del set canónico. Son opcionales o de market data; no bloquean validación ni BL-058.
 2. **TALO y TEP sin filings_manifest.json** — adquisición manual (ManualFetcher / EuRegulatorsFetcher). Coverage audit retorna NEEDS_ACTION. Limitación conocida, no bug.
-3. **Adquisición no-SEC aún gradual** — TALO, TEP y SOM mantienen rutas de acquire con limitaciones conocidas (coverage `NEEDS_ACTION` o `filings_sources` documentados). No bloquea extracción, pero sí la autonomía completa de acquire.
+3. **Adquisición no-SEC aún gradual** — TALO y TEP mantienen rutas de acquire con limitaciones conocidas (coverage `NEEDS_ACTION` o manifest ausente). SOM ya resuelve su piloto LSE/AIM por auto-discovery conservador, pero la autonomía completa de acquire fuera de mercados con API pública sigue siendo gradual.
 
 ## Hitos recientes
+
+- ✅ **BL-057 completado (2026-03-07)** — Cerrado el piloto conservador de auto-discovery LSE/AIM para SOM. `EuRegulatorsFetcher` ya deduplica variantes `/media` vs `/~/media`, poda documentos no financieros y limita LSE/AIM a un set núcleo anual/interim/regulatory. Un caso temporal de SOM sin `filings_sources` descarga 3 documentos y mantiene `eval SOM` en PASS 100.0% (179/179).
 
 - ✅ **BL-047 completado (2026-03-07)** — Endurecimiento reusable del extractor HTML en dos patrones compartidos. `elsian/extract/html_tables.py` ahora descarta tablas comparativas suplementarias con columnas explícitas de `Change`, y además preserva el contexto `Six/Nine Months Ended` cuando el markdown split deja la fecha del periodo anterior como header suelto. Eso evita period mappings ambiguos en notas como `Interest income` y corrige el ruido YTD de cash flow (`capex`, `cfo`, `depreciation_amortization`) sin tocar truth ni degradar winner selection. Validación shared-core: `python3 -m pytest -q tests/unit/test_html_tables.py tests/unit/test_extract_phase.py` → 65 passed; `python3 -m elsian eval NVDA` → PASS 100.0% (354/354, `extra` 545 → 503); `python3 -m elsian eval --all` → 15/15 PASS; `pytest -q` → 1303 passed, 5 skipped.
 

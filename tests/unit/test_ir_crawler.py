@@ -1,7 +1,5 @@
 """Tests for elsian.acquire.ir_crawler — IR website crawling utilities."""
 
-import pytest
-
 from elsian.acquire.ir_crawler import (
     _clean_embedded_pdf_url,
     _extract_date_from_html_document,
@@ -206,6 +204,85 @@ class TestExtractFilingCandidates:
         cand = next(c for c in candidates if "annual-report.pdf" in c["url"])
         assert cand["fecha_publicacion"] == "2024-03-15"
         assert cand["fecha_source"] == "context"
+
+    def test_generic_cta_navigation_page_skipped_but_direct_pdf_kept(self) -> None:
+        html = """
+        <html><body>
+          <a href="/news/regulatory-news">Read more</a>
+          <a href="/~/media/Files/S/Somero-IR/documents/2024/annual-report-2024.pdf">Read More</a>
+        </body></html>
+        """
+        candidates = extract_filing_candidates(
+            html, "https://investors.somero.com", exchange="LSE (AIM)"
+        )
+        urls = {c["url"] for c in candidates}
+        assert "https://investors.somero.com/news/regulatory-news" not in urls
+        assert len(urls) == 1
+        assert next(iter(urls)).endswith("/annual-report-2024.pdf")
+
+    def test_media_and_tilde_media_variants_collapse_to_one_candidate(self) -> None:
+        html = """
+        <html><body>
+          <a href="/media/Files/S/Somero-IR/documents/2024/annual-report-2024.pdf">Annual Report 2024</a>
+          <a href="/~/media/Files/S/Somero-IR/documents/2024/annual-report-2024.pdf">Annual Report 2024</a>
+        </body></html>
+        """
+        candidates = extract_filing_candidates(
+            html, "https://investors.somero.com", exchange="LSE (AIM)"
+        )
+        urls = [c["url"] for c in candidates]
+        assert len(urls) == 1
+        assert urls[0].endswith("/annual-report-2024.pdf")
+
+    def test_non_financial_policy_documents_are_filtered(self) -> None:
+        html = """
+        <html><body>
+          <a href="/~/media/Files/S/Somero-IR/documents/2024/annual-report-2024.pdf">Annual Report 2024</a>
+          <a href="/~/media/Files/S/Somero-IR/documents/corporate-governance-statement-2025.pdf">Corporate Governance Statement 2025</a>
+          <a href="/~/media/Files/S/Somero-IR/documents/modern-slavery-act-statement-v1.pdf">Modern Slavery Act Statement</a>
+        </body></html>
+        """
+        candidates = extract_filing_candidates(
+            html, "https://investors.somero.com", exchange="LSE (AIM)"
+        )
+        urls = {c["url"] for c in candidates}
+        assert len(urls) == 1
+        assert next(iter(urls)).endswith("/annual-report-2024.pdf")
+
+    def test_direct_relative_presentation_pdf_is_kept(self) -> None:
+        html = """
+        <html><body>
+          <a href="/docs/h1-2025-interim-investor-presentation.pdf">H1 2025 Interim Investor Presentation</a>
+        </body></html>
+        """
+        candidates = extract_filing_candidates(
+            html, "https://investors.somero.com", exchange="LSE (AIM)"
+        )
+        urls = {c["url"] for c in candidates}
+        assert "https://investors.somero.com/docs/h1-2025-interim-investor-presentation.pdf" in urls
+
+    def test_generic_cta_direct_docs_use_basename_context(self) -> None:
+        html = """
+        <html><body>
+          <div>
+            <a href="/docs/somero-2025-interim-investor-presentation.pdf">Read more</a>
+            <a href="/docs/somero-2024-final-results-presentation.pdf">Read more</a>
+          </div>
+        </body></html>
+        """
+        candidates = extract_filing_candidates(
+            html, "https://investors.somero.com", exchange="LSE (AIM)"
+        )
+        by_url = {c["url"]: c for c in candidates}
+        final_results = by_url[
+            "https://investors.somero.com/docs/somero-2024-final-results-presentation.pdf"
+        ]
+        interim = by_url[
+            "https://investors.somero.com/docs/somero-2025-interim-investor-presentation.pdf"
+        ]
+        assert final_results["tipo_guess"] == "REGULATORY_FILING"
+        assert final_results["fecha_publicacion"] == "2024-12-31"
+        assert interim["tipo_guess"] == "INTERIM_REPORT"
 
 
 # ── select_fallback_candidates ────────────────────────────────────────

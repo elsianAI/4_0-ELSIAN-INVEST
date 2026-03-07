@@ -49,6 +49,7 @@ def classify_filing_type(title: str, doc_url: str, snippet: str) -> str:
     IR_NEWS, OTHER.
     """
     ctx = f"{title.lower()} {doc_url.lower()} {snippet.lower()}"
+    ctx_norm = re.sub(r"[-_/]+", " ", ctx)
     url_low = doc_url.lower()
 
     # Skip media URLs
@@ -58,7 +59,7 @@ def classify_filing_type(title: str, doc_url: str, snippet: str) -> str:
         return "OTHER"
 
     has_press_release = any(
-        w in ctx
+        w in ctx_norm
         for w in (
             "press release",
             "press-release",
@@ -69,12 +70,12 @@ def classify_filing_type(title: str, doc_url: str, snippet: str) -> str:
         )
     )
     has_urd_strong = bool(
-        re.search(r"\burd\b", ctx)
-        or "universal registration document" in ctx
-        or "document d'enregistrement universel" in ctx
+        re.search(r"\burd\b", ctx_norm)
+        or "universal registration document" in ctx_norm
+        or "document d'enregistrement universel" in ctx_norm
     )
     has_annual_doc_signal = any(
-        w in ctx
+        w in ctx_norm
         for w in (
             "annual report",
             "registration document",
@@ -85,17 +86,21 @@ def classify_filing_type(title: str, doc_url: str, snippet: str) -> str:
     ) or has_urd_strong
 
     if has_press_release:
-        if "results" in ctx or "financial" in ctx or "earnings" in ctx:
+        if (
+            "results" in ctx_norm
+            or "financial" in ctx_norm
+            or "earnings" in ctx_norm
+        ):
             return "REGULATORY_FILING"
         return "IR_NEWS"
 
     if has_annual_doc_signal:
         return "ANNUAL_REPORT"
-    if any(w in ctx for w in ("interim", "half year", "h1 ", "h2 ", "half-year")):
+    if any(w in ctx_norm for w in ("interim", "half year", "h1 ", "h2 ")):
         return "INTERIM_REPORT"
-    if "rns" in ctx or "regulatory news" in ctx or "announcement" in ctx:
+    if "rns" in ctx_norm or "regulatory news" in ctx_norm or "announcement" in ctx_norm:
         return "IR_NEWS"
-    if any(w in ctx for w in ("results", "financial")):
+    if any(w in ctx_norm for w in ("results", "financial")):
         return "REGULATORY_FILING"
     return "OTHER"
 
