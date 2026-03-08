@@ -184,6 +184,17 @@
 - **Descripción:** Ejecutar un primer piloto real de paralelización mutante con dos BL independientes y write sets disjuntos, usando exclusivamente el proceso definido en `BL-072`. El piloto debe demostrar aislamiento por `git worktree` y rama, integración serial en el padre, cierre independiente por BL y aborto limpio si aparece solape material.
 - **Criterio de aceptación:** Se ejecuta un piloto con dos BL válidas y una BL por worktree/rama. Ningún agente sale de su write set. Cada BL pasa `gates -> auditor -> closeout` por separado. La integración se hace en serie y genera un commit por BL. Si aparece conflicto estructural, el piloto aborta sin contaminar `main`. Queda una decisión explícita de mantener, ajustar o descartar el modelo antes de extenderlo a más trabajo.
 
+### BL-081 — Promover ADTN a FULL (quarterlies)
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** targeted
+- **Depende de:** BL-075
+- **Referencias:** DEC-015, cases/ADTN/case.json, cases/ADTN/expected.json
+- **Descripción:** Promover ADTN de `ANNUAL_ONLY` a `FULL` incorporando al `expected.json` los periodos trimestrales que `curate ADTN` genere con evidencia suficiente y al menos 15 campos. No se debe asumir que `Q1-Q3 2021` entren; solo se incluyen los `Q*` reales del draft que superen el umbral y no sean redundantes con FY/H1. Para `Q1-Q3 2023` y `Q1-Q3 2024`, preferir comparativos restated de 10-K posteriores cuando el valor restated sea explícito y trazable; si no hay evidencia suficiente para un campo, mantener el valor del 10-Q original con su `source_filing` real.
+- **Criterio de aceptación:** `cases/ADTN/case.json` pasa a `period_scope: FULL`; `cases/ADTN/expected.json` incorpora solo los trimestrales `Q*` con cobertura suficiente (>=15 campos), excluyendo `Q1-Q4 2019`, `Q1-Q4 2020`, `Q4-2021`, todos los `H1-*` y cualquier trimestral sparse. `python3 scripts/validate_contracts.py --schema case --path cases/ADTN/case.json` y `--schema expected --path cases/ADTN/expected.json` pasan. `python3 -m elsian eval ADTN` queda verde; `python3 -m elsian eval --all` mantiene 16/16 PASS; `python3 -m pytest -q` sigue en verde. Si el cierre queda verde, ADTN pasa a `FULL`, el contador operativo de DEC-015 sube de 13 a 14 y la BL se archiva en `BACKLOG_DONE.md`.
+
 ### BL-076 — Retroportar campos BL-035/BL-058 a expected.json existentes
 - **Prioridad:** ALTA
 - **Estado:** TODO
