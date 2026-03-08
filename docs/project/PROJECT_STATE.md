@@ -1,7 +1,7 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
 > Última actualización: 2026-03-08
-> Actualizado por: Codex (BL-079 / BL-074 governance closeout)
+> Actualizado por: Codex (BL-080 closeout)
 
 ---
 
@@ -20,7 +20,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | Tickers WIP | 0 | 0 | 2026-03-08 |
 | Total campos validados | 3,471 | — | 2026-03-08 |
 | Campos canónicos | 29 (26 previos + accounts_receivable, inventories, accounts_payable) | — | 2026-03-07 |
-| Tests pasando | 1347 passed, 6 skipped; 1 failed en `pytest -q` local (`tests/integration/test_source_map.py::test_cli_source_map_tzoo_builds_full_artifact`) | — | 2026-03-08 |
+| Tests pasando | 1349 passed, 6 skipped, 1 warning en `pytest -q` local | — | 2026-03-08 |
 | Líneas de código (aprox.) | ~12,000 + ~6,500 tests | 2026-03-07 |
 
 *`DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies. `KAR` ya entra en esa excepción documentada (ASX). `SOM` y `0327` siguen en `ANNUAL_ONLY`, pero no cuentan todavía hacia el umbral de transición porque su tratamiento operativo no está cerrado como excepción equivalente a `FULL`. `ADTN` queda validado en `ANNUAL_ONLY` tras BL-079, pero no cuenta hacia `DEC-015` porque su universo SEC sí tiene quarterlies disponibles y la verdad canónica actual sigue limitada al slice anual.
@@ -77,7 +77,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | Sources compiler | ✅ Implementado | Merge multi-fetcher, dedup, SourcesPack_v1. CLI `elsian compile`. BL-023 DONE |
 | IR Website Crawling | ✅ Implementado + Integrado | ir_crawler.py portado completo (~600 líneas). Integrado en EuRegulatorsFetcher como fallback automático (BL-013 DONE). |
 | Provenance Level 2 | ✅ Completo | BL-006 DONE. Todos los extractores emiten L2 completo (table_title, row_label, col_label, raw_text, row, col, table_index, extraction_method). 100% completitud. |
-| Provenance Level 3 | 🟡 Pilotado con regresión abierta | `elsian/assemble/source_map.py` + CLI `elsian source-map`. El piloto histórico TZOO llegó a validar `SourceMap_v1` con 851/851 campos resueltos, pero el closeout actual observa `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_closeout.json` → `PARTIAL` con 812/818 (99.27%), y el full `pytest -q` falla en `tests/integration/test_source_map.py::test_cli_source_map_tzoo_builds_full_artifact`. El hardening previo (`*.txt:table`, `case_dir` relativo, labels verticales, salida `FULL/PARTIAL/EMPTY`) sigue presente, pero L3 ya no debe venderse como revalidado en verde hasta cerrar esa regresión. |
+| Provenance Level 3 | ✅ Pilotado y revalidado en verde | `elsian/assemble/source_map.py` + CLI `elsian source-map`. El piloto histórico TZOO validó `SourceMap_v1` en verde y BL-080 recupera esa garantía para el artefacto actual: `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` vuelve a `FULL` con 818/818 campos resueltos (100.0%). El hardening previo (`*.txt:table`, `case_dir` relativo, labels verticales, salida `FULL/PARTIAL/EMPTY`) sigue presente, y el closeout actual añade soporte explícito para punteros iXBRL derivados como `:bs_identity_bridge` sin cambiar winners de extracción ni merge/eval. |
 | CI GitHub Actions | ✅ Implementado | Workflow ci.yml en .github/workflows/. pytest en Python 3.11. WP-5 DONE |
 | Sanity Checks post-extracción | ✅ Implementado | capex sign, revenue neg, gp>revenue, YoY >10x. BL-016 DONE |
 | Autonomous Validator | ✅ Implementado | 9 quality gates intrínsecos (BS identity, CF identity, units 1000x, EV, margins, TTM, recency, completeness). BL-020 DONE |
@@ -100,15 +100,15 @@ No hay tickers WIP actualmente. Los 16 tickers están al 100%.
 
 ## Bloqueantes actuales
 
-No hay bloqueantes críticos de extractor/eval. El pipeline es funcional end-to-end para los 16 tickers validados al 100%, pero el repo no está plenamente verde porque `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_closeout.json` devuelve `SourceMap_v1 PARTIAL` (812/818) y el full `pytest -q` local falla en `tests/integration/test_source_map.py::test_cli_source_map_tzoo_builds_full_artifact`. En paralelo, el tracking operativo de `DEC-015` sigue en **13/15**: **12 FULL + KAR por excepción documentada**. La deuda actual ya no es de overrides ni de calidad base, sino de cómo promover o cerrar el tratamiento de `SOM`, `0327` y `ADTN` sin mezclar excepciones implícitas.
+No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Provenance Level 3. El pipeline es funcional end-to-end para los 16 tickers validados al 100%, `python3 -m pytest -q` vuelve a verde local (1349 passed, 6 skipped, 1 warning) y `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` vuelve a `SourceMap_v1 FULL` con 818/818. En paralelo, el tracking operativo de `DEC-015` sigue en **13/15**: **12 FULL + KAR por excepción documentada**. La deuda actual ya no es de overrides ni de quality gates base, sino de cómo promover o cerrar el tratamiento de `SOM`, `0327` y `ADTN` sin mezclar excepciones implícitas.
 
 **Gaps pendientes (no bloqueantes):**
 1. **Residual field-dependency gaps** — `fx_effect_cash`, `other_cash_adjustments`, `market_cap` y `price` siguen fuera del set canónico. Son opcionales o de market data; no bloquean validación ni BL-058.
 2. **TALO y TEP sin filings_manifest.json** — adquisición manual (ManualFetcher / EuRegulatorsFetcher). Coverage audit retorna NEEDS_ACTION. Limitación conocida, no bug.
 3. **Adquisición no-SEC aún gradual** — TALO y TEP mantienen rutas de acquire con limitaciones conocidas (coverage `NEEDS_ACTION` o manifest ausente). SOM ya resuelve su piloto LSE/AIM por auto-discovery conservador, pero la autonomía completa de acquire fuera de mercados con API pública sigue siendo gradual.
-4. **SourceMap v1 no revalidado en verde** — el piloto histórico de TZOO ya no está reproduciendo `FULL`: la observación actual es 812/818 `PARTIAL` y deja una integración roja en `tests/integration/test_source_map.py`.
-
 ## Hitos recientes
+
+- ✅ **BL-080 completado (2026-03-08)** — Recuperada la regresión acotada de Provenance Level 3 en TZOO sin reabrir extractor/eval de Módulo 1. `elsian/assemble/source_map.py` vuelve a resolver punteros `:ixbrl:` con sufijos derivados como `:bs_identity_bridge` contra el fact base de iXBRL, y `tests/unit/test_source_map.py` añade la regresión específica. Validación: `python3 -m pytest -q tests/unit/test_source_map.py tests/integration/test_source_map.py` → 14 passed; `python3 -m elsian source-map TZOO --output <tmp>` → `SourceMap_v1 FULL` (818/818); `python3 -m elsian eval TZOO` → PASS 100.0% (300/300); `python3 -m pytest -q` → 1349 passed, 6 skipped, 1 warning.
 
 - ✅ **BL-079 completado (2026-03-08)** — Cerrado el drift extractor amplio de ADTN con una corrección shared-core en extractor/merge, no con parche local por ticker. ADTN queda en PASS 100.0% (193/193) contra su verdad filing-backed anual; GCT y TZOO siguen en PASS 100%; los controles extra NEXN, NVDA, TEP, TALO, SONO e INMD también quedan verdes, y `eval --all` vuelve a pasar 16/16. En gobernanza, `BL-079` y `BL-074` quedan archivadas y `PROJECT_STATE` se reconcilia con ADTN como `ANNUAL_ONLY` validado pero todavía fuera del contador `DEC-015`.
 

@@ -200,6 +200,38 @@ def test_ixbrl_pointer_resolves_html_anchor(tmp_path: Path) -> None:
     assert field_entry["click_target"] == "filings/sample.htm#fact-1"
 
 
+def test_ixbrl_pointer_resolves_bridge_suffix_to_base_fact(tmp_path: Path) -> None:
+    case_dir = tmp_path / "TEST"
+    case_dir.mkdir()
+    _write_case(case_dir)
+
+    extraction_result_path = case_dir / "extraction_result.json"
+    extraction_result = json.loads(extraction_result_path.read_text(encoding="utf-8"))
+    extraction_result["periods"]["FY2024"]["fields"]["total_equity_bridge"] = {
+        "value": 1991.0,
+        "scale": "thousands",
+        "confidence": "high",
+        "source_filing": "sample.htm",
+        "source_location": "sample.htm:ixbrl:ctx-fy2024:us-gaap:StockholdersEquity:bs_identity_bridge",
+        "row_label": "us-gaap:StockholdersEquity (+ Non-controlling interest)",
+        "col_label": "FY2024",
+        "raw_text": "1,891 + (100)",
+        "extraction_method": "ixbrl",
+    }
+    extraction_result_path.write_text(
+        json.dumps(extraction_result, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+    source_map = SourceMapBuilder().build(case_dir)
+    field_entry = source_map["periods"]["FY2024"]["fields"]["total_equity_bridge"]
+
+    assert field_entry["resolution_status"] == "resolved"
+    assert field_entry["pointer"]["kind"] == "html_ixbrl"
+    assert field_entry["pointer"]["element_id"] == "fact-1"
+    assert field_entry["click_target"] == "filings/sample.htm#fact-1"
+
+
 @pytest.mark.parametrize(
     ("field_name", "expected_line"),
     [

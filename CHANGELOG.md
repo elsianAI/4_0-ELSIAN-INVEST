@@ -2,6 +2,16 @@
 
 ## 2026-03-08
 
+### [4.0] Governance closeout — BL-080 archived and Provenance L3 revalidated green
+- Closed `BL-080` after the narrow Provenance Level 3 regression was fixed without reopening extractor winners, merge logic, or Module 1 eval behavior. `docs/project/BACKLOG.md` no longer carries `BL-080` as active work; it moves to `docs/project/BACKLOG_DONE.md`. `docs/project/PROJECT_STATE.md` now reflects `SourceMap_v1` as revalidated green on the current TZOO artifact, with the full local `pytest -q` suite back to green.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` → `duplicate_ids=[]`, `project_state_lags_changelog=false`. `git diff --check -- CHANGELOG.md docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md docs/project/PROJECT_STATE.md` → PASS. Reused green technical basis from the completed BL-080 package: targeted source-map pytest PASS (14 passed), `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` → `SourceMap_v1 FULL`, resolved `818/818` (100.0%), `python3 -m elsian eval TZOO` → PASS 100.0%, `python3 -m pytest -q` → `1349 passed, 6 skipped, 1 warning`.
+
+### [4.0] BL-080 — Restore SourceMap_v1 TZOO from PARTIAL to FULL
+- Closed the narrow Provenance Level 3 regression in `elsian/assemble/source_map.py` without reopening extractor or eval logic. The source-map builder now parses `:ixbrl:` pointers with optional derived suffixes like `:bs_identity_bridge`, resolves them back to the base `(context_ref, concept)` fact, and deliberately ignores synthetic bridge `raw_text` when matching the original iXBRL tag. This restores click-target resolution for derived balance-sheet bridge values while keeping the rest of `SourceMap_v1` semantics unchanged. Regression coverage now includes an explicit unit test for derived iXBRL bridge suffixes.
+- **Files changed:** `elsian/assemble/source_map.py`, `tests/unit/test_source_map.py`, `CHANGELOG.md`
+- **Validation:** `python3 -m pytest -q tests/unit/test_source_map.py tests/integration/test_source_map.py` → PASS (14 passed). `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` → `SourceMap_v1 FULL`, resolved `818/818` (100.0%), breakdown `clean_md_table: 276`, `html_ixbrl: 539`, `text_label: 3`. `python3 -m elsian eval TZOO` → PASS 100.0% (300/300), extra=518. `python3 -m pytest -q` → `1349 passed, 6 skipped, 1 warning`.
+
 ### [4.0] Governance packaging — BL-080 opened for active SourceMap_v1 regression
 - Opened `BL-080` in `docs/project/BACKLOG.md` to give canonical ownership to the active Provenance Level 3 regression already documented in `PROJECT_STATE.md`. The new BL is scoped narrowly to recovering `SourceMap_v1` for TZOO from `PARTIAL` back to `FULL`, restoring `pytest -q` to green, and keeping `eval TZOO` untouched; this governance wave does not implement the fix.
 - **Files changed:** `docs/project/BACKLOG.md`, `CHANGELOG.md`

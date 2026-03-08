@@ -26,6 +26,9 @@ _TABLE_LOC_RE = re.compile(r":tbl(?P<table>\d+):row(?P<row>\d+):col(?P<col>\d+)"
 _CHAR_LOC_RE = re.compile(r":char(?P<char>\d+)")
 _IXBRL_NAME_RE = re.compile(r'\bname="(?P<name>[^"]+)"')
 _IXBRL_ID_RE = re.compile(r'\bid="(?P<id>[^"]+)"')
+_IXBRL_LOC_SUFFIX_RE = re.compile(
+    r"^(?P<context_ref>[^:]+):(?P<concept>[^:]+:[^:]+)(?::(?P<suffix>.+))?$"
+)
 _DASH_ONLY_RE = re.compile(r"^[\-\u2013\u2014]+$")
 _TEXT_NUM_TOKEN_RE = re.compile(r"\(?[\d,]+(?:\.\d+)?\)?")
 
@@ -368,16 +371,22 @@ def _resolve_ixbrl_pointer(
         return None
 
     rest = source_location[len(prefix):]
-    if ":" not in rest:
+    match = _IXBRL_LOC_SUFFIX_RE.match(rest)
+    if match is None:
         return None
-    context_ref, concept = rest.split(":", 1)
+    context_ref = match.group("context_ref")
+    concept = match.group("concept")
+    derived_suffix = match.group("suffix")
 
     text = source_path.read_text(encoding="utf-8", errors="ignore")
     matched = _find_ixbrl_tag(
         text,
         context_ref=context_ref,
         concept=concept,
-        raw_text=field_data.get("raw_text", "") or "",
+        # Derived provenance suffixes such as ``:bs_identity_bridge`` still
+        # point back to the base iXBRL fact, so their synthetic raw_text
+        # cannot be used as a matching constraint.
+        raw_text="" if derived_suffix else (field_data.get("raw_text", "") or ""),
     )
     if not matched:
         return None

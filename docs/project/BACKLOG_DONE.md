@@ -9,6 +9,16 @@
 
 ---
 
+### BL-080 — Recuperar SourceMap_v1 TZOO (FULL -> PARTIAL)
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-08)
+- **Asignado a:** engineer
+- **Depende de:** —
+- **Descripción:** Se cerró la regresión acotada de Provenance Level 3 que había degradado `SourceMap_v1` de TZOO de `FULL` a `PARTIAL`. El fix quedó limitado al builder `elsian/assemble/source_map.py`: los punteros `:ixbrl:` con sufijos derivados como `:bs_identity_bridge` vuelven a resolverse contra el fact base de iXBRL en vez de tratar el sufijo como parte del concepto, y los `raw_text` sintéticos de bridge dejan de bloquear el match contra el HTML original. La solución no reabre extractor, merge ni eval de Módulo 1, y TZOO vuelve a validar el piloto L3 con click targets completos.
+- **Criterio de aceptación:** ✓ `python3 -m pytest -q tests/unit/test_source_map.py tests/integration/test_source_map.py` PASS (14 passed). ✓ `python3 -m elsian source-map TZOO --output <tmp>` vuelve a `SourceMap_v1 FULL` con 818/818 campos resueltos. ✓ `python3 -m elsian eval TZOO` sigue en PASS 100.0% (300/300). ✓ `python3 -m pytest -q` vuelve a verde: 1349 passed, 6 skipped, 1 warning. ✓ `PROJECT_STATE` deja de vender L3 como regresión abierta.
+
+---
+
 ### BL-079 — Corregir drift extractor amplio de ADTN fuera del patrón BL-078
 - **Prioridad:** CRÍTICA
 - **Estado:** DONE ✅ (2026-03-08)

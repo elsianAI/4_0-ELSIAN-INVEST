@@ -184,17 +184,6 @@
 - **Descripción:** Ejecutar un primer piloto real de paralelización mutante con dos BL independientes y write sets disjuntos, usando exclusivamente el proceso definido en `BL-072`. El piloto debe demostrar aislamiento por `git worktree` y rama, integración serial en el padre, cierre independiente por BL y aborto limpio si aparece solape material.
 - **Criterio de aceptación:** Se ejecuta un piloto con dos BL válidas y una BL por worktree/rama. Ningún agente sale de su write set. Cada BL pasa `gates -> auditor -> closeout` por separado. La integración se hace en serie y genera un commit por BL. Si aparece conflicto estructural, el piloto aborta sin contaminar `main`. Queda una decisión explícita de mantener, ajustar o descartar el modelo antes de extenderlo a más trabajo.
 
-### BL-080 — Recuperar SourceMap_v1 TZOO (FULL -> PARTIAL)
-- **Prioridad:** ALTA
-- **Estado:** TODO
-- **Asignado a:** engineer
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** —
-- **Referencias:** BL-053, CHANGELOG.md, docs/project/PROJECT_STATE.md
-- **Descripción:** Empaquetar la regresión abierta de Provenance Level 3 / `SourceMap_v1` ya observada en TZOO. El problema actual no afecta extractor/eval de Módulo 1, pero sí deja el repo sin `pytest -q` plenamente verde y degrada el piloto L3 de `FULL` a `PARTIAL`. La BL debe recuperar el comportamiento esperado de `elsian source-map TZOO` sin reabrir el cierre de `BL-053` más allá de esta regresión concreta.
-- **Criterio de aceptación:** `python3 -m elsian source-map TZOO --output <tmp>` vuelve a reportar `FULL`. `python3 -m pytest -q tests/unit/test_source_map.py tests/integration/test_source_map.py` pasa. `python3 -m pytest -q` vuelve a quedar verde. `python3 -m elsian eval TZOO` sigue en PASS. `PROJECT_STATE` deja de vender L3 como regresión abierta una vez la BL se cierre.
-
 ### BL-075 — Enriquecer expected.json con campos derivados calculables
 - **Prioridad:** ALTA
 - **Estado:** TODO
