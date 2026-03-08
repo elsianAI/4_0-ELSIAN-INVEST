@@ -61,3 +61,96 @@ def test_merge_audit_record():
     )
     result = merge_extractions([filing], ticker="TEST")
     assert result.audit.fields_extracted == 1
+
+
+def test_merge_same_priority_prefers_better_affinity():
+    comparative = _make_fr(25.2, "SRC_001_10-K_FY2025.clean.md")
+    comparative._sort_key = (0, 1, 0, 0, ("SRC_001_10-K_FY2025.clean.md", -1, -11, 5))
+    primary = _make_fr(232918.0, "SRC_002_10-K_FY2024.htm")
+    primary._sort_key = (0, 0, -1, -9999, ("", 0, 0, 0))
+
+    result = merge_extractions(
+        [
+            ("10-K", "SRC_001_10-K_FY2025.clean.md", {"FY2024": {"sga": comparative}}),
+            ("10-K", "SRC_002_10-K_FY2024.htm", {"FY2024": {"sga": primary}}),
+        ],
+        ticker="TEST",
+    )
+
+    assert result.periods["FY2024"].fields["sga"].value == 232918.0
+
+
+def test_merge_same_priority_replaces_penalized_existing_semantics():
+    penalized = _make_fr(25.2, "SRC_001_10-K_FY2025.clean.md")
+    penalized._sort_key = (0, 0, 0, 50, ("SRC_001_10-K_FY2025.clean.md", -1, -11, 5))
+    better = _make_fr(232918.0, "SRC_002_10-K_FY2024.htm")
+    better._sort_key = (0, 0, -1, -9999, ("", 0, 0, 0))
+
+    result = merge_extractions(
+        [
+            ("10-K", "SRC_001_10-K_FY2025.clean.md", {"FY2024": {"sga": penalized}}),
+            ("10-K", "SRC_002_10-K_FY2024.htm", {"FY2024": {"sga": better}}),
+        ],
+        ticker="TEST",
+    )
+
+    assert result.periods["FY2024"].fields["sga"].value == 232918.0
+
+
+def test_merge_eps_keeps_close_newer_comparative_over_primary():
+    newer_comparative = _make_fr(-3.43, "SRC_001_10-K_FY2025.htm")
+    newer_comparative._sort_key = (0, 1, -1, -9999, ("", 0, 0, 0))
+    primary = _make_fr(-3.39, "SRC_002_10-K_FY2024.htm")
+    primary._sort_key = (0, 0, -1, -9999, ("", 0, 0, 0))
+
+    result = merge_extractions(
+        [
+            ("10-K", "SRC_001_10-K_FY2025.htm", {"FY2023": {"eps_basic": newer_comparative}}),
+            ("10-K", "SRC_002_10-K_FY2024.htm", {"FY2023": {"eps_basic": primary}}),
+        ],
+        ticker="TEST",
+    )
+
+    assert result.periods["FY2023"].fields["eps_basic"].value == -3.43
+
+
+def test_merge_eps_replaces_large_drift_newer_comparative_with_primary():
+    newer_comparative = _make_fr(0.18, "SRC_001_10-K_FY2025.htm")
+    newer_comparative._sort_key = (0, 1, -1, -9999, ("", 0, 0, 0))
+    primary = _make_fr(1.76, "SRC_002_10-K_FY2023.htm")
+    primary._sort_key = (0, 0, -1, -9999, ("", 0, 0, 0))
+
+    result = merge_extractions(
+        [
+            ("10-K", "SRC_001_10-K_FY2025.htm", {"FY2023": {"eps_basic": newer_comparative}}),
+            ("10-K", "SRC_002_10-K_FY2023.htm", {"FY2023": {"eps_basic": primary}}),
+        ],
+        ticker="TEST",
+    )
+
+    assert result.periods["FY2023"].fields["eps_basic"].value == 1.76
+
+
+def test_merge_eps_replaces_weighted_average_disclosure_with_primary():
+    newer_disclosure = _make_fr(-0.15, "SRC_002_20-F_FY2024.clean.md")
+    newer_disclosure.provenance.source_location = (
+        "SRC_002_20-F_FY2024.clean.md:table:income_statement:"
+        "weighted_average_number_of_ordinary_shares_used_to_calculate_"
+        "basic_earnings_per_share:tbl32:row3:col2"
+    )
+    newer_disclosure._sort_key = (0, 0, 0, 0, ("", 0, 0, 0))
+    primary = _make_fr(-0.3, "SRC_003_20-F_FY2023.clean.md")
+    primary.provenance.source_location = (
+        "SRC_003_20-F_FY2023.clean.md:table:income_statement:tbl1:row30:col1"
+    )
+    primary._sort_key = (0, 0, 0, 0, ("", 0, 0, 0))
+
+    result = merge_extractions(
+        [
+            ("20-F", "SRC_002_20-F_FY2024.clean.md", {"FY2023": {"eps_basic": newer_disclosure}}),
+            ("20-F", "SRC_003_20-F_FY2023.clean.md", {"FY2023": {"eps_basic": primary}}),
+        ],
+        ticker="TEST",
+    )
+
+    assert result.periods["FY2023"].fields["eps_basic"].value == -0.3

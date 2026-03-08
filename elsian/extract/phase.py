@@ -571,14 +571,15 @@ def _parse_stable_order(source_filing: str, source_location: str,
 
 
 # Fields that must prefer the PRIMARY filing (the one whose FY tag matches
-# the period) to honour "as-reported" semantics. This started with split-
-# sensitive per-share fields and also covers working-capital balance-sheet
-# lines where newer comparative filings can mix in note/cash-flow variants.
-# For all other fields, prefer the NEWEST filing (lowest SRC number) so
-# that implicit restatements / reclassifications are picked up.
+# the period) to honour "as-reported" semantics. This bucket stays narrow:
+# share counts, annual debt snapshots, and trade working-capital balances are
+# the remaining point-in-time fields where newer comparative filings were
+# still drifting to the wrong column even after source-quality filters.
 _SPLIT_SENSITIVE_FIELDS: set = {
-    "eps_basic", "eps_diluted", "shares_outstanding", "dividends_per_share",
-    "accounts_receivable", "inventories", "accounts_payable",
+    "shares_outstanding",
+    "total_debt",
+    "accounts_receivable",
+    "accounts_payable",
 }
 
 
@@ -590,20 +591,52 @@ _SPLIT_SENSITIVE_FIELDS: set = {
 _SUPPLEMENTAL_PRONE_FIELDS: frozenset = frozenset({"net_income"})
 
 _FY_YEAR_RE = re.compile(r"FY(\d{4})")
+_GENERIC_YEAR_RE = re.compile(r"(?<!\d)(20\d{2})(?!\d)")
+_STANDALONE_NET_RESULT_RE = re.compile(
+    r"^net\s+(?:income|loss)(?:\s*\(loss\))?\s*$",
+    re.I,
+)
+_PRIMARY_CFO_LABEL_RE = re.compile(
+    r"^net\s+cash\s+(?:provided|used)\s+(?:by|in)(?:\s*\(\s*used\s+in\s*\))?\s+operating",
+    re.I,
+)
+_PRIMARY_CAPEX_LABEL_RE = re.compile(
+    r"^(?:purchases?|payments?)\s+(?:to\s+acquire\s+)?property,\s*plant\s+and\s+equipment\b",
+    re.I,
+)
+_AUXILIARY_NOTE_MARKERS = (
+    "results_of_operations",
+    "profit_and_loss_transfer_agreement",
+    "interest_and_dividend_income",
+    "restructuring_expenses_included",
+    "lease_expense",
+)
+_NOTE_SMALL_VALUE_FIELDS = frozenset({
+    "cost_of_revenue",
+    "gross_profit",
+    "research_and_development",
+    "sga",
+})
+_MONETARY_SCALES = frozenset({"thousands", "millions", "billions"})
 
 
 def _extract_fy_year(s: str) -> int | None:
     """Parse the fiscal year from a string like 'FY2024' or a filename."""
     m = _FY_YEAR_RE.search(s)
-    return int(m.group(1)) if m else None
+    if m:
+        return int(m.group(1))
+    years = _GENERIC_YEAR_RE.findall(s)
+    return int(years[-1]) if years else None
 
 
 def _period_affinity(period_key: str, source_filing: str,
                      canonical_field: str | None = None) -> int:
     """Return 0 when the filing is the best source for *period_key*, else 1.
 
-    **FY periods — split-sensitive fields** (EPS, shares, DPS): the primary
-    filing is preferred (FY tag matches) so as-reported pre-split values win.
+    **FY periods — split-sensitive fields** (shares, debt snapshots, trade
+    working-capital balances): the primary filing is preferred (FY tag
+    matches) so point-in-time values do not drift to a newer comparative
+    column.
 
     **FY periods — supplemental-prone fields** (net_income): prefer the most
     recent filing whose standard 3-year window includes the period.  A filing
@@ -642,6 +675,77 @@ def _period_affinity(period_key: str, source_filing: str,
     if period_key in source_filing:
         return 0
     return 1
+
+
+def _candidate_context_bonus(
+    canonical: str,
+    raw_label: str,
+    source_location: str,
+    value: float,
+    scale: str,
+) -> int:
+    """Return field-specific context adjustments for candidate ranking."""
+    label_lower = raw_label.lower()
+    loc_lower = source_location.lower()
+    bonus = 0
+
+    if (
+        canonical in _NOTE_SMALL_VALUE_FIELDS
+        and scale in _MONETARY_SCALES
+        and abs(value) < 10000
+        and any(marker in loc_lower for marker in _AUXILIARY_NOTE_MARKERS)
+    ):
+        bonus -= 300
+
+    if canonical == "cfo":
+        if "operating lease" in label_lower:
+            bonus -= 300
+        elif _PRIMARY_CFO_LABEL_RE.search(raw_label):
+            bonus += 100
+    elif canonical == "capex":
+        if _PRIMARY_CAPEX_LABEL_RE.search(raw_label):
+            bonus += 100
+        if (
+            "included in" in label_lower
+            and any(
+                token in label_lower
+                for token in (
+                    "accounts payable",
+                    "other non-current liabilities",
+                    "other current liabilities",
+                    "liabilities",
+                )
+            )
+        ):
+            bonus -= 300
+        if label_lower.lstrip().startswith("accrued "):
+            bonus -= 300
+    elif canonical == "net_income":
+        if _STANDALONE_NET_RESULT_RE.fullmatch(raw_label.strip()):
+            bonus += 100
+        if any(
+            token in label_lower
+            for token in (
+                "on disposal",
+                "reclassification adjustment",
+                "redeemable non-controlling",
+                "non-controlling interest",
+                "included in net income",
+                "included in net (loss) income",
+            )
+        ):
+            bonus -= 300
+    elif canonical in {"eps_basic", "eps_diluted"}:
+        if "weighted_average_number_of_ordinary_shares_used_to_calculate" in loc_lower:
+            bonus -= 300
+    elif canonical == "total_debt":
+        if (
+            ":cash_flow:" in loc_lower
+            and re.search(r"\b(payment|payments|repayment|proceeds|receipt)\b", label_lower)
+        ):
+            bonus -= 300
+
+    return bonus
 
 
 def compute_sort_key(
@@ -968,6 +1072,9 @@ class ExtractPhase(PipelinePhase):
                     _was_rescaled = getattr(_fr, "_ixbrl_was_rescaled", False)
                     _ixbrl_sk = make_ixbrl_sort_key(
                         _period, _htm_path.stem, _fr_rank,
+                        affinity_override=_period_affinity(
+                            _period, _htm_path.stem, _field_name
+                        ),
                         was_rescaled=_was_rescaled,
                     )
                     _fr._sort_key = _ixbrl_sk  # type: ignore[attr-defined]
@@ -1167,12 +1274,18 @@ class ExtractPhase(PipelinePhase):
             label_pri = self._alias_resolver.label_priority(
                 canonical, tf.label
             )
+            vertical_bonus = (
+                _VERTICAL_BS_BONUS
+                if canonical in {"total_assets", "total_liabilities", "total_equity"}
+                else 0
+            )
+
             new_sort_key = compute_sort_key(
                 period_key=period_key,
                 filing_type=metadata.filing_type,
                 source_type="table",
                 label_priority=label_pri,
-                section_bonus_val=_VERTICAL_BS_BONUS,
+                section_bonus_val=vertical_bonus,
                 source_filing=filing_path.name,
                 source_location=tf.source_location,
                 rules=rules,
@@ -1381,6 +1494,67 @@ class ExtractPhase(PipelinePhase):
                 scale=scale,
             )
             return
+        if canonical == "total_debt" and ":cash_flow:" in tf.source_location.lower():
+            audit.discard(
+                field_name=canonical,
+                period=tf.column_header,
+                reason="cashflow_debt_movement_not_balance",
+                source_filing=filing_path.name,
+                raw_label=tf.label,
+                raw_value=tf.value,
+                scale=scale,
+            )
+            return
+        if (
+            canonical in {"accounts_receivable", "accounts_payable"}
+            and ":cash_flow:" in tf.source_location.lower()
+        ):
+            audit.discard(
+                field_name=canonical,
+                period=tf.column_header,
+                reason="cashflow_working_capital_not_balance",
+                source_filing=filing_path.name,
+                raw_label=tf.label,
+                raw_value=tf.value,
+                scale=scale,
+            )
+            return
+        if (
+            canonical in {"accounts_receivable", "accounts_payable"}
+            and any(
+                marker in tf.source_location.lower()
+                for marker in (
+                    ":income_statement:net_income:",
+                    ":income_statement:net_(loss)_income:",
+                    ":income_statement:deferred_income_taxes:",
+                    ":income_statement:prepaid_income_taxes:",
+                )
+            )
+        ):
+            audit.discard(
+                field_name=canonical,
+                period=tf.column_header,
+                reason="income_statement_working_capital_not_balance",
+                source_filing=filing_path.name,
+                raw_label=tf.label,
+                raw_value=tf.value,
+                scale=scale,
+            )
+            return
+        if (
+            canonical == "accounts_payable"
+            and "included in accounts payable" in tf.label.lower()
+        ):
+            audit.discard(
+                field_name=canonical,
+                period=tf.column_header,
+                reason="accounts_payable_component_not_balance",
+                source_filing=filing_path.name,
+                raw_label=tf.label,
+                raw_value=tf.value,
+                scale=scale,
+            )
+            return
 
         period_key = tf.column_header
         if not period_key or period_key == "unknown":
@@ -1415,6 +1589,13 @@ class ExtractPhase(PipelinePhase):
             )
             if _canonical_override < 0:
                 sec_bonus = min(sec_bonus, _canonical_override)
+        sec_bonus += _candidate_context_bonus(
+            canonical,
+            tf.label,
+            tf.source_location,
+            tf.value,
+            scale,
+        )
         new_sk = compute_sort_key(
             period_key=period_key,
             filing_type=metadata.filing_type,
@@ -1480,6 +1661,13 @@ class ExtractPhase(PipelinePhase):
                             raw_label=tf.label, raw_value=tf.value, scale=scale,
                         )
                         return
+                    if len(seen) == 1:
+                        # Allow duplicate replacement only while the field is
+                        # still a single constituent; once multiple additive
+                        # labels have been merged, replacing the aggregate with
+                        # a later duplicate would collapse the total back to a
+                        # single component.
+                        pass
                     else:
                         audit.discard(
                             field_name=canonical, period=period_key,

@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 from pathlib import Path
+from types import SimpleNamespace
 
 from elsian.extract.html_tables import TableField
 from elsian.extract.phase import (
@@ -16,6 +17,7 @@ from elsian.extract.phase import (
     _extract_financial_highlights_dividends_per_share,
     _pick_total_liabilities_bridge_components,
 )
+from elsian.normalize.audit import AuditLog
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -166,13 +168,29 @@ def test_source_type_rank_table_wins():
 # ── Period affinity ──────────────────────────────────────────────────
 
 def test_period_affinity_split_sensitive_primary():
-    """Split-sensitive field: FY2024 data from FY2024 filing → affinity 0."""
-    assert _period_affinity("FY2024", "SRC_003_10-K_FY2024.clean.md", "eps_basic") == 0
+    """Weighted-average shares stay primary-filing sensitive for FY periods."""
+    assert _period_affinity("FY2024", "SRC_003_10-K_FY2024.clean.md", "shares_outstanding") == 0
 
 
 def test_period_affinity_split_sensitive_comparative():
-    """Split-sensitive field: FY2024 data from a LATER filing → affinity 1."""
-    assert _period_affinity("FY2024", "SRC_001_10-K_FY2026.clean.md", "eps_diluted") == 1
+    """Later annual share-count comparatives stay affinity=1."""
+    assert _period_affinity("FY2024", "SRC_001_10-K_FY2026.clean.md", "shares_outstanding") == 1
+
+
+def test_period_affinity_eps_allows_later_annual_comparatives():
+    """Annual EPS uses merge-time heuristics rather than primary-only affinity."""
+    assert _period_affinity("FY2024", "SRC_001_10-K_FY2026.clean.md", "eps_basic") == 0
+    assert _period_affinity("FY2024", "SRC_001_REGULATORY_FILING_2025-02-27.clean.md", "eps_basic") == 0
+
+
+def test_period_affinity_total_debt_prefers_primary_filing():
+    """Annual debt snapshots should not drift to newer comparative filings."""
+    assert _period_affinity("FY2024", "SRC_001_10-K_FY2026.clean.md", "total_debt") == 1
+
+
+def test_period_affinity_working_capital_allows_later_annual_comparatives():
+    """Inventories can use later comparative annual filings when they rank better."""
+    assert _period_affinity("FY2024", "SRC_001_10-K_FY2026.clean.md", "inventories") == 0
 
 
 def test_period_affinity_non_split_always_zero():
@@ -184,7 +202,8 @@ def test_period_affinity_non_split_always_zero():
 def test_period_affinity_fy_no_tag():
     """FY period from a file without FY tag → affinity 1 for split-sensitive,
     0 for non-split (newer file wins)."""
-    assert _period_affinity("FY2024", "anything.clean.md", "eps_basic") == 1
+    assert _period_affinity("FY2024", "anything.clean.md", "shares_outstanding") == 1
+    assert _period_affinity("FY2024", "anything.clean.md", "eps_basic") == 0
     assert _period_affinity("FY2024", "anything.clean.md", "ingresos") == 0
 
 
@@ -198,6 +217,218 @@ def test_period_affinity_q_comparative():
     """Q periods: comparative filing → affinity 1 for ALL fields."""
     assert _period_affinity("Q1-2024", "SRC_012_10-Q_Q3-2024.clean.md", "eps_basic") == 1
     assert _period_affinity("Q1-2024", "SRC_012_10-Q_Q3-2024.clean.md", "ingresos") == 1
+
+
+def test_additive_duplicate_candidate_can_replace_worse_existing_one():
+    phase = ExtractPhase()
+    metadata = SimpleNamespace(filing_type="10-K", scale="thousands", scale_confidence="high")
+    filing_path = _REPO_ROOT / "cases" / "ADTN" / "filings" / "SRC_001_10-K_FY2025.clean.md"
+    rules = phase._load_selection_rules()
+    audit = AuditLog()
+    period_fields = {"FY2024": {}}
+    additive_labels: dict[str, dict[str, set]] = {}
+
+    weaker = TableField(
+        label="Selling, general and administrative expenses",
+        value=25.2,
+        column_header="FY2024",
+        source_location="filing:table:income_statement:results_of_operations:tbl1:row11:col5",
+        raw_text="25.2",
+        col_label="FY2024",
+        table_title="income_statement:results_of_operations",
+        row_idx=11,
+        col_idx=5,
+        table_index=1,
+    )
+    stronger = TableField(
+        label="Selling, general and administrative expenses",
+        value=232918.0,
+        column_header="FY2024",
+        source_location="filing:table:income_statement:interest_and_dividend_income:tbl4:row11:col5",
+        raw_text="232,918",
+        col_label="FY2024",
+        table_title="income_statement:interest_and_dividend_income",
+        row_idx=11,
+        col_idx=5,
+        table_index=4,
+    )
+
+    phase._process_table_field(
+        weaker,
+        filing_path,
+        metadata,
+        metadata.scale,
+        metadata.scale_confidence,
+        rules,
+        audit,
+        period_fields,
+        additive_labels,
+    )
+    phase._process_table_field(
+        stronger,
+        filing_path,
+        metadata,
+        metadata.scale,
+        metadata.scale_confidence,
+        rules,
+        audit,
+        period_fields,
+        additive_labels,
+    )
+
+    picked = period_fields["FY2024"]["sga"]
+    assert picked.value == 232918.0
+    assert "interest_and_dividend_income" in picked.provenance.source_location
+
+
+def test_additive_duplicate_cannot_replace_aggregate_once_multiple_labels_exist():
+    phase = ExtractPhase()
+    metadata = SimpleNamespace(filing_type="10-K", scale="thousands", scale_confidence="high")
+    filing_path = _REPO_ROOT / "cases" / "ADTN" / "filings" / "SRC_001_10-K_FY2025.clean.md"
+    rules = phase._load_selection_rules()
+    audit = AuditLog()
+    period_fields = {"FY2024": {}}
+    additive_labels: dict[str, dict[str, set]] = {}
+
+    phase._process_table_field(
+        TableField(
+            label="Sales and marketing",
+            value=272124.0,
+            column_header="FY2024",
+            source_location="filing:table:income_statement:operating_income:tbl1:row5:col4",
+            raw_text="272,124",
+            col_label="FY2024",
+            table_title="income_statement:operating_income",
+            row_idx=5,
+            col_idx=4,
+            table_index=1,
+        ),
+        filing_path,
+        metadata,
+        metadata.scale,
+        metadata.scale_confidence,
+        rules,
+        audit,
+        period_fields,
+        additive_labels,
+    )
+    phase._process_table_field(
+        TableField(
+            label="General and administrative",
+            value=152828.0,
+            column_header="FY2024",
+            source_location="filing:table:income_statement:operating_income:tbl1:row6:col4",
+            raw_text="152,828",
+            col_label="FY2024",
+            table_title="income_statement:operating_income",
+            row_idx=6,
+            col_idx=4,
+            table_index=1,
+        ),
+        filing_path,
+        metadata,
+        metadata.scale,
+        metadata.scale_confidence,
+        rules,
+        audit,
+        period_fields,
+        additive_labels,
+    )
+    phase._process_table_field(
+        TableField(
+            label="General and administrative",
+            value=152828.0,
+            column_header="FY2024",
+            source_location="filing:table:income_statement:operating_income_(loss):tbl6:row7:col1",
+            raw_text="152,828",
+            col_label="FY2024",
+            table_title="income_statement:operating_income_(loss)",
+            row_idx=7,
+            col_idx=1,
+            table_index=6,
+        ),
+        filing_path,
+        metadata,
+        metadata.scale,
+        metadata.scale_confidence,
+        rules,
+        audit,
+        period_fields,
+        additive_labels,
+    )
+
+    picked = period_fields["FY2024"]["sga"]
+    assert picked.value == 424952.0
+
+
+def test_total_debt_discards_cash_flow_candidates():
+    phase = ExtractPhase()
+    metadata = SimpleNamespace(filing_type="10-Q", scale="thousands", scale_confidence="high")
+    filing_path = _REPO_ROOT / "cases" / "TALO" / "filings" / "SRC_018_10-Q_Q1-2022.clean.md"
+    rules = phase._load_selection_rules()
+    audit = AuditLog()
+    period_fields = {"Q1-2022": {}}
+    additive_labels: dict[str, dict[str, set]] = {}
+
+    phase._process_table_field(
+        TableField(
+            label="Redemption of senior notes and other long-term debt",
+            value=0.0,
+            column_header="Q1-2022",
+            source_location="SRC_018_10-Q_Q1-2022.clean.md:table:cash_flow:condensed_consolidated_statements_of_cash_flows:tbl19:row28:col1",
+            raw_text="0",
+            col_label="Q1-2022",
+            table_title="cash_flow",
+            row_idx=28,
+            col_idx=1,
+            table_index=19,
+        ),
+        filing_path,
+        metadata,
+        metadata.scale,
+        metadata.scale_confidence,
+        rules,
+        audit,
+        period_fields,
+        additive_labels,
+    )
+
+    assert "total_debt" not in period_fields["Q1-2022"]
+
+
+def test_working_capital_discards_income_statement_candidates():
+    phase = ExtractPhase()
+    metadata = SimpleNamespace(filing_type="10-K", scale="thousands", scale_confidence="high")
+    filing_path = _REPO_ROOT / "cases" / "ADTN" / "filings" / "SRC_005_10-K_FY2021.clean.md"
+    rules = phase._load_selection_rules()
+    audit = AuditLog()
+    period_fields = {"FY2019": {}}
+    additive_labels: dict[str, dict[str, set]] = {}
+
+    phase._process_table_field(
+        TableField(
+            label="Purchases of property, plant and equipment included in accounts payable",
+            value=90.0,
+            column_header="FY2019",
+            source_location="SRC_005_10-K_FY2021.clean.md:table:income_statement:net_(loss)_income:tbl11:row49:col10",
+            raw_text="90",
+            col_label="FY2019",
+            table_title="income_statement:net_(loss)_income",
+            row_idx=49,
+            col_idx=10,
+            table_index=11,
+        ),
+        filing_path,
+        metadata,
+        metadata.scale,
+        metadata.scale_confidence,
+        rules,
+        audit,
+        period_fields,
+        additive_labels,
+    )
+
+    assert "accounts_payable" not in period_fields["FY2019"]
 
 
 # ── Sort key ─────────────────────────────────────────────────────────
@@ -240,6 +471,21 @@ def test_extract_financial_highlights_dividends_per_share():
         "SRC_001_ANNUAL_REPORT_FY2024.txt:table:financial_highlights_dps:line141",
         "SRC_001_ANNUAL_REPORT_FY2024.txt:table:financial_highlights_dps:line142",
     ]
+
+
+def test_adtn_regression_prefers_primary_statement_candidates():
+    result = _case_extract("ADTN")
+
+    assert result.periods["FY2019"].fields["cost_of_revenue"].value == 310894.0
+    assert result.periods["FY2019"].fields["gross_profit"].value == 219167.0
+    assert result.periods["FY2019"].fields["research_and_development"].value == 126200.0
+    assert result.periods["FY2019"].fields["total_debt"].value == 24600.0
+    assert result.periods["FY2022"].fields["dividends_per_share"].value == 0.09
+    assert result.periods["FY2024"].fields["cfo"].value == 103571.0
+    assert result.periods["FY2024"].fields["capex"].value == -34501.0
+    assert result.periods["FY2024"].fields["inventories"].value == 261557.0
+    assert result.periods["FY2024"].fields["eps_basic"].value == -5.79
+    assert result.periods["FY2024"].fields["eps_diluted"].value == -5.79
 
 
 def test_extract_financial_highlights_dividends_per_share_accepts_auto_discovered_filename():

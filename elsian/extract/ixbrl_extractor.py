@@ -209,6 +209,7 @@ def make_ixbrl_sort_key(
     filing_stem: str,
     filing_rank: int,
     *,
+    affinity_override: int | None = None,
     was_rescaled: bool = False,
 ) -> tuple:
     """Build the sort key tuple for an iXBRL ``FieldResult``.
@@ -236,11 +237,20 @@ def make_ixbrl_sort_key(
             or a comparative source (affinity=1).
         filing_rank: Integer priority for the filing type, as returned by
             ``_filing_rank()`` in ``phase.py`` (lower = better).
+        affinity_override: Optional period affinity computed by the shared
+            extractor logic. When present, it replaces the filename-only
+            heuristic so iXBRL candidates participate in the same annual
+            primary-vs-comparative policy as table and narrative candidates.
+        was_rescaled: Whether the winning iXBRL fact had to be normalized from
+            a non-dominant monetary scale, weakening the sort key so an exact
+            table value from the same priority band can override it.
 
     Returns:
         Tuple compatible with the sort key used in collision resolution.
     """
-    affinity = 0 if period in filing_stem else 1
+    affinity = affinity_override if affinity_override is not None else (
+        0 if period in filing_stem else 1
+    )
     if was_rescaled:
         # Weaker key: ties with table (src_type_rank=0) but worst semantic
         # rank (9999) so that the table's more precise value wins.

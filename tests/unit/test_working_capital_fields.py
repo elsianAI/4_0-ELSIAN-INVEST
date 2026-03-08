@@ -99,6 +99,10 @@ def test_section_bonus_penalizes_working_capital_net_income_tables():
     assert _section_bonus(source_location, canonical="accounts_receivable") < 0
 
 
-def test_period_affinity_prefers_primary_filing_for_working_capital_fields():
+def test_period_affinity_prefers_primary_filing_for_trade_working_capital_fields():
     assert _period_affinity("FY2021", "SRC_006_10-K_FY2021.clean.md", "accounts_payable") == 0
     assert _period_affinity("FY2021", "SRC_005_10-K_FY2022.clean.md", "accounts_payable") == 1
+
+
+def test_period_affinity_allows_later_annual_inventory_comparatives():
+    assert _period_affinity("FY2021", "SRC_005_10-K_FY2022.clean.md", "inventories") == 0

@@ -32,10 +32,91 @@ _TYPE_PRIORITY = {
     "unknown": 4,
 }
 
+_EPS_FIELDS = {"eps_basic", "eps_diluted"}
+
 
 def _filing_priority(filing_type: str) -> int:
     """Get priority for a filing type (lower = better)."""
     return _TYPE_PRIORITY.get(filing_type, 4)
+
+
+def _should_keep_existing_eps_comparative(
+    field_name: str,
+    existing: FieldResult,
+    field_result: FieldResult,
+) -> bool:
+    """Keep near-identical newer EPS comparatives over older primaries.
+
+    Some issuers restate annual EPS in the next one or two filings without a
+    structural share-count rebasing event. In those cases the newer comparative
+    is a small numeric refinement and should stay. When the delta is large, the
+    newer comparative is more likely a stock-split / rebasing artifact and the
+    primary filing should replace it.
+    """
+    if field_name not in _EPS_FIELDS:
+        return False
+    existing_value = existing.value
+    new_value = field_result.value
+    if existing_value == 0 or new_value == 0:
+        return False
+    if existing_value * new_value < 0:
+        return False
+    relative_delta = abs(existing_value - new_value) / max(
+        abs(existing_value), abs(new_value)
+    )
+    return relative_delta <= 0.05
+
+
+def _eps_relative_delta(existing: FieldResult, field_result: FieldResult) -> float | None:
+    existing_value = existing.value
+    new_value = field_result.value
+    if existing_value == 0 or new_value == 0:
+        return None
+    return abs(existing_value - new_value) / max(
+        abs(existing_value), abs(new_value)
+    )
+
+
+def _prefer_eps_candidate(
+    period_key: str,
+    existing: FieldResult,
+    field_result: FieldResult,
+) -> str | None:
+    """Resolve same-priority EPS conflicts using source semantics."""
+    existing_filing = getattr(existing.provenance, "source_filing", "")
+    new_filing = getattr(field_result.provenance, "source_filing", "")
+    existing_loc = getattr(existing.provenance, "source_location", "").lower()
+    new_loc = getattr(field_result.provenance, "source_location", "").lower()
+    existing_primary = period_key in existing_filing
+    new_primary = period_key in new_filing
+    existing_weighted = (
+        "weighted_average_number_of_ordinary_shares_used_to_calculate" in existing_loc
+    )
+    new_weighted = (
+        "weighted_average_number_of_ordinary_shares_used_to_calculate" in new_loc
+    )
+
+    if existing_weighted != new_weighted:
+        return "new" if existing_weighted else "existing"
+
+    if _should_keep_existing_eps_comparative("eps_basic", existing, field_result):
+        return "existing"
+
+    relative_delta = _eps_relative_delta(existing, field_result)
+    if relative_delta is None:
+        return None
+
+    if existing_primary != new_primary and relative_delta >= 0.25:
+        if not existing_primary and (
+            ":ixbrl:" in existing_loc or existing_weighted
+        ):
+            return "new"
+        if not new_primary and (
+            ":ixbrl:" in new_loc or new_weighted
+        ):
+            return "existing"
+
+    return None
 
 
 def merge_extractions(
@@ -101,21 +182,42 @@ def merge_extractions(
                             and len(existing_sk) > 3
                             and len(new_sk) > 3
                         ):
-                            # 1) Affinity wins: primary filing beats
-                            #    comparative (affinity 0 < 1).
-                            if new_sk[1] < existing_sk[1]:
-                                merged_periods[period_key][
-                                    field_name
-                                ] = field_result
-                            # 2) Same affinity, but existing comes from a
-                            #    deprioritized section (semantic_rank > 0
-                            #    implies section_bonus < 0).  Allow a
-                            #    better-quality candidate to replace it.
+                            handled_eps = False
+                            if field_name in _EPS_FIELDS:
+                                eps_preference = _prefer_eps_candidate(
+                                    period_key, existing, field_result
+                                )
+                                if eps_preference == "new":
+                                    merged_periods[period_key][
+                                        field_name
+                                    ] = field_result
+                                    handled_eps = True
+                                elif eps_preference == "existing":
+                                    handled_eps = True
+                                # Else fall through to the generic sort-key
+                                # policy below.
+                            if not handled_eps and new_sk[1] < existing_sk[1]:
+                                # 1) Affinity wins: primary filing beats
+                                #    comparative (affinity 0 < 1).
+                                if _should_keep_existing_eps_comparative(
+                                    field_name, existing, field_result
+                                ):
+                                    pass
+                                else:
+                                    merged_periods[period_key][
+                                        field_name
+                                    ] = field_result
                             elif (
+                                not handled_eps
+                                and
                                 new_sk[1] == existing_sk[1]
                                 and existing_sk[3] > 0
                                 and new_sk[3] < existing_sk[3]
                             ):
+                                # 2) Same affinity, but existing comes from a
+                                #    deprioritized section (semantic_rank > 0
+                                #    implies section_bonus < 0).  Allow a
+                                #    better-quality candidate to replace it.
                                 merged_periods[period_key][
                                     field_name
                                 ] = field_result

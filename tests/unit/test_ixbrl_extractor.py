@@ -390,6 +390,15 @@ class TestMakeIxbrlSortKey:
         sk = make_ixbrl_sort_key("FY2023", "SRC_001_10-K_FY2024", 1)
         assert sk[1] == 1
 
+    def test_affinity_override_wins_over_filename_heuristic(self):
+        sk = make_ixbrl_sort_key(
+            "FY2023",
+            "SRC_001_10-K_FY2024",
+            1,
+            affinity_override=0,
+        )
+        assert sk[1] == 0
+
     def test_filing_rank_is_preserved(self):
         for rank in (1, 2, 3):
             sk = make_ixbrl_sort_key("FY2024", "SRC_001_10-K_FY2024", rank)
