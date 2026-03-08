@@ -83,6 +83,11 @@ def _prefer_eps_candidate(
     field_result: FieldResult,
 ) -> str | None:
     """Resolve same-priority EPS conflicts using source semantics."""
+    existing_restated = getattr(existing, "_is_explicit_restatement", False)
+    new_restated = getattr(field_result, "_is_explicit_restatement", False)
+    if existing_restated != new_restated:
+        return "new" if new_restated else "existing"
+
     existing_filing = getattr(existing.provenance, "source_filing", "")
     new_filing = getattr(field_result.provenance, "source_filing", "")
     existing_loc = getattr(existing.provenance, "source_location", "").lower()

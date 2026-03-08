@@ -1,12 +1,16 @@
 """Tests for ExtractPhase sign normalization and helper functions."""
 
+import json
 from functools import lru_cache
 from pathlib import Path
+import shutil
 from types import SimpleNamespace
 
 from elsian.extract.html_tables import TableField
 from elsian.extract.phase import (
     ExtractPhase,
+    _candidate_allows_total_equity_restatement_affinity,
+    _has_explicit_restatement_signal,
     _normalize_sign,
     _section_bonus,
     _filing_rank,
@@ -146,6 +150,45 @@ def test_pick_total_liabilities_bridge_components_prefers_smallest_matching_subs
     ]
 
 
+def test_pick_total_liabilities_bridge_components_ignores_total_equity_with_nci_label():
+    fields = [
+        TableField(
+            label="Total liabilities",
+            value=675765.0,
+            column_header="Q1-2023",
+            source_location="filing:table:balance_sheet:tbl1:row0",
+            raw_text="Total liabilities 675,765",
+            col_label="Q1-2023",
+            table_title="balance_sheet",
+            row_idx=0,
+            col_idx=1,
+            table_index=1,
+        ),
+        TableField(
+            label="Stockholders' equity including portion attributable to noncontrolling interest",
+            value=442668.0,
+            column_header="Q1-2023",
+            source_location="filing:table:balance_sheet:tbl1:row1",
+            raw_text="Stockholders' equity including portion attributable to noncontrolling interest 442,668",
+            col_label="Q1-2023",
+            table_title="balance_sheet",
+            row_idx=1,
+            col_idx=1,
+            table_index=1,
+        ),
+    ]
+
+    picked = _pick_total_liabilities_bridge_components(
+        fields,
+        "Q1-2023",
+        442668.0,
+        675765.0,
+        "filing:table:balance_sheet:tbl1:row0",
+    )
+
+    assert picked == []
+
+
 # ── Filing rank ──────────────────────────────────────────────────────
 
 def test_filing_rank_with_rules():
@@ -217,6 +260,87 @@ def test_period_affinity_q_comparative():
     """Q periods: comparative filing → affinity 1 for ALL fields."""
     assert _period_affinity("Q1-2024", "SRC_012_10-Q_Q3-2024.clean.md", "eps_basic") == 1
     assert _period_affinity("Q1-2024", "SRC_012_10-Q_Q3-2024.clean.md", "ingresos") == 1
+
+
+def test_period_affinity_q_restatement_comparative_can_tie_primary():
+    """Restated quarterlies can tie on affinity; source-aware filters decide."""
+    assert _period_affinity(
+        "Q1-2024",
+        "SRC_009_10-Q_Q1-2025.clean.md",
+        "accounts_receivable",
+        restatement_detected=True,
+    ) == 0
+    assert _period_affinity(
+        "Q1-2023",
+        "SRC_010_10-Q_Q3-2024.clean.md",
+        "eps_basic",
+        restatement_detected=True,
+    ) == 0
+    assert _period_affinity(
+        "Q1-2024",
+        "SRC_009_10-Q_Q1-2025.clean.md",
+        "total_equity",
+        restatement_detected=True,
+    ) == 0
+
+
+def test_has_explicit_restatement_signal_requires_high_or_paired_medium_markers():
+    assert _has_explicit_restatement_signal(
+        SimpleNamespace(
+            restatement_detected=True,
+            restatement_signals=[
+                {"confidence": "medium", "pattern": r"\bpreviously\s+reported\b"},
+            ],
+        )
+    ) is False
+    assert _has_explicit_restatement_signal(
+        SimpleNamespace(
+            restatement_detected=True,
+            restatement_signals=[
+                {"confidence": "medium", "pattern": r"\bpreviously\s+reported\b"},
+                {"confidence": "medium", "pattern": r"\breclassif(?:ied|ication)\b"},
+            ],
+        )
+    ) is True
+
+
+def test_period_affinity_q_restatement_net_income_requires_same_quarter():
+    assert _period_affinity(
+        "Q1-2023",
+        "SRC_010_10-Q_Q3-2024.clean.md",
+        "net_income",
+        restatement_detected=True,
+    ) == 1
+    assert _period_affinity(
+        "Q1-2024",
+        "SRC_009_10-Q_Q1-2025.clean.md",
+        "net_income",
+        restatement_detected=True,
+    ) == 0
+
+
+def test_total_equity_restatement_affinity_requires_balance_sheet_context():
+    assert _candidate_allows_total_equity_restatement_affinity(
+        "total_equity",
+        "Q1-2024",
+        "SRC_009_10-Q_Q1-2025.clean.md",
+        "table",
+        "SRC_009_10-Q_Q1-2025.clean.md:table:balance_sheet:condensed_consolidated_balance_sheets:tbl2:row20:col3",
+    ) is True
+    assert _candidate_allows_total_equity_restatement_affinity(
+        "total_equity",
+        "Q1-2024",
+        "SRC_009_10-Q_Q1-2025.clean.md",
+        "table",
+        "SRC_009_10-Q_Q1-2025.clean.md:table:equity:condensed_consolidated_statements_of_stockholders_equity:tbl7:row20:col3",
+    ) is False
+    assert _candidate_allows_total_equity_restatement_affinity(
+        "total_equity",
+        "Q1-2024",
+        "SRC_009_10-Q_Q1-2025.clean.md",
+        "narrative",
+        "SRC_009_10-Q_Q1-2025.clean.md:narrative:char1200",
+    ) is False
 
 
 def test_additive_duplicate_candidate_can_replace_worse_existing_one():
@@ -359,6 +483,143 @@ def test_additive_duplicate_cannot_replace_aggregate_once_multiple_labels_exist(
 
     picked = period_fields["FY2024"]["sga"]
     assert picked.value == 424952.0
+
+
+def test_process_table_field_restated_total_equity_invalid_table_keeps_primary():
+    phase = ExtractPhase()
+    metadata = SimpleNamespace(filing_type="10-Q", scale="thousands", scale_confidence="high")
+    rules = phase._load_selection_rules()
+    audit = AuditLog()
+    period_fields = {"Q1-2024": {}}
+    additive_labels: dict[str, dict[str, set]] = {}
+
+    primary_filing = Path("SRC_012_10-Q_Q1-2024.clean.md")
+    phase._process_table_field(
+        TableField(
+            label="Total Equity",
+            value=260849.0,
+            column_header="Q1-2024",
+            source_location="SRC_012_10-Q_Q1-2024.clean.md:table:balance_sheet:condensed_consolidated_balance_sheets:tbl1:row41:col2",
+            raw_text="260,849",
+            col_label="Q1-2024",
+            table_title="balance_sheet:condensed_consolidated_balance_sheets",
+            row_idx=41,
+            col_idx=2,
+            table_index=1,
+        ),
+        primary_filing,
+        metadata,
+        metadata.scale,
+        metadata.scale_confidence,
+        rules,
+        audit,
+        period_fields,
+        additive_labels,
+    )
+
+    phase._process_table_field(
+        TableField(
+            label="Total stockholders' equity",
+            value=265783.0,
+            column_header="Q1-2024",
+            source_location="SRC_009_10-Q_Q1-2025.clean.md:table:equity:condensed_consolidated_statements_of_stockholders_equity:tbl7:row20:col3",
+            raw_text="265,783",
+            col_label="Q1-2024",
+            table_title="equity:condensed_consolidated_statements_of_stockholders_equity",
+            row_idx=20,
+            col_idx=3,
+            table_index=7,
+        ),
+        Path("SRC_009_10-Q_Q1-2025.clean.md"),
+        metadata,
+        metadata.scale,
+        metadata.scale_confidence,
+        rules,
+        audit,
+        period_fields,
+        additive_labels,
+        preflight_result=SimpleNamespace(
+            restatement_detected=True,
+            restatement_signals=[{"confidence": "high", "pattern": r"\brestated\b"}],
+            currency="USD",
+            accounting_standard="US_GAAP",
+            units_by_section={},
+            units_global={},
+        ),
+    )
+
+    picked = period_fields["Q1-2024"]["total_equity"]
+    assert picked.value == 260849.0
+    assert picked.provenance.source_filing == "SRC_012_10-Q_Q1-2024.clean.md"
+
+
+def test_process_table_field_restated_total_equity_balance_sheet_table_can_replace_primary():
+    phase = ExtractPhase()
+    metadata = SimpleNamespace(filing_type="10-Q", scale="thousands", scale_confidence="high")
+    rules = phase._load_selection_rules()
+    audit = AuditLog()
+    period_fields = {"Q1-2024": {}}
+    additive_labels: dict[str, dict[str, set]] = {}
+
+    primary_filing = Path("SRC_012_10-Q_Q1-2024.clean.md")
+    phase._process_table_field(
+        TableField(
+            label="Total Equity",
+            value=265783.0,
+            column_header="Q1-2024",
+            source_location="SRC_012_10-Q_Q1-2024.clean.md:table:balance_sheet:condensed_consolidated_balance_sheets:tbl1:row41:col2",
+            raw_text="265,783",
+            col_label="Q1-2024",
+            table_title="balance_sheet:condensed_consolidated_balance_sheets",
+            row_idx=41,
+            col_idx=2,
+            table_index=1,
+        ),
+        primary_filing,
+        metadata,
+        metadata.scale,
+        metadata.scale_confidence,
+        rules,
+        audit,
+        period_fields,
+        additive_labels,
+    )
+
+    phase._process_table_field(
+        TableField(
+            label="Total Equity",
+            value=260849.0,
+            column_header="Q1-2024",
+            source_location="SRC_009_10-Q_Q1-2025.clean.md:table:balance_sheet:condensed_consolidated_balance_sheets:tbl2:row41:col4",
+            raw_text="260,849",
+            col_label="Q1-2024",
+            table_title="balance_sheet:condensed_consolidated_balance_sheets",
+            row_idx=41,
+            col_idx=4,
+            table_index=2,
+        ),
+        Path("SRC_009_10-Q_Q1-2025.clean.md"),
+        metadata,
+        metadata.scale,
+        metadata.scale_confidence,
+        rules,
+        audit,
+        period_fields,
+        additive_labels,
+        preflight_result=SimpleNamespace(
+            restatement_detected=True,
+            restatement_signals=[{"confidence": "high", "pattern": r"\brestated\b"}],
+            currency="USD",
+            accounting_standard="US_GAAP",
+            units_by_section={},
+            units_global={},
+        ),
+    )
+
+    picked = period_fields["Q1-2024"]["total_equity"]
+    assert picked.value == 260849.0
+    assert picked.provenance.source_filing == "SRC_009_10-Q_Q1-2025.clean.md"
+    assert getattr(picked, "_is_explicit_restatement", False) is True
 
 
 def test_total_debt_discards_cash_flow_candidates():
@@ -547,6 +808,21 @@ def test_extract_phase_gct_prefers_monetary_da_over_per_share_artifact():
     assert result.periods["Q3-2025"].fields["depreciation_amortization"].value == 2115.0
 
 
+def test_extract_phase_adtn_keeps_q1_q2_2023_net_income_on_same_quarter_sources():
+    result = _case_extract("ADTN")
+
+    assert result.periods["Q1-2023"].fields["net_income"].value == -40453.0
+    assert result.periods["Q2-2023"].fields["net_income"].value == -36215.0
+
+
+def test_extract_phase_adtn_rejects_oci_revision_total_liabilities_tables():
+    result = _case_extract("ADTN")
+
+    assert result.periods["Q1-2023"].fields["total_liabilities"].value == 675765.0
+    assert result.periods["Q2-2023"].fields["total_liabilities"].value == 655006.0
+    assert result.periods["Q3-2023"].fields["total_liabilities"].value == 625355.0
+
+
 def test_extract_phase_gct_total_liabilities_absorbs_mezzanine_equity():
     result = _case_extract("GCT")
 
@@ -562,3 +838,37 @@ def test_extract_phase_tzoo_total_liabilities_absorbs_non_controlling_interest()
     assert result.periods["Q2-2022"].fields["total_liabilities"].value == 77049.0
     assert result.periods["Q3-2022"].fields["total_liabilities"].value == 67704.0
     assert result.periods["Q1-2023"].fields["total_liabilities"].value == 58048.0
+
+
+def test_extract_phase_tzoo_keeps_primary_total_equity_over_restated_rollforward():
+    result = _case_extract("TZOO")
+
+    assert result.periods["Q1-2022"].fields["total_equity"].value == -1469.0
+    assert result.periods["Q2-2022"].fields["total_equity"].value == 1431.0
+    assert result.periods["Q3-2022"].fields["total_equity"].value == 616.0
+
+
+def test_extract_phase_adtn_full_prefers_restated_quarters_and_preserves_da_scale(
+    tmp_path: Path,
+):
+    src = _REPO_ROOT / "cases" / "ADTN"
+    dst = tmp_path / "ADTN"
+    shutil.copytree(src, dst)
+
+    case_config = json.loads((dst / "case.json").read_text(encoding="utf-8"))
+    case_config["period_scope"] = "FULL"
+    (dst / "case.json").write_text(
+        json.dumps(case_config, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    result = ExtractPhase().extract(str(dst))
+
+    assert result.periods["Q1-2023"].fields["eps_basic"].value == -0.51
+    assert result.periods["Q1-2024"].fields["accounts_receivable"].value == 191052.0
+    assert result.periods["Q3-2023"].fields["total_equity"].value == 675651.0
+    assert result.periods["Q1-2024"].fields["total_equity"].value == 260849.0
+    assert result.periods["Q2-2024"].fields["total_equity"].value == 213628.0
+    assert result.periods["Q3-2024"].fields["total_equity"].value == 205578.0
+    assert result.periods["Q3-2024"].fields["total_liabilities"].value == 638536.0
+    assert result.periods["Q2-2025"].fields["depreciation_amortization"].value == 7.6

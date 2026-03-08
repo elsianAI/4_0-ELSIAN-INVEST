@@ -468,6 +468,12 @@ def _pick_total_liabilities_bridge_components(
             continue
 
         label_lower = rtf.label.lower()
+        if (
+            "stockholders" in label_lower or "shareholders" in label_lower
+        ) and "equity" in label_lower:
+            continue
+        if "including portion attributable to noncontrolling interest" in label_lower:
+            continue
         if "total liabilities" in label_lower and any(
             token in label_lower
             for token in ("equity", "stockholders", "shareholders")
@@ -482,6 +488,8 @@ def _pick_total_liabilities_bridge_components(
         elif re.search(r"\bnon[- ]?controlling\s+interest\b", label_lower):
             component_kind = "non_controlling_interest"
         else:
+            continue
+        if component_kind == "redeemable_nci" and period_key.startswith("Q"):
             continue
 
         dedup_key = (component_kind, float(rtf.value), rtf.source_location)
@@ -593,6 +601,7 @@ _SUPPLEMENTAL_PRONE_FIELDS: frozenset = frozenset({"net_income"})
 
 _FY_YEAR_RE = re.compile(r"FY(\d{4})")
 _GENERIC_YEAR_RE = re.compile(r"(?<!\d)(20\d{2})(?!\d)")
+_QUARTER_TOKEN_RE = re.compile(r"Q([1-4])(?:[-_](20\d{2}))?")
 _STANDALONE_NET_RESULT_RE = re.compile(
     r"^net\s+(?:income|loss)(?:\s*\(loss\))?\s*$",
     re.I,
@@ -630,8 +639,98 @@ def _extract_fy_year(s: str) -> int | None:
     return int(years[-1]) if years else None
 
 
+def _has_explicit_restatement_signal(pf: Optional[PreflightResult]) -> bool:
+    """Return True only for explicit restatement / revision evidence."""
+    if pf is None or not pf.restatement_detected:
+        return False
+    if any(
+        signal.get("confidence") == "high"
+        for signal in pf.restatement_signals
+    ):
+        return True
+    medium_patterns = {
+        signal.get("pattern", "")
+        for signal in pf.restatement_signals
+        if signal.get("confidence") == "medium"
+    }
+    return (
+        any("previously\\s+reported" in pattern for pattern in medium_patterns)
+        and any("reclassif" in pattern for pattern in medium_patterns)
+    )
+
+
+def _mark_explicit_restatement_candidate(
+    fr: FieldResult,
+    period_key: str,
+    source_filing: str,
+    *,
+    restatement_detected: bool,
+) -> None:
+    """Annotate later comparative candidates from explicitly restated filings."""
+    fr._is_explicit_restatement = bool(  # type: ignore[attr-defined]
+        restatement_detected
+        and period_key.startswith(("Q", "H"))
+        and period_key not in source_filing
+    )
+
+
+def _candidate_allows_total_equity_restatement_affinity(
+    canonical_field: str | None,
+    period_key: str,
+    source_filing: str,
+    source_type: str,
+    source_location: str,
+    *,
+    ixbrl_total_equity_context: str = "",
+) -> bool:
+    """Return whether a restated quarterly equity candidate may tie primary."""
+    if canonical_field != "total_equity":
+        return True
+    if not period_key.startswith(("Q", "H")):
+        return True
+    if period_key in source_filing:
+        return True
+    if source_type == "ixbrl":
+        return ixbrl_total_equity_context == "balance_sheet_restatement"
+    if source_type == "narrative":
+        return False
+    return _is_balance_sheet_source(source_location)
+
+
+def _candidate_restatement_detected(
+    *,
+    canonical_field: str | None,
+    period_key: str,
+    source_filing: str,
+    source_type: str,
+    source_location: str,
+    preflight_result: Optional[PreflightResult],
+    ixbrl_total_equity_context: str = "",
+) -> bool:
+    """Return whether explicit-restatement affinity should apply here."""
+    if not _has_explicit_restatement_signal(preflight_result):
+        return False
+    return _candidate_allows_total_equity_restatement_affinity(
+        canonical_field,
+        period_key,
+        source_filing,
+        source_type,
+        source_location,
+        ixbrl_total_equity_context=ixbrl_total_equity_context,
+    )
+
+
+def _extract_quarter_token(s: str) -> int | None:
+    """Parse the quarter number from a period key or filing stem."""
+    m = _QUARTER_TOKEN_RE.search(s)
+    if not m:
+        return None
+    return int(m.group(1))
+
+
 def _period_affinity(period_key: str, source_filing: str,
-                     canonical_field: str | None = None) -> int:
+                     canonical_field: str | None = None,
+                     restatement_detected: bool = False) -> int:
     """Return 0 when the filing is the best source for *period_key*, else 1.
 
     **FY periods — split-sensitive fields** (shares, debt snapshots, trade
@@ -649,9 +748,13 @@ def _period_affinity(period_key: str, source_filing: str,
     restatements / reclassifications in newer comparative columns are
     picked up automatically.
 
-    **Quarterly periods**: always prefer the primary filing regardless of
-    field, because quarterly values vary across filings (3-month vs YTD
-    cumulative in 10-Q comparatives).
+    **Quarterly periods**: prefer the primary filing by default.  However,
+    when preflight has already detected an explicit restatement / revision in
+    the later filing, allow that comparative to compete on equal affinity for
+    prior-year values carried inside the next year's quarterly comparatives.
+    ``net_income`` remains same-quarter-only because later Q3 filings can
+    carry Q1/Q2 YTD net-income derivations that are not directly comparable to
+    the original standalone quarter.
     """
     if period_key.startswith("FY"):
         if canonical_field and canonical_field not in _SPLIT_SENSITIVE_FIELDS:
@@ -672,9 +775,28 @@ def _period_affinity(period_key: str, source_filing: str,
         if fy_tag in source_filing:
             return 0
         return 1
-    # Quarterly: always prefer primary filing
+    # Quarterly: prefer primary filing unless the later filing explicitly
+    # restates / revises the prior-year comparative.
     if period_key in source_filing:
         return 0
+    if restatement_detected:
+        period_year = _extract_fy_year(period_key)
+        filing_year = _extract_fy_year(source_filing)
+        if (
+            period_year is not None
+            and filing_year is not None
+            and 0 < filing_year - period_year <= 1
+        ):
+            if canonical_field == "net_income":
+                period_quarter = _extract_quarter_token(period_key)
+                filing_quarter = _extract_quarter_token(source_filing)
+                if (
+                    period_quarter is not None
+                    and filing_quarter is not None
+                    and period_quarter != filing_quarter
+                ):
+                    return 1
+            return 0
     return 1
 
 
@@ -759,6 +881,7 @@ def compute_sort_key(
     source_location: str,
     rules: Optional[Dict] = None,
     canonical_field: str | None = None,
+    restatement_detected: bool = False,
 ) -> Tuple:
     """Compute a comparable sort key for collision resolution.
 
@@ -770,7 +893,12 @@ def compute_sort_key(
     5. stable_order
     """
     fr = _filing_rank(period_key, filing_type, rules)
-    affinity = _period_affinity(period_key, source_filing, canonical_field)
+    affinity = _period_affinity(
+        period_key,
+        source_filing,
+        canonical_field,
+        restatement_detected=restatement_detected,
+    )
     src_rank = _source_type_rank(source_type, rules)
     semantic_rank = -(label_priority + section_bonus_val)
     stable = _parse_stable_order(source_filing, source_location, rules)
@@ -1071,14 +1199,41 @@ class ExtractPhase(PipelinePhase):
                 _fr_rank = _filing_rank(_period, metadata.filing_type, rules)
                 for _field_name, _fr in _fields.items():
                     _was_rescaled = getattr(_fr, "_ixbrl_was_rescaled", False)
+                    _candidate_restated = _candidate_restatement_detected(
+                        canonical_field=_field_name,
+                        period_key=_period,
+                        source_filing=_htm_path.stem,
+                        source_type="ixbrl",
+                        source_location=getattr(
+                            _fr.provenance,
+                            "source_location",
+                            "",
+                        ),
+                        preflight_result=preflight_result,
+                        ixbrl_total_equity_context=getattr(
+                            _fr,
+                            "_ixbrl_total_equity_context",
+                            "",
+                        ),
+                    )
+                    _affinity_override = _period_affinity(
+                        _period,
+                        _htm_path.stem,
+                        _field_name,
+                        restatement_detected=_candidate_restated,
+                    )
                     _ixbrl_sk = make_ixbrl_sort_key(
                         _period, _htm_path.stem, _fr_rank,
-                        affinity_override=_period_affinity(
-                            _period, _htm_path.stem, _field_name
-                        ),
+                        affinity_override=_affinity_override,
                         was_rescaled=_was_rescaled,
                     )
                     _fr._sort_key = _ixbrl_sk  # type: ignore[attr-defined]
+                    _mark_explicit_restatement_candidate(
+                        _fr,
+                        _period,
+                        _htm_path.stem,
+                        restatement_detected=_candidate_restated,
+                    )
                     period_fields[_period][_field_name] = _fr
                     audit.accept(
                         field_name=_field_name,
@@ -1280,6 +1435,14 @@ class ExtractPhase(PipelinePhase):
                 if canonical in {"total_assets", "total_liabilities", "total_equity"}
                 else 0
             )
+            candidate_restated = _candidate_restatement_detected(
+                canonical_field=canonical,
+                period_key=period_key,
+                source_filing=filing_path.name,
+                source_type="table",
+                source_location=tf.source_location,
+                preflight_result=preflight_result,
+            )
 
             new_sort_key = compute_sort_key(
                 period_key=period_key,
@@ -1291,6 +1454,7 @@ class ExtractPhase(PipelinePhase):
                 source_location=tf.source_location,
                 rules=rules,
                 canonical_field=canonical,
+                restatement_detected=candidate_restated,
             )
 
             if period_key not in period_fields:
@@ -1327,6 +1491,12 @@ class ExtractPhase(PipelinePhase):
                 extraction_method="table",
             )
             fr._sort_key = new_sort_key  # type: ignore[attr-defined]
+            _mark_explicit_restatement_candidate(
+                fr,
+                period_key,
+                filing_path.name,
+                restatement_detected=candidate_restated,
+            )
             period_fields[period_key][canonical] = fr
             audit.accept(
                 field_name=canonical,
@@ -1398,6 +1568,14 @@ class ExtractPhase(PipelinePhase):
                 period_fields[period_key] = {}
 
             new_lp = self._alias_resolver.label_priority(canonical, nf.label)
+            candidate_restated = _candidate_restatement_detected(
+                canonical_field=canonical,
+                period_key=period_key,
+                source_filing=filing_path.name,
+                source_type="narrative",
+                source_location=nf.source_location,
+                preflight_result=preflight_result,
+            )
             new_sk = compute_sort_key(
                 period_key=period_key,
                 filing_type=metadata.filing_type,
@@ -1408,6 +1586,7 @@ class ExtractPhase(PipelinePhase):
                 source_location=nf.source_location,
                 rules=rules,
                 canonical_field=canonical,
+                restatement_detected=candidate_restated,
             )
             if canonical in period_fields[period_key]:
                 existing = period_fields[period_key][canonical]
@@ -1428,6 +1607,12 @@ class ExtractPhase(PipelinePhase):
                 extraction_method="narrative",
             )
             fr._sort_key = new_sk  # type: ignore[attr-defined]
+            _mark_explicit_restatement_candidate(
+                fr,
+                period_key,
+                filing_path.name,
+                restatement_detected=candidate_restated,
+            )
             period_fields[period_key][canonical] = fr
             audit.accept(
                 field_name=canonical, period=period_key,
@@ -1556,6 +1741,57 @@ class ExtractPhase(PipelinePhase):
                 scale=scale,
             )
             return
+        if (
+            canonical == "total_liabilities"
+            and ":income_statement:" in tf.source_location.lower()
+        ):
+            audit.discard(
+                field_name=canonical,
+                period=tf.column_header,
+                reason="income_statement_liabilities_not_balance",
+                source_filing=filing_path.name,
+                raw_label=tf.label,
+                raw_value=tf.value,
+                scale=scale,
+            )
+            return
+        if (
+            canonical == "total_liabilities"
+            and any(
+                token in tf.label.lower()
+                for token in ("equity", "stockholders", "shareholders")
+            )
+        ):
+            audit.discard(
+                field_name=canonical,
+                period=tf.column_header,
+                reason="liabilities_plus_equity_total_not_liabilities",
+                source_filing=filing_path.name,
+                raw_label=tf.label,
+                raw_value=tf.value,
+                scale=scale,
+            )
+            return
+        if (
+            canonical == "total_liabilities"
+            and any(
+                marker in tf.source_location.lower()
+                for marker in (
+                    ":income_statement:accumulated_other_comprehensive_income:",
+                    ":income_statement:less:_net_income_attributable_to_non-controlling_interest:",
+                )
+            )
+        ):
+            audit.discard(
+                field_name=canonical,
+                period=tf.column_header,
+                reason="income_statement_total_liabilities_not_balance",
+                source_filing=filing_path.name,
+                raw_label=tf.label,
+                raw_value=tf.value,
+                scale=scale,
+            )
+            return
 
         period_key = tf.column_header
         if not period_key or period_key == "unknown":
@@ -1597,6 +1833,14 @@ class ExtractPhase(PipelinePhase):
             tf.value,
             scale,
         )
+        candidate_restated = _candidate_restatement_detected(
+            canonical_field=canonical,
+            period_key=period_key,
+            source_filing=filing_path.name,
+            source_type=source_type,
+            source_location=tf.source_location,
+            preflight_result=preflight_result,
+        )
         new_sk = compute_sort_key(
             period_key=period_key,
             filing_type=metadata.filing_type,
@@ -1607,6 +1851,7 @@ class ExtractPhase(PipelinePhase):
             source_location=tf.source_location,
             rules=rules,
             canonical_field=canonical,
+            restatement_detected=candidate_restated,
         )
 
         if canonical in period_fields[period_key]:
@@ -1707,6 +1952,12 @@ class ExtractPhase(PipelinePhase):
             extraction_method=_ext_method,
         )
         fr._sort_key = new_sk  # type: ignore[attr-defined]
+        _mark_explicit_restatement_candidate(
+            fr,
+            period_key,
+            filing_path.name,
+            restatement_detected=candidate_restated,
+        )
 
         # Populate preflight metadata on provenance
         if preflight_result is not None:

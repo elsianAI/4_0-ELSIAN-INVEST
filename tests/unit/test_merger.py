@@ -154,3 +154,21 @@ def test_merge_eps_replaces_weighted_average_disclosure_with_primary():
     )
 
     assert result.periods["FY2023"].fields["eps_basic"].value == -0.3
+
+
+def test_merge_eps_prefers_explicit_restatement_candidate():
+    primary = _make_fr(-0.44, "SRC_015_10-Q_Q1-2023.htm")
+    primary._sort_key = (0, 0, -1, -9999, ("", 0, 0, 0))
+    restated = _make_fr(-0.51, "SRC_010_10-Q_Q3-2024.htm")
+    restated._sort_key = (0, 0, -1, -9999, ("", 0, 0, 0))
+    restated._is_explicit_restatement = True
+
+    result = merge_extractions(
+        [
+            ("10-Q", "SRC_015_10-Q_Q1-2023.htm", {"Q1-2023": {"eps_basic": primary}}),
+            ("10-Q", "SRC_010_10-Q_Q3-2024.htm", {"Q1-2023": {"eps_basic": restated}}),
+        ],
+        ticker="TEST",
+    )
+
+    assert result.periods["Q1-2023"].fields["eps_basic"].value == -0.51

@@ -122,6 +122,72 @@ _NVDA_STYLE_IXBRL = textwrap.dedent("""\
     </html>
 """)
 
+_MIXED_SCALE_DA_IXBRL = textwrap.dedent("""\
+    <?xml version='1.0' encoding='ASCII'?>
+    <html xmlns:ix="http://www.xbrl.org/2013/inlineXBRL"
+          xmlns:xbrli="http://www.xbrl.org/2003/instance"
+          xmlns:us-gaap="http://fasb.org/us-gaap/2024"
+          xml:lang="en-US">
+    <head><title>Mixed-scale D&A</title></head>
+    <body>
+    <div style="display:none">
+    <ix:header>
+    <ix:resources>
+    <xbrli:context id="c-current">
+      <xbrli:entity>
+        <xbrli:identifier scheme="http://www.sec.gov/CIK">0000000000</xbrli:identifier>
+      </xbrli:entity>
+      <xbrli:period>
+        <xbrli:startDate>2025-04-01</xbrli:startDate>
+        <xbrli:endDate>2025-06-30</xbrli:endDate>
+      </xbrli:period>
+    </xbrli:context>
+    </ix:resources>
+    </ix:header>
+    </div>
+    <p>
+    Revenue: <ix:nonFraction unitRef="usd" contextRef="c-current" decimals="-3"
+        name="us-gaap:Revenues" scale="3" id="f-1">144,732</ix:nonFraction>
+    D&amp;A: <ix:nonFraction unitRef="usd" contextRef="c-current" decimals="-5"
+        name="us-gaap:DepreciationAndAmortization" scale="6" id="f-2">7.6</ix:nonFraction>
+    </p>
+    </body>
+    </html>
+""")
+
+_MIXED_SCALE_DURATION_DA_IXBRL = textwrap.dedent("""\
+    <?xml version='1.0' encoding='ASCII'?>
+    <html xmlns:ix="http://www.xbrl.org/2013/inlineXBRL"
+          xmlns:xbrli="http://www.xbrl.org/2003/instance"
+          xmlns:us-gaap="http://fasb.org/us-gaap/2024"
+          xml:lang="en-US">
+    <head><title>Mixed-scale duration D&A</title></head>
+    <body>
+    <div style="display:none">
+    <ix:header>
+    <ix:resources>
+    <xbrli:context id="Duration_4_1_2025_To_6_30_2025_ctx">
+      <xbrli:entity>
+        <xbrli:identifier scheme="http://www.sec.gov/CIK">0000000000</xbrli:identifier>
+      </xbrli:entity>
+      <xbrli:period>
+        <xbrli:startDate>2025-04-01</xbrli:startDate>
+        <xbrli:endDate>2025-06-30</xbrli:endDate>
+      </xbrli:period>
+    </xbrli:context>
+    </ix:resources>
+    </ix:header>
+    </div>
+    <p>
+    Revenue: <ix:nonFraction unitRef="usd" contextRef="Duration_4_1_2025_To_6_30_2025_ctx" decimals="-3"
+        name="us-gaap:Revenues" scale="3" id="f-1">144,732</ix:nonFraction>
+    D&amp;A: <ix:nonFraction unitRef="usd" contextRef="Duration_4_1_2025_To_6_30_2025_ctx" decimals="-5"
+        name="us-gaap:DepreciationAndAmortization" scale="6" id="f-2">7.6</ix:nonFraction>
+    </p>
+    </body>
+    </html>
+""")
+
 PLAIN_HTML = "<html><head></head><body><p>No iXBRL here</p></body></html>"
 
 
@@ -137,6 +203,20 @@ def nvda_q1_file(tmp_path: Path) -> Path:
     """Simulates NVDA's Q1 FY2023 10-Q (period ending May 1, 2022)."""
     fp = tmp_path / "SRC_018_10-Q_Q2-2022.htm"
     fp.write_text(_NVDA_STYLE_IXBRL, encoding="utf-8")
+    return fp
+
+
+@pytest.fixture
+def mixed_scale_da_file(tmp_path: Path) -> Path:
+    fp = tmp_path / "SRC_008_10-Q_Q2-2025.htm"
+    fp.write_text(_MIXED_SCALE_DA_IXBRL, encoding="utf-8")
+    return fp
+
+
+@pytest.fixture
+def mixed_scale_duration_da_file(tmp_path: Path) -> Path:
+    fp = tmp_path / "SRC_008_10-Q_Q2-2025.htm"
+    fp.write_text(_MIXED_SCALE_DURATION_DA_IXBRL, encoding="utf-8")
     return fp
 
 
@@ -307,6 +387,30 @@ class TestCalendarQuarterPeriodResolution:
         ext = IxbrlExtractor()
         result = ext.extract(nvda_q1_file, fiscal_year_end_month=1)
         assert "FY2023" not in result
+
+    def test_preserves_million_scale_for_decimal_quarterly_da(
+        self,
+        mixed_scale_da_file: Path,
+    ):
+        ext = IxbrlExtractor()
+        result = ext.extract(mixed_scale_da_file, fiscal_year_end_month=12)
+        fr = result["Q2-2025"]["depreciation_amortization"]
+
+        assert fr.value == pytest.approx(7.6)
+        assert fr.scale == "millions"
+        assert getattr(fr, "_ixbrl_was_rescaled", False) is False
+
+    def test_rescales_duration_context_quarterly_da_to_dominant_scale(
+        self,
+        mixed_scale_duration_da_file: Path,
+    ):
+        ext = IxbrlExtractor()
+        result = ext.extract(mixed_scale_duration_da_file, fiscal_year_end_month=12)
+        fr = result["Q2-2025"]["depreciation_amortization"]
+
+        assert fr.value == pytest.approx(7600.0)
+        assert fr.scale == "thousands"
+        assert getattr(fr, "_ixbrl_was_rescaled", False) is True
 
 
 # ---------------------------------------------------------------------------

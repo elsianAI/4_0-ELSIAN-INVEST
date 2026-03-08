@@ -1,7 +1,7 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
 > Última actualización: 2026-03-08
-> Actualizado por: Codex (BL-075 closeout)
+> Actualizado por: Codex (BL-082 closeout)
 
 ---
 
@@ -20,10 +20,10 @@ Ver ROADMAP.md para descripción completa de fases.
 | Tickers WIP | 0 | 0 | 2026-03-08 |
 | Total campos validados | 3,729 | — | 2026-03-08 |
 | Campos canónicos | 29 (26 previos + accounts_receivable, inventories, accounts_payable) | — | 2026-03-07 |
-| Tests pasando | 1359 passed, 5 skipped, 1 warning en `pytest -q` local | — | 2026-03-08 |
+| Tests pasando | 1373 passed, 5 skipped, 1 warning en `pytest -q` local | — | 2026-03-08 |
 | Líneas de código (aprox.) | ~12,000 + ~6,500 tests | 2026-03-07 |
 
-*`DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies. `KAR` ya entra en esa excepción documentada (ASX). `SOM` y `0327` siguen en `ANNUAL_ONLY`, pero no cuentan todavía hacia el umbral de transición porque su tratamiento operativo no está cerrado como excepción equivalente a `FULL`. `ADTN` queda validado en `ANNUAL_ONLY` tras BL-079, pero no cuenta hacia `DEC-015` porque su universo SEC sí tiene quarterlies disponibles y la verdad canónica actual sigue limitada al slice anual.
+*`DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies. `KAR` ya entra en esa excepción documentada (ASX). `SOM` y `0327` siguen en `ANNUAL_ONLY`, pero no cuentan todavía hacia el umbral de transición porque su tratamiento operativo no está cerrado como excepción equivalente a `FULL`. `ADTN` queda validado en `ANNUAL_ONLY` tras BL-079 y BL-082 ya retira el bloqueador shared-core que impedía su promoción, pero no cuenta todavía hacia `DEC-015` porque su universo SEC sí tiene quarterlies disponibles y la promoción a `FULL` sigue pendiente de la ola targeted de `BL-081`.
 
 ## Tickers validados
 
@@ -44,7 +44,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | CROX | 314 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL — BL-041 DONE) |
 | SOM | 197 | LSE/AIM (GB) | PDF (US-GAAP, USD) | ✅ VALIDATED (ANNUAL_ONLY: 16A, 197/197 — DEC-022 completado) |
 | 0327 | 62 | HKEX (HK) | PDF (HKFRS, HKD) | ✅ VALIDATED (ANNUAL_ONLY: 3A — BL-043 DONE, primer ticker asiático) |
-| ADTN | 209 | SEC (US) | 10-K HTML | ✅ VALIDATED (ANNUAL_ONLY: 8A, 209/209 — BL-079 DONE) |
+| ADTN | 209 | SEC (US) | 10-K HTML | ✅ VALIDATED (ANNUAL_ONLY: 8A, 209/209 — BL-079 DONE; BL-081 ready) |
 
 ## Nuevos componentes (Oleada 2 cierre Módulo 1)
 
@@ -100,7 +100,7 @@ No hay tickers WIP actualmente. Los 16 tickers están al 100%.
 
 ## Bloqueantes actuales
 
-No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Provenance Level 3. El pipeline es funcional end-to-end para los 16 tickers validados al 100%, `python3 -m pytest -q` vuelve a verde local (1359 passed, 5 skipped, 1 warning) y `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` vuelve a `SourceMap_v1 FULL` con 818/818. BL-075 cierra la deuda de derivados deterministas en `expected.json`: `ebitda` y `fcf` quedan retroalimentados donde existen componentes, sin sobrescribir valores ya presentes y respetando exclusiones `DERIVED_INCONSISTENT` canonizadas por periodo. En paralelo, el tracking operativo de `DEC-015` sigue en **13/15**: **12 FULL + KAR por excepción documentada**. La deuda actual ya no es de overrides ni de quality gates base, sino de cómo promover o cerrar el tratamiento de `SOM`, `0327` y `ADTN` sin mezclar excepciones implícitas.
+No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Provenance Level 3. El pipeline es funcional end-to-end para los 16 tickers validados al 100%, `python3 -m pytest -q` vuelve a verde local (1373 passed, 5 skipped, 1 warning) y `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` vuelve a `SourceMap_v1 FULL` con 818/818. BL-075 cierra la deuda de derivados deterministas en `expected.json`: `ebitda` y `fcf` quedan retroalimentados donde existen componentes, sin sobrescribir valores ya presentes y respetando exclusiones `DERIVED_INCONSISTENT` canonizadas por periodo. BL-082 cierra además el bloqueador shared-core de ADTN para restatements 2023-2024 y rutas de escala: la repro `ADTN scratch FULL` ya valida 100.0% (`wrong=0`, `missed=0`) y `BL-081` pasa a estado operativo `ready` para su promoción targeted sin tocar todavía la verdad canónica trimestral. En paralelo, el tracking operativo de `DEC-015` sigue en **13/15**: **12 FULL + KAR por excepción documentada**. La deuda actual ya no es de overrides ni de quality gates base, sino de cómo promover o cerrar el tratamiento de `SOM`, `0327` y `ADTN` sin mezclar excepciones implícitas.
 
 **Gaps pendientes (no bloqueantes):**
 1. **Residual field-dependency gaps** — `fx_effect_cash`, `other_cash_adjustments`, `market_cap` y `price` siguen fuera del set canónico. Son opcionales o de market data; no bloquean validación ni BL-058.
@@ -108,6 +108,7 @@ No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Proven
 3. **Adquisición no-SEC aún gradual** — TALO y TEP mantienen rutas de acquire con limitaciones conocidas (coverage `NEEDS_ACTION` o manifest ausente). SOM ya resuelve su piloto LSE/AIM por auto-discovery conservador, pero la autonomía completa de acquire fuera de mercados con API pública sigue siendo gradual.
 ## Hitos recientes
 
+- ✅ **BL-082 completado (2026-03-08)** — Cerrado el bloqueador shared-core que seguía impidiendo la promoción trimestral de ADTN. `elsian/extract/phase.py` centraliza la afinidad de restatement para `total_equity` y la aplica simétricamente en iXBRL, table, narrative y `.txt` tables, mientras se preservan el fix de `depreciation_amortization` mixed-scale y la protección de `total_liabilities`. Validación: `python3 -m pytest -q tests/unit/test_extract_phase.py tests/unit/test_ixbrl_extractor.py tests/unit/test_merger.py` → 106 passed; `python3 -m elsian eval ACLS`/`ADTN`/`GCT`/`TZOO` → PASS 100%; `python3 -m elsian eval --all` → PASS 16/16; `python3 -m pytest -q` → 1373 passed, 5 skipped, 1 warning; repro `ADTN scratch FULL` → `score=100.0`, `wrong=0`, `missed=0`. Efecto operativo: `BL-081` deja de estar bloqueada y queda lista para una ola targeted de promoción a `FULL`.
 - ✅ **BL-075 completado (2026-03-08)** — Cerrado el backfill determinista de campos derivados en `expected.json` sin mezclar la retroportación de BL-035/BL-058. El nuevo script `scripts/backfill_expected_derived.py` añade `ebitda = ebit + depreciation_amortization` y `fcf = cfo - abs(capex)` cuando existen ambos componentes, el derivado no está ya presente y no hay exclusión canonizada por `ticker+periodo+campo`. La ola toca 15 tickers (`0327`, `ACLS`, `ADTN`, `CROX`, `GCT`, `INMD`, `IOSP`, `NEXN`, `NVDA`, `PR`, `SOM`, `SONO`, `TALO`, `TEP`, `TZOO`) y deja `KAR` intacto. Para mantener la paridad, `elsian/evaluate/evaluator.py` y `elsian/curate_draft.py` ahora prefieren el valor derivado cuando el `expected.json` canoniza ese campo como `DERIVED`. En la misma ola se absorbió un fix mínimo previo de provenance para las dos filas `dividends_per_share` de SOM en el annual report FY2024, de modo que `pytest -q` vuelva a verde sin cambiar winner selection. Validación: baseline `python3 scripts/backfill_expected_derived.py --cases-dir cases --dry-run` → `ebitda eligible_missing_before=148`, `fcf eligible_missing_before=110`; apply → 15 `expected.json` modificados; rerun dry-run → `eligible_missing_before=0` para ambos campos; `python3 scripts/validate_contracts.py --schema expected --path <15 touched expected.json>` → PASS; `python3 -m elsian eval --all` → PASS 16/16 (`0327 62/62`, `ACLS 399/399`, `ADTN 209/209`, `CROX 314/314`, `GCT 267/267`, `INMD 234/234`, `IOSP 366/366`, `KAR 49/49`, `NEXN 169/169`, `NVDA 374/374`, `PR 153/153`, `SOM 197/197`, `SONO 335/335`, `TALO 199/199`, `TEP 90/90`, `TZOO 312/312`); `python3 -m pytest -q` → 1359 passed, 5 skipped, 1 warning.
 - ✅ **BL-080 completado (2026-03-08)** — Recuperada la regresión acotada de Provenance Level 3 en TZOO sin reabrir extractor/eval de Módulo 1. `elsian/assemble/source_map.py` vuelve a resolver punteros `:ixbrl:` con sufijos derivados como `:bs_identity_bridge` contra el fact base de iXBRL, y `tests/unit/test_source_map.py` añade la regresión específica. Validación: `python3 -m pytest -q tests/unit/test_source_map.py tests/integration/test_source_map.py` → 14 passed; `python3 -m elsian source-map TZOO --output <tmp>` → `SourceMap_v1 FULL` (818/818); `python3 -m elsian eval TZOO` → PASS 100.0% (300/300); `python3 -m pytest -q` → 1349 passed, 6 skipped, 1 warning.
 
@@ -174,7 +175,7 @@ Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC
 **Tracking operativo de DEC-015:**
 - Cuentan hoy: **13/15** (12 FULL + KAR por excepción documentada)
 - ANNUAL_ONLY pendientes: **3** (SOM, 0327, ADTN)
-- `ADTN` no entra en la vía de excepción porque su universo SEC sí dispone de quarterlies; `SOM` y `0327` siguen pendientes de cierre operativo explícito como excepciones o de promoción adicional.
+- `ADTN` no entra en la vía de excepción porque su universo SEC sí dispone de quarterlies; `BL-082` ya está cerrado y `BL-081` queda lista para ejecutar la promoción targeted a `FULL`. `SOM` y `0327` siguen pendientes de cierre operativo explícito como excepciones o de promoción adicional.
 - **DEC-015 target aún no se declara alcanzado** mientras no exista promoción adicional o cierre explícito para `SOM`, `0327` y `ADTN`.
 
 **WP-6** — IxbrlExtractor en producción. **DONE** (BL-048).

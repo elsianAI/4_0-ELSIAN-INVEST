@@ -9,6 +9,14 @@
 
 ---
 
+### BL-082 — Resolver wrongs de ADTN por restatements 2023-2024
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-08)
+- **Asignado a:** engineer
+- **Depende de:** —
+- **Descripción:** Se cerró el bloqueador shared-core que impedía promover ADTN a `FULL` aunque la curación trimestral ya tuviera 15 periodos candidatos. El fix endurece la selección trimestral restated de forma reutilizable: `elsian/extract/phase.py` centraliza la afinidad de restatement para `total_equity` y la aplica simétricamente en iXBRL, table, narrative y `.txt` tables, con preferencia por comparativos restated sólo cuando hay evidencia válida de balance sheet restatement y sin volver a dar ventaja a equity rollforwards o narrativas amplias. En la misma ola se mantiene el fix ya validado para `depreciation_amortization` mixed-scale y para `total_liabilities`, preservando los verdes de ACLS, GCT y TZOO. La repro `ADTN scratch FULL` pasa a 100.0% (`wrong=0`, `missed=0`), por lo que `BL-081` deja de estar bloqueada y queda lista para su propia promoción targeted.
+- **Criterio de aceptación:** ✓ `python3 -m pytest -q tests/unit/test_extract_phase.py tests/unit/test_ixbrl_extractor.py tests/unit/test_merger.py` PASS (106 passed). ✓ `python3 -m elsian eval ACLS` PASS 100.0% (399/399). ✓ `python3 -m elsian eval ADTN` PASS 100.0% (209/209). ✓ `python3 -m elsian eval GCT` PASS 100.0% (267/267). ✓ `python3 -m elsian eval TZOO` PASS 100.0% (312/312). ✓ `python3 -m elsian eval --all` PASS 16/16. ✓ `python3 -m pytest -q` PASS (1373 passed, 5 skipped, 1 warning). ✓ `git diff --check` limpio. ✓ Repro `ADTN scratch FULL` sobre expected trimestral temporal/mergeado: `score=100.0`, `matched=520`, `wrong=0`, `missed=0`, `extra=292`.
+
 ### BL-075 — Enriquecer expected.json con campos derivados calculables
 - **Prioridad:** ALTA
 - **Estado:** DONE ✅ (2026-03-08)

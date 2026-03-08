@@ -55,6 +55,33 @@ IXBRL_SRC_TYPE_RANK: int = -1
 # competes at the same (filing_rank, affinity, src_type_rank) level.
 IXBRL_SEMANTIC_RANK: int = -9999
 
+_TOTAL_EQUITY_CONCEPT_MARKERS = (
+    "stockholdersequity",
+    "stockholdersequityincludingportionattributabletononcontrollinginterest",
+)
+_BALANCE_SHEET_RESTATEMENT_MARKERS = (
+    "as reported adjustment as restated",
+    "as previously reported",
+    "adjustment as restated",
+)
+_BALANCE_SHEET_TABLE_MARKERS = (
+    " assets ",
+    " total liabilities ",
+    " liabilities and stockholders equity ",
+    " total liabilities, redeemable non-controlling interest and equity ",
+)
+_EQUITY_ROLLFORWARD_MARKERS = (
+    "common stock",
+    "additional paid-in capital",
+    "retained earnings",
+    "retained deficit",
+    "treasury stock",
+    "accumulated other comprehensive",
+    "total stockholders",
+    "total travelzoo stockholders",
+    "balances,",
+)
+
 
 # ── Public class ──────────────────────────────────────────────────────────────
 
@@ -142,6 +169,14 @@ class IxbrlExtractor:
             return {}
 
         _, _, preferred_concepts = _load_concept_map()
+        total_equity_context_map = (
+            _build_total_equity_context_map(filepath)
+            if any(
+                fact.field == "total_equity" and fact.tag_id
+                for fact in facts
+            )
+            else {}
+        )
 
         # Determine the dominant monetary scale across all facts so that outlier
         # tags (e.g. a D&A tag at scale=6/millions in a thousands-based filing)
@@ -149,6 +184,11 @@ class IxbrlExtractor:
         dom_scale = _dominant_monetary_scale(facts)
 
         facts_by_period = deduplicate_facts(facts, preferred_concepts)
+        _prefer_balance_sheet_total_equity_facts(
+            facts_by_period,
+            facts,
+            total_equity_context_map,
+        )
 
         result: dict[str, dict[str, FieldResult]] = {}
         filing_name = filepath.name
@@ -156,11 +196,20 @@ class IxbrlExtractor:
         for period, field_facts in facts_by_period.items():
             result[period] = {}
             for field_name, fact in field_facts.items():
-                adj = _adjust_to_dominant_scale(fact.value, fact.scale, dom_scale)
+                preserve_raw_scale = _should_preserve_raw_scale(
+                    field_name, fact, dom_scale
+                )
+                adj = (
+                    fact.value
+                    if preserve_raw_scale
+                    else _adjust_to_dominant_scale(
+                        fact.value, fact.scale, dom_scale
+                    )
+                )
                 value = _normalize_sign(field_name, adj)
                 # Preserve "raw" scale for per-share / unitless fields (scale=0);
                 # use dominant scale for all monetary fields.
-                if fact.scale == 0 or dom_scale == 0:
+                if preserve_raw_scale or fact.scale == 0 or dom_scale == 0:
                     scale = _map_scale(fact.scale)
                 else:
                     scale = _map_scale(dom_scale)
@@ -184,9 +233,16 @@ class IxbrlExtractor:
                     scale=scale,
                     confidence="high",
                 )
+                if field_name == "total_equity" and fact.tag_id:
+                    fr._ixbrl_total_equity_context = total_equity_context_map.get(  # type: ignore[attr-defined]
+                        fact.tag_id,
+                        "",
+                    )
                 # Mark this FieldResult when the value was rescaled from a
                 # non-dominant scale (lower precision — allow table to win).
                 was_rescaled = (
+                    not preserve_raw_scale
+                    and
                     fact.scale != 0
                     and dom_scale != 0
                     and fact.scale != dom_scale
@@ -277,6 +333,69 @@ def _dominant_monetary_scale(facts: list) -> int:
     return Counter(monetary).most_common(1)[0][0]
 
 
+def _normalize_table_text(text: str) -> str:
+    return f" {' '.join(text.lower().split())} "
+
+
+def _classify_total_equity_table(table_text: str) -> str:
+    normalized = _normalize_table_text(table_text)
+    if (
+        any(marker in normalized for marker in _BALANCE_SHEET_RESTATEMENT_MARKERS)
+        and any(marker in normalized for marker in _BALANCE_SHEET_TABLE_MARKERS)
+    ):
+        return "balance_sheet_restatement"
+    if any(marker in normalized for marker in _EQUITY_ROLLFORWARD_MARKERS):
+        return "equity_rollforward"
+    return ""
+
+
+def _build_total_equity_context_map(filepath: Path) -> dict[str, str]:
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(
+        filepath.read_text(encoding="utf-8", errors="replace"),
+        "html.parser",
+    )
+    context_map: dict[str, str] = {}
+    for tag in soup.find_all(lambda t: t.get("id") and t.get("name")):
+        concept = (tag.get("name") or "").lower().replace(":", "")
+        if not any(marker in concept for marker in _TOTAL_EQUITY_CONCEPT_MARKERS):
+            continue
+        table = tag.find_parent("table")
+        if table is None:
+            continue
+        context_map[tag.get("id")] = _classify_total_equity_table(
+            table.get_text(" ", strip=True)
+        )
+    return context_map
+
+
+def _prefer_balance_sheet_total_equity_facts(
+    facts_by_period: dict[str, dict[str, object]],
+    facts: list,
+    total_equity_context_map: dict[str, str],
+) -> None:
+    for period, field_facts in facts_by_period.items():
+        chosen = field_facts.get("total_equity")
+        if chosen is None:
+            continue
+        chosen_context = total_equity_context_map.get(getattr(chosen, "tag_id", ""), "")
+        if chosen_context == "balance_sheet_restatement":
+            continue
+        replacement = next(
+            (
+                fact for fact in facts
+                if fact.field == "total_equity"
+                and fact.period == period
+                and total_equity_context_map.get(fact.tag_id, "")
+                == "balance_sheet_restatement"
+            ),
+            None,
+        )
+        if replacement is not None:
+            field_facts["total_equity"] = replacement
+
+
 def _adjust_to_dominant_scale(value: float, fact_scale: int, dominant_scale: int) -> float:
     """Rescale *value* from *fact_scale* to *dominant_scale*.
 
@@ -290,6 +409,36 @@ def _adjust_to_dominant_scale(value: float, fact_scale: int, dominant_scale: int
         return value  # raw — no normalisation
     diff = fact_scale - dominant_scale
     return value * (10 ** diff) if diff != 0 else value
+
+
+def _should_preserve_raw_scale(field_name: str, fact, dominant_scale: int) -> bool:
+    """Keep narrow million-denominated D&A facts in their displayed scale.
+
+    Some issuers disclose quarterly D&A as a small decimal amount in millions
+    while the rest of the filing is denominated in thousands. Re-scaling those
+    facts to the dominant filing unit destroys the intended displayed value and
+    can also let a weaker table candidate override the correct iXBRL fact.
+
+    We keep this exception narrow to note-style inline facts whose context does
+    not use the standard ``Duration_*`` naming found on filing-wide tables.
+    When the context is a standard duration context, the tag typically follows
+    the filing's dominant monetary unit and should still be normalized.
+    """
+    if field_name != "depreciation_amortization":
+        return False
+    if fact.scale == 0 or dominant_scale == 0 or fact.scale == dominant_scale:
+        return False
+    if fact.scale < dominant_scale:
+        return False
+    if abs(fact.value) >= 1000:
+        return False
+    displayed = (fact.displayed_value or "").replace(",", "")
+    if "." not in displayed:
+        return False
+    if (fact.context_ref or "").lower().startswith("duration_"):
+        return False
+    concept_suffix = fact.concept.rsplit(":", 1)[-1]
+    return concept_suffix in {"Depreciation", "DepreciationAndAmortization"}
 
 
 def _normalize_sign(canonical: str, value: float) -> float:
