@@ -1,7 +1,7 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
-> Última actualización: 2026-03-07
-> Actualizado por: Codex (BL-057 closeout)
+> Última actualización: 2026-03-08
+> Actualizado por: Codex (BL-079 / BL-074 governance closeout)
 
 ---
 
@@ -13,17 +13,17 @@ Ver ROADMAP.md para descripción completa de fases.
 
 | Métrica | Valor | Target Fase 1→2 | Fecha |
 |---|---|---|---|
-| Tickers validados 100% | **15** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, CROX, TEP, SOM, 0327, KAR) | — | 2026-03-07 |
-| Tickers que cuentan para DEC-015 | **13** (12 FULL + KAR por excepción documentada) | ≥15 | 2026-03-07 |
-| Tickers FULL 100% | **12** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, CROX, TEP) | — | 2026-03-07 |
-| Tickers ANNUAL_ONLY 100% pendientes de promoción/cierre | 2 (SOM, 0327) | — | 2026-03-07 |
-| Tickers WIP | 0 | 0 | 2026-03-05 |
-| Total campos validados | 3,278 | — | 2026-03-07 |
+| Tickers validados 100% | **16** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, CROX, TEP, SOM, 0327, KAR, ADTN) | — | 2026-03-08 |
+| Tickers que cuentan para DEC-015 | **13** (12 FULL + KAR por excepción documentada) | ≥15 | 2026-03-08 |
+| Tickers FULL 100% | **12** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, CROX, TEP) | — | 2026-03-08 |
+| Tickers ANNUAL_ONLY 100% pendientes de promoción/cierre | 3 (SOM, 0327, ADTN) | — | 2026-03-08 |
+| Tickers WIP | 0 | 0 | 2026-03-08 |
+| Total campos validados | 3,471 | — | 2026-03-08 |
 | Campos canónicos | 29 (26 previos + accounts_receivable, inventories, accounts_payable) | — | 2026-03-07 |
-| Tests pasando | 1324 passed, 5 skipped (último sweep completo) | — | 2026-03-07 |
+| Tests pasando | 1347 passed, 6 skipped; 1 failed en `pytest -q` local (`tests/integration/test_source_map.py::test_cli_source_map_tzoo_builds_full_artifact`) | — | 2026-03-08 |
 | Líneas de código (aprox.) | ~12,000 + ~6,500 tests | 2026-03-07 |
 
-*`DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies. `KAR` ya entra en esa excepción documentada (ASX). `SOM` y `0327` siguen en `ANNUAL_ONLY`, pero no cuentan todavía hacia el umbral de transición porque su tratamiento operativo no está cerrado como excepción equivalente a `FULL`.
+*`DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies. `KAR` ya entra en esa excepción documentada (ASX). `SOM` y `0327` siguen en `ANNUAL_ONLY`, pero no cuentan todavía hacia el umbral de transición porque su tratamiento operativo no está cerrado como excepción equivalente a `FULL`. `ADTN` queda validado en `ANNUAL_ONLY` tras BL-079, pero no cuenta hacia `DEC-015` porque su universo SEC sí tiene quarterlies disponibles y la verdad canónica actual sigue limitada al slice anual.
 
 ## Tickers validados
 
@@ -44,6 +44,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | CROX | 294 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL — BL-041 DONE) |
 | SOM | 179 | LSE/AIM (GB) | PDF (US-GAAP, USD) | ✅ VALIDATED (ANNUAL_ONLY: 16A, 179/179 — DEC-022 completado) |
 | 0327 | 59 | HKEX (HK) | PDF (HKFRS, HKD) | ✅ VALIDATED (ANNUAL_ONLY: 3A — BL-043 DONE, primer ticker asiático) |
+| ADTN | 193 | SEC (US) | 10-K HTML | ✅ VALIDATED (ANNUAL_ONLY: 8A, 193/193 — BL-079 DONE) |
 
 ## Nuevos componentes (Oleada 2 cierre Módulo 1)
 
@@ -76,7 +77,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | Sources compiler | ✅ Implementado | Merge multi-fetcher, dedup, SourcesPack_v1. CLI `elsian compile`. BL-023 DONE |
 | IR Website Crawling | ✅ Implementado + Integrado | ir_crawler.py portado completo (~600 líneas). Integrado en EuRegulatorsFetcher como fallback automático (BL-013 DONE). |
 | Provenance Level 2 | ✅ Completo | BL-006 DONE. Todos los extractores emiten L2 completo (table_title, row_label, col_label, raw_text, row, col, table_index, extraction_method). 100% completitud. |
-| Provenance Level 3 | 🟡 Pilotado | `elsian/assemble/source_map.py` + CLI `elsian source-map`. Piloto TZOO validado con `SourceMap_v1`: 851/851 campos resueltos (`html_ixbrl`, `clean_md_table`, `text_label`). El hardening posterior añade soporte `*.txt:table`, `case_dir` relativo, labels `total_debt` / `stockholdersʼ equity` y salida CLI `FULL/PARTIAL/EMPTY` sin traceback cuando falta `extraction_result.json`. Queda pendiente convertirlo en soporte general de producto/UI. |
+| Provenance Level 3 | 🟡 Pilotado con regresión abierta | `elsian/assemble/source_map.py` + CLI `elsian source-map`. El piloto histórico TZOO llegó a validar `SourceMap_v1` con 851/851 campos resueltos, pero el closeout actual observa `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_closeout.json` → `PARTIAL` con 812/818 (99.27%), y el full `pytest -q` falla en `tests/integration/test_source_map.py::test_cli_source_map_tzoo_builds_full_artifact`. El hardening previo (`*.txt:table`, `case_dir` relativo, labels verticales, salida `FULL/PARTIAL/EMPTY`) sigue presente, pero L3 ya no debe venderse como revalidado en verde hasta cerrar esa regresión. |
 | CI GitHub Actions | ✅ Implementado | Workflow ci.yml en .github/workflows/. pytest en Python 3.11. WP-5 DONE |
 | Sanity Checks post-extracción | ✅ Implementado | capex sign, revenue neg, gp>revenue, YoY >10x. BL-016 DONE |
 | Autonomous Validator | ✅ Implementado | 9 quality gates intrínsecos (BS identity, CF identity, units 1000x, EV, margins, TTM, recency, completeness). BL-020 DONE |
@@ -89,24 +90,27 @@ Ver ROADMAP.md para descripción completa de fases.
 |---|---|---|---|---|
 | Ninguno | 0 | 0.0% | — | ✅ Sin overrides activos |
 
-**Total:** 0 overrides / 3,278 campos = 0.00% global. TEP y SOM ya no tienen overrides activos tras BL-054 y BL-055.
+**Total:** 0 overrides / 3,471 campos = 0.00% global. TEP y SOM ya no tienen overrides activos tras BL-054 y BL-055.
 
-**Estado "autónomo suficiente" (DEC-026):** ALCANZADO para extracción autónoma strict. Los 15 tickers validados pasan al 100% con 0 overrides activos. La adquisición sigue teniendo limitaciones conocidas y transparentes en algunos mercados sin API pública, pero la deuda de extracción manual ya está cerrada y SOM ya no depende de `filings_sources` hardcodeados.
+**Estado "autónomo suficiente" (DEC-026):** ALCANZADO para extracción autónoma strict. Los 16 tickers validados pasan al 100% con 0 overrides activos. La adquisición sigue teniendo limitaciones conocidas y transparentes en algunos mercados sin API pública, pero la deuda de extracción manual ya está cerrada y SOM ya no depende de `filings_sources` hardcodeados.
 
 ## Tickers WIP
 
-No hay tickers WIP actualmente. Los 15 tickers están al 100%.
+No hay tickers WIP actualmente. Los 16 tickers están al 100%.
 
 ## Bloqueantes actuales
 
-No hay bloqueantes críticos. El pipeline es funcional end-to-end para los 15 tickers validados al 100%, pero el tracking operativo de `DEC-015` sigue en **13/15**: **12 FULL + KAR por excepción documentada**. La deuda actual ya no es de overrides ni de calidad base, sino de cómo promover o cerrar el tratamiento de `SOM` y `0327` sin mezclar excepciones implícitas.
+No hay bloqueantes críticos de extractor/eval. El pipeline es funcional end-to-end para los 16 tickers validados al 100%, pero el repo no está plenamente verde porque `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_closeout.json` devuelve `SourceMap_v1 PARTIAL` (812/818) y el full `pytest -q` local falla en `tests/integration/test_source_map.py::test_cli_source_map_tzoo_builds_full_artifact`. En paralelo, el tracking operativo de `DEC-015` sigue en **13/15**: **12 FULL + KAR por excepción documentada**. La deuda actual ya no es de overrides ni de calidad base, sino de cómo promover o cerrar el tratamiento de `SOM`, `0327` y `ADTN` sin mezclar excepciones implícitas.
 
 **Gaps pendientes (no bloqueantes):**
 1. **Residual field-dependency gaps** — `fx_effect_cash`, `other_cash_adjustments`, `market_cap` y `price` siguen fuera del set canónico. Son opcionales o de market data; no bloquean validación ni BL-058.
 2. **TALO y TEP sin filings_manifest.json** — adquisición manual (ManualFetcher / EuRegulatorsFetcher). Coverage audit retorna NEEDS_ACTION. Limitación conocida, no bug.
 3. **Adquisición no-SEC aún gradual** — TALO y TEP mantienen rutas de acquire con limitaciones conocidas (coverage `NEEDS_ACTION` o manifest ausente). SOM ya resuelve su piloto LSE/AIM por auto-discovery conservador, pero la autonomía completa de acquire fuera de mercados con API pública sigue siendo gradual.
+4. **SourceMap v1 no revalidado en verde** — el piloto histórico de TZOO ya no está reproduciendo `FULL`: la observación actual es 812/818 `PARTIAL` y deja una integración roja en `tests/integration/test_source_map.py`.
 
 ## Hitos recientes
+
+- ✅ **BL-079 completado (2026-03-08)** — Cerrado el drift extractor amplio de ADTN con una corrección shared-core en extractor/merge, no con parche local por ticker. ADTN queda en PASS 100.0% (193/193) contra su verdad filing-backed anual; GCT y TZOO siguen en PASS 100%; los controles extra NEXN, NVDA, TEP, TALO, SONO e INMD también quedan verdes, y `eval --all` vuelve a pasar 16/16. En gobernanza, `BL-079` y `BL-074` quedan archivadas y `PROJECT_STATE` se reconcilia con ADTN como `ANNUAL_ONLY` validado pero todavía fuera del contador `DEC-015`.
 
 - ✅ **BL-057 completado (2026-03-07)** — Cerrado el piloto conservador de auto-discovery LSE/AIM para SOM. `EuRegulatorsFetcher` ya deduplica variantes `/media` vs `/~/media`, backfillea `filings/` parciales cuando `filings_expected_count` queda corto, poda documentos no financieros y limita LSE/AIM a un set núcleo anual/interim/regulatory. `ir_crawler` además conserva PDFs de presentación directos y usa basename context para CTA genéricos tipo `Read more`, evitando misclasificaciones por contexto vecino. Un caso temporal de SOM sin `filings_sources` descarga `annual-report-2024`, `somero-2024-final-results-presentation` y `somero-2025-interim-investor-presentation`, manteniendo `eval SOM` en PASS 100.0% (179/179).
 
@@ -168,8 +172,9 @@ Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC
 
 **Tracking operativo de DEC-015:**
 - Cuentan hoy: **13/15** (12 FULL + KAR por excepción documentada)
-- ANNUAL_ONLY pendientes: **2** (SOM, 0327)
-- **DEC-015 target aún no se declara alcanzado** mientras no exista promoción adicional o cierre explícito para `SOM` y `0327`.
+- ANNUAL_ONLY pendientes: **3** (SOM, 0327, ADTN)
+- `ADTN` no entra en la vía de excepción porque su universo SEC sí dispone de quarterlies; `SOM` y `0327` siguen pendientes de cierre operativo explícito como excepciones o de promoción adicional.
+- **DEC-015 target aún no se declara alcanzado** mientras no exista promoción adicional o cierre explícito para `SOM`, `0327` y `ADTN`.
 
 **WP-6** — IxbrlExtractor en producción. **DONE** (BL-048).
 

@@ -9,6 +9,26 @@
 
 ---
 
+### BL-079 — Corregir drift extractor amplio de ADTN fuera del patrón BL-078
+- **Prioridad:** CRÍTICA
+- **Estado:** DONE ✅ (2026-03-08)
+- **Asignado a:** engineer
+- **Depende de:** —
+- **Descripción:** Se cerró el fix shared-core amplio que quedaba pendiente para ADTN tras BL-078. El extractor/merge dejó de seleccionar filas y tablas auxiliares equivocadas en múltiples familias de campos y la solución quedó absorbida como patrón reutilizable, no como parche opaco por ticker. ADTN vuelve a verde contra la verdad filing-backed canonizada, GCT y TZOO se mantienen verdes, y los controles adicionales sobre NEXN, NVDA, TEP, TALO, SONO e INMD también quedan en PASS. La revalidación global vuelve a `eval --all` con 16/16 tickers en verde.
+- **Criterio de aceptación:** ✓ `python3 -m pytest -q tests/unit/test_extract_phase.py tests/unit/test_merger.py tests/unit/test_ixbrl_extractor.py tests/unit/test_working_capital_fields.py` PASS (110 passed). ✓ `python3 -m elsian eval ADTN` PASS 100.0% (193/193). ✓ `python3 -m elsian eval GCT` PASS 100.0% (252/252). ✓ `python3 -m elsian eval TZOO` PASS 100.0% (300/300). ✓ Controles extra `NEXN`, `NVDA`, `TEP`, `TALO`, `SONO`, `INMD` en PASS 100.0%. ✓ `python3 -m elsian eval --all` PASS 16/16.
+
+---
+
+### BL-074 — Corregir issues críticos en expected.json (ADTN, GCT, TZOO)
+- **Prioridad:** CRÍTICA
+- **Estado:** DONE ✅ (2026-03-08)
+- **Asignado a:** engineer
+- **Depende de:** BL-079
+- **Descripción:** La curación filing-backed de ADTN, GCT y TZOO ya había quedado canonizada en `expected.json` con `source_filing` explícito. BL-078 absorbió el patrón shared-core estrecho de identidad de balance y D&A; BL-079 cerró el drift extractor amplio restante de ADTN. Con ello, los issues críticos originales quedan resueltos end-to-end sin reabrir la verdad curada, y el cierre contractual pasa a estar plenamente satisfecho.
+- **Criterio de aceptación:** ✓ Los `BS_IDENTITY_FAIL` y `SCALE_INCONSISTENT` que originaron la BL quedan absorbidos por la verdad filing-backed ya corregida y por los fixes shared-core posteriores. ✓ `python3 -m elsian eval ADTN` PASS 100.0% (193/193). ✓ `python3 -m elsian eval GCT` PASS 100.0% (252/252). ✓ `python3 -m elsian eval TZOO` PASS 100.0% (300/300). ✓ La revisión independiente posterior no reporta ningún issue crítico nuevo; el único desacople material detectado fue de gobernanza y queda reconciliado en este cierre.
+
+---
+
 ### BL-078 — Alinear extractor con BL-074 (BS identity con NCI/mezzanine y D&A de GCT)
 - **Prioridad:** CRÍTICA
 - **Estado:** DONE ✅ (2026-03-07)

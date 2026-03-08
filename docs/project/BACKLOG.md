@@ -184,27 +184,16 @@
 - **Descripción:** Ejecutar un primer piloto real de paralelización mutante con dos BL independientes y write sets disjuntos, usando exclusivamente el proceso definido en `BL-072`. El piloto debe demostrar aislamiento por `git worktree` y rama, integración serial en el padre, cierre independiente por BL y aborto limpio si aparece solape material.
 - **Criterio de aceptación:** Se ejecuta un piloto con dos BL válidas y una BL por worktree/rama. Ningún agente sale de su write set. Cada BL pasa `gates -> auditor -> closeout` por separado. La integración se hace en serie y genera un commit por BL. Si aparece conflicto estructural, el piloto aborta sin contaminar `main`. Queda una decisión explícita de mantener, ajustar o descartar el modelo antes de extenderlo a más trabajo.
 
-### BL-074 — Corregir issues críticos en expected.json (ADTN, GCT, TZOO)
-- **Prioridad:** CRÍTICA
-- **Estado:** BLOCKED (ADTN mantiene drift extractor más amplio fuera del patrón BL-078)
-- **Asignado a:** engineer
-- **Módulo:** Module 1
-- **Validation tier:** targeted
-- **Depende de:** BL-079
-- **Referencias:** DEC-027
-- **Descripción:** La curación filing-backed de ADTN, GCT y TZOO ya está hecha en `expected.json` con `source_filing` explícito. `BL-078` ya cerró el fix shared-core estrecho necesario para absorber `NCI/RNCI/mezzanine` en `total_liabilities` y para priorizar el valor monetario correcto de `depreciation_amortization`; con ello GCT y TZOO ya quedaron alineadas end-to-end con la verdad corregida. El cierre contractual de BL-074 sigue bloqueado porque `python3 -m elsian eval ADTN` permanece rojo por drift extractor más amplio, fuera del patrón estrecho cubierto por BL-078 y ahora empaquetado en BL-079.
-- **Criterio de aceptación:** Los `BS_IDENTITY_FAIL` detectados en la auditoría desaparecen con tolerancia ±1%. Los 4 `SCALE_INCONSISTENT` de GCT desaparecen. `python3 -m elsian eval GCT` y `python3 -m elsian eval TZOO` ya están verdes; BL-074 solo puede cerrarse cuando ADTN también quede verde y el check de auditoría sobre ADTN, GCT y TZOO no reporte ningún issue crítico nuevo.
-
-### BL-079 — Corregir drift extractor amplio de ADTN fuera del patrón BL-078
-- **Prioridad:** CRÍTICA
+### BL-080 — Recuperar SourceMap_v1 TZOO (FULL -> PARTIAL)
+- **Prioridad:** ALTA
 - **Estado:** TODO
 - **Asignado a:** engineer
 - **Módulo:** Module 1
 - **Validation tier:** shared-core
 - **Depende de:** —
-- **Referencias:** BL-074, BL-078, DEC-027
-- **Descripción:** Corregir el drift extractor amplio que sigue afectando a ADTN después del cierre estrecho de BL-078. El problema restante ya no es `BS identity` ni el patrón de `depreciation_amortization` tipo GCT, sino selección incorrecta de filas y tablas en múltiples familias de campos dentro del extractor/eval. La BL debe endurecer de forma reproducible la selección de candidatos de ADTN en familias como working capital, ingresos/costes/márgenes, cash flow y métricas por acción, sin reabrir la verdad filing-backed ya curada en BL-074 y sin degradar GCT/TZOO.
-- **Criterio de aceptación:** El extractor/eval de ADTN mejora de forma amplia y reproducible frente al drift actual, sin convertir el trabajo en un fix local opaco. `python3 -m elsian eval ADTN` se revalida en verde contra la verdad filing-backed de BL-074. `python3 -m elsian eval GCT` y `python3 -m elsian eval TZOO` se revalidan al menos en verde, sin regresiones frente al cierre de BL-078. La solución queda cubierta por tests shared-core o regresiones equivalentes que demuestren que el problema de ADTN ya no es selección incorrecta de filas/tablas en múltiples familias de campos.
+- **Referencias:** BL-053, CHANGELOG.md, docs/project/PROJECT_STATE.md
+- **Descripción:** Empaquetar la regresión abierta de Provenance Level 3 / `SourceMap_v1` ya observada en TZOO. El problema actual no afecta extractor/eval de Módulo 1, pero sí deja el repo sin `pytest -q` plenamente verde y degrada el piloto L3 de `FULL` a `PARTIAL`. La BL debe recuperar el comportamiento esperado de `elsian source-map TZOO` sin reabrir el cierre de `BL-053` más allá de esta regresión concreta.
+- **Criterio de aceptación:** `python3 -m elsian source-map TZOO --output <tmp>` vuelve a reportar `FULL`. `python3 -m pytest -q tests/unit/test_source_map.py tests/integration/test_source_map.py` pasa. `python3 -m pytest -q` vuelve a quedar verde. `python3 -m elsian eval TZOO` sigue en PASS. `PROJECT_STATE` deja de vender L3 como regresión abierta una vez la BL se cierre.
 
 ### BL-075 — Enriquecer expected.json con campos derivados calculables
 - **Prioridad:** ALTA
