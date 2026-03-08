@@ -2,6 +2,16 @@
 
 ## 2026-03-08
 
+### [4.0] Governance closeout — BL-081 archived and ADTN promoted to FULL
+- Reconciled the canonical governance state after the green BL-081 targeted promotion. `docs/project/BACKLOG.md` no longer carries `BL-081` as active work; it moves to `docs/project/BACKLOG_DONE.md`. `docs/project/PROJECT_STATE.md` now reflects ADTN as `FULL` (`8A+15Q`, 520 validated fields), raises the operational DEC-015 counter from 13/15 to 14/15 (`13 FULL + KAR` by documented exception), and reduces the remaining `ANNUAL_ONLY` promotion/exception backlog to `SOM` and `0327`.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` → `duplicate_ids=[]`, `project_state_lags_changelog=false`. `python3 scripts/validate_contracts.py --schema case --path cases/ADTN/case.json` → PASS. `python3 scripts/validate_contracts.py --schema expected --path cases/ADTN/expected.json` → PASS. `python3 -m elsian eval ADTN` → PASS 100.0% (520/520). `python3 -m elsian eval --all` → PASS 16/16. `python3 -m pytest -q` → 1373 passed, 5 skipped, 1 warning. `git diff --check` → PASS.
+
+### [4.0] BL-081 — Promote ADTN to FULL with targeted quarterly truth
+- Promoted ADTN from `ANNUAL_ONLY` to `FULL` by switching `cases/ADTN/case.json` to `period_scope: FULL` and canonizing exactly the quarterly periods that meet the BL-081 contract in `cases/ADTN/expected.json`: `Q1-Q3 2021` plus `Q1-Q3 2022-2025`, each with at least 15 fields and real filing-backed provenance. The promotion explicitly excludes `Q1-Q4 2019`, `Q1-Q4 2020`, `Q4-2021`, every `H1-*`, and any sparse quarterlies. For `Q1-Q3 2023` and `Q1-Q3 2024`, later restated comparatives are kept only where the restated value is explicit and traceable; otherwise the original 10-Q value and `source_filing` stay in place.
+- **Files changed:** `cases/ADTN/case.json`, `cases/ADTN/expected.json`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/validate_contracts.py --schema case --path cases/ADTN/case.json` → PASS. `python3 scripts/validate_contracts.py --schema expected --path cases/ADTN/expected.json` → PASS. `python3 -m elsian eval ADTN` → PASS 100.0% (520/520), `wrong=0`, `missed=0`, `extra=292`. `python3 -m elsian eval --all` → PASS 16/16. `python3 -m pytest -q` → 1373 passed, 5 skipped, 1 warning. `git diff --check` → PASS.
+
 ### [4.0] Governance closeout — BL-082 archived, BL-081 unblocked for targeted ADTN promotion
 - Reconciled the canonical governance state after the green BL-082 technical wave. `docs/project/BACKLOG.md` no longer carries `BL-082` as active work; it moves to `docs/project/BACKLOG_DONE.md`. `BL-081` remains the canonical ADTN quarterlies objective, but it is no longer blocked: the dependency on `BL-082` is removed, the BL returns to active `TODO`, and the wording now reflects that the shared-core restatement/scale blocker is closed while the targeted promotion itself still remains pending. `docs/project/PROJECT_STATE.md` stays explicit that ADTN is still `ANNUAL_ONLY`, `DEC-015` remains at 13/15, and `BL-081` is merely unblocked/ready rather than closed.
 - **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`

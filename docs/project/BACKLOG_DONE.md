@@ -9,6 +9,16 @@
 
 ---
 
+### BL-081 — Promover ADTN a FULL (quarterlies)
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-08)
+- **Asignado a:** engineer
+- **Depende de:** —
+- **Descripción:** Se promovió ADTN de `ANNUAL_ONLY` a `FULL` sin abrir una BL nueva ni reescribir la verdad anual ya canonizada. `cases/ADTN/case.json` pasa a `period_scope: FULL` y `cases/ADTN/expected.json` incorpora exactamente los 15 trimestrales `Q*` con cobertura suficiente y al menos 15 campos (`Q1-Q3 2021` y `Q1-Q3 2022-2025`), excluyendo `Q1-Q4 2019`, `Q1-Q4 2020`, `Q4-2021`, todos los `H1-*` y cualquier trimestral sparse. Para `Q1-Q3 2023` y `Q1-Q3 2024`, la promoción conserva comparativos restated de filings posteriores sólo cuando el valor restated es explícito y trazable; en el resto de campos se mantiene el `source_filing` real del 10-Q original. Con ello ADTN pasa a validar 23 periodos (`8A+15Q`) y `520/520`, por lo que `DEC-015` sube operativamente de 13/15 a 14/15 sin declarar todavía el target alcanzado.
+- **Criterio de aceptación:** ✓ `python3 scripts/validate_contracts.py --schema case --path cases/ADTN/case.json` PASS. ✓ `python3 scripts/validate_contracts.py --schema expected --path cases/ADTN/expected.json` PASS. ✓ `python3 -m elsian eval ADTN` PASS 100.0% (520/520) with `wrong=0`, `missed=0`, `extra=292`. ✓ `python3 -m elsian eval --all` PASS 16/16 and ADTN promoted in-place (`520/520`). ✓ `python3 -m pytest -q` PASS (`1373 passed, 5 skipped, 1 warning`). ✓ `git diff --check` limpio. ✓ `python3 scripts/check_governance.py --format json` queda sin IDs duplicados y con `project_state_lags_changelog=false`.
+
+---
+
 ### BL-082 — Resolver wrongs de ADTN por restatements 2023-2024
 - **Prioridad:** ALTA
 - **Estado:** DONE ✅ (2026-03-08)
