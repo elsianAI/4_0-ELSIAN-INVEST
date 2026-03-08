@@ -489,8 +489,6 @@ def _pick_total_liabilities_bridge_components(
             component_kind = "non_controlling_interest"
         else:
             continue
-        if component_kind == "redeemable_nci" and period_key.startswith("Q"):
-            continue
 
         dedup_key = (component_kind, float(rtf.value), rtf.source_location)
         if dedup_key in seen:
@@ -519,6 +517,99 @@ def _pick_total_liabilities_bridge_components(
                 best_combo = [rtf for _, rtf in combo]
 
     return best_combo
+
+
+_TOTAL_LIABILITIES_IDENTITY_TOTAL_RE = re.compile(
+    r"^total\s+liabilities\b.*\bequity\b",
+    re.I,
+)
+
+
+def _pick_total_liabilities_identity_total_row(
+    raw_table_fields: List[TableField],
+    period_key: str,
+    *,
+    assets_value: float | None = None,
+) -> TableField | None:
+    """Pick an explicit identity-total row for total-liabilities bridging.
+
+    Some quarterlies expose the face-of-statement bridge as a total row like
+    ``Total Liabilities and Equity`` or
+    ``Total Liabilities, Redeemable Non-Controlling Interest and Equity``.
+    This helper returns the best row for the requested period, preferring
+    actual balance-sheet sections when available.
+    """
+    tolerance = max(1.0, abs(assets_value) * 0.001) if assets_value is not None else 1.0
+    best_row: TableField | None = None
+    best_rank: tuple[int, int, int, int] | None = None
+
+    for rtf in raw_table_fields:
+        if rtf.column_header != period_key:
+            continue
+
+        label_lower = rtf.label.strip().lower()
+        if not _TOTAL_LIABILITIES_IDENTITY_TOTAL_RE.search(label_lower):
+            continue
+        if "including portion attributable to noncontrolling interest" in label_lower:
+            continue
+        if assets_value is not None and abs(rtf.value - assets_value) > tolerance:
+            continue
+
+        rank = (
+            0 if _is_balance_sheet_source(rtf.source_location) else 1,
+            0 if "redeemable non-controlling interest" in label_lower else 1,
+            rtf.table_index if rtf.table_index >= 0 else 9999,
+            rtf.row_idx if rtf.row_idx >= 0 else 9999,
+        )
+        if best_rank is None or rank < best_rank:
+            best_rank = rank
+            best_row = rtf
+
+    return best_row
+
+
+def _has_total_liabilities_bridge_context(
+    raw_table_fields: List[TableField],
+    period_key: str,
+    identity_total_row: TableField | None = None,
+) -> bool:
+    """Return True when the period exposes a bridge component above equity."""
+    anchor_prefix = (
+        _source_anchor_prefix(identity_total_row.source_location)
+        if identity_total_row is not None
+        else ""
+    )
+    anchor_section = (
+        _source_section_prefix(anchor_prefix)
+        if anchor_prefix
+        else ""
+    )
+
+    for rtf in raw_table_fields:
+        if rtf.column_header != period_key:
+            continue
+
+        if anchor_prefix:
+            candidate_prefix = _source_anchor_prefix(rtf.source_location)
+            candidate_section = _source_section_prefix(candidate_prefix)
+            if (
+                candidate_prefix != anchor_prefix
+                and candidate_section != anchor_section
+            ):
+                continue
+
+        label_lower = rtf.label.lower()
+        if re.search(r"redeemable\s+non[- ]?controlling\s+interest", label_lower):
+            return True
+        if re.search(r"\bmezzanine\s+equity\b", label_lower):
+            return True
+        if (
+            re.search(r"\bnon[- ]?controlling\s+interest\b", label_lower)
+            and "including portion attributable" not in label_lower
+        ):
+            return True
+
+    return False
 
 
 def _filing_rank(period_key: str, filing_type: str,
@@ -2032,11 +2123,72 @@ class ExtractPhase(PipelinePhase):
                         raw_text=f"{nc_val} + {c_val}",
                         extraction_method="table",
                     )
-                continue
 
             assets = period_fields[pk].get("total_assets")
             liabilities = period_fields[pk].get("total_liabilities")
             equity = period_fields[pk].get("total_equity")
+            identity_total_row = (
+                _pick_total_liabilities_identity_total_row(
+                    raw_table_fields,
+                    pk,
+                    assets_value=assets.value if assets else None,
+                )
+                if equity
+                else None
+            )
+
+            if equity and liabilities is None and identity_total_row:
+                identity_total_tolerance = max(
+                    1.0,
+                    abs(identity_total_row.value) * 0.001,
+                )
+                derived_total_liabilities = identity_total_row.value - equity.value
+                should_use_identity_total = _has_total_liabilities_bridge_context(
+                    raw_table_fields,
+                    pk,
+                    identity_total_row,
+                )
+
+                if should_use_identity_total and derived_total_liabilities > 0:
+                    base_field = equity
+                    base_prov = base_field.provenance
+                    adjusted = _make_field_result(
+                        derived_total_liabilities,
+                        base_field.scale,
+                        source_filename,
+                        f"{identity_total_row.source_location}:bs_identity_bridge",
+                        base_field.confidence,
+                        table_index=identity_total_row.table_index
+                        if identity_total_row.table_index >= 0
+                        else None,
+                        table_title=identity_total_row.table_title,
+                        row_label=(
+                            "total_liabilities "
+                            "(computed: total liabilities and equity - total equity)"
+                        ),
+                        col_label=identity_total_row.col_label,
+                        row=identity_total_row.row_idx
+                        if identity_total_row.row_idx >= 0
+                        else None,
+                        col=identity_total_row.col_idx
+                        if identity_total_row.col_idx >= 0
+                        else None,
+                        raw_text=f"{identity_total_row.value} - {equity.value}",
+                        extraction_method="table",
+                    )
+                    adjusted.provenance.preflight_currency = (
+                        base_prov.preflight_currency
+                    )
+                    adjusted.provenance.preflight_standard = (
+                        base_prov.preflight_standard
+                    )
+                    adjusted.provenance.preflight_units_hint = (
+                        base_prov.preflight_units_hint
+                    )
+                    adjusted._sort_key = getattr(equity, "_sort_key", None)  # type: ignore[attr-defined]
+                    period_fields[pk]["total_liabilities"] = adjusted
+                    liabilities = adjusted
+
             if not assets or not liabilities or not equity:
                 continue
 
@@ -2052,32 +2204,47 @@ class ExtractPhase(PipelinePhase):
                 liabilities.value,
                 liabilities.provenance.source_location,
             )
-            if not bridge_fields:
-                continue
-
             bridge_value = sum(field.value for field in bridge_fields)
-            if abs(bridge_value - identity_gap) > tolerance:
+            same_filing_identity_bridge = (
+                assets.provenance.source_filing
+                and assets.provenance.source_filing == liabilities.provenance.source_filing
+                and liabilities.provenance.source_filing == equity.provenance.source_filing
+                and _has_total_liabilities_bridge_context(raw_table_fields, pk)
+            )
+            if not bridge_fields and not same_filing_identity_bridge:
                 continue
 
             existing = liabilities
             existing_prov = existing.provenance
-            bridge_labels = ", ".join(field.label for field in bridge_fields)
-            bridge_raw = " + ".join(str(field.value) for field in bridge_fields)
             row_label = existing_prov.row_label or "Total liabilities"
+            if bridge_fields and abs(bridge_value - identity_gap) <= tolerance:
+                adjusted_value = existing.value + bridge_value
+                bridge_labels = ", ".join(field.label for field in bridge_fields)
+                raw_text = f"{existing.value} + ({' + '.join(str(field.value) for field in bridge_fields)})"
+                adjusted_row_label = f"{row_label} (+ {bridge_labels})"
+            elif same_filing_identity_bridge:
+                adjusted_value = assets.value - equity.value
+                raw_text = f"{assets.value} - {equity.value}"
+                adjusted_row_label = (
+                    f"{row_label} "
+                    "(computed: total assets - total equity with explicit bridge)"
+                )
+            else:
+                continue
 
             adjusted = _make_field_result(
-                existing.value + bridge_value,
+                adjusted_value,
                 existing.scale,
                 existing_prov.source_filing or source_filename,
                 f"{existing_prov.source_location}:bs_identity_bridge",
                 existing.confidence,
                 table_index=existing_prov.table_index,
                 table_title=existing_prov.table_title,
-                row_label=f"{row_label} (+ {bridge_labels})",
+                row_label=adjusted_row_label,
                 col_label=existing_prov.col_label,
                 row=existing_prov.row,
                 col=existing_prov.col,
-                raw_text=f"{existing.value} + ({bridge_raw})",
+                raw_text=raw_text,
                 extraction_method=existing_prov.extraction_method or "table",
             )
             adjusted.provenance.preflight_currency = (
@@ -2121,32 +2288,47 @@ class ExtractPhase(PipelinePhase):
                 liabilities.value,
                 liabilities.provenance.source_location,
             )
-            if not bridge_fields:
-                continue
-
             bridge_value = sum(field.value for field in bridge_fields)
-            if abs(bridge_value - identity_gap) > tolerance:
+            same_filing_identity_bridge = (
+                assets.provenance.source_filing
+                and assets.provenance.source_filing == liabilities.provenance.source_filing
+                and liabilities.provenance.source_filing == equity.provenance.source_filing
+                and _has_total_liabilities_bridge_context(raw_table_fields, pk)
+            )
+            if not bridge_fields and not same_filing_identity_bridge:
                 continue
 
             existing = liabilities
             existing_prov = existing.provenance
-            bridge_labels = ", ".join(field.label for field in bridge_fields)
-            bridge_raw = " + ".join(str(field.value) for field in bridge_fields)
             row_label = existing_prov.row_label or "Total liabilities"
+            if bridge_fields and abs(bridge_value - identity_gap) <= tolerance:
+                adjusted_value = existing.value + bridge_value
+                bridge_labels = ", ".join(field.label for field in bridge_fields)
+                raw_text = f"{existing.value} + ({' + '.join(str(field.value) for field in bridge_fields)})"
+                adjusted_row_label = f"{row_label} (+ {bridge_labels})"
+            elif same_filing_identity_bridge:
+                adjusted_value = assets.value - equity.value
+                raw_text = f"{assets.value} - {equity.value}"
+                adjusted_row_label = (
+                    f"{row_label} "
+                    "(computed: total assets - total equity with explicit bridge)"
+                )
+            else:
+                continue
 
             adjusted = _make_field_result(
-                existing.value + bridge_value,
+                adjusted_value,
                 existing.scale,
                 existing_prov.source_filing,
                 f"{existing_prov.source_location}:bs_identity_bridge",
                 existing.confidence,
                 table_index=existing_prov.table_index,
                 table_title=existing_prov.table_title,
-                row_label=f"{row_label} (+ {bridge_labels})",
+                row_label=adjusted_row_label,
                 col_label=existing_prov.col_label,
                 row=existing_prov.row,
                 col=existing_prov.col,
-                raw_text=f"{existing.value} + ({bridge_raw})",
+                raw_text=raw_text,
                 extraction_method=existing_prov.extraction_method or "table",
             )
             adjusted.provenance.preflight_currency = (

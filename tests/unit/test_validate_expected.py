@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -230,6 +231,19 @@ class TestSanityWarnings:
         errors = validate_expected(path)
         warnings = [e for e in errors if "[WARNING]" in e and "total_assets" in e]
         assert warnings == []
+
+    def test_adtn_promoted_quarters_no_balance_identity_warning(self):
+        repo_root = Path(__file__).resolve().parents[2]
+        expected_path = repo_root / "cases" / "ADTN" / "expected.json"
+
+        errors = validate_expected(str(expected_path))
+        bs_warnings = [
+            e
+            for e in errors
+            if e.startswith("[WARNING]") and "total_assets" in e
+        ]
+
+        assert bs_warnings == []
 
 
 class TestFileNotFound:

@@ -815,12 +815,24 @@ def test_extract_phase_adtn_keeps_q1_q2_2023_net_income_on_same_quarter_sources(
     assert result.periods["Q2-2023"].fields["net_income"].value == -36215.0
 
 
-def test_extract_phase_adtn_rejects_oci_revision_total_liabilities_tables():
+def test_extract_phase_adtn_promoted_quarters_total_liabilities_use_identity_bridge():
     result = _case_extract("ADTN")
 
-    assert result.periods["Q1-2023"].fields["total_liabilities"].value == 675765.0
-    assert result.periods["Q2-2023"].fields["total_liabilities"].value == 655006.0
-    assert result.periods["Q3-2023"].fields["total_liabilities"].value == 625355.0
+    q1_2023 = result.periods["Q1-2023"].fields["total_liabilities"]
+    q1_2024 = result.periods["Q1-2024"].fields["total_liabilities"]
+    q1_2025 = result.periods["Q1-2025"].fields["total_liabilities"]
+
+    assert q1_2023.value == 1117657.0
+    assert q1_2023.provenance.source_filing == "SRC_010_10-Q_Q3-2024.clean.md"
+    assert q1_2023.provenance.source_location.endswith(":bs_identity_bridge")
+
+    assert q1_2024.value == 1066092.0
+    assert q1_2024.provenance.source_filing == "SRC_009_10-Q_Q1-2025.htm"
+    assert q1_2024.provenance.source_location.endswith(":bs_identity_bridge")
+
+    assert q1_2025.value == 1054346.0
+    assert q1_2025.provenance.source_filing == "SRC_009_10-Q_Q1-2025.htm"
+    assert q1_2025.provenance.source_location.endswith(":bs_identity_bridge")
 
 
 def test_extract_phase_gct_total_liabilities_absorbs_mezzanine_equity():
@@ -870,5 +882,5 @@ def test_extract_phase_adtn_full_prefers_restated_quarters_and_preserves_da_scal
     assert result.periods["Q1-2024"].fields["total_equity"].value == 260849.0
     assert result.periods["Q2-2024"].fields["total_equity"].value == 213628.0
     assert result.periods["Q3-2024"].fields["total_equity"].value == 205578.0
-    assert result.periods["Q3-2024"].fields["total_liabilities"].value == 638536.0
+    assert result.periods["Q3-2024"].fields["total_liabilities"].value == 1061487.0
     assert result.periods["Q2-2025"].fields["depreciation_amortization"].value == 7.6

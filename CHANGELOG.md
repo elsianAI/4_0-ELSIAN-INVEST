@@ -2,6 +2,11 @@
 
 ## 2026-03-08
 
+### [4.0] ADTN post-BL-081 remediation — quarterly BS identity restored without changing canonical state
+- Resolved the audit finding left after the BL-081 promotion by repairing the shared-core quarterly `total_liabilities` bridge in `elsian/extract/phase.py` and tightening the ADTN promoted quarterly truth so the promoted quarters no longer mix balance-sheet components into a broken identity. The fix keeps ADTN at `FULL` and leaves the canonical governance state unchanged: `BL-081` stays `DONE`, ADTN stays `FULL`, and the operational `DEC-015` counter stays `14/15`.
+- **Files changed:** `cases/ADTN/expected.json`, `elsian/extract/phase.py`, `tests/unit/test_extract_phase.py`, `tests/unit/test_validate_expected.py`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/validate_contracts.py --schema case --path cases/ADTN/case.json` → PASS. `python3 scripts/validate_contracts.py --schema expected --path cases/ADTN/expected.json` → PASS. `python3 -m pytest -q tests/unit/test_extract_phase.py tests/unit/test_validate_expected.py` → PASS (71 passed). `python3 -m elsian eval ADTN` → PASS 100.0% (520/520), and `python3 -m elsian eval ADTN 2>&1 | rg -n "validate_expected|total_assets \\(|WARNING"` → no output. `python3 -m elsian eval --all` → PASS 16/16. `python3 -m pytest -q` → 1374 passed, 5 skipped, 1 warning. `git diff --check` → PASS.
+
 ### [4.0] Governance closeout — BL-081 archived and ADTN promoted to FULL
 - Reconciled the canonical governance state after the green BL-081 targeted promotion. `docs/project/BACKLOG.md` no longer carries `BL-081` as active work; it moves to `docs/project/BACKLOG_DONE.md`. `docs/project/PROJECT_STATE.md` now reflects ADTN as `FULL` (`8A+15Q`, 520 validated fields), raises the operational DEC-015 counter from 13/15 to 14/15 (`13 FULL + KAR` by documented exception), and reduces the remaining `ANNUAL_ONLY` promotion/exception backlog to `SOM` and `0327`.
 - **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`

@@ -3,7 +3,7 @@
   "ticker": "ADTN",
   "currency": "USD",
   "scale": "as_reported",
-  "scale_notes": "Values stored as displayed in filing iXBRL tags. Primary unit: thousands (USD). FY2019 total_debt=24,600 normalized from 24.6M (iXBRL tag in SRC_006 used _scale:6 = millions; converted to thousands for scale consistency with all other period values). FY2023-FY2025 total_liabilities includes the separately presented Redeemable Non-Controlling Interest (RNCI from Adtran Networks SE JV) from the same 10-K balance sheet source so total_assets reconcile to liabilities plus equity under the project BS identity rule. FY2022 total_assets/total_liabilities reflect measurement-period-adjusted values from SRC_003 comparative (ADTRAN Networks acquisition closed Aug-2022; ASC 805 measurement period). FY2022 total_equity sourced from SRC_001 equity rollforward; consistent across SRC_003 and SRC_004 (1,303,613).",
+  "scale_notes": "Values stored as displayed in filing iXBRL tags. Primary unit: thousands (USD). FY2019 total_debt=24,600 normalized from 24.6M (iXBRL tag in SRC_006 used _scale:6 = millions; converted to thousands for scale consistency with all other period values). FY2023-FY2025 total_liabilities includes the separately presented Redeemable Non-Controlling Interest (RNCI from Adtran Networks SE JV) from the same 10-K balance sheet source so total_assets reconcile to liabilities plus equity under the project BS identity rule. Promoted quarterlies Q1-2023 through Q3-2025 apply the same BS identity rule when the filing presents an explicit Total Liabilities and Equity bridge and a separately presented RNCI / mezzanine component for that period. FY2022 total_assets/total_liabilities reflect measurement-period-adjusted values from SRC_003 comparative (ADTRAN Networks acquisition closed Aug-2022; ASC 805 measurement period). FY2022 total_equity sourced from SRC_001 equity rollforward; consistent across SRC_003 and SRC_004 (1,303,613).",
   "periods": {
     "FY2018": {
       "fecha_fin": "2018-12-31",
@@ -1490,8 +1490,8 @@
           "source_filing": "SRC_010_10-Q_Q3-2024.clean.md"
         },
         "total_liabilities": {
-          "value": 675765.0,
-          "source_filing": "SRC_015_10-Q_Q1-2023.clean.md"
+          "value": 1117657.0,
+          "source_filing": "SRC_010_10-Q_Q3-2024.clean.md"
         }
       }
     },
@@ -1580,8 +1580,8 @@
           "source_filing": "SRC_010_10-Q_Q3-2024.clean.md"
         },
         "total_liabilities": {
-          "value": 655006.0,
-          "source_filing": "SRC_014_10-Q_Q2-2023.clean.md"
+          "value": 1096529.0,
+          "source_filing": "SRC_010_10-Q_Q3-2024.clean.md"
         }
       }
     },
@@ -1670,8 +1670,8 @@
           "source_filing": "SRC_010_10-Q_Q3-2024.clean.md"
         },
         "total_liabilities": {
-          "value": 625355.0,
-          "source_filing": "SRC_013_10-Q_Q3-2023.clean.md"
+          "value": 1066518.0,
+          "source_filing": "SRC_010_10-Q_Q3-2024.clean.md"
         }
       }
     },
@@ -1769,10 +1769,10 @@
         },
         "total_equity": {
           "value": 260849.0,
-          "source_filing": "SRC_007_10-Q_Q3-2025.clean.md"
+          "source_filing": "SRC_009_10-Q_Q1-2025.clean.md"
         },
         "total_liabilities": {
-          "value": 622771.0,
+          "value": 1066092.0,
           "source_filing": "SRC_009_10-Q_Q1-2025.clean.md"
         }
       }
@@ -1855,10 +1855,10 @@
         },
         "total_equity": {
           "value": 213628.0,
-          "source_filing": "SRC_007_10-Q_Q3-2025.clean.md"
+          "source_filing": "SRC_008_10-Q_Q2-2025.clean.md"
         },
         "total_liabilities": {
-          "value": 629225.0,
+          "value": 1072522.0,
           "source_filing": "SRC_008_10-Q_Q2-2025.clean.md"
         }
       }
@@ -1944,7 +1944,7 @@
           "source_filing": "SRC_007_10-Q_Q3-2025.clean.md"
         },
         "total_liabilities": {
-          "value": 638536.0,
+          "value": 1061487.0,
           "source_filing": "SRC_007_10-Q_Q3-2025.clean.md"
         }
       }
@@ -2043,10 +2043,10 @@
         },
         "total_equity": {
           "value": 138893.0,
-          "source_filing": "SRC_007_10-Q_Q3-2025.clean.md"
+          "source_filing": "SRC_009_10-Q_Q1-2025.clean.md"
         },
         "total_liabilities": {
-          "value": 631412.0,
+          "value": 1054346.0,
           "source_filing": "SRC_009_10-Q_Q1-2025.clean.md"
         }
       }
@@ -2129,10 +2129,10 @@
         },
         "total_equity": {
           "value": 169613.0,
-          "source_filing": "SRC_007_10-Q_Q3-2025.clean.md"
+          "source_filing": "SRC_008_10-Q_Q2-2025.clean.md"
         },
         "total_liabilities": {
-          "value": 644593.0,
+          "value": 1046682.0,
           "source_filing": "SRC_008_10-Q_Q2-2025.clean.md"
         }
       }
@@ -2218,7 +2218,7 @@
           "source_filing": "SRC_007_10-Q_Q3-2025.clean.md"
         },
         "total_liabilities": {
-          "value": 665237.0,
+          "value": 1067325.0,
           "source_filing": "SRC_007_10-Q_Q3-2025.clean.md"
         }
       }
