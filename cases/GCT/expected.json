@@ -4,7 +4,7 @@
   "currency": "USD",
   "restatement_policy": "as_reported_unless_explicit_restatement",
   "scale": "mixed",
-  "scale_notes": "Monetary fields in thousands as stated in filing tables. EPS in raw units per share. shares_outstanding = weighted-average basic from EPS table in raw share count (NOT thousands, GCT filings report share counts in raw units). All expense fields (cost_of_revenue, income_tax, interest_expense, sga, R&D, D&A) stored as positive magnitudes. capex = purchases of property and equipment (negative = outflow per cash flow statement). ebitda = Adjusted EBITDA as reported by company (non-GAAP, includes SBC add-back). total_equity = Total shareholders equity (excludes mezzanine equity). FY2020 has no balance sheet (20-F only reports FY2021/FY2022 balance sheets). GCT transitioned from 20-F to 10-K filing format starting FY2023.",
+  "scale_notes": "Monetary fields in thousands as stated in filing tables. EPS in raw units per share. shares_outstanding = weighted-average basic from EPS table in raw share count (NOT thousands, GCT filings report share counts in raw units). All expense fields (cost_of_revenue, income_tax, interest_expense, sga, R&D, D&A) stored as positive magnitudes. capex = purchases of property and equipment (negative = outflow per cash flow statement). ebitda = Adjusted EBITDA as reported by company (non-GAAP, includes SBC add-back). total_equity = Total shareholders equity (excludes mezzanine equity). FY2021 total_liabilities includes the separately presented mezzanine equity (Series E preferred shares redemption value) from the 20-F balance sheet so total_assets reconcile to liabilities plus equity under the project BS identity rule. FY2020 has no balance sheet (20-F only reports FY2021/FY2022 balance sheets). GCT transitioned from 20-F to 10-K filing format starting FY2023.",
   "periods": {
     "FY2025": {
       "fecha_fin": "2025-12-31",
@@ -387,7 +387,7 @@
           "source_filing": "SRC_004_20-F_FY2023.clean.md"
         },
         "total_liabilities": {
-          "value": 60945,
+          "value": 87597,
           "source_filing": "SRC_004_20-F_FY2023.clean.md"
         },
         "total_equity": {
@@ -593,7 +593,7 @@
           "source_filing": "SRC_009_10-Q_Q2-2024.clean.md"
         },
         "depreciation_amortization": {
-          "value": 0.01,
+          "value": 380.0,
           "source_filing": "SRC_009_10-Q_Q2-2024.clean.md"
         }
       }
@@ -651,7 +651,7 @@
           "source_filing": "SRC_008_10-Q_Q3-2024.clean.md"
         },
         "depreciation_amortization": {
-          "value": 0.01,
+          "value": 390.0,
           "source_filing": "SRC_008_10-Q_Q3-2024.clean.md"
         }
       }
@@ -803,7 +803,7 @@
           "source_filing": "SRC_006_10-Q_Q2-2025.clean.md"
         },
         "depreciation_amortization": {
-          "value": 0.06,
+          "value": 2140.0,
           "source_filing": "SRC_006_10-Q_Q2-2025.clean.md"
         },
         "cash_and_equivalents": {
@@ -877,7 +877,7 @@
           "source_filing": "SRC_005_10-Q_Q3-2025.clean.md"
         },
         "depreciation_amortization": {
-          "value": 0.06,
+          "value": 2115.0,
           "source_filing": "SRC_005_10-Q_Q3-2025.clean.md"
         },
         "cash_and_equivalents": {

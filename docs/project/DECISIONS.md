@@ -270,3 +270,21 @@
      - 14/14 PASS 100% con 0 overrides = autónomo suficiente para extracción
 - **Razón:** VISION.md es inequívoco: "Cada paso manual es un bug en el sistema, no una solución." Los 8 overrides son 8 bugs documentados. El pipeline es maduro, robusto, y cubre 4 mercados — pero honestamente no es autónomo al 100% todavía. Declarar prematuramente "autónomo suficiente" sería exactamente la trampa que Elsian quiere evitar.
 - **Impacto:** No cambia el estado del proyecto ni degrada ningún ticker. Establece el estándar de verdad: el 14/14 es real pero incompleto. El objetivo es llegar al 14/14 con 0 overrides.
+
+## DEC-027 — Canonizar la auditoría de expected.json para BL-074..BL-077
+- **Fecha:** 2026-03-07
+- **Contexto:** La auditoría exhaustiva de los 16 `expected.json` generó un paquete de governance que abrió BL-074, BL-075, BL-076 y BL-077. Ese primer empaquetado referenciaba `docs/reports/AUDIT_EXPECTED_JSON.md`, pero el informe quedó como artefacto local `untracked` clasificado por el checker como `other_dirty`. Eso deja el backlog canónico dependiendo de evidencia no versionada, lo que rompe la transportabilidad del paquete a otro agente o a un checkout limpio desde `main`.
+- **Decisión:**
+  1. La fuente operativa canónica para BL-074, BL-075, BL-076 y BL-077 pasa a ser esta decisión. El informe local de auditoría puede seguir existiendo como evidencia suplementaria, pero no es requisito para interpretar ni ejecutar esas BL.
+  2. Hallazgos canonizados de la auditoría:
+     - **14 issues críticos en 3 tickers.** ADTN concentra 3 `BS_IDENTITY_FAIL` (FY2023-FY2025). GCT concentra 1 `BS_IDENTITY_FAIL` (FY2021) y 4 `SCALE_INCONSISTENT` en `depreciation_amortization` (Q2/Q3-2023 y Q2/Q3-2025). TZOO concentra 6 `BS_IDENTITY_FAIL` consecutivos (FY2020-Q1-2023).
+     - **122 issues menores** con dos familias sistémicas dominantes: campos BL-035/BL-058 no retroportados a `expected.json` existentes y campos derivados calculables ausentes en múltiples tickers/periodos.
+     - **Gaps sistémicos canónicos.** `cfi`, `cff` y `delta_cash` faltan como `MISSING_EXPECTED` en 14-15 tickers (~106-114 periodos). `accounts_receivable` y `accounts_payable` faltan en 16 tickers (~161 periodos). `inventories` falta en 7 tickers inventory-bearing (~88 periodos). `ebitda` falta en 14 tickers (~148 periodos) y `fcf` en 15 tickers (~110 periodos) pese a tener componentes presentes.
+     - **Inconsistencias derivadas a investigar.** ACLS (`ebitda`), NEXN (`gross_profit`), SONO (`gross_profit`), SOM (`delta_cash`) y TZOO (`delta_cash`) requieren clasificación caso a caso antes de automatizar o documentar excepciones.
+  3. Mapeo operativo a backlog:
+     - **BL-074** cubre exclusivamente la corrección de los issues críticos de ADTN, GCT y TZOO.
+     - **BL-075** cubre la adición determinista de `ebitda` y `fcf` cuando existan componentes y no haya `DERIVED_INCONSISTENT`.
+     - **BL-076** cubre la retroportación no destructiva de campos BL-035/BL-058 a `expected.json` existentes.
+     - **BL-077** cubre la clasificación y resolución de las inconsistencias derivadas restantes.
+- **Razón:** `BACKLOG.md` debe ser interpretable desde un checkout limpio con solo documentos versionados. Si una BL viva depende de un artefacto local no canónico, el paquete deja de ser portable y aumenta el riesgo de drift entre agentes o entornos.
+- **Impacto:** BL-074..BL-077 pasan a referenciar `DEC-027` como fuente operativa primaria. No cambian prioridad, orden, dependencias ni criterios de aceptación; solo se corrige la canonización de su justificación.

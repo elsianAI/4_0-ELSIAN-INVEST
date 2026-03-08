@@ -25,6 +25,7 @@ Objetivos de esta fase:
 - seguir reduciendo manualidad residual fuera del core de extracción;
 - ampliar cobertura funcional del pipeline sin degradar provenance;
 - hacer que añadir un ticker o un campo nuevo siga siendo un cambio local y verificable.
+- mantener el paralelismo mutante real como capacidad diferida hasta que exista criterio explícito de `parallel-ready` y un proceso operativo formal, en lugar de improvisarlo sobre `main`.
 
 `BL-057` ya quedó cerrado como mejora conservadora del path de acquire: SOM ya no depende de `filings_sources` hardcodeados y el piloto LSE/AIM se resuelve con discovery automático de 3 documentos núcleo. Si aparece masa crítica LSE/AIM en el futuro, el siguiente paso ya no es arreglar Somero, sino decidir si compensa subir esto a infraestructura de mercado más amplia.
 

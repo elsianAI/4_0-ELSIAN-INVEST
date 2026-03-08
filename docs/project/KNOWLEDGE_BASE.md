@@ -56,3 +56,55 @@ Este documento no es el manual técnico del módulo. Su función es ayudarte a a
 - Si necesitas política de rol, ve a `docs/project/ROLES.md`.
 - Si necesitas doctrina técnica de Módulo 1, ve a `docs/project/MODULE_1_ENGINEER_CONTEXT.md`.
 - No dupliques aquí métricas vivas, backlog activo, decisiones completas ni detalle técnico profundo del módulo.
+
+## 7. Paralelismo multiagente: estado actual y criterio futuro
+
+### Estado actual
+
+- El repositorio no debe tratarse hoy como `parallel-ready` para mutaciones concurrentes sobre el mismo árbol principal.
+- El paralelismo sí es útil ya para exploración, packaging, auditoría y validación read-only.
+- La implementación mutante por defecto sigue siendo secuencial sobre `main`, con integración y cierre seriales.
+
+### Qué aprendimos del primer intento
+
+- El problema no fue escribir código en paralelo, sino integrar y cerrar sin contaminar el árbol principal.
+- Un paquete puede ser técnicamente correcto y aun así romper la elegibilidad de `auto-commit` si el worktree deja de estar limpio o si aparece dirty ajeno.
+- `CHANGELOG.md`, backlog/gobernanza y varias superficies transversales siguen siendo puntos de serialización natural.
+- Tener tareas razonablemente bien descritas en `BACKLOG.md` ayuda, pero no sustituye reglas de write set, aislamiento de workspace y proceso de integración.
+
+### Criterio mínimo de `parallel-ready`
+
+ELSIAN solo podrá considerarse `parallel-ready` para mutaciones reales cuando, como mínimo, se cumpla todo lo siguiente:
+
+- repo limpio al inicio, salvo `workspace_only_dirty`;
+- una sola BL por agente;
+- write set explícito por BL;
+- sin solape material entre write sets;
+- surfaces seriales declaradas y respetadas;
+- integración siempre serial en el padre neutral;
+- `gates -> auditor -> closeout` ejecutados por BL, no en cierre conjunto;
+- política explícita de aborto y rollback si aparece conflicto, drift o contaminación del worktree.
+
+### Modelo objetivo recomendado
+
+- Modelo preferido: `git worktree + una rama por BL`.
+- El padre neutral (`orchestrator`) sigue siendo el único responsable de integrar, cerrar y decidir commits finales.
+- El uso de subagentes forked sin aislamiento git formal puede servir para pilotos o trabajo read-only, pero no debe considerarse el modelo estable de paralelización mutante.
+
+### Surfaces que deben seguir serializadas por defecto
+
+- `docs/project/ROLES.md`
+- `docs/project/BACKLOG.md`
+- `docs/project/PROJECT_STATE.md`
+- `ROADMAP.md`
+- `CHANGELOG.md`
+- `elsian/cli.py`
+- `elsian/extract/phase.py`
+- `elsian/extract/html_tables.py`
+- `elsian/evaluate/validation.py`
+
+### Backlog asociado
+
+- `BL-072` define el criterio oficial de `parallel-ready` y el proceso operativo de paralelización.
+- `BL-073` ejecuta el primer piloto real solo cuando `BL-072` y `BL-061` estén cerradas.
+- Hasta entonces, el paralelismo mutante debe tratarse como no habilitado de forma general.

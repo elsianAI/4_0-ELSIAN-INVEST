@@ -1,7 +1,9 @@
 """Tests for ExtractPhase sign normalization and helper functions."""
 
+from functools import lru_cache
 from pathlib import Path
 
+from elsian.extract.html_tables import TableField
 from elsian.extract.phase import (
     ExtractPhase,
     _normalize_sign,
@@ -12,6 +14,7 @@ from elsian.extract.phase import (
     compute_sort_key,
     _make_field_result,
     _extract_financial_highlights_dividends_per_share,
+    _pick_total_liabilities_bridge_components,
 )
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -19,6 +22,11 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 
 def _som_filing_text(filename: str) -> str:
     return (_REPO_ROOT / "cases" / "SOM" / "filings" / filename).read_text()
+
+
+@lru_cache(maxsize=None)
+def _case_extract(ticker: str):
+    return ExtractPhase().extract(str(_REPO_ROOT / "cases" / ticker))
 
 
 # ── Sign normalization ───────────────────────────────────────────────
@@ -74,6 +82,66 @@ def test_section_bonus_strongly_deprioritized():
 
 def test_section_bonus_neutral():
     assert _section_bonus("filing:some_other_section:tbl1") == 0
+
+
+def test_section_bonus_strongly_penalizes_da_from_per_share_sections():
+    assert _section_bonus(
+        "filing:income_statement:net_income_per_ordinary_share_–_diluted:tbl14",
+        canonical="depreciation_amortization",
+    ) < -10
+
+
+def test_pick_total_liabilities_bridge_components_prefers_smallest_matching_subset():
+    fields = [
+        TableField(
+            label="Total liabilities",
+            value=621525.0,
+            column_header="FY2024",
+            source_location="filing:table:balance_sheet:tbl1:row0",
+            raw_text="Total liabilities 621,525",
+            col_label="FY2024",
+            table_title="balance_sheet",
+            row_idx=0,
+            col_idx=1,
+            table_index=1,
+        ),
+        TableField(
+            label="Redeemable Non-Controlling Interest",
+            value=442152.0,
+            column_header="FY2024",
+            source_location="filing:table:balance_sheet:tbl1:row1",
+            raw_text="Redeemable Non-Controlling Interest 442,152",
+            col_label="FY2024",
+            table_title="balance_sheet",
+            row_idx=1,
+            col_idx=1,
+            table_index=1,
+        ),
+        TableField(
+            label="Non-controlling interest",
+            value=316415.0,
+            column_header="FY2024",
+            source_location="filing:table:balance_sheet:tbl1:row2",
+            raw_text="Non-controlling interest 316,415",
+            col_label="FY2024",
+            table_title="balance_sheet",
+            row_idx=2,
+            col_idx=1,
+            table_index=1,
+        ),
+    ]
+
+    picked = _pick_total_liabilities_bridge_components(
+        fields,
+        "FY2024",
+        442152.0,
+        621525.0,
+        "filing:table:balance_sheet:tbl1:row0",
+    )
+
+    assert [field.label for field in picked] == [
+        "Redeemable Non-Controlling Interest",
+    ]
 
 
 # ── Filing rank ──────────────────────────────────────────────────────
@@ -200,9 +268,7 @@ def test_extract_financial_highlights_dividends_per_share_ignores_presentation_c
 
 
 def test_extract_phase_som_dividends_per_share_from_annual_report():
-    case_dir = _REPO_ROOT / "cases" / "SOM"
-
-    result = ExtractPhase().extract(str(case_dir))
+    result = _case_extract("SOM")
 
     fy2024 = result.periods["FY2024"].fields["dividends_per_share"]
     fy2023 = result.periods["FY2023"].fields["dividends_per_share"]
@@ -217,3 +283,29 @@ def test_extract_phase_som_dividends_per_share_from_annual_report():
     assert fy2023.provenance.extraction_method == "table"
     assert "financial_highlights_dps" in fy2023.provenance.source_location
     assert {fy2024.value, fy2023.value}.isdisjoint({4.1, 7.4, 16.9, 23.0})
+
+
+def test_extract_phase_gct_prefers_monetary_da_over_per_share_artifact():
+    result = _case_extract("GCT")
+
+    assert result.periods["Q2-2023"].fields["depreciation_amortization"].value == 380.0
+    assert result.periods["Q3-2023"].fields["depreciation_amortization"].value == 390.0
+    assert result.periods["Q2-2025"].fields["depreciation_amortization"].value == 2140.0
+    assert result.periods["Q3-2025"].fields["depreciation_amortization"].value == 2115.0
+
+
+def test_extract_phase_gct_total_liabilities_absorbs_mezzanine_equity():
+    result = _case_extract("GCT")
+
+    assert result.periods["FY2021"].fields["total_liabilities"].value == 87597.0
+
+
+def test_extract_phase_tzoo_total_liabilities_absorbs_non_controlling_interest():
+    result = _case_extract("TZOO")
+
+    assert result.periods["FY2020"].fields["total_liabilities"].value == 100509.0
+    assert result.periods["FY2021"].fields["total_liabilities"].value == 103959.0
+    assert result.periods["Q1-2022"].fields["total_liabilities"].value == 94352.0
+    assert result.periods["Q2-2022"].fields["total_liabilities"].value == 77049.0
+    assert result.periods["Q3-2022"].fields["total_liabilities"].value == 67704.0
+    assert result.periods["Q1-2023"].fields["total_liabilities"].value == 58048.0

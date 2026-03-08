@@ -9,6 +9,16 @@
 
 ---
 
+### BL-078 — Alinear extractor con BL-074 (BS identity con NCI/mezzanine y D&A de GCT)
+- **Prioridad:** CRÍTICA
+- **Estado:** DONE ✅ (2026-03-07)
+- **Asignado a:** engineer
+- **Depende de:** —
+- **Descripción:** Se cerró el fix shared-core estrecho que faltaba para que la verdad corregida en BL-074 pudiera evaluarse correctamente donde el patrón sí era reutilizable. `elsian/extract/phase.py` ahora absorbe en `total_liabilities` las partidas presentadas fuera de equity común pero dentro de la identidad de balance usada por el proyecto (`non-controlling interest`, `redeemable non-controlling interest`, `mezzanine equity`) y penaliza con fuerza los candidatos de `depreciation_amortization` que provienen de secciones per-share. `elsian/extract/vertical.py` expone las etiquetas puente necesarias y `tests/unit/test_extract_phase.py` cubre ambos patrones. En la misma oleada quedaron canonizados `cases/ADTN/case.json` y `cases/ADTN/expected.json`. El paquete deja GCT y TZOO alineadas end-to-end con la verdad corregida de BL-074 y deja explícito que la roja restante de ADTN es drift extractor más amplio, fuera del alcance estrecho de esta BL.
+- **Criterio de aceptación:** ✓ `python3 scripts/validate_contracts.py --schema case --path cases/ADTN/case.json` PASS. ✓ `python3 scripts/validate_contracts.py --schema expected --path cases/ADTN/expected.json` PASS. ✓ `python3 -m pytest -q tests/unit/test_extract_phase.py` PASS (29 passed). ✓ `python3 -m elsian eval GCT` PASS 100.0% (252/252). ✓ `python3 -m elsian eval TZOO` PASS 100.0% (300/300). ✓ `python3 -m elsian eval ADTN` sigue FAIL 84.97% (164/193) por drift extractor más amplio fuera del patrón BL-078, por lo que BL-074 permanece `BLOCKED`; ese follow-up quedó empaquetado después como `BL-079`.
+
+---
+
 ### BL-060 — T02 — Hardening de CI (scope filtrado restante)
 - **Prioridad:** ALTA
 - **Estado:** DONE ✅ (2026-03-07)

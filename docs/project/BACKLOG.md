@@ -162,6 +162,83 @@
 - **Descripción:** Añadir scaffolding y plantillas para tareas, casos y reportes, reduciendo pasos manuales y forzando metadatos mínimos de aceptación, riesgos y validación.
 - **Criterio de aceptación:** Crear una nueva tarea o un nuevo caso requiere menos pasos manuales y las plantillas obligan a declarar validación y criterio de cierre.
 
+### BL-072 — Habilitación de paralelismo: criterio `parallel-ready` y proceso operativo
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Módulo:** Governance
+- **Validation tier:** governance-only
+- **Depende de:** —
+- **Referencias:** BL-061, docs/project/KNOWLEDGE_BASE.md
+- **Descripción:** Definir el modelo oficial de paralelización mutante para ELSIAN y dejar explícito cuándo el sistema puede considerarse `parallel-ready`. La tarea debe fijar un único proceso operativo, preferentemente con `git worktree + una rama por BL`, incluyendo preflight, criterios go/no-go, surfaces seriales, reglas de write set, rol del padre neutral, integración serial, closeout por BL y criterios de aborto/rollback.
+- **Criterio de aceptación:** Existe una definición explícita de `parallel-ready`. Existe un checklist go/no-go antes de lanzar trabajo mutante en paralelo. Queda fijado el proceso end-to-end de creación de worktree/rama, ejecución por agente, validación, auditoría, closeout, integración y commit. Quedan definidas las surfaces que nunca se paralelizan. Queda explícito que la implementación mutante en paralelo sigue deshabilitada mientras no se cumplan al menos los prerrequisitos definidos en esta BL, incluyendo `BL-061`.
+
+### BL-073 — Piloto controlado de paralelización multiagente
+- **Prioridad:** MEDIA
+- **Estado:** BLOCKED (espera `BL-072` y `BL-061`)
+- **Asignado a:** sin asignar
+- **Módulo:** Module 1
+- **Validation tier:** shared-core
+- **Depende de:** BL-072, BL-061
+- **Referencias:** BL-059, BL-060, docs/project/KNOWLEDGE_BASE.md
+- **Descripción:** Ejecutar un primer piloto real de paralelización mutante con dos BL independientes y write sets disjuntos, usando exclusivamente el proceso definido en `BL-072`. El piloto debe demostrar aislamiento por `git worktree` y rama, integración serial en el padre, cierre independiente por BL y aborto limpio si aparece solape material.
+- **Criterio de aceptación:** Se ejecuta un piloto con dos BL válidas y una BL por worktree/rama. Ningún agente sale de su write set. Cada BL pasa `gates -> auditor -> closeout` por separado. La integración se hace en serie y genera un commit por BL. Si aparece conflicto estructural, el piloto aborta sin contaminar `main`. Queda una decisión explícita de mantener, ajustar o descartar el modelo antes de extenderlo a más trabajo.
+
+### BL-074 — Corregir issues críticos en expected.json (ADTN, GCT, TZOO)
+- **Prioridad:** CRÍTICA
+- **Estado:** BLOCKED (ADTN mantiene drift extractor más amplio fuera del patrón BL-078)
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** targeted
+- **Depende de:** BL-079
+- **Referencias:** DEC-027
+- **Descripción:** La curación filing-backed de ADTN, GCT y TZOO ya está hecha en `expected.json` con `source_filing` explícito. `BL-078` ya cerró el fix shared-core estrecho necesario para absorber `NCI/RNCI/mezzanine` en `total_liabilities` y para priorizar el valor monetario correcto de `depreciation_amortization`; con ello GCT y TZOO ya quedaron alineadas end-to-end con la verdad corregida. El cierre contractual de BL-074 sigue bloqueado porque `python3 -m elsian eval ADTN` permanece rojo por drift extractor más amplio, fuera del patrón estrecho cubierto por BL-078 y ahora empaquetado en BL-079.
+- **Criterio de aceptación:** Los `BS_IDENTITY_FAIL` detectados en la auditoría desaparecen con tolerancia ±1%. Los 4 `SCALE_INCONSISTENT` de GCT desaparecen. `python3 -m elsian eval GCT` y `python3 -m elsian eval TZOO` ya están verdes; BL-074 solo puede cerrarse cuando ADTN también quede verde y el check de auditoría sobre ADTN, GCT y TZOO no reporte ningún issue crítico nuevo.
+
+### BL-079 — Corregir drift extractor amplio de ADTN fuera del patrón BL-078
+- **Prioridad:** CRÍTICA
+- **Estado:** TODO
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** shared-core
+- **Depende de:** —
+- **Referencias:** BL-074, BL-078, DEC-027
+- **Descripción:** Corregir el drift extractor amplio que sigue afectando a ADTN después del cierre estrecho de BL-078. El problema restante ya no es `BS identity` ni el patrón de `depreciation_amortization` tipo GCT, sino selección incorrecta de filas y tablas en múltiples familias de campos dentro del extractor/eval. La BL debe endurecer de forma reproducible la selección de candidatos de ADTN en familias como working capital, ingresos/costes/márgenes, cash flow y métricas por acción, sin reabrir la verdad filing-backed ya curada en BL-074 y sin degradar GCT/TZOO.
+- **Criterio de aceptación:** El extractor/eval de ADTN mejora de forma amplia y reproducible frente al drift actual, sin convertir el trabajo en un fix local opaco. `python3 -m elsian eval ADTN` se revalida en verde contra la verdad filing-backed de BL-074. `python3 -m elsian eval GCT` y `python3 -m elsian eval TZOO` se revalidan al menos en verde, sin regresiones frente al cierre de BL-078. La solución queda cubierta por tests shared-core o regresiones equivalentes que demuestren que el problema de ADTN ya no es selección incorrecta de filas/tablas en múltiples familias de campos.
+
+### BL-075 — Enriquecer expected.json con campos derivados calculables
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** targeted
+- **Depende de:** BL-074
+- **Referencias:** DEC-027, config/field_aliases.json
+- **Descripción:** Añadir campos derivados a todos los `expected.json` donde ya existan sus componentes. `ebitda = ebit + depreciation_amortization` (14 tickers, ~148 periodos) y `fcf = cfo - abs(capex)` (15 tickers, ~110 periodos). Debe implementarse como script determinista: leer cada `expected.json`, calcular y añadir el derivado solo cuando los dos componentes existan y el campo derivado no exista, usar `source_filing: "DERIVED"`, no sobrescribir valores existentes y no aplicar la fórmula en ticker/periodo con `DERIVED_INCONSISTENT` detectado por la auditoría.
+- **Criterio de aceptación:** Los `MISSING_EXPECTED` de `ebitda` y `fcf` se reducen a los periodos donde faltan componentes o donde exista `DERIVED_INCONSISTENT` documentado. El script es idempotente y puede re-ejecutarse sin efectos secundarios.
+
+### BL-076 — Retroportar campos BL-035/BL-058 a expected.json existentes
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** targeted
+- **Depende de:** BL-074
+- **Referencias:** DEC-027, BL-035, BL-058
+- **Descripción:** Añadir a los `expected.json` existentes los campos canónicos incorporados en BL-035 y BL-058 que no se retroportaron. `cfi`, `cff` y `delta_cash` (~106 periodos); `accounts_receivable` y `accounts_payable` (~161 periodos); `inventories` solo para empresas inventory-bearing (~88 periodos). Para cada ticker/periodo: ejecutar `elsian curate` para regenerar el draft, extraer solo los campos nuevos, mergearlos en el `expected.json` existente sin sobrescribir campos ya presentes e incluir `source_filing` del draft para cada campo añadido. Si `elsian curate` no extrae un campo para un periodo específico, documentarlo como gap justificado y no fabricar valores.
+- **Criterio de aceptación:** Los campos de BL-035 y BL-058 están presentes en todos los `expected.json` donde el filing los soporta. Los `MISSING_EXPECTED` reportados por la auditoría se reducen significativamente. Ningún campo previamente existente se modifica.
+
+### BL-077 — Investigar inconsistencias de campos derivados
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** targeted
+- **Depende de:** BL-075, BL-076
+- **Referencias:** DEC-027
+- **Descripción:** Investigar caso por caso las inconsistencias de campos derivados detectadas en la auditoría. ACLS: `ebitda` reportado vs `ebit + D&A` difiere hasta 47%. NEXN: `gross_profit` diverge de `ingresos - cost_of_revenue` hasta 18.8%. SONO: `gross_profit` diverge 23.7% en Q3-2023. SOM: `delta_cash` diverge 398% en FY2023. TZOO: `delta_cash` diverge 27–30% en múltiples FY. Para cada caso, determinar si (a) el `expected.json` tiene un valor incorrecto que debe corregirse, (b) la fórmula simplificada no aplica y debe documentarse, o (c) falta o está mal capturado un campo componente.
+- **Criterio de aceptación:** Cada `DERIVED_INCONSISTENT` queda clasificado como (a), (b) o (c). Los casos (a) quedan corregidos. Los casos (b) y (c) quedan documentados. Se genera un mini-informe en `docs/reports/DERIVED_INCONSISTENCIES_RESOLUTION.md`.
+
 ### BL-005 — Expandir cobertura de tickers (diversidad de mercados/formatos)
 - **Prioridad:** BAJA
 - **Estado:** TODO

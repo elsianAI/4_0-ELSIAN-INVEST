@@ -1,0 +1,13 @@
+{
+  "ticker": "ADTN",
+  "company_name": "ADTRAN Holdings, Inc.",
+  "exchange": "NASDAQ",
+  "country": "US",
+  "currency": "USD",
+  "source_hint": "sec",
+  "accounting_standard": "US-GAAP",
+  "cik": "926282",
+  "fiscal_year_end_month": 12,
+  "sector": "Electronic Equipment",
+  "period_scope": "ANNUAL_ONLY"
+}

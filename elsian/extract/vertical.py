@@ -35,6 +35,12 @@ _TARGET_LABELS: List[Tuple[re.Pattern, str, bool]] = [
      "_debt_current", True),
     (re.compile(r"^long[\s-]term\s+debt\b", re.I),
      "_debt_long_term", True),
+    (re.compile(r"^redeemable\s+non[\s-]?controlling\s+interest$", re.I),
+     "_bridge_redeemable_nci", False),
+    (re.compile(r"^non[\s-]?controlling\s+interest$", re.I),
+     "_bridge_non_controlling_interest", False),
+    (re.compile(r"^total\s+mezzanine\s+equity$", re.I),
+     "_bridge_mezzanine_equity", False),
 ]
 
 # ── Section boundary detection ───────────────────────────────────────

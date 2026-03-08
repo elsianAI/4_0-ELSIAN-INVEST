@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import re
+from itertools import combinations
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -372,7 +373,143 @@ def _section_bonus(source_location: str, rules: Optional[Dict] = None,
         if ":income_statement:" in loc_lower and ":net_income:" in loc_lower:
             base = min(base, severe_penalty)
 
+    # D&A should come from monetary income-statement rows, not from per-share
+    # reconciliation tables where the same label can appear as a cents/share
+    # add-back component (e.g. GCT 0.01 / 0.06 artifacts).
+    if canonical == "depreciation_amortization":
+        loc_lower = source_location.lower()
+        if ":income_statement:" in loc_lower and any(
+            token in loc_lower
+            for token in (
+                "per_share",
+                "per_ordinary_share",
+                "per_common_share",
+                "per_ads",
+            )
+        ):
+            base = min(base, severe_penalty)
+
     return base
+
+
+def _is_balance_sheet_source(source_location: str) -> bool:
+    """Return True for balance-sheet-like table/text sources."""
+    loc_lower = source_location.lower()
+    return ":balance_sheet:" in loc_lower or ":vertical_bs:" in loc_lower
+
+
+def _source_anchor_prefix(source_location: str) -> str:
+    """Return the stable table/section prefix for a source location."""
+    return re.sub(r":row\d+(?::col\d+)?$", "", source_location)
+
+
+def _source_section_prefix(source_location: str) -> str:
+    """Return a broader section prefix shared by related balance-sheet tables."""
+    if ":tbl" in source_location:
+        return re.sub(r":tbl\d+.*$", "", source_location)
+    return re.sub(r":[^:]+$", "", source_location)
+
+
+def _pick_total_liabilities_bridge_components(
+    raw_table_fields: List[TableField],
+    period_key: str,
+    identity_gap: float,
+    base_liabilities_value: float,
+    base_source_location: str,
+) -> List[TableField]:
+    """Pick the smallest bridge component set that closes the BS identity gap.
+
+    Some filings present balance-sheet items outside "Total liabilities" but
+    still above common equity, e.g. mezzanine equity or redeemable/non-
+    controlling interests. When that happens, we keep "total_equity" on the
+    face-of-statement basis and fold only the matching bridge component(s) into
+    `total_liabilities`.
+    """
+    if identity_gap <= 0:
+        return []
+
+    tolerance = max(1.0, abs(identity_gap) * 0.001)
+    component_priority = {
+        "redeemable_nci": 0,
+        "mezzanine_equity": 1,
+        "non_controlling_interest": 2,
+    }
+    candidates: List[Tuple[str, TableField]] = []
+    seen: set[Tuple[str, float, str]] = set()
+    anchor_prefixes: set[str] = set()
+    anchor_sections: set[str] = set()
+
+    for rtf in raw_table_fields:
+        if rtf.column_header != period_key:
+            continue
+        if re.fullmatch(r"total\s+liabilities", rtf.label.strip(), re.I):
+            if abs(rtf.value - base_liabilities_value) <= max(1.0, abs(base_liabilities_value) * 0.001):
+                anchor_prefix = _source_anchor_prefix(rtf.source_location)
+                anchor_prefixes.add(anchor_prefix)
+                anchor_sections.add(_source_section_prefix(anchor_prefix))
+
+    if not anchor_prefixes and base_source_location:
+        anchor_prefix = _source_anchor_prefix(base_source_location)
+        anchor_prefixes.add(anchor_prefix)
+        anchor_sections.add(_source_section_prefix(anchor_prefix))
+
+    for rtf in raw_table_fields:
+        if rtf.column_header != period_key:
+            continue
+        candidate_prefix = _source_anchor_prefix(rtf.source_location)
+        candidate_section = _source_section_prefix(candidate_prefix)
+        if anchor_prefixes and (
+            candidate_prefix not in anchor_prefixes
+            and candidate_section not in anchor_sections
+        ):
+            continue
+        if not anchor_prefixes and not _is_balance_sheet_source(rtf.source_location):
+            continue
+
+        label_lower = rtf.label.lower()
+        if "total liabilities" in label_lower and any(
+            token in label_lower
+            for token in ("equity", "stockholders", "shareholders")
+        ):
+            continue
+
+        component_kind = ""
+        if re.search(r"redeemable\s+non[- ]?controlling\s+interest", label_lower):
+            component_kind = "redeemable_nci"
+        elif re.search(r"\bmezzanine\s+equity\b", label_lower):
+            component_kind = "mezzanine_equity"
+        elif re.search(r"\bnon[- ]?controlling\s+interest\b", label_lower):
+            component_kind = "non_controlling_interest"
+        else:
+            continue
+
+        dedup_key = (component_kind, float(rtf.value), rtf.source_location)
+        if dedup_key in seen:
+            continue
+        seen.add(dedup_key)
+        candidates.append((component_kind, rtf))
+
+    if not candidates:
+        return []
+
+    best_combo: List[TableField] = []
+    best_rank: Tuple[int, Tuple[int, ...]] | None = None
+    max_size = min(3, len(candidates))
+
+    for combo_size in range(1, max_size + 1):
+        for combo in combinations(candidates, combo_size):
+            combo_value = sum(rtf.value for _, rtf in combo)
+            if abs(combo_value - identity_gap) > tolerance:
+                continue
+            combo_rank = (
+                combo_size,
+                tuple(sorted(component_priority[kind] for kind, _ in combo)),
+            )
+            if best_rank is None or combo_rank < best_rank:
+                best_rank = combo_rank
+                best_combo = [rtf for _, rtf in combo]
+
+    return best_combo
 
 
 def _filing_rank(period_key: str, filing_type: str,
@@ -652,6 +789,7 @@ class ExtractPhase(PipelinePhase):
 
         audit = AuditLog()
         filing_extractions: List[Tuple[str, str, Dict[str, Dict[str, FieldResult]]]] = []
+        all_raw_table_fields: List[TableField] = []
 
         # Build a set of filing prefixes that have .clean.md versions.
         # When a .clean.md exists, narrative extraction from the .txt
@@ -720,6 +858,7 @@ class ExtractPhase(PipelinePhase):
                 period_fields, _raw_table_fields, filing_path.name,
                 filing_scale, filing_scale_confidence,
             )
+            all_raw_table_fields.extend(_raw_table_fields)
 
             if period_fields:
                 filing_extractions.append(
@@ -771,6 +910,10 @@ class ExtractPhase(PipelinePhase):
         # extractor could not find (e.g. corrupted PDF sources). If the
         # extractor already produced a value, it always wins.
         self._apply_manual_overrides(config, result)
+
+        # Cross-filing BS bridge: some comparative filings provide the winning
+        # liabilities/assets while equity still comes from another filing.
+        self._bridge_total_liabilities_after_merge(result, all_raw_table_fields)
 
         # Restore the alias resolver's original additive set before returning
         # so that per-case additive_fields don't leak into subsequent cases.
@@ -976,9 +1119,11 @@ class ExtractPhase(PipelinePhase):
         # ensures these authoritative consolidated values beat
         # Schedule I / parent-only values from other sources.
         _VERTICAL_BS_BONUS = 20
-        for tf in extract_vertical_bs(
+        vertical_bs_fields = extract_vertical_bs(
             text, source_filename=filing_path.name,
-        ):
+        )
+        raw_table_fields.extend(vertical_bs_fields)
+        for tf in vertical_bs_fields:
             canonical = self._alias_resolver.resolve(tf.label)
             if canonical is None:
                 # Synthetic labels (e.g. "Total debt (current +
@@ -1414,7 +1559,7 @@ class ExtractPhase(PipelinePhase):
         filing_scale: str,
         filing_scale_confidence: str,
     ) -> None:
-        """Recover total_liabilities from non-current + current sub-totals."""
+        """Recover or bridge total_liabilities from BS sub-totals/components."""
         _NC_LIAB_RE = re.compile(r"total\s+non[- ]?current\s+liabilities", re.I)
         _C_LIAB_RE = re.compile(r"total\s+current\s+liabilities", re.I)
 
@@ -1447,6 +1592,133 @@ class ExtractPhase(PipelinePhase):
                         raw_text=f"{nc_val} + {c_val}",
                         extraction_method="table",
                     )
+                continue
+
+            assets = period_fields[pk].get("total_assets")
+            liabilities = period_fields[pk].get("total_liabilities")
+            equity = period_fields[pk].get("total_equity")
+            if not assets or not liabilities or not equity:
+                continue
+
+            identity_gap = assets.value - (liabilities.value + equity.value)
+            tolerance = max(1.0, abs(assets.value) * 0.001)
+            if identity_gap <= tolerance:
+                continue
+
+            bridge_fields = _pick_total_liabilities_bridge_components(
+                raw_table_fields,
+                pk,
+                identity_gap,
+                liabilities.value,
+                liabilities.provenance.source_location,
+            )
+            if not bridge_fields:
+                continue
+
+            bridge_value = sum(field.value for field in bridge_fields)
+            if abs(bridge_value - identity_gap) > tolerance:
+                continue
+
+            existing = liabilities
+            existing_prov = existing.provenance
+            bridge_labels = ", ".join(field.label for field in bridge_fields)
+            bridge_raw = " + ".join(str(field.value) for field in bridge_fields)
+            row_label = existing_prov.row_label or "Total liabilities"
+
+            adjusted = _make_field_result(
+                existing.value + bridge_value,
+                existing.scale,
+                existing_prov.source_filing or source_filename,
+                f"{existing_prov.source_location}:bs_identity_bridge",
+                existing.confidence,
+                table_index=existing_prov.table_index,
+                table_title=existing_prov.table_title,
+                row_label=f"{row_label} (+ {bridge_labels})",
+                col_label=existing_prov.col_label,
+                row=existing_prov.row,
+                col=existing_prov.col,
+                raw_text=f"{existing.value} + ({bridge_raw})",
+                extraction_method=existing_prov.extraction_method or "table",
+            )
+            adjusted.provenance.preflight_currency = (
+                existing_prov.preflight_currency
+            )
+            adjusted.provenance.preflight_standard = (
+                existing_prov.preflight_standard
+            )
+            adjusted.provenance.preflight_units_hint = (
+                existing_prov.preflight_units_hint
+            )
+            adjusted._sort_key = getattr(existing, "_sort_key", None)  # type: ignore[attr-defined]
+            period_fields[pk]["total_liabilities"] = adjusted
+
+    @staticmethod
+    def _bridge_total_liabilities_after_merge(
+        result: ExtractionResult,
+        raw_table_fields: List[TableField],
+    ) -> None:
+        """Apply the same BS-identity bridge on merged results.
+
+        Needed when the winning liabilities/assets come from a comparative
+        filing while the winning equity comes from a different filing.
+        """
+        for pk, period_result in result.periods.items():
+            assets = period_result.fields.get("total_assets")
+            liabilities = period_result.fields.get("total_liabilities")
+            equity = period_result.fields.get("total_equity")
+            if not assets or not liabilities or not equity:
+                continue
+
+            identity_gap = assets.value - (liabilities.value + equity.value)
+            tolerance = max(1.0, abs(assets.value) * 0.001)
+            if identity_gap <= tolerance:
+                continue
+
+            bridge_fields = _pick_total_liabilities_bridge_components(
+                raw_table_fields,
+                pk,
+                identity_gap,
+                liabilities.value,
+                liabilities.provenance.source_location,
+            )
+            if not bridge_fields:
+                continue
+
+            bridge_value = sum(field.value for field in bridge_fields)
+            if abs(bridge_value - identity_gap) > tolerance:
+                continue
+
+            existing = liabilities
+            existing_prov = existing.provenance
+            bridge_labels = ", ".join(field.label for field in bridge_fields)
+            bridge_raw = " + ".join(str(field.value) for field in bridge_fields)
+            row_label = existing_prov.row_label or "Total liabilities"
+
+            adjusted = _make_field_result(
+                existing.value + bridge_value,
+                existing.scale,
+                existing_prov.source_filing,
+                f"{existing_prov.source_location}:bs_identity_bridge",
+                existing.confidence,
+                table_index=existing_prov.table_index,
+                table_title=existing_prov.table_title,
+                row_label=f"{row_label} (+ {bridge_labels})",
+                col_label=existing_prov.col_label,
+                row=existing_prov.row,
+                col=existing_prov.col,
+                raw_text=f"{existing.value} + ({bridge_raw})",
+                extraction_method=existing_prov.extraction_method or "table",
+            )
+            adjusted.provenance.preflight_currency = (
+                existing_prov.preflight_currency
+            )
+            adjusted.provenance.preflight_standard = (
+                existing_prov.preflight_standard
+            )
+            adjusted.provenance.preflight_units_hint = (
+                existing_prov.preflight_units_hint
+            )
+            period_result.fields["total_liabilities"] = adjusted
 
     # ── MANUAL OVERRIDES ─────────────────────────────────────────────
 
