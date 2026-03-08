@@ -85,6 +85,10 @@
         "capex": {
           "value": -126876,
           "source_filing": "SRC_001_AR_FY2024.clean.md"
+        },
+        "fcf": {
+          "value": 1035815.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -171,6 +175,10 @@
         "capex": {
           "value": -213001,
           "source_filing": "SRC_002_AR_FY2023.clean.md"
+        },
+        "fcf": {
+          "value": 277016.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -257,6 +265,10 @@
         "capex": {
           "value": -330609,
           "source_filing": "SRC_003_AR_FY2022.clean.md"
+        },
+        "fcf": {
+          "value": 317918.0,
+          "source_filing": "DERIVED"
         }
       }
     }

@@ -10,6 +10,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from elsian.expected_derived import derive_missing_fields
 from elsian.evaluate.validate_expected import validate_expected
 from elsian.models.result import EvalMatch, EvalReport, ExtractionResult
 
@@ -62,9 +63,31 @@ def evaluate(extraction: ExtractionResult, expected_path: str | Path) -> EvalRep
             actual_value = None
             if period_key in extraction.periods:
                 period = extraction.periods[period_key]
-                if field_name in period.fields:
-                    actual_value = period.fields[field_name].value
-                    fields_with_value += 1
+                expected_is_derived = field_info.get("source_filing") == "DERIVED"
+                if expected_is_derived:
+                    derived_actual = derive_missing_fields(
+                        ticker=extraction.ticker,
+                        period_key=period_key,
+                        fields={name: {"value": fr.value} for name, fr in period.fields.items()},
+                        existing_field_names={name for name in period.fields if name != field_name},
+                    )
+                    if field_name in derived_actual:
+                        actual_value = derived_actual[field_name]
+                        fields_with_value += 1
+                if actual_value is None:
+                    if field_name in period.fields:
+                        actual_value = period.fields[field_name].value
+                        fields_with_value += 1
+                    else:
+                        derived_actual = derive_missing_fields(
+                            ticker=extraction.ticker,
+                            period_key=period_key,
+                            fields={name: {"value": fr.value} for name, fr in period.fields.items()},
+                            existing_field_names=set(period.fields),
+                        )
+                        if field_name in derived_actual:
+                            actual_value = derived_actual[field_name]
+                            fields_with_value += 1
 
             if actual_value is None:
                 missed += 1

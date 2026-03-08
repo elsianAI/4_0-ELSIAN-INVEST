@@ -130,3 +130,132 @@ def test_build_expected_draft_from_extraction_keeps_empty_contract_shape():
     assert draft["_comparison_to_expected"]["common_periods"] == []
     assert draft["_comparison_to_expected"]["missing_periods"] == ["FY2024"]
     assert draft["periods"] == {}
+
+
+def test_build_expected_draft_from_extraction_adds_supported_derived_fields():
+    extraction_result = {
+        "ticker": "TEST",
+        "currency": "USD",
+        "periods": {
+            "FY2024": {
+                "fields": {
+                    "ebit": {
+                        "value": 100,
+                        "confidence": "high",
+                        "source_filing": "SRC_001.pdf",
+                    },
+                    "depreciation_amortization": {
+                        "value": 20,
+                        "confidence": "high",
+                        "source_filing": "SRC_001.pdf",
+                    },
+                    "cfo": {
+                        "value": 90,
+                        "confidence": "high",
+                        "source_filing": "SRC_001.pdf",
+                    },
+                    "capex": {
+                        "value": -30,
+                        "confidence": "high",
+                        "source_filing": "SRC_001.pdf",
+                    },
+                }
+            }
+        },
+    }
+
+    draft = build_expected_draft_from_extraction(
+        extraction_result,
+        ticker="TEST",
+        currency="USD",
+        expected=None,
+    )
+
+    period = draft["periods"]["FY2024"]
+    assert period["fields"]["ebitda"]["value"] == 120
+    assert period["fields"]["ebitda"]["source_filing"] == "DERIVED"
+    assert period["fields"]["fcf"]["value"] == 60
+    assert period["fields"]["fcf"]["source_filing"] == "DERIVED"
+
+
+def test_build_expected_draft_from_extraction_respects_canonical_exclusions():
+    extraction_result = {
+        "ticker": "ACLS",
+        "currency": "USD",
+        "periods": {
+            "Q1-2024": {
+                "fields": {
+                    "ebit": {
+                        "value": 100,
+                        "confidence": "high",
+                        "source_filing": "SRC_001.pdf",
+                    },
+                    "depreciation_amortization": {
+                        "value": 20,
+                        "confidence": "high",
+                        "source_filing": "SRC_001.pdf",
+                    },
+                }
+            }
+        },
+    }
+
+    draft = build_expected_draft_from_extraction(
+        extraction_result,
+        ticker="ACLS",
+        currency="USD",
+        expected=None,
+    )
+
+    assert "ebitda" not in draft["periods"]["Q1-2024"]["fields"]
+
+
+def test_build_expected_draft_prefers_derived_value_when_expected_marks_field_derived():
+    extraction_result = {
+        "ticker": "GCT",
+        "currency": "USD",
+        "periods": {
+            "Q1-2023": {
+                "fields": {
+                    "ebit": {
+                        "value": 17856,
+                        "confidence": "high",
+                        "source_filing": "SRC_001.pdf",
+                    },
+                    "depreciation_amortization": {
+                        "value": 380,
+                        "confidence": "high",
+                        "source_filing": "SRC_001.pdf",
+                    },
+                    "ebitda": {
+                        "value": 19847,
+                        "confidence": "low",
+                        "source_filing": "SRC_001.pdf",
+                    },
+                }
+            }
+        },
+    }
+    expected = {
+        "periods": {
+            "Q1-2023": {
+                "fields": {
+                    "ebitda": {"value": 18236, "source_filing": "DERIVED"},
+                }
+            }
+        }
+    }
+
+    draft = build_expected_draft_from_extraction(
+        extraction_result,
+        ticker="GCT",
+        currency="USD",
+        expected=expected,
+    )
+
+    field = draft["periods"]["Q1-2023"]["fields"]["ebitda"]
+    assert field["value"] == 18236
+    assert field["source_filing"] == "DERIVED"
+    assert field["_source"] == "derived"
+    assert draft["periods"]["Q1-2023"]["_confidence"]["field_counts"] == {"high": 3}
+    assert draft["periods"]["Q1-2023"]["_confidence"]["non_high_fields"] == []

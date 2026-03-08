@@ -471,6 +471,7 @@ def test_extract_financial_highlights_dividends_per_share():
         "SRC_001_ANNUAL_REPORT_FY2024.txt:table:financial_highlights_dps:line141",
         "SRC_001_ANNUAL_REPORT_FY2024.txt:table:financial_highlights_dps:line142",
     ]
+    assert [field.table_index for field in fields] == [0, 0]
 
 
 def test_adtn_regression_prefers_primary_statement_candidates():
@@ -523,11 +524,17 @@ def test_extract_phase_som_dividends_per_share_from_annual_report():
     assert fy2024.provenance.source_filing == "SRC_001_ANNUAL_REPORT_FY2024.txt"
     assert fy2024.provenance.extraction_method == "table"
     assert "financial_highlights_dps" in fy2024.provenance.source_location
+    assert fy2024.provenance.table_index == 0
+    assert fy2024.provenance.row is not None
+    assert fy2024.provenance.col is not None
 
     assert fy2023.value == 0.2319
     assert fy2023.provenance.source_filing == "SRC_001_ANNUAL_REPORT_FY2024.txt"
     assert fy2023.provenance.extraction_method == "table"
     assert "financial_highlights_dps" in fy2023.provenance.source_location
+    assert fy2023.provenance.table_index == 0
+    assert fy2023.provenance.row is not None
+    assert fy2023.provenance.col is not None
     assert {fy2024.value, fy2023.value}.isdisjoint({4.1, 7.4, 16.9, 23.0})
 
 

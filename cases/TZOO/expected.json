@@ -97,6 +97,14 @@
         "delta_cash": {
           "value": 1351,
           "source_filing": "SRC_001_10-K_FY2024.clean.md"
+        },
+        "ebitda": {
+          "value": 19405.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": 20923.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -191,6 +199,14 @@
         "delta_cash": {
           "value": -2989,
           "source_filing": "SRC_002_10-K_FY2023.clean.md"
+        },
+        "ebitda": {
+          "value": 17465.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": 10420.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -285,6 +301,14 @@
         "delta_cash": {
           "value": -25611,
           "source_filing": "SRC_003_10-K_FY2022.clean.md"
+        },
+        "ebitda": {
+          "value": 9746.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": -23583.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -379,6 +403,14 @@
         "delta_cash": {
           "value": -19396,
           "source_filing": "SRC_004_10-K_FY2021.clean.md"
+        },
+        "ebitda": {
+          "value": 507.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": -8112.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -473,6 +505,14 @@
         "delta_cash": {
           "value": 43675,
           "source_filing": "SRC_005_10-K_FY2020.clean.md"
+        },
+        "ebitda": {
+          "value": -11759.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": 46766.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -623,6 +663,14 @@
         "delta_cash": {
           "value": 1249,
           "source_filing": "SRC_006_10-K_FY2019.clean.md"
+        },
+        "ebitda": {
+          "value": 18359.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": 10762.0,
+          "source_filing": "DERIVED"
         }
       }
     },

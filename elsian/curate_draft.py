@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from elsian.expected_derived import derive_missing_fields
 from elsian.evaluate.validation import validate
 from elsian.models.result import ExtractionResult
 from elsian.normalize.aliases import AliasResolver
@@ -139,6 +140,7 @@ def build_expected_draft_from_extraction(
         confidence_counts: dict[str, int] = {}
         non_high_fields: list[str] = []
         skipped_manual_fields: list[str] = []
+        expected_fields = expected.get("periods", {}).get(period_label, {}).get("fields", {}) if expected else {}
 
         for field_name in sorted(fields):
             field_data = fields[field_name]
@@ -164,6 +166,55 @@ def build_expected_draft_from_extraction(
             if field_data.get("source_location"):
                 entry["_source_location"] = field_data["source_location"]
             fields_out[field_name] = entry
+
+        def _apply_derived_field(field_name: str, value: float, *, override_existing: bool) -> None:
+            if override_existing and field_name in fields_out:
+                previous_confidence = fields_out[field_name].get("confidence", "unknown")
+                if previous_confidence in confidence_counts:
+                    confidence_counts[previous_confidence] -= 1
+                    if confidence_counts[previous_confidence] <= 0:
+                        del confidence_counts[previous_confidence]
+                if previous_confidence in confidence_totals:
+                    confidence_totals[previous_confidence] -= 1
+                    if confidence_totals[previous_confidence] <= 0:
+                        del confidence_totals[previous_confidence]
+                if previous_confidence != "high":
+                    non_high_fields[:] = [name for name in non_high_fields if name != field_name]
+
+            confidence_counts["high"] = confidence_counts.get("high", 0) + 1
+            confidence_totals["high"] = confidence_totals.get("high", 0) + 1
+
+            fields_out[field_name] = {
+                "value": value,
+                "source_filing": "DERIVED",
+                "confidence": "high",
+                "_source": "derived",
+                "extraction_method": "derived",
+            }
+
+        derived_expected_names = {
+            field_name
+            for field_name, field_data in expected_fields.items()
+            if field_data.get("source_filing") == "DERIVED"
+        }
+        if derived_expected_names:
+            derived_overrides = derive_missing_fields(
+                ticker=ticker,
+                period_key=period_label,
+                fields=fields_out,
+                existing_field_names=set(fields_out) - derived_expected_names,
+            )
+            for field_name in sorted(derived_expected_names & set(derived_overrides)):
+                _apply_derived_field(field_name, derived_overrides[field_name], override_existing=True)
+
+        derived_fields = derive_missing_fields(
+            ticker=ticker,
+            period_key=period_label,
+            fields=fields_out,
+            existing_field_names=set(fields_out),
+        )
+        for field_name in sorted(derived_fields):
+            _apply_derived_field(field_name, derived_fields[field_name], override_existing=False)
 
         missing_canonicals = [
             field_name for field_name in canonical_fields if field_name not in fields_out

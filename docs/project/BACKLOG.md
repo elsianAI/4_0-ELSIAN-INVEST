@@ -184,17 +184,6 @@
 - **Descripción:** Ejecutar un primer piloto real de paralelización mutante con dos BL independientes y write sets disjuntos, usando exclusivamente el proceso definido en `BL-072`. El piloto debe demostrar aislamiento por `git worktree` y rama, integración serial en el padre, cierre independiente por BL y aborto limpio si aparece solape material.
 - **Criterio de aceptación:** Se ejecuta un piloto con dos BL válidas y una BL por worktree/rama. Ningún agente sale de su write set. Cada BL pasa `gates -> auditor -> closeout` por separado. La integración se hace en serie y genera un commit por BL. Si aparece conflicto estructural, el piloto aborta sin contaminar `main`. Queda una decisión explícita de mantener, ajustar o descartar el modelo antes de extenderlo a más trabajo.
 
-### BL-075 — Enriquecer expected.json con campos derivados calculables
-- **Prioridad:** ALTA
-- **Estado:** TODO
-- **Asignado a:** engineer
-- **Módulo:** Module 1
-- **Validation tier:** targeted
-- **Depende de:** BL-074
-- **Referencias:** DEC-027, config/field_aliases.json
-- **Descripción:** Añadir campos derivados a todos los `expected.json` donde ya existan sus componentes. `ebitda = ebit + depreciation_amortization` (14 tickers, ~148 periodos) y `fcf = cfo - abs(capex)` (15 tickers, ~110 periodos). Debe implementarse como script determinista: leer cada `expected.json`, calcular y añadir el derivado solo cuando los dos componentes existan y el campo derivado no exista, usar `source_filing: "DERIVED"`, no sobrescribir valores existentes y no aplicar la fórmula en ticker/periodo con `DERIVED_INCONSISTENT` detectado por la auditoría.
-- **Criterio de aceptación:** Los `MISSING_EXPECTED` de `ebitda` y `fcf` se reducen a los periodos donde faltan componentes o donde exista `DERIVED_INCONSISTENT` documentado. El script es idempotente y puede re-ejecutarse sin efectos secundarios.
-
 ### BL-076 — Retroportar campos BL-035/BL-058 a expected.json existentes
 - **Prioridad:** ALTA
 - **Estado:** TODO

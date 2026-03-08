@@ -247,6 +247,7 @@ def _extract_financial_highlights_dividends_per_share(
                 label="Dividends per share",
                 value=value,
                 column_header=f"FY{year}",
+                table_index=0,
                 source_location=(
                     f"{source_filename}:table:financial_highlights_dps:"
                     f"line{line_idx + 1}"

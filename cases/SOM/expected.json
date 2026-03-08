@@ -9,275 +9,884 @@
       "fecha_fin": "2024-12-31",
       "tipo_periodo": "anual",
       "fields": {
-        "ingresos": { "value": 109154, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "cost_of_revenue": { "value": 50350, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "gross_profit": { "value": 58804, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "sga": { "value": 31836, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "research_and_development": { "value": 2691, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "ebit": { "value": 24277, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "interest_expense": { "value": 53, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "income_tax": { "value": 5195, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "net_income": { "value": 18604, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "eps_basic": { "value": 0.34, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "eps_diluted": { "value": 0.33, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "shares_outstanding": { "value": 55126730, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "dividends_per_share": { "value": 0.169, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "total_assets": { "value": 98116, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "total_liabilities": { "value": 13815, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "total_equity": { "value": 84301, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "cash_and_equivalents": { "value": 29486, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "cfo": { "value": 17627, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "capex": { "value": -2449, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "cfi": { "value": -2449, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "cff": { "value": -19326, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "delta_cash": { "value": -3825, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "depreciation_amortization": { "value": 1830, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" }
+        "ingresos": {
+          "value": 109154,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "cost_of_revenue": {
+          "value": 50350,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "gross_profit": {
+          "value": 58804,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "sga": {
+          "value": 31836,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "research_and_development": {
+          "value": 2691,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "ebit": {
+          "value": 24277,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "interest_expense": {
+          "value": 53,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "income_tax": {
+          "value": 5195,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "net_income": {
+          "value": 18604,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "eps_basic": {
+          "value": 0.34,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "eps_diluted": {
+          "value": 0.33,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "shares_outstanding": {
+          "value": 55126730,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "dividends_per_share": {
+          "value": 0.169,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "total_assets": {
+          "value": 98116,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "total_liabilities": {
+          "value": 13815,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "total_equity": {
+          "value": 84301,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "cash_and_equivalents": {
+          "value": 29486,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "cfo": {
+          "value": 17627,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "capex": {
+          "value": -2449,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "cfi": {
+          "value": -2449,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "cff": {
+          "value": -19326,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "delta_cash": {
+          "value": -3825,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "depreciation_amortization": {
+          "value": 1830,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "ebitda": {
+          "value": 26107.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": 15178.0,
+          "source_filing": "DERIVED"
+        }
       }
     },
     "FY2023": {
       "fecha_fin": "2023-12-31",
       "tipo_periodo": "anual",
       "fields": {
-        "ingresos": { "value": 120699, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "cost_of_revenue": { "value": 53343, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "gross_profit": { "value": 67356, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "sga": { "value": 31082, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "research_and_development": { "value": 2679, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "ebit": { "value": 33595, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "interest_expense": { "value": 19, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "income_tax": { "value": 5259, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "net_income": { "value": 27978, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "eps_basic": { "value": 0.5, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "eps_diluted": { "value": 0.5, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "shares_outstanding": { "value": 55735120, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "dividends_per_share": { "value": 0.2319, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "total_assets": { "value": 98550, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "total_liabilities": { "value": 15315, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "total_equity": { "value": 83235, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "cash_and_equivalents": { "value": 33311, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "cfo": { "value": 24446, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "capex": { "value": -1740, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "cfi": { "value": -1740, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "cff": { "value": -22576, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "delta_cash": { "value": -388, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" },
-        "depreciation_amortization": { "value": 1560, "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt" }
+        "ingresos": {
+          "value": 120699,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "cost_of_revenue": {
+          "value": 53343,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "gross_profit": {
+          "value": 67356,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "sga": {
+          "value": 31082,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "research_and_development": {
+          "value": 2679,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "ebit": {
+          "value": 33595,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "interest_expense": {
+          "value": 19,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "income_tax": {
+          "value": 5259,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "net_income": {
+          "value": 27978,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "eps_basic": {
+          "value": 0.5,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "eps_diluted": {
+          "value": 0.5,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "shares_outstanding": {
+          "value": 55735120,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "dividends_per_share": {
+          "value": 0.2319,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "total_assets": {
+          "value": 98550,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "total_liabilities": {
+          "value": 15315,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "total_equity": {
+          "value": 83235,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "cash_and_equivalents": {
+          "value": 33311,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "cfo": {
+          "value": 24446,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "capex": {
+          "value": -1740,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "cfi": {
+          "value": -1740,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "cff": {
+          "value": -22576,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "delta_cash": {
+          "value": -388,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "depreciation_amortization": {
+          "value": 1560,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "ebitda": {
+          "value": 35155.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": 22706.0,
+          "source_filing": "DERIVED"
+        }
       }
     },
     "FY2022": {
       "fecha_fin": "2022-12-31",
       "tipo_periodo": "anual",
       "fields": {
-        "ingresos": { "value": 133600, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "cost_of_revenue": { "value": 57400, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "gross_profit": { "value": 76200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "sga": { "value": 33100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "ebit": { "value": 43100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "income_tax": { "value": 9700, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "net_income": { "value": 31100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "depreciation_amortization": { "value": 1400, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "capex": { "value": -5200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" }
+        "ingresos": {
+          "value": 133600,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "cost_of_revenue": {
+          "value": 57400,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "gross_profit": {
+          "value": 76200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "sga": {
+          "value": 33100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebit": {
+          "value": 43100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "income_tax": {
+          "value": 9700,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "net_income": {
+          "value": 31100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "depreciation_amortization": {
+          "value": 1400,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "capex": {
+          "value": -5200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebitda": {
+          "value": 44500.0,
+          "source_filing": "DERIVED"
+        }
       }
     },
     "FY2021": {
       "fecha_fin": "2021-12-31",
       "tipo_periodo": "anual",
       "fields": {
-        "ingresos": { "value": 133300, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "cost_of_revenue": { "value": 56500, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "gross_profit": { "value": 76800, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "sga": { "value": 31700, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "ebit": { "value": 45100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "income_tax": { "value": 9800, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "net_income": { "value": 34800, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "depreciation_amortization": { "value": 1300, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "capex": { "value": -6200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" }
+        "ingresos": {
+          "value": 133300,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "cost_of_revenue": {
+          "value": 56500,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "gross_profit": {
+          "value": 76800,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "sga": {
+          "value": 31700,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebit": {
+          "value": 45100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "income_tax": {
+          "value": 9800,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "net_income": {
+          "value": 34800,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "depreciation_amortization": {
+          "value": 1300,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "capex": {
+          "value": -6200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebitda": {
+          "value": 46400.0,
+          "source_filing": "DERIVED"
+        }
       }
     },
     "FY2020": {
       "fecha_fin": "2020-12-31",
       "tipo_periodo": "anual",
       "fields": {
-        "ingresos": { "value": 88600, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "cost_of_revenue": { "value": 39800, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "gross_profit": { "value": 48800, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "sga": { "value": 24900, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "ebit": { "value": 23900, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "income_tax": { "value": 5800, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "net_income": { "value": 18800, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "depreciation_amortization": { "value": 1100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "capex": { "value": -3700, "source_filing": "SRC_003_INTERIM_H1_2025.txt" }
+        "ingresos": {
+          "value": 88600,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "cost_of_revenue": {
+          "value": 39800,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "gross_profit": {
+          "value": 48800,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "sga": {
+          "value": 24900,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebit": {
+          "value": 23900,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "income_tax": {
+          "value": 5800,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "net_income": {
+          "value": 18800,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "depreciation_amortization": {
+          "value": 1100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "capex": {
+          "value": -3700,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebitda": {
+          "value": 25000.0,
+          "source_filing": "DERIVED"
+        }
       }
     },
     "FY2019": {
       "fecha_fin": "2019-12-31",
       "tipo_periodo": "anual",
       "fields": {
-        "ingresos": { "value": 89300, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "cost_of_revenue": { "value": 38600, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "gross_profit": { "value": 50700, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "sga": { "value": 24100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "ebit": { "value": 26600, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "income_tax": { "value": 5900, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "net_income": { "value": 21100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "depreciation_amortization": { "value": 1100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "capex": { "value": -3000, "source_filing": "SRC_003_INTERIM_H1_2025.txt" }
+        "ingresos": {
+          "value": 89300,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "cost_of_revenue": {
+          "value": 38600,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "gross_profit": {
+          "value": 50700,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "sga": {
+          "value": 24100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebit": {
+          "value": 26600,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "income_tax": {
+          "value": 5900,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "net_income": {
+          "value": 21100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "depreciation_amortization": {
+          "value": 1100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "capex": {
+          "value": -3000,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebitda": {
+          "value": 27700.0,
+          "source_filing": "DERIVED"
+        }
       }
     },
     "FY2018": {
       "fecha_fin": "2018-12-31",
       "tipo_periodo": "anual",
       "fields": {
-        "ingresos": { "value": 94000, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "cost_of_revenue": { "value": 40400, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "gross_profit": { "value": 53600, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "sga": { "value": 24500, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "ebit": { "value": 29100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "interest_expense": { "value": 100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "income_tax": { "value": 7500, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "net_income": { "value": 21500, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "depreciation_amortization": { "value": 1200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "capex": { "value": -800, "source_filing": "SRC_003_INTERIM_H1_2025.txt" }
+        "ingresos": {
+          "value": 94000,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "cost_of_revenue": {
+          "value": 40400,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "gross_profit": {
+          "value": 53600,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "sga": {
+          "value": 24500,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebit": {
+          "value": 29100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "interest_expense": {
+          "value": 100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "income_tax": {
+          "value": 7500,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "net_income": {
+          "value": 21500,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "depreciation_amortization": {
+          "value": 1200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "capex": {
+          "value": -800,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebitda": {
+          "value": 30300.0,
+          "source_filing": "DERIVED"
+        }
       }
     },
     "FY2017": {
       "fecha_fin": "2017-12-31",
       "tipo_periodo": "anual",
       "fields": {
-        "ingresos": { "value": 85600, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "cost_of_revenue": { "value": 36900, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "gross_profit": { "value": 48800, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "sga": { "value": 23300, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "ebit": { "value": 25500, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "interest_expense": { "value": 100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "income_tax": { "value": 7300, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "net_income": { "value": 18500, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "depreciation_amortization": { "value": 2100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "capex": { "value": -2200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" }
+        "ingresos": {
+          "value": 85600,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "cost_of_revenue": {
+          "value": 36900,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "gross_profit": {
+          "value": 48800,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "sga": {
+          "value": 23300,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebit": {
+          "value": 25500,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "interest_expense": {
+          "value": 100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "income_tax": {
+          "value": 7300,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "net_income": {
+          "value": 18500,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "depreciation_amortization": {
+          "value": 2100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "capex": {
+          "value": -2200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebitda": {
+          "value": 27600.0,
+          "source_filing": "DERIVED"
+        }
       }
     },
     "FY2016": {
       "fecha_fin": "2016-12-31",
       "tipo_periodo": "anual",
       "fields": {
-        "ingresos": { "value": 79400, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "cost_of_revenue": { "value": 34300, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "gross_profit": { "value": 45100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "sga": { "value": 23900, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "ebit": { "value": 21200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "interest_expense": { "value": 100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "income_tax": { "value": 7000, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "net_income": { "value": 14300, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "depreciation_amortization": { "value": 2700, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "capex": { "value": -4400, "source_filing": "SRC_003_INTERIM_H1_2025.txt" }
+        "ingresos": {
+          "value": 79400,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "cost_of_revenue": {
+          "value": 34300,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "gross_profit": {
+          "value": 45100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "sga": {
+          "value": 23900,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebit": {
+          "value": 21200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "interest_expense": {
+          "value": 100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "income_tax": {
+          "value": 7000,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "net_income": {
+          "value": 14300,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "depreciation_amortization": {
+          "value": 2700,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "capex": {
+          "value": -4400,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebitda": {
+          "value": 23900.0,
+          "source_filing": "DERIVED"
+        }
       }
     },
     "FY2015": {
       "fecha_fin": "2015-12-31",
       "tipo_periodo": "anual",
       "fields": {
-        "ingresos": { "value": 70200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "cost_of_revenue": { "value": 31000, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "gross_profit": { "value": 39200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "sga": { "value": 21600, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "ebit": { "value": 17600, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "interest_expense": { "value": 200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "income_tax": { "value": 5800, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "net_income": { "value": 11600, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "depreciation_amortization": { "value": 2300, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "capex": { "value": -4200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" }
+        "ingresos": {
+          "value": 70200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "cost_of_revenue": {
+          "value": 31000,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "gross_profit": {
+          "value": 39200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "sga": {
+          "value": 21600,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebit": {
+          "value": 17600,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "interest_expense": {
+          "value": 200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "income_tax": {
+          "value": 5800,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "net_income": {
+          "value": 11600,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "depreciation_amortization": {
+          "value": 2300,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "capex": {
+          "value": -4200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebitda": {
+          "value": 19900.0,
+          "source_filing": "DERIVED"
+        }
       }
     },
     "FY2014": {
       "fecha_fin": "2014-12-31",
       "tipo_periodo": "anual",
       "fields": {
-        "ingresos": { "value": 59300, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "cost_of_revenue": { "value": 27300, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "gross_profit": { "value": 32000, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "sga": { "value": 19400, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "ebit": { "value": 12600, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "interest_expense": { "value": 100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "income_tax": { "value": -2100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "net_income": { "value": 14500, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "depreciation_amortization": { "value": 2000, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "capex": { "value": -1200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" }
+        "ingresos": {
+          "value": 59300,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "cost_of_revenue": {
+          "value": 27300,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "gross_profit": {
+          "value": 32000,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "sga": {
+          "value": 19400,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebit": {
+          "value": 12600,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "interest_expense": {
+          "value": 100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "income_tax": {
+          "value": -2100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "net_income": {
+          "value": 14500,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "depreciation_amortization": {
+          "value": 2000,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "capex": {
+          "value": -1200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebitda": {
+          "value": 14600.0,
+          "source_filing": "DERIVED"
+        }
       }
     },
     "FY2013": {
       "fecha_fin": "2013-12-31",
       "tipo_periodo": "anual",
       "fields": {
-        "ingresos": { "value": 45100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "cost_of_revenue": { "value": 21600, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "gross_profit": { "value": 23500, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "sga": { "value": 17100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "ebit": { "value": 6400, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "interest_expense": { "value": 200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "income_tax": { "value": 1100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "net_income": { "value": 5400, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "depreciation_amortization": { "value": 2400, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "capex": { "value": -800, "source_filing": "SRC_003_INTERIM_H1_2025.txt" }
+        "ingresos": {
+          "value": 45100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "cost_of_revenue": {
+          "value": 21600,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "gross_profit": {
+          "value": 23500,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "sga": {
+          "value": 17100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebit": {
+          "value": 6400,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "interest_expense": {
+          "value": 200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "income_tax": {
+          "value": 1100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "net_income": {
+          "value": 5400,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "depreciation_amortization": {
+          "value": 2400,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "capex": {
+          "value": -800,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebitda": {
+          "value": 8800.0,
+          "source_filing": "DERIVED"
+        }
       }
     },
     "FY2012": {
       "fecha_fin": "2012-12-31",
       "tipo_periodo": "anual",
       "fields": {
-        "ingresos": { "value": 32200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "cost_of_revenue": { "value": 16500, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "gross_profit": { "value": 15700, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "sga": { "value": 14300, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "ebit": { "value": 1400, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "interest_expense": { "value": 300, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "income_tax": { "value": 200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "net_income": { "value": 1000, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "depreciation_amortization": { "value": 2600, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "capex": { "value": -600, "source_filing": "SRC_003_INTERIM_H1_2025.txt" }
+        "ingresos": {
+          "value": 32200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "cost_of_revenue": {
+          "value": 16500,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "gross_profit": {
+          "value": 15700,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "sga": {
+          "value": 14300,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebit": {
+          "value": 1400,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "interest_expense": {
+          "value": 300,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "income_tax": {
+          "value": 200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "net_income": {
+          "value": 1000,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "depreciation_amortization": {
+          "value": 2600,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "capex": {
+          "value": -600,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebitda": {
+          "value": 4000.0,
+          "source_filing": "DERIVED"
+        }
       }
     },
     "FY2011": {
       "fecha_fin": "2011-12-31",
       "tipo_periodo": "anual",
       "fields": {
-        "ingresos": { "value": 21900, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "cost_of_revenue": { "value": 11700, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "gross_profit": { "value": 10200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "sga": { "value": 12000, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "ebit": { "value": -1800, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "interest_expense": { "value": 400, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "net_income": { "value": -2300, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "depreciation_amortization": { "value": 2600, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "capex": { "value": -100, "source_filing": "SRC_003_INTERIM_H1_2025.txt" }
+        "ingresos": {
+          "value": 21900,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "cost_of_revenue": {
+          "value": 11700,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "gross_profit": {
+          "value": 10200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "sga": {
+          "value": 12000,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebit": {
+          "value": -1800,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "interest_expense": {
+          "value": 400,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "net_income": {
+          "value": -2300,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "depreciation_amortization": {
+          "value": 2600,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "capex": {
+          "value": -100,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebitda": {
+          "value": 800.0,
+          "source_filing": "DERIVED"
+        }
       }
     },
     "FY2010": {
       "fecha_fin": "2010-12-31",
       "tipo_periodo": "anual",
       "fields": {
-        "ingresos": { "value": 21000, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "cost_of_revenue": { "value": 11200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "gross_profit": { "value": 9800, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "sga": { "value": 11500, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "ebit": { "value": -1700, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "interest_expense": { "value": 500, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "income_tax": { "value": -200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "net_income": { "value": -2200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "depreciation_amortization": { "value": 2600, "source_filing": "SRC_003_INTERIM_H1_2025.txt" }
+        "ingresos": {
+          "value": 21000,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "cost_of_revenue": {
+          "value": 11200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "gross_profit": {
+          "value": 9800,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "sga": {
+          "value": 11500,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebit": {
+          "value": -1700,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "interest_expense": {
+          "value": 500,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "income_tax": {
+          "value": -200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "net_income": {
+          "value": -2200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "depreciation_amortization": {
+          "value": 2600,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebitda": {
+          "value": 900.0,
+          "source_filing": "DERIVED"
+        }
       }
     },
     "FY2009": {
       "fecha_fin": "2009-12-31",
       "tipo_periodo": "anual",
       "fields": {
-        "ingresos": { "value": 24200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "cost_of_revenue": { "value": 12500, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "gross_profit": { "value": 11700, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "sga": { "value": 27400, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "ebit": { "value": -15700, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "interest_expense": { "value": 1000, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "income_tax": { "value": -1200, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "net_income": { "value": -15400, "source_filing": "SRC_003_INTERIM_H1_2025.txt" },
-        "depreciation_amortization": { "value": 2700, "source_filing": "SRC_003_INTERIM_H1_2025.txt" }
+        "ingresos": {
+          "value": 24200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "cost_of_revenue": {
+          "value": 12500,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "gross_profit": {
+          "value": 11700,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "sga": {
+          "value": 27400,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebit": {
+          "value": -15700,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "interest_expense": {
+          "value": 1000,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "income_tax": {
+          "value": -1200,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "net_income": {
+          "value": -15400,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "depreciation_amortization": {
+          "value": 2700,
+          "source_filing": "SRC_003_INTERIM_H1_2025.txt"
+        },
+        "ebitda": {
+          "value": -13000.0,
+          "source_filing": "DERIVED"
+        }
       }
     }
   }

@@ -85,6 +85,14 @@
         "capex": {
           "value": -28676,
           "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "ebitda": {
+          "value": 11853.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": 108193.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -167,6 +175,14 @@
         "capex": {
           "value": -55247,
           "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "ebitda": {
+          "value": 4332.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": 134659.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -249,6 +265,14 @@
         "capex": {
           "value": -50286,
           "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "ebitda": {
+          "value": 28422.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": 50120.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -331,6 +355,14 @@
         "capex": {
           "value": -46216,
           "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "ebitda": {
+          "value": 128036.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": -74476.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -417,6 +449,14 @@
         "capex": {
           "value": -45531,
           "source_filing": "SRC_005_10-K_FY2021.clean.md"
+        },
+        "ebitda": {
+          "value": 188846.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": 207695.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -503,6 +543,14 @@
         "capex": {
           "value": -33035,
           "source_filing": "SRC_006_10-K_FY2020.clean.md"
+        },
+        "ebitda": {
+          "value": 9193.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": 128951.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -577,6 +625,10 @@
         "total_liabilities": {
           "value": 431611.0,
           "source_filing": "SRC_012_10-Q_Q1-2024.clean.md"
+        },
+        "ebitda": {
+          "value": -59717.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -651,6 +703,10 @@
         "depreciation_amortization": {
           "value": 15167.0,
           "source_filing": "SRC_009_10-Q_Q1-2025.clean.md"
+        },
+        "ebitda": {
+          "value": -46057.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -725,6 +781,10 @@
         "total_equity": {
           "value": 671684.0,
           "source_filing": "SRC_018_10-Q_Q2-2022.clean.md"
+        },
+        "ebitda": {
+          "value": 19617.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -799,6 +859,10 @@
         "total_liabilities": {
           "value": 446339.0,
           "source_filing": "SRC_015_10-Q_Q2-2023.clean.md"
+        },
+        "ebitda": {
+          "value": -45513.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -873,6 +937,10 @@
         "total_liabilities": {
           "value": 496714.0,
           "source_filing": "SRC_011_10-Q_Q2-2024.clean.md"
+        },
+        "ebitda": {
+          "value": 24621.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -947,6 +1015,10 @@
         "depreciation_amortization": {
           "value": 15879.0,
           "source_filing": "SRC_008_10-Q_Q2-2025.clean.md"
+        },
+        "ebitda": {
+          "value": 12950.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -1021,6 +1093,10 @@
         "total_equity": {
           "value": 642736.0,
           "source_filing": "SRC_017_10-Q_Q3-2022.clean.md"
+        },
+        "ebitda": {
+          "value": 15867.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -1095,6 +1171,10 @@
         "shares_outstanding": {
           "value": 125113916.0,
           "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "ebitda": {
+          "value": -9052.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -1169,6 +1249,10 @@
         "shares_outstanding": {
           "value": 127212245.0,
           "source_filing": "SRC_016_10-Q_Q4-2022.clean.md"
+        },
+        "ebitda": {
+          "value": 97436.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -1231,6 +1315,10 @@
         "shares_outstanding": {
           "value": 125181717.0,
           "source_filing": "SRC_013_10-Q_Q4-2023.clean.md"
+        },
+        "ebitda": {
+          "value": 91573.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -1293,6 +1381,10 @@
         "shares_outstanding": {
           "value": 122071586.0,
           "source_filing": "SRC_010_10-Q_Q4-2024.clean.md"
+        },
+        "ebitda": {
+          "value": 65704.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -1355,6 +1447,10 @@
         "eps_diluted": {
           "value": 0.75,
           "source_filing": "SRC_007_10-Q_Q4-2025.clean.md"
+        },
+        "ebitda": {
+          "value": 114438.0,
+          "source_filing": "DERIVED"
         }
       }
     }

@@ -118,6 +118,14 @@
         "capex": {
           "value": -233,
           "source_filing": "SRC_001_ANNUAL_REPORT_2024-12-31.txt"
+        },
+        "ebitda": {
+          "value": 1264.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": 1142.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -188,6 +196,14 @@
         "capex": {
           "value": -219,
           "source_filing": "tp-press-release-2025-annual-results.txt"
+        },
+        "ebitda": {
+          "value": 1375.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": 1594.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -258,6 +274,14 @@
         "capex": {
           "value": -253,
           "source_filing": "tp-press-release-2025-annual-results.txt"
+        },
+        "ebitda": {
+          "value": 1323.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": 1361.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -304,6 +328,14 @@
         "capex": {
           "value": -88,
           "source_filing": "SRC_011_REGULATORY_FILING_2025-07-31.txt"
+        },
+        "ebitda": {
+          "value": 651.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": 683.0,
+          "source_filing": "DERIVED"
         }
       }
     },
@@ -370,6 +402,14 @@
         "capex": {
           "value": -117,
           "source_filing": "SRC_011_REGULATORY_FILING_2025-07-31.txt"
+        },
+        "ebitda": {
+          "value": 664.0,
+          "source_filing": "DERIVED"
+        },
+        "fcf": {
+          "value": 471.0,
+          "source_filing": "DERIVED"
         }
       }
     }

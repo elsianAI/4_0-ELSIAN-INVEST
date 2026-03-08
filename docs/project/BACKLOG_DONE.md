@@ -9,6 +9,16 @@
 
 ---
 
+### BL-075 — Enriquecer expected.json con campos derivados calculables
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-08)
+- **Asignado a:** engineer
+- **Depende de:** BL-074
+- **Descripción:** Se cerró el backfill determinista de campos derivados en `expected.json` sin mezclar la retroportación de BL-035/BL-058. El nuevo script `scripts/backfill_expected_derived.py` añade `ebitda = ebit + depreciation_amortization` y `fcf = cfo - abs(capex)` solo cuando ambos componentes existen, el derivado no está ya presente y no hay una exclusión canonizada `DERIVED_INCONSISTENT` por `ticker+periodo+campo`. La ola toca 15 tickers (`0327`, `ACLS`, `ADTN`, `CROX`, `GCT`, `INMD`, `IOSP`, `NEXN`, `NVDA`, `PR`, `SOM`, `SONO`, `TALO`, `TEP`, `TZOO`) y deja `KAR` intacto. Para mantener la paridad de Módulo 1, `elsian/evaluate/evaluator.py` y `elsian/curate_draft.py` ahora prefieren el valor derivado cuando el `expected.json` canoniza ese campo como `DERIVED` aunque el extractor haya capturado un valor ruidoso distinto. En la misma ola se absorbió un fix mínimo previo de provenance para las dos filas `dividends_per_share` de SOM en el annual report FY2024, de modo que `pytest -q` vuelva a verde sin cambiar winner selection.
+- **Criterio de aceptación:** ✓ `python3 scripts/backfill_expected_derived.py --cases-dir cases --dry-run` pasa y es idempotente: antes del apply reporta `ebitda eligible_missing_before=148` y `fcf eligible_missing_before=110`; tras aplicar y rerunear reporta `eligible_missing_before=0` para ambos campos, con `modified_files=[]`. ✓ Se validan los 15 `expected.json` tocados. ✓ `python3 -m elsian eval --all` vuelve a PASS 16/16 (`0327 62/62`, `ACLS 399/399`, `ADTN 209/209`, `CROX 314/314`, `GCT 267/267`, `INMD 234/234`, `IOSP 366/366`, `KAR 49/49`, `NEXN 169/169`, `NVDA 374/374`, `PR 153/153`, `SOM 197/197`, `SONO 335/335`, `TALO 199/199`, `TEP 90/90`, `TZOO 312/312`). ✓ `python3 -m pytest -q` vuelve a verde: `1359 passed, 5 skipped, 1 warning`. ✓ La gobernanza queda reconciliada con 3,729 campos validados, sin reabrir `BL-076` ni `BL-077`.
+
+---
+
 ### BL-080 — Recuperar SourceMap_v1 TZOO (FULL -> PARTIAL)
 - **Prioridad:** ALTA
 - **Estado:** DONE ✅ (2026-03-08)
