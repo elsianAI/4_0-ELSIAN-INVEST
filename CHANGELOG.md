@@ -2,6 +2,10 @@
 
 ## 2026-03-08
 
+### [4.0] Governance packaging — BL-082 opened and BL-081 blocked on ADTN restatements
+- Opened `BL-082` in `docs/project/BACKLOG.md` as the shared-core follow-up for the failed `BL-081` promotion attempt. `BL-081` remains the canonical ADTN quarterlies objective, but it is now explicitly blocked because the targeted attempt confirmed 15 quarterly candidate periods while `python3 -m elsian eval ADTN` still stayed red due to shared-core wrongs in restated/original comparative preference and quarterly `depreciation_amortization` scaling. This governance wave does not implement the fix; it only gives the blocker canonical ownership and keeps `BL-081` honest.
+- **Files changed:** `docs/project/BACKLOG.md`, `CHANGELOG.md`
+
 ### [4.0] Governance packaging — BL-081 opened for ADTN FULL promotion
 - Opened `BL-081` in `docs/project/BACKLOG.md` as the canonical follow-up to promote ADTN from `ANNUAL_ONLY` to `FULL` once `BL-075` is closed. The new BL is scoped to a case-level promotion only: switch `cases/ADTN/case.json` to `period_scope: FULL`, merge only quarterly `Q*` periods from `curate ADTN` that have sufficient evidence and at least 15 fields, and prefer explicit restated comparatives from later 10-K filings for `Q1-Q3 2023` and `Q1-Q3 2024` when they are traceable. This governance wave does not implement the promotion yet.
 - **Files changed:** `docs/project/BACKLOG.md`, `CHANGELOG.md`

@@ -186,14 +186,25 @@
 
 ### BL-081 — Promover ADTN a FULL (quarterlies)
 - **Prioridad:** ALTA
-- **Estado:** TODO
+- **Estado:** BLOCKED
 - **Asignado a:** engineer
 - **Módulo:** Module 1
 - **Validation tier:** targeted
-- **Depende de:** BL-075
+- **Depende de:** BL-075, BL-082
 - **Referencias:** DEC-015, cases/ADTN/case.json, cases/ADTN/expected.json
-- **Descripción:** Promover ADTN de `ANNUAL_ONLY` a `FULL` incorporando al `expected.json` los periodos trimestrales que `curate ADTN` genere con evidencia suficiente y al menos 15 campos. No se debe asumir que `Q1-Q3 2021` entren; solo se incluyen los `Q*` reales del draft que superen el umbral y no sean redundantes con FY/H1. Para `Q1-Q3 2023` y `Q1-Q3 2024`, preferir comparativos restated de 10-K posteriores cuando el valor restated sea explícito y trazable; si no hay evidencia suficiente para un campo, mantener el valor del 10-Q original con su `source_filing` real.
+- **Descripción:** Promover ADTN de `ANNUAL_ONLY` a `FULL` incorporando al `expected.json` los periodos trimestrales que `curate ADTN` genere con evidencia suficiente y al menos 15 campos. No se debe asumir que `Q1-Q3 2021` entren; solo se incluyen los `Q*` reales del draft que superen el umbral y no sean redundantes con FY/H1. Para `Q1-Q3 2023` y `Q1-Q3 2024`, preferir comparativos restated de 10-K posteriores cuando el valor restated sea explícito y trazable; si no hay evidencia suficiente para un campo, mantener el valor del 10-Q original con su `source_filing` real. Estado actual: el intento targeted confirmó 15 trimestrales candidatos (`Q1-Q3 2021` y `Q1-Q3 2022-2025`), pero `eval ADTN` sigue rojo porque persisten wrongs shared-core de restatements/selección y escala; la promoción queda bloqueada por `BL-082`.
 - **Criterio de aceptación:** `cases/ADTN/case.json` pasa a `period_scope: FULL`; `cases/ADTN/expected.json` incorpora solo los trimestrales `Q*` con cobertura suficiente (>=15 campos), excluyendo `Q1-Q4 2019`, `Q1-Q4 2020`, `Q4-2021`, todos los `H1-*` y cualquier trimestral sparse. `python3 scripts/validate_contracts.py --schema case --path cases/ADTN/case.json` y `--schema expected --path cases/ADTN/expected.json` pasan. `python3 -m elsian eval ADTN` queda verde; `python3 -m elsian eval --all` mantiene 16/16 PASS; `python3 -m pytest -q` sigue en verde. Si el cierre queda verde, ADTN pasa a `FULL`, el contador operativo de DEC-015 sube de 13 a 14 y la BL se archiva en `BACKLOG_DONE.md`.
+
+### BL-082 — Resolver wrongs de ADTN por restatements 2023-2024
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** shared-core
+- **Depende de:** —
+- **Referencias:** BL-081, DEC-015, cases/ADTN/case.json, cases/ADTN/expected.json
+- **Descripción:** El intento de promover ADTN a `FULL` dejó `python3 -m elsian eval ADTN` en rojo con 46 wrongs aunque los 15 trimestres candidatos (`Q1-Q3 2021` y `Q1-Q3 2022-2025`) cumplen el umbral de cobertura. El patrón ya no es de curación local del caso: el pipeline sigue mezclando comparativos restated y originales en `Q1-Q3 2023` y `Q1-Q3 2024`, mantiene `total_liabilities` desalineado frente a la verdad curada en varios trimestres y además escala mal `depreciation_amortization` en comparativos trimestrales (por ejemplo `3.0 -> 3000.0`, `7.6 -> 44990.0`). Esta BL debe investigar y corregir la selección/preferencia de facts restated y las rutas de escala que hoy impiden cerrar `BL-081`.
+- **Criterio de aceptación:** Se documentan los wrongs residuales exactos que bloquean ADTN `FULL` y se implementa un fix shared-core suficiente para que `python3 -m elsian eval ADTN` quede verde sin degradar el resto del universo. `python3 -m elsian eval --all` y `python3 -m pytest -q` siguen verdes. Si el cierre queda verde, `BL-081` deja de estar bloqueada.
 
 ### BL-076 — Retroportar campos BL-035/BL-058 a expected.json existentes
 - **Prioridad:** ALTA
