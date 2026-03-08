@@ -2,6 +2,39 @@
 
 ## 2026-03-08
 
+### [4.0] BL-083 — CLI _get_fetcher aligned with AcquirePhase for hkex/hkex_manual
+- Added missing `hkex`/`hkex_manual` branch to `elsian/cli.py::_get_fetcher`. Previously the CLI fell back to `ManualFetcher` for those hints while `elsian/acquire/phase.py` correctly routed to `HkexFetcher`. Both selectors are now identical.
+- Added regression tests in `tests/unit/test_cli_fetcher_routing.py` covering all source_hint variants (sec, asx, eu, hkex, hkex_manual, unknown).
+- **Files changed:** `elsian/cli.py`, `tests/unit/test_cli_fetcher_routing.py`, `CHANGELOG.md`
+
+### [4.0] Governance reconciliation — BL-083 stays active; BL-076 scope drift removed
+- Reconciled the truthful governance state after the green BL-083 technical wave. `BL-083` does not close and does not move to done: the HKEX acquire/manual path and its tests are now real, and `cases/0327` honestly points at `hkex_manual`, but `0327` remains `ANNUAL_ONLY` because semestral H1 extraction is still unsupported in shared-core extractor surfaces. The backlog therefore now marks `BL-083` as `IN_PROGRESS`, with phase 1 landed and the remaining acceptance explicitly narrowed to future semestral extractor-backed canonization and only then a decision on `FULL` vs explicit non-counting permanence under `DEC-015`.
+- Removed unrelated governance contamination from `BL-076`. The temporary broadening to include `total_debt` was not part of the BL-083 packet or its preflight state, so `BL-076` is restored to its prior scope (retroport only the BL-035/BL-058 fields) instead of being silently co-closed with this HKEX wave.
+- **Files changed:** `docs/project/BACKLOG.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` → `duplicate_ids=[]`, `project_state_lags_changelog=false`. `git diff --check -- docs/project/BACKLOG.md CHANGELOG.md` → PASS.
+
+### [4.0] BL-083 gate-fix — Revert 0327 H1 canonization; restore green shared-core gates
+- **Gate-fix bounce from parent.** Previous wave promoted 0327 H1 semestral periods (H12025/H12024/H12023) to `expected.json` and set `period_scope: FULL` without extractor support for semestral periods. Result: `eval 0327` → 49.6% (62/125), regression test FAIL, `eval --all` RED.
+- **Reverted:** `cases/0327/expected.json` — removed H12025, H12024, H12023 semestral blocks (63 unsupported fields); restored ANNUAL_ONLY baseline of 62 fields across FY2024/FY2023/FY2022.
+- **Reverted:** `cases/0327/case.json` — `period_scope` restored to `ANNUAL_ONLY`; notes updated to accurately state H1 filings are present but not canonized.
+- **Preserved:** `elsian/acquire/hkex.py` (HkexFetcher), `elsian/acquire/phase.py` routing, `tests/unit/test_hkex_fetcher.py` (6 tests), and H1 filing artifacts under `cases/0327/filings/` — all legitimate and retained for future H1 BL.
+- **Follow-up required:** H1 semestral extraction support must be implemented in a future BL (shared-core `elsian/extract/` surfaces, forbidden in this packet) before H1 periods can be re-canonized and 0327 can promote to FULL.
+- **Files changed:** `cases/0327/expected.json`, `cases/0327/case.json`, `CHANGELOG.md`
+
+### [4.0] BL-083 — HkexFetcher implemented + 0327 H1 interim filings expanded
+- Implemented `elsian/acquire/hkex.py` (`HkexFetcher`) — offline manifest fetcher for HKEX-listed companies using `source_hint: hkex_manual`. No network calls; reads pre-placed filings from `cases/{TICKER}/filings/`. Registered in `elsian/acquire/phase.py` under `["hkex", "hkex_manual"]` routing branch. Added 6 offline deterministic unit tests (`tests/unit/test_hkex_fetcher.py`): empty dir, missing dir, extension filtering, sort order, source_id stem, directory exclusion.
+- Copied H1 interim reports for PAX Global Technology (0327) from 3.0 reference set: `SRC_004_IR_H12025.{pdf,txt,clean.md}` (H1-2025, 6m ended Jun 30 2025), `SRC_005_IR_H12024.{pdf,txt,clean.md}` (H1-2024), `SRC_006_IR_H12023.{pdf,txt,clean.md}` (H1-2023). Source: `3.0/casos/0327/_raw_filings/`.
+- Updated `cases/0327/case.json`: `source_hint` → `hkex_manual`, `period_scope` → `FULL`, notes updated to remove BL-044 stub reference.
+- Expanded `cases/0327/expected.json` with 3 new semestral periods: `H12025` (21 fields), `H12024` (21 fields), `H12023` (21 fields). All values filing-backed from archived 3.0 reference financial statements (SRC_005/006/007 txts). Annual periods FY2024/FY2023/FY2022 untouched — still 62/62 fields matched 100%.
+- **Eval metrics:** Before: 100% (62/62) annual-only baseline. After: 49.6% (62/125) — annual periods 100% unchanged, H1 periods 0% missed (expected: pipeline does not yet extract semestral periods; H1 extraction is scheduled for a future BL). No regressions on annual fields (wrong=0).
+- **Files changed:** `elsian/acquire/hkex.py`, `elsian/acquire/phase.py`, `cases/0327/case.json`, `cases/0327/expected.json`, `tests/unit/test_hkex_fetcher.py`, `CHANGELOG.md`; cases/0327/filings/: 8 new files (SRC_004/005/006 ×{pdf,txt,clean.md}; SRC_006 clean.md generated from txt).
+- **Validation:** `python3 -m pytest tests/unit/test_hkex_fetcher.py -v` → 6 passed. `python3 -m pytest tests/unit/ -q` → 1282 passed, 0 failed. `python3 -m elsian extract 0327` → 100 fields across 5 periods from 4 filings. `python3 -m elsian eval 0327` → 62/125, wrong=0, missed=63 (H1 pending extract support), extra=41.
+
+### [4.0] Governance packaging — BL-083 opened for HKEX acquire + 0327 semestral expansion
+- Opened `BL-083` in `docs/project/BACKLOG.md` as the canonical follow-up for the still-pending HKEX acquire path and the operational closure of `0327`. The task is intentionally packaged as a single Module 1 BL with `shared-core` validation: phase 1 introduces a reusable HKEX acquisition route or an explicit `hkex_manual` fallback with tests, and phase 2 expands `cases/0327` with H1 evidence before deciding whether `0327` truly promotes to `FULL` or remains an explicit non-counting exception. This governance wave does not implement the fetcher, alter the case, or change the current `DEC-015` counter.
+- **Files changed:** `docs/project/BACKLOG.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` → expected clean governance metadata for duplicate IDs / document sync after packaging. `git diff --check -- docs/project/BACKLOG.md CHANGELOG.md` → expected clean.
+
 ### [4.0] ADTN post-BL-081 remediation — quarterly BS identity restored without changing canonical state
 - Resolved the audit finding left after the BL-081 promotion by repairing the shared-core quarterly `total_liabilities` bridge in `elsian/extract/phase.py` and tightening the ADTN promoted quarterly truth so the promoted quarters no longer mix balance-sheet components into a broken identity. The fix keeps ADTN at `FULL` and leaves the canonical governance state unchanged: `BL-081` stays `DONE`, ADTN stays `FULL`, and the operational `DEC-015` counter stays `14/15`.
 - **Files changed:** `cases/ADTN/expected.json`, `elsian/extract/phase.py`, `tests/unit/test_extract_phase.py`, `tests/unit/test_validate_expected.py`, `CHANGELOG.md`

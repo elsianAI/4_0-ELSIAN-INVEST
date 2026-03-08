@@ -1,7 +1,7 @@
 {
   "ticker": "0327",
   "company_name": "PAX Global Technology Ltd",
-  "source_hint": "manual",
+  "source_hint": "hkex_manual",
   "period_scope": "ANNUAL_ONLY",
   "currency": "HKD",
   "exchange": "HKEX",
@@ -10,5 +10,5 @@
   "fiscal_year_end_month": 12,
   "sector": "Technology Hardware",
   "additive_fields": ["depreciation_amortization"],
-  "notes": "HKEX stock 0327. Manual bootstrap: annual PDFs ported from 3.0 reference set. HkexFetcher to be implemented (BL-044) for automation. HKFRS is IFRS-equivalent (applied by PwC-audited entity). All financial statements in HK$'000. No interest-bearing borrowings (confirmed 2022-2024). EBITDA explicitly stated in segment note per year. Weighted-average basic shares from Note 12 each filing. D&A reported as sub-components in Note 7 EXPENSES BY NATURE (PPE + ROU + intangibles); additive accumulation required to reach total."
+  "notes": "HKEX stock 0327. hkex_manual bootstrap: annual PDFs (SRC_001-003) ported from 3.0 reference set. H1 interim PDFs (SRC_004-006) present in filings/ but NOT canonized in expected.json — H1 extractor support is pending (future BL). HkexFetcher implemented (BL-083). HKFRS is IFRS-equivalent (applied by PwC-audited entity). All monetary fields in HK$'000. No interest-bearing borrowings (confirmed 2022-2025). EBITDA explicitly stated in segment note each period. Weighted-average basic shares from Note 12. D&A additive: PPE depreciation + ROU depreciation + intangible amortisation (Note 8)."
 }

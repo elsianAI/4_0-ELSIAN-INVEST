@@ -26,6 +26,9 @@ def _get_fetcher(case: CaseConfig):
     elif hint in ("eu", "eu_manual", "manual_http"):
         from elsian.acquire.eu_regulators import EuRegulatorsFetcher
         return EuRegulatorsFetcher()
+    elif hint in ("hkex", "hkex_manual"):
+        from elsian.acquire.hkex import HkexFetcher
+        return HkexFetcher()
     else:
         from elsian.acquire.manual import ManualFetcher
         return ManualFetcher()
