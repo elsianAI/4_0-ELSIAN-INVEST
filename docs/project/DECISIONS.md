@@ -288,3 +288,25 @@
      - **BL-077** cubre la clasificación y resolución de las inconsistencias derivadas restantes.
 - **Razón:** `BACKLOG.md` debe ser interpretable desde un checkout limpio con solo documentos versionados. Si una BL viva depende de un artefacto local no canónico, el paquete deja de ser portable y aumenta el riesgo de drift entre agentes o entornos.
 - **Impacto:** BL-074..BL-077 pasan a referenciar `DEC-027` como fuente operativa primaria. No cambian prioridad, orden, dependencias ni criterios de aceptación; solo se corrige la canonización de su justificación.
+
+  ## DEC-028 — `finance lease obligation` cuenta como `total_debt` solo como fallback debt-like no duplicativo
+  - **Fecha:** 2026-03-09
+  - **Contexto:** ACLS expone en balance sheet `Current portion of finance lease obligation` y `Long-term finance lease obligation`, pero no hay evidencia mínima leída de una línea clásica de `total debt` o `long-term debt` en el extracto revisado. Esa ausencia deja huecos reales downstream: `truth_pack.json` no puede calcular `enterprise_value` porque el ensamblado exige `market_cap + total_debt + cash_and_equivalents`. El comportamiento actual del sistema ya sugiere una frontera semántica: `elsian/extract/vertical.py` sintetiza `total_debt` desde componentes de deuda financiera clásicos, `ixbrl_concept_map.json` ya acepta conceptos como `LongTermDebtAndCapitalLeaseObligations`, y `phase.py` ya penaliza `operating lease`, movimientos de deuda en cash flow y señales no propias de balance sheet para no contaminar `total_debt`.
+  - **Decisión:**
+    1. `Current portion of finance lease obligation` y `Long-term finance lease obligation` se consideran señal válida de `total_debt` solo como **fallback debt-like** cuando el filing no ofrezca una señal explícita mejor de deuda totalizada.
+    2. La precedencia canónica queda fijada así:
+      - gana cualquier línea explícita y agregada de `total debt`, `long-term debt`, `debt and finance lease obligations` o equivalente ya totalizado;
+      - si no existe esa señal mejor, puede sintetizarse `total_debt` sumando componentes debt-like de lease financiero: tramo corriente + tramo largo plazo de `finance lease obligation`;
+      - la síntesis fallback nunca puede duplicar una deuda ya totalizada ni sumarse encima de una línea agregada explícita.
+    3. Quedan explícitamente fuera de `total_debt`:
+      - `operating lease liabilities`;
+      - `lease expense`;
+      - `principal payments on finance lease obligation` o movimientos equivalentes de cash flow / rollforward.
+    4. Esta policy es funcional y canónica para Módulo 1, pero **no reabre BL-076**. La implementación, tests y ajuste shared-core correspondiente deben viajar en una ola nueva y separada.
+  - **Razón:** ELSIAN necesita una definición operativa consistente de deuda financiera que preserve dos propiedades a la vez: (a) no perder deuda económica real cuando el issuer solo desagrega la obligación de lease financiero por tramos corriente/no corriente; y (b) no inflar `total_debt` mezclando pasivos operativos de arrendamiento, gastos o flujos de pago con una métrica de balance sheet usada aguas abajo en derivados y gates. Tratar `finance lease obligation` como fallback debt-like respeta el significado financiero de pasivo financiado, pero mantenerlo subordinado a señales agregadas explícitas evita doble conteo y mantiene la regla de “as reported when possible, synthesized only when necessary”.
+  - **Impacto:**
+    - `net_debt` pasa a poder incorporar deuda de lease financiero cuando no exista una mejor señal explícita y sí exista caja, evitando subestimar apalancamiento en emisores como ACLS.
+    - `enterprise_value`, `ev_ebit` y `ev_fcf` dejan de quedar artificialmente vacíos o infravalorados en casos donde el filing presenta deuda financiera solo como `finance lease obligation` separada.
+    - `invested_capital` y `ROIC` pasan a usar una base de capital más coherente con pasivos financieros debt-like realmente reportados en el balance.
+    - Los gates y validaciones ligados a EV deben interpretar esta policy como ampliación funcional legítima de cobertura de `total_debt`, no como permiso para ingerir `operating lease liabilities` ni movimientos de cash flow.
+    - La siguiente ola técnica queda empaquetada por separado como trabajo shared-core nuevo, sin reciclar BL-076 ni mezclar esta decisión con BL-077.

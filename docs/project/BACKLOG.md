@@ -184,16 +184,19 @@
 - **Descripción:** Ejecutar un primer piloto real de paralelización mutante con dos BL independientes y write sets disjuntos, usando exclusivamente el proceso definido en `BL-072`. El piloto debe demostrar aislamiento por `git worktree` y rama, integración serial en el padre, cierre independiente por BL y aborto limpio si aparece solape material.
 - **Criterio de aceptación:** Se ejecuta un piloto con dos BL válidas y una BL por worktree/rama. Ningún agente sale de su write set. Cada BL pasa `gates -> auditor -> closeout` por separado. La integración se hace en serie y genera un commit por BL. Si aparece conflicto estructural, el piloto aborta sin contaminar `main`. Queda una decisión explícita de mantener, ajustar o descartar el modelo antes de extenderlo a más trabajo.
 
-### BL-076 — Retroportar campos BL-035/BL-058 a expected.json existentes
+### BL-084 — Implementar fallback no duplicativo de `finance lease obligation` hacia `total_debt`
 - **Prioridad:** ALTA
 - **Estado:** TODO
-- **Asignado a:** engineer
+- **Asignado a:** sin asignar
 - **Módulo:** Module 1
-- **Validation tier:** targeted
-- **Depende de:** BL-074
-- **Referencias:** DEC-027, BL-035, BL-058
-- **Descripción:** Añadir a los `expected.json` existentes los campos canónicos incorporados en BL-035 y BL-058 que no se retroportaron, más `total_debt` que es canónico pero tiene cobertura muy desigual (solo 7/16 tickers). Campos objetivo: `cfi`, `cff` y `delta_cash` (~106 periodos); `accounts_receivable` y `accounts_payable` (~161 periodos); `inventories` solo para empresas inventory-bearing (~88 periodos); `total_debt` en todos los tickers donde el balance sheet reporte deuda financiera (actualmente ausente en ACLS, 0327, GCT, INMD, IOSP, SOM, SONO, TZOO — 8 tickers con 0 periodos). Para cada ticker/periodo: ejecutar `elsian curate` para regenerar el draft, extraer solo los campos nuevos, mergearlos en el `expected.json` existente sin sobrescribir campos ya presentes e incluir `source_filing` del draft para cada campo añadido. Si `elsian curate` no extrae un campo para un periodo específico, documentarlo como gap justificado y no fabricar valores. Nota: si un ticker realmente no tiene deuda financiera (e.g. INMD, TZOO), documentar `total_debt: 0` o excluir con justificación explícita.
-- **Criterio de aceptación:** Los campos de BL-035 y BL-058 más `total_debt` están presentes en todos los `expected.json` donde el filing los soporta. Los `MISSING_EXPECTED` reportados por la auditoría se reducen significativamente. Ningún campo previamente existente se modifica.
+- **Validation tier:** shared-core
+- **Depende de:** —
+- **Referencias:** DEC-028
+- **Descripción:** Implementar en shared-core la policy canónica de `DEC-028`: cuando no exista una señal explícita mejor de `total debt` o `long-term debt`, el sistema podrá sintetizar `total_debt` a partir de `Current portion of finance lease obligation` + `Long-term finance lease obligation` como fallback debt-like. La implementación debe preservar precedencia estricta y no duplicación: si el filing ya expone una línea agregada de deuda totalizada, esa línea gana y los componentes lease/debt no se suman encima. Quedan fuera de alcance semántico `operating lease liabilities`, `lease expense` y `principal payments on finance lease obligation`. Esta BL no reabre BL-076 ni toca truth local; es una ola shared-core nueva para extracción/normalización/ensamblado consistente de `total_debt`.
+- **Write set previsto:** `elsian/extract/vertical.py`, `elsian/extract/phase.py`, `config/field_aliases.json`, `config/ixbrl_concept_map.json`, `elsian/assemble/source_map.py`, `tests/unit/test_extract_phase.py`
+- **Tests mínimos:** caso tipo ACLS con `current portion of finance lease obligation` + `long-term finance lease obligation` que produzca `total_debt` por fallback cuando no exista línea agregada mejor; negativos explícitos para `operating lease liabilities`, `lease expense` y `principal payments on finance lease obligation`; precedencia cuando exista `total debt` o `long-term debt` explícito; prueba de no duplicación cuando coexistan línea agregada y componentes subyacentes.
+- **Validación prevista:** `pytest` targeted sobre `tests/unit/test_extract_phase.py` y cualquier suite unitaria nueva tocada por la ola; smoke de extractor/eval sobre un caso SEC representativo tipo ACLS y, si el cambio toca ensamblado/provenance de `total_debt`, una comprobación targeted del artefacto afectado. No vender cierre global ni reopen de paquetes previos sin evidencia nueva.
+- **Criterio de aceptación:** La extracción de `total_debt` incorpora `finance lease obligation` solo como fallback debt-like conforme a `DEC-028`, sin contaminarse con operating lease ni movimientos de cash flow, sin duplicar deuda ya totalizada y con cobertura de tests suficiente para blindar precedencia y no-duplicación.
 
 ### BL-077 — Investigar inconsistencias de campos derivados
 - **Prioridad:** MEDIA

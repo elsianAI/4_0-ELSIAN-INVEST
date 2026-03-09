@@ -2,6 +2,12 @@
 
 ## 2026-03-09
 
+### [4.0] Governance policy — DEC-028 canonizes `finance lease obligation` fallback into `total_debt`
+- Canonized the functional Module 1 policy for `total_debt` when a filing exposes `Current portion of finance lease obligation` plus `Long-term finance lease obligation` but no better explicit debt aggregate. The policy is now explicit: finance-lease obligations count only as a fallback debt-like signal; `operating lease liabilities`, `lease expense`, and `principal payments on finance lease obligation` do not enter `total_debt`; explicit `total debt` / `long-term debt` style signals always take precedence; and the fallback may never duplicate already-totalized debt.
+- Governance reconciliation: `BL-076` remains closed and is removed from the active backlog rather than being implicitly reopened. The next implementation wave is packaged separately as `BL-084`, a new shared-core Module 1 task referenced to `DEC-028`.
+- **Files changed:** `docs/project/DECISIONS.md`, `docs/project/BACKLOG.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` → expected clean governance metadata after the packaging. `git diff --check -- docs/project/DECISIONS.md docs/project/BACKLOG.md CHANGELOG.md` → expected clean.
+
 ### [4.0] BL-083 — 0327 promoted to FULL with extractor-backed HKEX H1 support
 - **What:** Closed `BL-083` honestly after confirming that the 3.0 repo was useful only as discovery/inventory reference, not as a portable deterministic extractor. The reusable fix landed in 4.0 shared-core surfaces: `elsian/extract/detect.py` now recognises HKEX day-first half-year phrasing such as `Six months ended 30 June 2025`, and `elsian/extract/html_tables.py` now extracts compact bilingual interim TXT blocks (`income statement`, `statement of financial position`, `cash flow`, `expenses by nature`, per-share note, receivables/payables) plus `shares_outstanding` from the weighted-average-shares note, including the `in issue` wording variant.
 - **What:** With that shared-core support in place, `cases/0327/expected.json` now canonises `H1-2023`, `H1-2024`, and `H1-2025` as filing-backed periods, and `cases/0327/case.json` promotes the ticker from `ANNUAL_ONLY` to `FULL`. The promoted scope is `3A+3H`, `131/131`, and remains bounded: FY2018 is still not canonised in this wave. To make that close portable, the repo now tracks the minimum `hkex_manual` TXT corpus for `0327` (`SRC_001`-`SRC_006`) through a narrow `.gitignore` exception instead of relying on local-only ignored filings.
