@@ -184,20 +184,6 @@
 - **Descripción:** Ejecutar un primer piloto real de paralelización mutante con dos BL independientes y write sets disjuntos, usando exclusivamente el proceso definido en `BL-072`. El piloto debe demostrar aislamiento por `git worktree` y rama, integración serial en el padre, cierre independiente por BL y aborto limpio si aparece solape material.
 - **Criterio de aceptación:** Se ejecuta un piloto con dos BL válidas y una BL por worktree/rama. Ningún agente sale de su write set. Cada BL pasa `gates -> auditor -> closeout` por separado. La integración se hace en serie y genera un commit por BL. Si aparece conflicto estructural, el piloto aborta sin contaminar `main`. Queda una decisión explícita de mantener, ajustar o descartar el modelo antes de extenderlo a más trabajo.
 
-### BL-084 — Implementar fallback no duplicativo de `finance lease obligation` hacia `total_debt`
-- **Prioridad:** ALTA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** —
-- **Referencias:** DEC-028
-- **Descripción:** Implementar en shared-core la policy canónica de `DEC-028`: cuando no exista una señal explícita mejor de `total debt` o `long-term debt`, el sistema podrá sintetizar `total_debt` a partir de `Current portion of finance lease obligation` + `Long-term finance lease obligation` como fallback debt-like. La implementación debe preservar precedencia estricta y no duplicación: si el filing ya expone una línea agregada de deuda totalizada, esa línea gana y los componentes lease/debt no se suman encima. Quedan fuera de alcance semántico `operating lease liabilities`, `lease expense` y `principal payments on finance lease obligation`. Esta BL no reabre BL-076 ni toca truth local; es una ola shared-core nueva para extracción/normalización/ensamblado consistente de `total_debt`.
-- **Write set previsto:** `elsian/extract/vertical.py`, `elsian/extract/phase.py`, `config/field_aliases.json`, `config/ixbrl_concept_map.json`, `elsian/assemble/source_map.py`, `tests/unit/test_extract_phase.py`
-- **Tests mínimos:** caso tipo ACLS con `current portion of finance lease obligation` + `long-term finance lease obligation` que produzca `total_debt` por fallback cuando no exista línea agregada mejor; negativos explícitos para `operating lease liabilities`, `lease expense` y `principal payments on finance lease obligation`; precedencia cuando exista `total debt` o `long-term debt` explícito; prueba de no duplicación cuando coexistan línea agregada y componentes subyacentes.
-- **Validación prevista:** `pytest` targeted sobre `tests/unit/test_extract_phase.py` y cualquier suite unitaria nueva tocada por la ola; smoke de extractor/eval sobre un caso SEC representativo tipo ACLS y, si el cambio toca ensamblado/provenance de `total_debt`, una comprobación targeted del artefacto afectado. No vender cierre global ni reopen de paquetes previos sin evidencia nueva.
-- **Criterio de aceptación:** La extracción de `total_debt` incorpora `finance lease obligation` solo como fallback debt-like conforme a `DEC-028`, sin contaminarse con operating lease ni movimientos de cash flow, sin duplicar deuda ya totalizada y con cobertura de tests suficiente para blindar precedencia y no-duplicación.
-
 ### BL-077 — Investigar inconsistencias de campos derivados
 - **Prioridad:** MEDIA
 - **Estado:** TODO

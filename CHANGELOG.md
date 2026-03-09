@@ -2,6 +2,13 @@
 
 ## 2026-03-09
 
+### [4.0] BL-084 — Shared-core fix: cross-filing isolation of finance-lease fallback synthesis (DEC-028)
+- Fixed provenance-based block condition in `_synthesize_finance_lease_fallback_debt` so that synthesis is only suppressed when the current filing itself carries an explicit `total_debt` signal (filing-local). Cross-filing signals in `period_fields` no longer prevent the fallback from being synthesised; precedence resolution is delegated to the merge sort key (section_bonus_val=-1 on the fallback).
+- Added `_filing_base_id(filename)` module-level helper in `elsian/extract/phase.py` that normalises `.clean.md`, `.htm`, `.txt`, and `.md` variants of the same SEC filing to an identical logical base ID, so iXBRL-sourced candidates (source_filing ends in `.htm`) count correctly as filing-local signals.
+- New regression test `test_bl084_crossfiling_total_debt_does_not_block_filing_local_synthesis` validates the multi-filing scenario: filing A contributes `total_debt`, filing B has only finance-lease components — filing B must synthesise its own fallback, and the fallback sort key must remain strictly worse than filing A's explicit signal.
+- Updated `_run_fl_synthesis` test helper: pre-existing `total_debt` now uses `source_filing="SRC_test.clean.md"` (matching `filing_path`) so the helper correctly represents a filing-local explicit signal, which must still block synthesis.
+- **Files changed:** `elsian/extract/phase.py`, `tests/unit/test_extract_phase.py`, `CHANGELOG.md`
+
 ### [4.0] BL-084 — Finance lease obligation fallback synthesis for `total_debt` (DEC-028)
 - Implemented DEC-028 policy in shared-core Module 1 extractors: `Current portion of finance lease obligation` + `Long-term finance lease obligation` now synthesise `total_debt` as a fallback when no explicit better aggregate (total debt / long-term debt / equivalent alias) exists for the period in the same filing.
 - `elsian/extract/vertical.py`: added `_FINANCE_LEASE_LABELS` tracking with separate `fl_current_by_period` / `fl_longterm_by_period` accumulators; step 4 synthesises finance-lease fallback only when no explicit-debt synthesis occurred for the period.
@@ -17,6 +24,12 @@
 - Governance reconciliation: `BL-076` remains closed and is removed from the active backlog rather than being implicitly reopened. The next implementation wave is packaged separately as `BL-084`, a new shared-core Module 1 task referenced to `DEC-028`.
 - **Files changed:** `docs/project/DECISIONS.md`, `docs/project/BACKLOG.md`, `CHANGELOG.md`
 - **Validation:** `python3 scripts/check_governance.py --format json` → expected clean governance metadata after the packaging. `git diff --check -- docs/project/DECISIONS.md docs/project/BACKLOG.md CHANGELOG.md` → expected clean.
+
+### [4.0] Governance closeout — BL-084 archived after green technical gates
+- Reconciled the canonical governance state after the BL-084 technical wave closed green. `docs/project/BACKLOG.md` no longer carries `BL-084` as active work and the BL moves to `docs/project/BACKLOG_DONE.md` with the verified closeout basis already established by the parent: targeted extractor tests green, `eval ACLS` green, `eval --all` green at 16/16, full `pytest -q` green, and no governance drift in `check_governance`.
+- `docs/project/PROJECT_STATE.md` stays untouched on purpose. BL-084 changes shared-core extraction behaviour and test coverage, but it does not change the repo's operative headline state beyond what is already truthfully captured by the existing 2026-03-09 technical entries and current project metrics.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` → expected clean governance metadata after closeout. `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md CHANGELOG.md` → expected clean.
 
 ### [4.0] BL-083 — 0327 promoted to FULL with extractor-backed HKEX H1 support
 - **What:** Closed `BL-083` honestly after confirming that the 3.0 repo was useful only as discovery/inventory reference, not as a portable deterministic extractor. The reusable fix landed in 4.0 shared-core surfaces: `elsian/extract/detect.py` now recognises HKEX day-first half-year phrasing such as `Six months ended 30 June 2025`, and `elsian/extract/html_tables.py` now extracts compact bilingual interim TXT blocks (`income statement`, `statement of financial position`, `cash flow`, `expenses by nature`, per-share note, receivables/payables) plus `shares_outstanding` from the weighted-average-shares note, including the `in issue` wording variant.

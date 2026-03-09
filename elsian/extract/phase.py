@@ -418,6 +418,25 @@ _OPERATING_LEASE_EXCL_RE = re.compile(r"\boperating\s+lease\b", re.IGNORECASE)
 _LEASE_EXPENSE_EXCL_RE = re.compile(r"\blease\s+expense\b", re.IGNORECASE)
 
 
+def _filing_base_id(filename: str) -> str:
+    """Return the logical filing base ID, normalised across extension variants.
+
+    Strips ``.clean.md`` as a compound extension, then any remaining single
+    extension (.htm, .txt, .md), so that the ``.htm`` iXBRL sibling and the
+    ``.clean.md`` table file of the same logical SEC filing share an identical
+    base key.
+
+    DEC-028 / BL-084: used to determine whether an existing ``total_debt``
+    candidate in ``period_fields`` originated from the current filing
+    (filing-local) or from a different filing (cross-filing).  Cross-filing
+    signals must not suppress the finance-lease fallback synthesis for the
+    current filing; that resolution is handled by the merge sort key.
+    """
+    if filename.endswith(".clean.md"):
+        return filename[: -len(".clean.md")]
+    return Path(filename).stem
+
+
 def _source_anchor_prefix(source_location: str) -> str:
     """Return the stable table/section prefix for a source location."""
     return re.sub(r":row\d+(?::col\d+)?$", "", source_location)
@@ -2489,10 +2508,18 @@ class ExtractPhase(PipelinePhase):
                     fl_longterm[period_key] = rtf
 
         # Synthesise only when both components are present.
+        current_filing_base = _filing_base_id(filing_path.name)
         for period_key in set(fl_current) & set(fl_longterm):
-            # Skip if an explicit total_debt is already present in this filing.
+            # DEC-028 (BL-084): block synthesis only when the current filing
+            # itself carries an explicit better total_debt signal — determined
+            # by comparing provenance source_filing (normalised to the logical
+            # filing base ID so the .htm iXBRL sibling counts as filing-local).
+            # A cross-filing signal in period_fields must not suppress
+            # synthesis here; the merge sort key resolves precedence instead.
             if period_key in period_fields and "total_debt" in period_fields[period_key]:
-                continue
+                existing_src = period_fields[period_key]["total_debt"].provenance.source_filing
+                if _filing_base_id(existing_src) == current_filing_base:
+                    continue  # filing-local explicit signal — synthesis blocked
 
             curr_rtf = fl_current[period_key]
             long_rtf = fl_longterm[period_key]

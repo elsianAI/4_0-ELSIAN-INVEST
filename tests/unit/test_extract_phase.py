@@ -954,8 +954,8 @@ def _run_fl_synthesis(
             "total_debt": _make_field_result(
                 existing_total_debt,
                 "thousands",
-                "SRC_explicit.clean.md",
-                "SRC_explicit.clean.md:balance_sheet:tbl0:row1:col1",
+                "SRC_test.clean.md",
+                "SRC_test.clean.md:balance_sheet:tbl0:row1:col1",
                 "high",
             )
         }
@@ -1233,4 +1233,91 @@ def test_bl084_vertical_finance_lease_fallback_sort_key_loses_to_neutral_explici
     assert explicit_sk < fallback_sk, (
         "Neutral explicit total_debt sort key must be strictly better (lower) "
         "than vertical finance lease fallback sort key (DEC-028 guarantee)"
+    )
+
+
+# ── BL-084 shared-core fix: cross-filing isolation of synthesis block ─────────
+
+def test_bl084_crossfiling_total_debt_does_not_block_filing_local_synthesis():
+    """DEC-028 regression: cross-filing total_debt from a prior filing must not
+    prevent the current filing from synthesising its own finance-lease fallback.
+
+    Multi-filing scenario:
+    - Filing A (SRC_A.clean.md) already produced total_debt = 95000.
+    - Filing B (SRC_B.clean.md) has ONLY finance-lease components, no explicit debt.
+    - After the BL-084 shared-core fix, synthesis for filing B must proceed
+      regardless of filing A's contribution to period_fields.
+    - The fallback sort key (section_bonus_val=-1) must remain strictly worse
+      than filing A's explicit signal so the merge phase still prefers filing A.
+    """
+    from pathlib import Path
+
+    cross_filing_debt = 95000.0
+    period = "FY2025"
+
+    # Simulate period_fields contaminated with filing A's total_debt.
+    # SRC_A ≠ SRC_B → cross-filing signal that must NOT block synthesis.
+    period_fields_b: dict = {
+        period: {
+            "total_debt": _make_field_result(
+                cross_filing_debt,
+                "thousands",
+                "SRC_A.clean.md",
+                "SRC_A.clean.md:balance_sheet:tbl0:row1:col1",
+                "high",
+            )
+        }
+    }
+
+    raw_fields_b = [
+        _make_simple_tf("Current portion of finance lease obligation", 1575.0, period),
+        _make_simple_tf("Long-term finance lease obligation", 40754.0, period),
+    ]
+
+    phase = ExtractPhase()
+    phase._synthesize_finance_lease_fallback_debt(
+        period_fields=period_fields_b,
+        raw_table_fields=raw_fields_b,
+        filing_path=Path("SRC_B.clean.md"),
+        filing_type="10-K",
+        filing_scale="thousands",
+        filing_scale_confidence="high",
+        metadata_scale="thousands",
+        rules={},
+        preflight_result=None,
+    )
+
+    result = period_fields_b.get(period, {}).get("total_debt")
+
+    # After fix: synthesis must have run for filing B, overwriting the
+    # cross-filing placeholder in this isolated dict with the fallback.
+    assert result is not None
+    assert abs(result.value - 42329.0) < 1.0, (
+        f"Filing B must synthesise its own fallback (42329.0); got {result.value}. "
+        "Cross-filing total_debt from filing A must not suppress local synthesis."
+    )
+    assert ":finance_lease_fallback" in result.provenance.source_location, (
+        "Synthesised fallback must carry the :finance_lease_fallback sentinel "
+        "so that phase.py assigns section_bonus_val=-1 in cross-filing merge."
+    )
+
+    # The fallback sort key must be strictly worse than filing A's explicit
+    # signal, so the real merge phase still selects filing A's value overall.
+    fallback_sk = getattr(result, "_sort_key", None)
+    assert fallback_sk is not None, "Synthesised fallback must carry a _sort_key."
+    explicit_sk = compute_sort_key(
+        period_key=period,
+        filing_type="10-K",
+        source_type="table",
+        label_priority=0,
+        section_bonus_val=0,
+        source_filing="SRC_A.clean.md",
+        source_location="SRC_A.clean.md:balance_sheet:tbl0:row1:col1",
+        rules={},
+        canonical_field="total_debt",
+        restatement_detected=False,
+    )
+    assert explicit_sk < fallback_sk, (
+        "Filing A explicit sort key must be strictly better (lower) than "
+        "filing B finance-lease fallback sort key (DEC-028 cross-filing guarantee)."
     )

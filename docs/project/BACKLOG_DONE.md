@@ -9,6 +9,14 @@
 
 ---
 
+### BL-084 — Implementar fallback no duplicativo de `finance lease obligation` hacia `total_debt`
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-09)
+- **Asignado a:** engineer
+- **Depende de:** —
+- **Descripción:** Se cierra BL-084 con la policy de `DEC-028` ya absorbida en shared-core y revalidada tras el ajuste final de aislamiento por filing. `total_debt` puede sintetizarse desde `Current portion of finance lease obligation` + `Long-term finance lease obligation` solo como fallback debt-like cuando el filing actual no expone una señal mejor de deuda agregada; la precedencia sigue siendo estricta, el fallback nunca duplica una línea explícita ya totalizada y quedan excluidos `operating lease liabilities`, `lease expense` y `principal payments on finance lease obligation`. El fix final corrige además el bloqueo cruzado entre filings: una señal explícita en otro filing del mismo periodo ya no impide sintetizar el fallback filing-local, y la resolución definitiva sigue delegada al sort key de merge. El cierre no cambia `PROJECT_STATE.md`: el estado operativo del proyecto ya estaba correctamente reflejado por los gates verdes y por la trazabilidad técnica existente.
+- **Criterio de aceptación:** ✓ `python3 -m pytest -q tests/unit/test_extract_phase.py` PASS (64 passed). ✓ `python3 -m elsian eval ACLS` PASS 100.0% (486/486) `wrong=0 missed=0 extra=287`. ✓ `python3 -m elsian eval --all` PASS 16/16 tickers. ✓ `python3 -m pytest -q` PASS (`1432 passed, 5 skipped, 1 warning`). ✓ La regresión multi-filing queda cubierta explícitamente y `check_governance` permanece sin drift documental.
+
 ### BL-076 — Retroportar campos BL-035/BL-058 y total_debt a expected.json existentes
 - **Prioridad:** ALTA
 - **Estado:** DONE ✅ (2026-03-09)
