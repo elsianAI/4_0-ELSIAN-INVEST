@@ -25,6 +25,12 @@ cases/*/filings/*.txt
 cases/*/filings/*.pdf
 cases/*/filings/*.clean.md
 cases/*/filings/*.source_map.json
+!cases/0327/filings/SRC_001_AR_FY2024.txt
+!cases/0327/filings/SRC_002_AR_FY2023.txt
+!cases/0327/filings/SRC_003_AR_FY2022.txt
+!cases/0327/filings/SRC_004_IR_H12025.txt
+!cases/0327/filings/SRC_005_IR_H12024.txt
+!cases/0327/filings/SRC_006_IR_H12023.txt
 
 # OS
 .DS_Store

@@ -59,6 +59,12 @@ def test_detect_periods_quarterly():
     assert "Q3-2024" in periods
 
 
+def test_detect_periods_hkex_day_first_half_year():
+    text = "Six months ended 30 June 2025"
+    periods = detect_periods(text)
+    assert "H1-2025" in periods
+
+
 def test_detect_filing_type_10k():
     assert detect_filing_type("SRC_001_10-K_FY2024.clean.md") == "10-K"
 
@@ -69,6 +75,10 @@ def test_detect_filing_type_20f():
 
 def test_detect_filing_type_annual():
     assert detect_filing_type("SRC_002_ANNUAL_REPORT_2025.txt") == "annual_report"
+
+
+def test_detect_filing_type_hkex_half_year_filename():
+    assert detect_filing_type("SRC_004_IR_H12025.txt") == "interim_report"
 
 
 def test_detect_sections():

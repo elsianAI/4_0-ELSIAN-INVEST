@@ -256,6 +256,27 @@ def detect_periods(text: str) -> List[str]:
             half = 1 if month_num <= 6 else 2
             periods.add(f"H{half}-{year}")
 
+    # "Six months ended 30 June 2025" / "Three months ended 31 March 2025"
+    # (HKEX / day-first filing text extracted from bilingual PDFs).
+    for months_word, prefix in (("three", "Q"), ("six", "H"), ("nine", "9M")):
+        for m in re.finditer(
+            rf"{months_word}\s+months?\s+ended\s+(\d{{1,2}})\s+([A-Za-z]+)\s+(\d{{4}})",
+            sample,
+            re.IGNORECASE,
+        ):
+            month_num = _MONTH_MAP.get(m.group(2).lower(), 0)
+            year = m.group(3)
+            if not month_num:
+                continue
+            if prefix == "Q":
+                q = (month_num - 1) // 3 + 1
+                periods.add(f"Q{q}-{year}")
+            elif prefix == "H":
+                half = 1 if month_num <= 6 else 2
+                periods.add(f"H{half}-{year}")
+            else:
+                periods.add(f"9M-{year}")
+
     # "1st half-year 2025", "2nd half-year 2024" (Euronext / European format)
     for m in re.finditer(
         r"(\d+)(?:st|nd|rd|th)\s+half[-\s]?year\s+(20\d{2})",
@@ -353,6 +374,8 @@ def detect_filing_type(filename: str) -> str:
         return "DEF14A"
     if "annual" in low:
         return "annual_report"
+    if re.search(r"h[12]20\d{2}", low):
+        return "interim_report"
     if "interim" in low or "half" in low:
         return "interim_report"
     return "unknown"

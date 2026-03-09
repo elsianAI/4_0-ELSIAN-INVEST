@@ -9,6 +9,16 @@
 
 ---
 
+### BL-083 — Implementar HkexFetcher y ampliar 0327 con semestrales HKEX
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-09)
+- **Asignado a:** engineer
+- **Depende de:** —
+- **Descripción:** Se cerró el frente HKEX de `0327` sin vender una portabilidad falsa desde 3.0. La referencia 3.0 sólo sirvió para discovery/inventario y contraste de filings; el soporte determinista reusable quedó implementado en 4.0 sobre `elsian/extract/detect.py` y `elsian/extract/html_tables.py`, que ahora reconocen day-first H1 (`Six months ended 30 June 2025`), extraen bloques compactos bilingües de HKEX desde TXT (`income statement`, `balance sheet`, `cash flow`, `expenses by nature`, `receivables`, `per-share`) y resuelven `shares_outstanding` también en la variante `weighted average number of ordinary shares in issue`. Además, el cierre deja de depender de artefactos sólo locales: el repo versiona el set mínimo de TXT `hkex_manual` para `0327` (`SRC_001`-`SRC_006`) mediante una excepción estrecha en `.gitignore`, y un checkout limpio exportado desde git vuelve a validar `0327` al 100%. Con ello `cases/0327/expected.json` incorpora `H1-2023`, `H1-2024` y `H1-2025` filing-backed, `cases/0327/case.json` pasa a `period_scope: FULL`, y `0327` promueve de `ANNUAL_ONLY` a `FULL` con 6 periodos (`3A+3H`) y 131/131 campos validados. FY2018 no se canoniza en esta ola.
+- **Criterio de aceptación:** ✓ `python3 scripts/validate_contracts.py --schema case --path cases/0327/case.json` PASS. ✓ `python3 scripts/validate_contracts.py --schema expected --path cases/0327/expected.json` PASS. ✓ `python3 -m pytest -q tests/unit/test_detect.py tests/unit/test_html_tables.py tests/unit/test_extract_phase.py` PASS (110 passed). ✓ `python3 -m pytest -q tests/unit/test_hkex_fetcher.py tests/unit/test_cli_fetcher_routing.py` PASS (17 passed). ✓ `python3 -m elsian eval 0327` PASS 100.0% (131/131) con `wrong=0`, `missed=0`, `extra=62`. ✓ `python3 -m elsian eval --all` PASS 16/16. ✓ `python3 -m pytest -q` PASS (`1397 passed, 5 skipped, 1 warning`). ✓ `git diff --check` limpio. ✓ `python3 scripts/check_governance.py --format json` sin IDs duplicados y con `project_state_lags_changelog=false`. ✓ `git ls-files cases/0327/filings` incluye `SRC_001`-`SRC_006`. ✓ Un checkout limpio exportado desde git vuelve a dar `python3 -m elsian eval 0327` → PASS 100.0% (131/131).
+
+---
+
 ### BL-081 — Promover ADTN a FULL (quarterlies)
 - **Prioridad:** ALTA
 - **Estado:** DONE ✅ (2026-03-08)

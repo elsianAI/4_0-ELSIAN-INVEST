@@ -4,6 +4,8 @@ from elsian.extract.html_tables import (
     parse_number,
     extract_from_markdown_table,
     extract_tables_from_clean_md,
+    extract_tables_from_text,
+    extract_shares_outstanding_from_text,
     _identify_period_columns,
     _collapse_split_parentheticals,
 )
@@ -195,6 +197,92 @@ def test_source_location_includes_filename():
     )
     fields = extract_tables_from_clean_md(md, source_filename="10k.md")
     assert all("10k.md" in f.source_location for f in fields)
+
+
+def test_extract_tables_from_text_hkex_interim_compact_lines():
+    text = (
+        "Interim Report 2025\n"
+        "Six months ended 30 June 2025\n"
+        "Interim Condensed Consolidated Income Statement Revenue 2,716,164 3,013,241 "
+        "Cost of sales (1,443,619) (1,604,005) Gross profit 1,272,545 1,409,236 "
+        "Operating profit 470,997 537,525 Finance costs (2,446) (2,908) "
+        "Income tax expense (74,599) (79,543) Owners of the Company 390,877 454,583\n"
+        "Six months ended 30 June 2025 2024 Per Share (in HK$) "
+        "Earnings per share - Basic 0.369 0.425 - Diluted 0.363 0.416 "
+        "Interim dividend per ordinary share 0.25 0.24\n"
+        "Interim Condensed Consolidated Balance Sheet Inventories 1,517,960 1,587,039 "
+        "Cash and cash equivalents 2,976,058 3,083,598 Total assets 9,208,715 9,169,505 "
+        "Total equity 7,805,146 7,564,587\n"
+        "Interim Condensed Consolidated Balance Sheet Trade payables 832,910 937,211 "
+        "Total liabilities 1,403,569 1,604,918\n"
+        "Interim Condensed Consolidated Cash Flow Statement Net cash generated from operating activities "
+        "153,656 430,686 Purchase of property, plant and equipment (18,088) (58,628) "
+        "Purchase of intangible assets (24,916) (56,427)\n"
+        "EXPENSES BY NATURE Research and development costs (305,174) (304,219) "
+        "Depreciation of property, plant and equipment 34,811 29,197 "
+        "Depreciation of right-of-use assets 14,098 15,268 "
+        "Amortisation of intangible assets 5,337 1,595\n"
+        "Trade and bills receivables Trade receivables, net 2,753,840 2,543,614\n"
+        "Liquidity and Financial Resources no borrowing\n"
+    )
+
+    fields = extract_tables_from_text(text, source_filename="SRC_004_IR_H12025.txt")
+    by_period = {(f.label, f.column_header): f.value for f in fields}
+
+    assert by_period.get(("Revenue", "H1-2025")) == 2716164.0
+    assert by_period.get(("Revenue", "H1-2024")) == 3013241.0
+    assert by_period.get(("Total assets", "H1-2025")) == 9208715.0
+    assert by_period.get(("Total liabilities", "H1-2024")) == 1604918.0
+    assert by_period.get(("Trade receivables, net", "H1-2025")) == 2753840.0
+    assert by_period.get(("Purchase of property, plant and equipment and intangible assets", "H1-2025")) == -43004.0
+    assert by_period.get(("Research and development costs", "H1-2024")) == -304219.0
+    assert by_period.get(("– Basic", "H1-2025")) == 0.369
+    assert by_period.get(("– Diluted", "H1-2024")) == 0.416
+    assert by_period.get(("total dividend per ordinary share", "H1-2025")) == 0.25
+
+
+def test_extract_shares_outstanding_from_hkex_note_prefers_row_label_match():
+    text = (
+        "12 EARNINGS PER SHARE (a) Basic Basic earnings per share is calculated by dividing "
+        "the profit for the period attributable to the owners of the Company by the weighted "
+        "average number of ordinary shares outstanding during the period. Unaudited "
+        "Six months ended 30 June 2025 2024 Profit attributable to the owners of the Company "
+        "(HK$’000) 390,877 454,583 Weighted average number of ordinary shares outstanding "
+        "(thousand shares) 1,060,685 1,070,525 Basic earnings per share attributable to the "
+        "owners of the Company (HK$ per share) 0.369 0.425\n"
+    )
+
+    fields = extract_shares_outstanding_from_text(
+        text,
+        source_filename="SRC_004_IR_H12025.txt",
+    )
+    by_period = {(f.column_header, f.value) for f in fields}
+
+    assert ("H1-2025", 1060685.0) in by_period
+    assert ("H1-2024", 1070525.0) in by_period
+    assert ("H1-2025", 390877.0) not in by_period
+
+
+def test_extract_shares_outstanding_from_hkex_note_accepts_in_issue_variant():
+    text = (
+        "12 EARNINGS PER SHARE (a) Basic Basic earnings per share is calculated by dividing "
+        "the profit for the period attributable to the owners of the Company by the weighted "
+        "average number of ordinary shares in issue during the period. Unaudited "
+        "Six months ended 30 June 2023 2022 Profit attributable to the owners of the Company "
+        "(HK$’000) 650,643 699,770 Weighted average number of ordinary shares in issue "
+        "(thousand shares) 1,078,240 1,083,172 Basic earnings per share attributable to the "
+        "owners of the Company (HK$ per share) 0.603 0.646\n"
+    )
+
+    fields = extract_shares_outstanding_from_text(
+        text,
+        source_filename="SRC_006_IR_H12023.txt",
+    )
+    by_period = {(f.column_header, f.value) for f in fields}
+
+    assert ("H1-2023", 1078240.0) in by_period
+    assert ("H1-2022", 1083172.0) in by_period
+    assert ("H1-2023", 650643.0) not in by_period
 
 
 # ── Bug A: $ currency-prefix colspan headers (grouped year assignment) ───────

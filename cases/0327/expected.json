@@ -271,6 +271,300 @@
           "source_filing": "DERIVED"
         }
       }
+    },
+    "H1-2025": {
+      "fecha_fin": "2025-06-30",
+      "tipo_periodo": "semestral",
+      "fields": {
+        "ingresos": {
+          "value": 2716164.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "cost_of_revenue": {
+          "value": 1443619.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "gross_profit": {
+          "value": 1272545.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "research_and_development": {
+          "value": 305174.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "ebit": {
+          "value": 470997.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "depreciation_amortization": {
+          "value": 54246.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "interest_expense": {
+          "value": 2446.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "income_tax": {
+          "value": 74599.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "net_income": {
+          "value": 390877.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "eps_basic": {
+          "value": 0.369,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "eps_diluted": {
+          "value": 0.363,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "shares_outstanding": {
+          "value": 1060685.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "dividends_per_share": {
+          "value": 0.25,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "cash_and_equivalents": {
+          "value": 2976058.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "inventories": {
+          "value": 1517960.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "accounts_receivable": {
+          "value": 2753840.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "accounts_payable": {
+          "value": 832910.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "total_assets": {
+          "value": 9208715.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "total_liabilities": {
+          "value": 1403569.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "total_equity": {
+          "value": 7805146.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "cfo": {
+          "value": 153656.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "capex": {
+          "value": -43004.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        },
+        "total_debt": {
+          "value": 0.0,
+          "source_filing": "SRC_004_IR_H12025.txt"
+        }
+      }
+    },
+    "H1-2024": {
+      "fecha_fin": "2024-06-30",
+      "tipo_periodo": "semestral",
+      "fields": {
+        "ingresos": {
+          "value": 3013241.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "cost_of_revenue": {
+          "value": 1604005.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "gross_profit": {
+          "value": 1409236.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "research_and_development": {
+          "value": 304219.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "ebit": {
+          "value": 537525.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "depreciation_amortization": {
+          "value": 46060.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "interest_expense": {
+          "value": 2908.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "income_tax": {
+          "value": 79543.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "net_income": {
+          "value": 454583.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "eps_basic": {
+          "value": 0.425,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "eps_diluted": {
+          "value": 0.416,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "shares_outstanding": {
+          "value": 1070525.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "dividends_per_share": {
+          "value": 0.24,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "cash_and_equivalents": {
+          "value": 2794057.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "inventories": {
+          "value": 1819361.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "accounts_receivable": {
+          "value": 2819899.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "accounts_payable": {
+          "value": 1122586.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "total_assets": {
+          "value": 9291220.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "total_liabilities": {
+          "value": 1666454.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "total_equity": {
+          "value": 7624766.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "cfo": {
+          "value": 430686.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "capex": {
+          "value": -115055.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        },
+        "total_debt": {
+          "value": 0.0,
+          "source_filing": "SRC_005_IR_H12024.txt"
+        }
+      }
+    },
+    "H1-2023": {
+      "fecha_fin": "2023-06-30",
+      "tipo_periodo": "semestral",
+      "fields": {
+        "ingresos": {
+          "value": 3568564.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "cost_of_revenue": {
+          "value": 1997647.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "gross_profit": {
+          "value": 1570917.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "research_and_development": {
+          "value": 306873.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "ebit": {
+          "value": 689565.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "depreciation_amortization": {
+          "value": 31221.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "interest_expense": {
+          "value": 2425.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "income_tax": {
+          "value": 30059.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "net_income": {
+          "value": 650643.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "eps_basic": {
+          "value": 0.603,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "eps_diluted": {
+          "value": 0.589,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "shares_outstanding": {
+          "value": 1078240.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "dividends_per_share": {
+          "value": 0.21,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "cash_and_equivalents": {
+          "value": 2876585.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "inventories": {
+          "value": 2148231.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "accounts_receivable": {
+          "value": 2409092.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "accounts_payable": {
+          "value": 1053995.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "total_assets": {
+          "value": 8958231.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "total_liabilities": {
+          "value": 1712424.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "total_equity": {
+          "value": 7245807.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "cfo": {
+          "value": 111731.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "capex": {
+          "value": -122325.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        },
+        "total_debt": {
+          "value": 0.0,
+          "source_filing": "SRC_006_IR_H12023.txt"
+        }
+      }
     }
   }
 }

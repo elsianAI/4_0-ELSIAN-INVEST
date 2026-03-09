@@ -1315,14 +1315,554 @@ def _guided_anchors_from_headers(
     return sorted(anchors)
 
 
+# ── HKEX interim compact-line extractor ────────────────────────────
+_HKEX_HALF_FROM_FILENAME_RE = re.compile(r"H([12])(20\d{2})", re.IGNORECASE)
+_HKEX_INTERIM_DOC_RE = re.compile(
+    r"\bINTERIM\s+REPORT\b|\bInterim\s+Condensed\s+Consolidated\b",
+    re.IGNORECASE,
+)
+_HKEX_DAY_FIRST_HALF_RE = re.compile(
+    r"six\s+months?\s+ended\s+(\d{1,2})\s+([A-Za-z]+)\s+(20\d{2})",
+    re.IGNORECASE,
+)
+_HKEX_CJK_RE = re.compile(r"[\u3400-\u9fff\uf900-\ufaff]")
+_HKEX_COMPACT_NUM_RE = r"(?:\([\d,]+(?:\.\d+)?\)|-?[\d,]+(?:\.\d+)?|[—–-])"
+
+
+def _normalize_hkex_interim_line(line: str) -> str:
+    """Normalize bilingual HKEX PDF-text lines while keeping English labels."""
+    line = _HKEX_CJK_RE.sub(" ", line)
+    line = (
+        line.replace("╱", " ")
+        .replace("／", " ")
+        .replace("－", " - ")
+        .replace("–", " - ")
+        .replace("—", " - ")
+        .replace("�", " ")
+    )
+    return re.sub(r"\s+", " ", line).strip()
+
+
+def _hkex_interim_period_pair(
+    text: str, source_filename: str,
+) -> Optional[Tuple[str, str]]:
+    """Infer current/prior H-periods for HKEX interim compact reports."""
+    m = _HKEX_HALF_FROM_FILENAME_RE.search(source_filename)
+    if m:
+        half = int(m.group(1))
+        year = int(m.group(2))
+        return f"H{half}-{year}", f"H{half}-{year - 1}"
+
+    m = _HKEX_DAY_FIRST_HALF_RE.search(text[:20_000])
+    if m:
+        month_num = _resolve_month(m.group(2))
+        if month_num:
+            half = 1 if month_num <= 6 else 2
+            year = int(m.group(3))
+            return f"H{half}-{year}", f"H{half}-{year - 1}"
+
+    return None
+
+
+def _make_hkex_interim_compact_field(
+    label: str,
+    raw_value: str,
+    period_key: str,
+    source_filename: str,
+    line_no: int,
+    section_name: str,
+    col_idx: int,
+) -> Optional[TableField]:
+    """Create a TableField from a compact HKEX line match."""
+    value = parse_number(raw_value)
+    if value is None and raw_value.strip() in {"—", "–", "-"}:
+        value = 0.0
+    if value is None:
+        return None
+
+    location = (
+        f"{source_filename}:table:hkex_interim_compact:"
+        f"{section_name}:line{line_no}"
+    )
+    return TableField(
+        label=label,
+        value=value,
+        column_header=period_key,
+        source_location=location,
+        raw_text=raw_value,
+        col_label=period_key,
+        table_title=f"hkex_interim_compact:{section_name}",
+        row_idx=line_no - 1,
+        col_idx=col_idx,
+        table_index=0,
+    )
+
+
+def _extract_hkex_compact_pattern_fields(
+    line: str,
+    current_period: str,
+    prior_period: str,
+    source_filename: str,
+    line_no: int,
+    section_name: str,
+    patterns: List[Tuple[str, str]],
+) -> List[TableField]:
+    """Extract simple current/prior label pairs from a compact HKEX line."""
+    results: List[TableField] = []
+    for label, pattern in patterns:
+        match = re.search(pattern, line, re.IGNORECASE)
+        if not match:
+            continue
+        current = _make_hkex_interim_compact_field(
+            label,
+            match.group("current"),
+            current_period,
+            source_filename,
+            line_no,
+            section_name,
+            0,
+        )
+        prior = _make_hkex_interim_compact_field(
+            label,
+            match.group("prior"),
+            prior_period,
+            source_filename,
+            line_no,
+            section_name,
+            1,
+        )
+        if current is not None:
+            results.append(current)
+        if prior is not None:
+            results.append(prior)
+    return results
+
+
+def _extract_hkex_interim_compact_fields(
+    text: str, source_filename: str = "",
+) -> List[TableField]:
+    """Extract reusable H1 fields from HKEX interim PDF-text collapsed lines."""
+    periods = _hkex_interim_period_pair(text, source_filename)
+    if periods is None:
+        return []
+    if not _HKEX_INTERIM_DOC_RE.search(text[:20_000]):
+        return []
+
+    current_period, prior_period = periods
+    results: List[TableField] = []
+    normalized_lines = [
+        _normalize_hkex_interim_line(line)
+        for line in text.splitlines()
+    ]
+
+    compact_num = _HKEX_COMPACT_NUM_RE
+    compact_decimal = r"-?[\d,]+(?:\.\d+)?"
+    statement_patterns = [
+        (
+            "Revenue",
+            rf"\bRevenue\b(?:\s+\d+(?:\([a-z]\))?)?\s+"
+            rf"(?P<current>{compact_num})\s+(?P<prior>{compact_num})",
+        ),
+        (
+            "Cost of sales",
+            rf"\bCost of sales\b(?:\s+\d+(?:\([a-z]\))?)?\s+"
+            rf"(?P<current>{compact_num})\s+(?P<prior>{compact_num})",
+        ),
+        (
+            "Gross profit",
+            rf"\bGross profit\b\s+(?P<current>{compact_num})\s+"
+            rf"(?P<prior>{compact_num})",
+        ),
+        (
+            "Operating profit",
+            rf"\bOperating profit\b\s+(?P<current>{compact_num})\s+"
+            rf"(?P<prior>{compact_num})",
+        ),
+        (
+            "Finance costs",
+            rf"\bFinance costs\b(?:\s+\d+(?:\([a-z]\))?)?\s+"
+            rf"(?P<current>{compact_num})\s+(?P<prior>{compact_num})",
+        ),
+        (
+            "Income tax expense",
+            rf"\bIncome tax expense\b(?:\s+\d+(?:\([a-z]\))?)?\s+"
+            rf"(?P<current>{compact_num})\s+(?P<prior>{compact_num})",
+        ),
+        (
+            "Profit attributable to the owners of the Company",
+            rf"\bOwners of the Company\b\s+(?P<current>{compact_num})\s+"
+            rf"(?P<prior>{compact_num})",
+        ),
+    ]
+    balance_assets_patterns = [
+        (
+            "Inventories",
+            rf"\bInventories\b\s+(?P<current>{compact_num})\s+"
+            rf"(?P<prior>{compact_num})",
+        ),
+        (
+            "Cash and cash equivalents",
+            rf"\bCash and cash equivalents\b\s+(?P<current>{compact_num})\s+"
+            rf"(?P<prior>{compact_num})",
+        ),
+        (
+            "Total assets",
+            rf"\bTotal assets\b\s+(?P<current>{compact_num})\s+"
+            rf"(?P<prior>{compact_num})",
+        ),
+        (
+            "Total equity",
+            rf"\bTotal equity\b\s+(?P<current>{compact_num})\s+"
+            rf"(?P<prior>{compact_num})",
+        ),
+    ]
+    balance_liabilities_patterns = [
+        (
+            "Trade payables",
+            rf"\bTrade payables\b(?:\s+\d+(?:\([a-z]\))?)?\s+"
+            rf"(?P<current>{compact_num})\s+(?P<prior>{compact_num})",
+        ),
+        (
+            "Total liabilities",
+            rf"\bTotal liabilities\b\s+(?P<current>{compact_num})\s+"
+            rf"(?P<prior>{compact_num})",
+        ),
+    ]
+    note_patterns = [
+        (
+            "Research and development costs",
+            rf"\bResearch and development costs\b\s+"
+            rf"(?P<current>{compact_num})\s+(?P<prior>{compact_num})",
+        ),
+        (
+            "Depreciation of property, plant and equipment",
+            rf"\bDepreciation of property, plant and equipment\b.*?\s"
+            rf"(?P<current>{compact_num})\s+(?P<prior>{compact_num})",
+        ),
+        (
+            "Depreciation of right-of-use assets",
+            rf"\bDepreciation of right-of-use assets\b.*?\s"
+            rf"(?P<current>{compact_num})\s+(?P<prior>{compact_num})",
+        ),
+        (
+            "Amortisation of intangible assets",
+            rf"\bAmortisation of intangible assets\b.*?\s"
+            rf"(?P<current>{compact_num})\s+(?P<prior>{compact_num})",
+        ),
+    ]
+    receivables_patterns = [
+        (
+            "Trade receivables, net",
+            rf"\bTrade receivables, net\b\s+(?P<current>{compact_num})\s+"
+            rf"(?P<prior>{compact_num})",
+        ),
+    ]
+
+    for line_no, line in enumerate(normalized_lines, start=1):
+        if not line:
+            continue
+        line_lower = line.lower()
+
+        if (
+            "interim condensed consolidated income statement" in line_lower
+            and "revenue" in line_lower
+            and "operating profit" in line_lower
+        ):
+            results.extend(
+                _extract_hkex_compact_pattern_fields(
+                    line,
+                    current_period,
+                    prior_period,
+                    source_filename,
+                    line_no,
+                    "income_statement",
+                    statement_patterns,
+                )
+            )
+            continue
+
+        if (
+            "earnings per share" in line_lower
+            and "- basic" in line_lower
+            and "interim dividend per ordinary share" in line_lower
+        ):
+            results.extend(
+                _extract_hkex_compact_pattern_fields(
+                    line,
+                    current_period,
+                    prior_period,
+                    source_filename,
+                    line_no,
+                    "per_share",
+                    [
+                        (
+                            "– Basic",
+                            rf"-\s*Basic\b(?:\s+(?:\d+\([a-z]\)|-))?\s+"
+                            rf"(?P<current>{compact_decimal})\s+"
+                            rf"(?P<prior>{compact_decimal})",
+                        ),
+                        (
+                            "– Diluted",
+                            rf"-\s*Diluted\b(?:\s+(?:\d+\([a-z]\)|-))?\s+"
+                            rf"(?P<current>{compact_decimal})\s+"
+                            rf"(?P<prior>{compact_decimal})",
+                        ),
+                        (
+                            "total dividend per ordinary share",
+                            rf"Interim dividend per ordinary share\b\s+"
+                            rf"(?P<current>{compact_decimal})\s+"
+                            rf"(?P<prior>{compact_decimal})",
+                        ),
+                    ],
+                )
+            )
+            continue
+
+        if (
+            "interim condensed consolidated balance sheet" in line_lower
+            and "assets" in line_lower
+            and "total assets" in line_lower
+        ):
+            results.extend(
+                _extract_hkex_compact_pattern_fields(
+                    line,
+                    current_period,
+                    prior_period,
+                    source_filename,
+                    line_no,
+                    "balance_sheet",
+                    balance_assets_patterns,
+                )
+            )
+            continue
+
+        if (
+            "interim condensed consolidated balance sheet" in line_lower
+            and "liabilities" in line_lower
+            and "total liabilities" in line_lower
+        ):
+            results.extend(
+                _extract_hkex_compact_pattern_fields(
+                    line,
+                    current_period,
+                    prior_period,
+                    source_filename,
+                    line_no,
+                    "balance_sheet",
+                    balance_liabilities_patterns,
+                )
+            )
+            continue
+
+        if (
+            "interim condensed consolidated cash flow statement" in line_lower
+            and (
+                "cash flows from operating activities" in line_lower
+                or "net cash generated from operating activities" in line_lower
+            )
+        ):
+            cfo_match = re.search(
+                rf"\bNet cash generated from(?:/\(used in\))?\s+"
+                rf"operating activities\b.*?(?P<current>{compact_num})\s+"
+                rf"(?P<prior>{compact_num})",
+                line,
+                re.IGNORECASE,
+            )
+            if cfo_match:
+                current = _make_hkex_interim_compact_field(
+                    "Net cash generated from operating activities",
+                    cfo_match.group("current"),
+                    current_period,
+                    source_filename,
+                    line_no,
+                    "cash_flow",
+                    0,
+                )
+                prior = _make_hkex_interim_compact_field(
+                    "Net cash generated from operating activities",
+                    cfo_match.group("prior"),
+                    prior_period,
+                    source_filename,
+                    line_no,
+                    "cash_flow",
+                    1,
+                )
+                if current is not None:
+                    results.append(current)
+                if prior is not None:
+                    results.append(prior)
+
+            capex_current = 0.0
+            capex_prior = 0.0
+            capex_found = False
+            for pattern in (
+                rf"\bPurchase of property, plant and equipment\b.*?\s"
+                rf"(?P<current>{compact_num})\s+(?P<prior>{compact_num})",
+                rf"\bPurchase of intangible assets\b\s+"
+                rf"(?P<current>{compact_num})\s+(?P<prior>{compact_num})",
+            ):
+                match = re.search(pattern, line, re.IGNORECASE)
+                if not match:
+                    continue
+                current_val = _make_hkex_interim_compact_field(
+                    "Purchase of property, plant and equipment and intangible assets",
+                    match.group("current"),
+                    current_period,
+                    source_filename,
+                    line_no,
+                    "cash_flow",
+                    0,
+                )
+                prior_val = _make_hkex_interim_compact_field(
+                    "Purchase of property, plant and equipment and intangible assets",
+                    match.group("prior"),
+                    prior_period,
+                    source_filename,
+                    line_no,
+                    "cash_flow",
+                    1,
+                )
+                if current_val is not None:
+                    capex_current += current_val.value
+                if prior_val is not None:
+                    capex_prior += prior_val.value
+                capex_found = True
+            if capex_found:
+                results.append(
+                    TableField(
+                        label="Purchase of property, plant and equipment and intangible assets",
+                        value=capex_current,
+                        column_header=current_period,
+                        source_location=(
+                            f"{source_filename}:table:hkex_interim_compact:"
+                            f"cash_flow:line{line_no}"
+                        ),
+                        raw_text=str(capex_current),
+                        col_label=current_period,
+                        table_title="hkex_interim_compact:cash_flow",
+                        row_idx=line_no - 1,
+                        col_idx=0,
+                        table_index=0,
+                    )
+                )
+                results.append(
+                    TableField(
+                        label="Purchase of property, plant and equipment and intangible assets",
+                        value=capex_prior,
+                        column_header=prior_period,
+                        source_location=(
+                            f"{source_filename}:table:hkex_interim_compact:"
+                            f"cash_flow:line{line_no}"
+                        ),
+                        raw_text=str(capex_prior),
+                        col_label=prior_period,
+                        table_title="hkex_interim_compact:cash_flow",
+                        row_idx=line_no - 1,
+                        col_idx=1,
+                        table_index=0,
+                    )
+                )
+            continue
+
+        if "expenses by nature" in line_lower and "research and development costs" in line_lower:
+            results.extend(
+                _extract_hkex_compact_pattern_fields(
+                    line,
+                    current_period,
+                    prior_period,
+                    source_filename,
+                    line_no,
+                    "expenses_by_nature",
+                    note_patterns,
+                )
+            )
+            continue
+
+        if (
+            "trade and bills receivables" in line_lower
+            and "trade receivables, net" in line_lower
+        ):
+            results.extend(
+                _extract_hkex_compact_pattern_fields(
+                    line,
+                    current_period,
+                    prior_period,
+                    source_filename,
+                    line_no,
+                    "receivables_note",
+                    receivables_patterns,
+                )
+            )
+            continue
+
+        if "interim dividend of hk$" in line_lower and "per ordinary share" in line_lower:
+            dividend_match = re.search(
+                rf"interim dividend of HK\$\s*(?P<current>{compact_num})\s+"
+                rf"per ordinary share.*?HK\$\s*(?P<prior>{compact_num})\s+"
+                rf"per ordinary share",
+                line,
+                re.IGNORECASE,
+            )
+            if dividend_match:
+                current = _make_hkex_interim_compact_field(
+                    "total dividend per ordinary share",
+                    dividend_match.group("current"),
+                    current_period,
+                    source_filename,
+                    line_no,
+                    "dividends",
+                    0,
+                )
+                prior = _make_hkex_interim_compact_field(
+                    "total dividend per ordinary share",
+                    dividend_match.group("prior"),
+                    prior_period,
+                    source_filename,
+                    line_no,
+                    "dividends",
+                    1,
+                )
+                if current is not None:
+                    results.append(current)
+                if prior is not None:
+                    results.append(prior)
+            continue
+
+        if (
+            line_lower.startswith("liquidity and financial resources")
+            or "capital structure and details of charges" in line_lower
+        ) and re.search(r"\bno\s+(?:significant\s+)?borrowing\b", line_lower):
+            results.append(
+                TableField(
+                    label="Borrowings",
+                    value=0.0,
+                    column_header=current_period,
+                    source_location=(
+                        f"{source_filename}:table:hkex_interim_compact:"
+                        f"liquidity:line{line_no}"
+                    ),
+                    raw_text="0",
+                    col_label=current_period,
+                    table_title="hkex_interim_compact:liquidity",
+                    row_idx=line_no - 1,
+                    col_idx=0,
+                    table_index=0,
+                )
+            )
+            continue
+
+    return results
+
+
 # ── Dedicated shares_outstanding extractor ─────────────────────────
 _SHARES_LABEL_RE = re.compile(
     r"weighted\s+average\s+(?:number\s+of\s+)?(?:ordinary\s+)?shares"
-    r"(?:\s+(?:of\s+\S+(?:\s+\S+){0,4}\s+)?(?:on\s+issue|outstanding|used))",
+    r"(?:\s+(?:of\s+\S+(?:\s+\S+){0,4}\s+)?(?:on\s+issue|in\s+issue|outstanding|used))",
     re.IGNORECASE,
 )
 _LARGE_INT_RE = re.compile(r"[\d,]{7,}")  # 7+ chars to catch 1,000,000+
 _QUARTER_FROM_FILENAME = re.compile(r"Q([123])-(\d{4})", re.IGNORECASE)
+_HALF_YEAR_FROM_FILENAME = re.compile(r"H([12])(\d{4})", re.IGNORECASE)
 
 
 def extract_shares_outstanding_from_text(
@@ -1338,20 +1878,32 @@ def extract_shares_outstanding_from_text(
     lines = text.split("\n")
 
     for i, line in enumerate(lines):
-        if not _SHARES_LABEL_RE.search(line):
+        label_matches = list(_SHARES_LABEL_RE.finditer(line))
+        if not label_matches:
             continue
+        # Compact H1 notes can repeat the explanatory sentence and the actual
+        # weighted-average-shares row on the same line. Use the LAST row-label
+        # match so we anchor after the real share-count label rather than the
+        # explanatory paragraph.
+        label_match = label_matches[-1]
         # Might be on this line or next (multi-line wrapping)
         search_text = line
         if i + 1 < len(lines):
             search_text += " " + lines[i + 1]
 
-        ints = _LARGE_INT_RE.findall(search_text)
+        # Only scan AFTER the matched weighted-average-shares label so
+        # preceding profit figures in compact note lines cannot be mistaken
+        # for the share count.
+        search_tail = search_text[label_match.end():]
+        ints = _LARGE_INT_RE.findall(search_tail)
         if not ints:
             continue
 
-        # Reject diluted shares: if "diluted" appears in the label, skip.
-        label_area = line.lower()
-        if "dilut" in label_area:
+        # Reject diluted-only variants of the label, but keep compact HKEX
+        # note lines where the surrounding paragraph mentions diluted EPS
+        # while the first matched label is still the basic weighted average.
+        label_area = search_tail[:80].lower()
+        if "for diluted earnings per share" in label_area:
             continue
 
         values = []
@@ -1376,18 +1928,24 @@ def extract_shares_outstanding_from_text(
             # Remaining values are typically YTD (9M/6M) — skip those.
             periods: List[str] = [f"Q{q_num}-{q_year}", f"Q{q_num}-{q_year - 1}"]
         else:
-            # Find year context by scanning BACKWARD from the shares line
-            # (closest header wins, avoids stale predecessor-note headers).
-            periods = []
-            for j in range(i - 1, max(0, i - 30) - 1, -1):
-                yr_matches = list(_YEAR_RE.finditer(lines[j]))
-                if len(yr_matches) >= 2:
-                    for ym in yr_matches:
-                        pk = f"FY{ym.group(1)}"
-                        if pk not in periods:
-                            periods.append(pk)
-                    if len(periods) >= 2:
-                        break
+            hm = _HALF_YEAR_FROM_FILENAME.search(source_filename)
+            if hm:
+                h_num = int(hm.group(1))
+                h_year = int(hm.group(2))
+                periods = [f"H{h_num}-{h_year}", f"H{h_num}-{h_year - 1}"]
+            else:
+                # Find year context by scanning BACKWARD from the shares line
+                # (closest header wins, avoids stale predecessor-note headers).
+                periods = []
+                for j in range(i - 1, max(0, i - 30) - 1, -1):
+                    yr_matches = list(_YEAR_RE.finditer(lines[j]))
+                    if len(yr_matches) >= 2:
+                        for ym in yr_matches:
+                            pk = f"FY{ym.group(1)}"
+                            if pk not in periods:
+                                periods.append(pk)
+                        if len(periods) >= 2:
+                            break
 
         if not periods:
             continue
@@ -1810,6 +2368,10 @@ def extract_tables_from_text(
     number alignment, and extracts label/value pairs with period assignment.
     """
     all_fields: List[TableField] = []
+    # HKEX interim PDF text can collapse whole H1 statements into single
+    # bilingual lines that never become generic space-aligned tables.
+    # Recover those rows first and keep them alongside the normal parser.
+    all_fields.extend(_extract_hkex_interim_compact_fields(text, source_filename))
     lines = text.split("\n")
 
     # Detect parent-company financial statements zone: find the actual
@@ -1987,7 +2549,7 @@ def extract_tables_from_text(
     sections.sort(key=lambda s: s[0])
 
     if not sections:
-        return []
+        return all_fields
 
     # Detect half-year financial reports (Euronext / European format).
     # When True, M/D/YYYY date headers like "6/30/2025" are mapped to

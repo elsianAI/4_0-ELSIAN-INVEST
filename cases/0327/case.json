@@ -2,7 +2,7 @@
   "ticker": "0327",
   "company_name": "PAX Global Technology Ltd",
   "source_hint": "hkex_manual",
-  "period_scope": "ANNUAL_ONLY",
+  "period_scope": "FULL",
   "currency": "HKD",
   "exchange": "HKEX",
   "country": "HK",
@@ -10,5 +10,5 @@
   "fiscal_year_end_month": 12,
   "sector": "Technology Hardware",
   "additive_fields": ["depreciation_amortization"],
-  "notes": "HKEX stock 0327. hkex_manual bootstrap: annual PDFs (SRC_001-003) ported from 3.0 reference set. H1 interim PDFs (SRC_004-006) present in filings/ but NOT canonized in expected.json — H1 extractor support is pending (future BL). HkexFetcher implemented (BL-083). HKFRS is IFRS-equivalent (applied by PwC-audited entity). All monetary fields in HK$'000. No interest-bearing borrowings (confirmed 2022-2025). EBITDA explicitly stated in segment note each period. Weighted-average basic shares from Note 12. D&A additive: PPE depreciation + ROU depreciation + intangible amortisation (Note 8)."
+  "notes": "HKEX stock 0327. hkex_manual is now reproducible from git via the tracked TXT filing set SRC_001-SRC_006 (FY2022-FY2024 plus H1-2023/H1-2024/H1-2025); 3.0 was used only as reference inventory to recover those source texts, not as an extraction solution. H1 interim support is canonized from extractor-backed HKEX compact bilingual text parsing. HkexFetcher implemented (BL-083). HKFRS is IFRS-equivalent (applied by PwC-audited entity). All monetary fields in HK$'000. No interest-bearing borrowings (confirmed 2022-2025). Weighted-average basic shares from Note 12. D&A additive: PPE depreciation + ROU depreciation + intangible amortisation (Note 8)."
 }

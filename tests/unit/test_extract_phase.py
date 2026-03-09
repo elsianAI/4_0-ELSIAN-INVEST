@@ -808,6 +808,30 @@ def test_extract_phase_gct_prefers_monetary_da_over_per_share_artifact():
     assert result.periods["Q3-2025"].fields["depreciation_amortization"].value == 2115.0
 
 
+def test_extract_phase_0327_h1_interim_reports_are_shared_core_extractor_backed():
+    result = _case_extract("0327")
+
+    h1_2025 = result.periods["H1-2025"].fields
+    h1_2024 = result.periods["H1-2024"].fields
+    h1_2023 = result.periods["H1-2023"].fields
+
+    assert h1_2025["ingresos"].value == 2716164.0
+    assert h1_2025["eps_basic"].value == 0.369
+    assert h1_2025["shares_outstanding"].value == 1060685.0
+    assert h1_2025["accounts_receivable"].value == 2753840.0
+    assert h1_2025["capex"].value == -43004.0
+    assert h1_2025["total_debt"].value == 0.0
+    assert h1_2025["shares_outstanding"].provenance.source_filing == "SRC_004_IR_H12025.txt"
+    assert "hkex_interim_compact" in h1_2025["ingresos"].provenance.source_location
+
+    assert h1_2024["ingresos"].value == 3013241.0
+    assert h1_2024["shares_outstanding"].value == 1070525.0
+    assert h1_2024["dividends_per_share"].value == 0.24
+
+    assert h1_2023["ingresos"].value == 3568564.0
+    assert h1_2023["shares_outstanding"].value == 1078240.0
+
+
 def test_extract_phase_adtn_keeps_q1_q2_2023_net_income_on_same_quarter_sources():
     result = _case_extract("ADTN")
 

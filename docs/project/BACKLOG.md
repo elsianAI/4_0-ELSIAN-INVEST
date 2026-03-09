@@ -206,17 +206,6 @@
 - **Descripción:** Investigar caso por caso las inconsistencias de campos derivados detectadas en la auditoría. ACLS: `ebitda` reportado vs `ebit + D&A` difiere hasta 47%. NEXN: `gross_profit` diverge de `ingresos - cost_of_revenue` hasta 18.8%. SONO: `gross_profit` diverge 23.7% en Q3-2023. SOM: `delta_cash` diverge 398% en FY2023. TZOO: `delta_cash` diverge 27–30% en múltiples FY. Para cada caso, determinar si (a) el `expected.json` tiene un valor incorrecto que debe corregirse, (b) la fórmula simplificada no aplica y debe documentarse, o (c) falta o está mal capturado un campo componente.
 - **Criterio de aceptación:** Cada `DERIVED_INCONSISTENT` queda clasificado como (a), (b) o (c). Los casos (a) quedan corregidos. Los casos (b) y (c) quedan documentados. Se genera un mini-informe en `docs/reports/DERIVED_INCONSISTENCIES_RESOLUTION.md`.
 
-### BL-083 — Implementar HkexFetcher y ampliar 0327 con semestrales HKEX
-- **Prioridad:** ALTA
-- **Estado:** IN_PROGRESS (engineer)
-- **Asignado a:** engineer
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** —
-- **Referencias:** DEC-009, DEC-015, DEC-016, DEC-017
-- **Descripción:** Mantener el frente HKEX como trabajo mixto de shared-core + caso local, sin vender un cierre que no existe. La primera fase ya dejó un path HKEX registrado y testeado (`HkexFetcher`/`hkex_manual`) y los informes H1-2023, H1-2024 y H1-2025 están ya presentes en `cases/0327/filings/`. La fase pendiente sigue siendo la incorporación productiva de soporte semestral reutilizable en el extractor para que esos filings puedan canonizarse sin romper gates. Solo después podrá decidirse si `0327` promueve de `ANNUAL_ONLY` a `FULL` o si queda como permanencia explícita no contable frente a `DEC-015`. FY2018 solo entra si aporta cobertura útil y se canoniza con el mismo estándar de verdad.
-- **Criterio de aceptación:** El path HKEX registrado y testeado se mantiene sin degradar el acquire existente. `cases/0327/filings/` conserva, como mínimo, FY2022-FY2024 más H1-2023/H1-2024/H1-2025. La futura canonización H1 exige soporte semestral extractor-backed y debe cerrar con `python3 -m elsian eval 0327` PASS 100%, `python3 -m elsian eval --all` PASS 16/16 y `python3 -m pytest -q` verde. Solo si `0327` pasa a contar operativamente para `DEC-015`, la gobernanza derivada (`BACKLOG_DONE.md`, `PROJECT_STATE.md`, `CHANGELOG.md`) se actualiza en el mismo cierre.
-
 ### BL-005 — Expandir cobertura de tickers (diversidad de mercados/formatos)
 - **Prioridad:** BAJA
 - **Estado:** TODO
