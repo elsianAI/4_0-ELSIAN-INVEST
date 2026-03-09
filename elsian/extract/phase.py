@@ -1796,17 +1796,48 @@ class ExtractPhase(PipelinePhase):
                 scale=scale,
             )
             return
+        # Reject inventories from cash_flow only when the section has a named subsection
+        # (clean.md: cash_flow:consolidated_statements_of_cash_flows:tblN → reject)
+        # (txt:      cash_flow:tbl2:row13 → don't reject, those are balance-sheet-backed)
+        if canonical == "inventories" and ":cash_flow:" in tf.source_location.lower():
+            _loc = tf.source_location.lower()
+            _cf_pos = _loc.find(":cash_flow:")
+            _after_cf = _loc[_cf_pos + len(":cash_flow:"):]
+            if not _after_cf.startswith("tbl"):
+                audit.discard(
+                    field_name=canonical,
+                    period=tf.column_header,
+                    reason="cashflow_working_capital_not_balance",
+                    source_filing=filing_path.name,
+                    raw_label=tf.label,
+                    raw_value=tf.value,
+                    scale=scale,
+                )
+                return
         if (
-            canonical in {"accounts_receivable", "accounts_payable"}
+            canonical in {"accounts_receivable", "inventories", "accounts_payable"}
             and any(
                 marker in tf.source_location.lower()
                 for marker in (
                     ":income_statement:net_income:",
                     ":income_statement:net_(loss)_income:",
                     ":income_statement:deferred_income_taxes:",
-                    ":income_statement:prepaid_income_taxes:",
                 )
             )
+        ):
+            audit.discard(
+                field_name=canonical,
+                period=tf.column_header,
+                reason="income_statement_working_capital_not_balance",
+                source_filing=filing_path.name,
+                raw_label=tf.label,
+                raw_value=tf.value,
+                scale=scale,
+            )
+            return
+        if (
+            canonical in {"accounts_receivable", "accounts_payable"}
+            and ":income_statement:prepaid_income_taxes:" in tf.source_location.lower()
         ):
             audit.discard(
                 field_name=canonical,

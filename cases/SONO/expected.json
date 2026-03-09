@@ -93,6 +93,30 @@
         "fcf": {
           "value": 108193.0,
           "source_filing": "DERIVED"
+        },
+        "cff": {
+          "value": -102342.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cfi": {
+          "value": -29520.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "delta_cash": {
+          "value": 4936.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "accounts_payable": {
+          "value": 184109.0,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "accounts_receivable": {
+          "value": 65847.0,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
+        },
+        "inventories": {
+          "value": 171020.0,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
         }
       }
     },
@@ -183,6 +207,30 @@
         "fcf": {
           "value": 134659.0,
           "source_filing": "DERIVED"
+        },
+        "cff": {
+          "value": -137309.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cfi": {
+          "value": -105242.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "delta_cash": {
+          "value": -50499.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "accounts_payable": {
+          "value": 194590.0,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "accounts_receivable": {
+          "value": 44513.0,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
+        },
+        "inventories": {
+          "value": 231505.0,
+          "source_filing": "SRC_001_10-K_FY2025.clean.md"
         }
       }
     },
@@ -273,6 +321,30 @@
         "fcf": {
           "value": 50120.0,
           "source_filing": "DERIVED"
+        },
+        "cff": {
+          "value": -108592.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cfi": {
+          "value": -50286.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "delta_cash": {
+          "value": -54624.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "accounts_payable": {
+          "value": 187981.0,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "accounts_receivable": {
+          "value": 67583.0,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
+        },
+        "inventories": {
+          "value": 346521.0,
+          "source_filing": "SRC_002_10-K_FY2024.clean.md"
         }
       }
     },
@@ -363,6 +435,30 @@
         "fcf": {
           "value": -74476.0,
           "source_filing": "DERIVED"
+        },
+        "cff": {
+          "value": -150260.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "cfi": {
+          "value": -172632.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "delta_cash": {
+          "value": -365246.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "accounts_payable": {
+          "value": 335758.0,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "accounts_receivable": {
+          "value": 101206.0,
+          "source_filing": "SRC_004_10-K_FY2022.clean.md"
+        },
+        "inventories": {
+          "value": 454288.0,
+          "source_filing": "SRC_003_10-K_FY2023.clean.md"
         }
       }
     },
@@ -457,6 +553,18 @@
         "fcf": {
           "value": 207695.0,
           "source_filing": "DERIVED"
+        },
+        "cff": {
+          "value": 24967.0,
+          "source_filing": "SRC_003_10-K_FY2023.htm"
+        },
+        "cfi": {
+          "value": -45531.0,
+          "source_filing": "SRC_003_10-K_FY2023.htm"
+        },
+        "delta_cash": {
+          "value": 232810.0,
+          "source_filing": "SRC_003_10-K_FY2023.htm"
         }
       }
     },
@@ -551,6 +659,18 @@
         "fcf": {
           "value": 128951.0,
           "source_filing": "DERIVED"
+        },
+        "cff": {
+          "value": -27091.0,
+          "source_filing": "SRC_004_10-K_FY2022.htm"
+        },
+        "cfi": {
+          "value": -69324.0,
+          "source_filing": "SRC_004_10-K_FY2022.htm"
+        },
+        "delta_cash": {
+          "value": 68471.0,
+          "source_filing": "SRC_004_10-K_FY2022.htm"
         }
       }
     },
@@ -629,6 +749,18 @@
         "ebitda": {
           "value": -59717.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 121497.0,
+          "source_filing": "SRC_012_10-Q_Q1-2024.htm"
+        },
+        "accounts_receivable": {
+          "value": 69725.0,
+          "source_filing": "SRC_012_10-Q_Q1-2024.htm"
+        },
+        "inventories": {
+          "value": 179545.0,
+          "source_filing": "SRC_012_10-Q_Q1-2024.htm"
         }
       }
     },
@@ -707,6 +839,18 @@
         "ebitda": {
           "value": -46057.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 117946.0,
+          "source_filing": "SRC_009_10-Q_Q1-2025.htm"
+        },
+        "accounts_receivable": {
+          "value": 40430.0,
+          "source_filing": "SRC_009_10-Q_Q1-2025.htm"
+        },
+        "inventories": {
+          "value": 138421.0,
+          "source_filing": "SRC_009_10-Q_Q1-2025.htm"
         }
       }
     },
@@ -785,6 +929,18 @@
         "ebitda": {
           "value": 19617.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 271005.0,
+          "source_filing": "SRC_018_10-Q_Q2-2022.htm"
+        },
+        "accounts_receivable": {
+          "value": 111388.0,
+          "source_filing": "SRC_018_10-Q_Q2-2022.htm"
+        },
+        "inventories": {
+          "value": 264405.0,
+          "source_filing": "SRC_018_10-Q_Q2-2022.htm"
         }
       }
     },
@@ -863,6 +1019,18 @@
         "ebitda": {
           "value": -45513.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 183648.0,
+          "source_filing": "SRC_015_10-Q_Q2-2023.htm"
+        },
+        "accounts_receivable": {
+          "value": 84203.0,
+          "source_filing": "SRC_015_10-Q_Q2-2023.htm"
+        },
+        "inventories": {
+          "value": 326289.0,
+          "source_filing": "SRC_015_10-Q_Q2-2023.htm"
         }
       }
     },
@@ -941,6 +1109,18 @@
         "ebitda": {
           "value": 24621.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 179327.0,
+          "source_filing": "SRC_011_10-Q_Q2-2024.htm"
+        },
+        "accounts_receivable": {
+          "value": 131581.0,
+          "source_filing": "SRC_011_10-Q_Q2-2024.htm"
+        },
+        "inventories": {
+          "value": 154903.0,
+          "source_filing": "SRC_011_10-Q_Q2-2024.htm"
         }
       }
     },
@@ -1019,6 +1199,18 @@
         "ebitda": {
           "value": 12950.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 143992.0,
+          "source_filing": "SRC_008_10-Q_Q2-2025.htm"
+        },
+        "accounts_receivable": {
+          "value": 94201.0,
+          "source_filing": "SRC_008_10-Q_Q2-2025.htm"
+        },
+        "inventories": {
+          "value": 115427.0,
+          "source_filing": "SRC_008_10-Q_Q2-2025.htm"
         }
       }
     },
@@ -1097,6 +1289,18 @@
         "ebitda": {
           "value": 15867.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 308032.0,
+          "source_filing": "SRC_017_10-Q_Q3-2022.htm"
+        },
+        "accounts_receivable": {
+          "value": 124884.0,
+          "source_filing": "SRC_017_10-Q_Q3-2022.htm"
+        },
+        "inventories": {
+          "value": 335730.0,
+          "source_filing": "SRC_017_10-Q_Q3-2022.htm"
         }
       }
     },
@@ -1175,6 +1379,18 @@
         "ebitda": {
           "value": -9052.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 187981.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "accounts_receivable": {
+          "value": 67583.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "inventories": {
+          "value": 346521.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
         }
       }
     },
@@ -1253,6 +1469,30 @@
         "ebitda": {
           "value": 97436.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 335758.0,
+          "source_filing": "SRC_003_10-K_FY2023.htm"
+        },
+        "accounts_receivable": {
+          "value": 101206.0,
+          "source_filing": "SRC_003_10-K_FY2023.htm"
+        },
+        "cff": {
+          "value": -15316.0,
+          "source_filing": "SRC_013_10-Q_Q4-2023.htm"
+        },
+        "cfi": {
+          "value": -14689.0,
+          "source_filing": "SRC_013_10-Q_Q4-2023.htm"
+        },
+        "delta_cash": {
+          "value": 156678.0,
+          "source_filing": "SRC_013_10-Q_Q4-2023.htm"
+        },
+        "inventories": {
+          "value": 454288.0,
+          "source_filing": "SRC_003_10-K_FY2023.htm"
         }
       }
     },
@@ -1319,6 +1559,18 @@
         "ebitda": {
           "value": 91573.0,
           "source_filing": "DERIVED"
+        },
+        "cff": {
+          "value": -23691.0,
+          "source_filing": "SRC_010_10-Q_Q4-2024.htm"
+        },
+        "cfi": {
+          "value": -6077.0,
+          "source_filing": "SRC_010_10-Q_Q4-2024.htm"
+        },
+        "delta_cash": {
+          "value": 247111.0,
+          "source_filing": "SRC_010_10-Q_Q4-2024.htm"
         }
       }
     },
@@ -1385,6 +1637,18 @@
         "ebitda": {
           "value": 65704.0,
           "source_filing": "DERIVED"
+        },
+        "cff": {
+          "value": -33798.0,
+          "source_filing": "SRC_007_10-Q_Q4-2025.htm"
+        },
+        "cfi": {
+          "value": -9334.0,
+          "source_filing": "SRC_007_10-Q_Q4-2025.htm"
+        },
+        "delta_cash": {
+          "value": 110223.0,
+          "source_filing": "SRC_007_10-Q_Q4-2025.htm"
         }
       }
     },
@@ -1451,6 +1715,18 @@
         "ebitda": {
           "value": 114438.0,
           "source_filing": "DERIVED"
+        },
+        "cff": {
+          "value": -23421.0,
+          "source_filing": "SRC_007_10-Q_Q4-2025.htm"
+        },
+        "cfi": {
+          "value": -4064.0,
+          "source_filing": "SRC_007_10-Q_Q4-2025.htm"
+        },
+        "delta_cash": {
+          "value": 137836.0,
+          "source_filing": "SRC_007_10-Q_Q4-2025.htm"
         }
       }
     }

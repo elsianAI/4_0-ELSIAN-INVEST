@@ -93,6 +93,14 @@
         "fcf": {
           "value": 143093.0,
           "source_filing": "DERIVED"
+        },
+        "cff": {
+          "value": -174744.0,
+          "source_filing": "SRC_001_20-F_FY2025.htm"
+        },
+        "cfi": {
+          "value": -21212.0,
+          "source_filing": "SRC_001_20-F_FY2025.htm"
         }
       }
     },
@@ -183,6 +191,14 @@
         "fcf": {
           "value": 56246.0,
           "source_filing": "DERIVED"
+        },
+        "cff": {
+          "value": -26547.0,
+          "source_filing": "SRC_001_20-F_FY2025.htm"
+        },
+        "cfi": {
+          "value": -16960.0,
+          "source_filing": "SRC_001_20-F_FY2025.htm"
         }
       }
     },
@@ -273,6 +289,14 @@
         "fcf": {
           "value": 76575.0,
           "source_filing": "DERIVED"
+        },
+        "cff": {
+          "value": 3056.0,
+          "source_filing": "SRC_001_20-F_FY2025.htm"
+        },
+        "cfi": {
+          "value": -232994.0,
+          "source_filing": "SRC_001_20-F_FY2025.htm"
         }
       }
     },
@@ -363,6 +387,14 @@
         "fcf": {
           "value": 166710.0,
           "source_filing": "DERIVED"
+        },
+        "cff": {
+          "value": 116862.0,
+          "source_filing": "SRC_002_20-F_FY2024.htm"
+        },
+        "cfi": {
+          "value": -16487.0,
+          "source_filing": "SRC_002_20-F_FY2024.htm"
         }
       }
     },

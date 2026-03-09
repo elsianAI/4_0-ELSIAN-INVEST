@@ -89,6 +89,26 @@
         "fcf": {
           "value": 1035815.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 937211.0,
+          "source_filing": "SRC_001_AR_FY2024.txt"
+        },
+        "cff": {
+          "value": -570451.0,
+          "source_filing": "SRC_001_AR_FY2024.txt"
+        },
+        "cfi": {
+          "value": -335753.0,
+          "source_filing": "SRC_001_AR_FY2024.txt"
+        },
+        "delta_cash": {
+          "value": 256487.0,
+          "source_filing": "SRC_001_AR_FY2024.txt"
+        },
+        "inventories": {
+          "value": 1587039.0,
+          "source_filing": "SRC_001_AR_FY2024.txt"
         }
       }
     },
@@ -179,6 +199,26 @@
         "fcf": {
           "value": 277016.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 888621.0,
+          "source_filing": "SRC_002_AR_FY2023.txt"
+        },
+        "cff": {
+          "value": -525922.0,
+          "source_filing": "SRC_001_AR_FY2024.txt"
+        },
+        "cfi": {
+          "value": -172213.0,
+          "source_filing": "SRC_001_AR_FY2024.txt"
+        },
+        "delta_cash": {
+          "value": -208118.0,
+          "source_filing": "SRC_001_AR_FY2024.txt"
+        },
+        "inventories": {
+          "value": 1826091.0,
+          "source_filing": "SRC_001_AR_FY2024.txt"
         }
       }
     },
@@ -269,6 +309,26 @@
         "fcf": {
           "value": 317918.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 1699530.0,
+          "source_filing": "SRC_003_AR_FY2022.txt"
+        },
+        "cff": {
+          "value": -449167.0,
+          "source_filing": "SRC_002_AR_FY2023.txt"
+        },
+        "cfi": {
+          "value": -300021.0,
+          "source_filing": "SRC_002_AR_FY2023.txt"
+        },
+        "delta_cash": {
+          "value": -100661.0,
+          "source_filing": "SRC_002_AR_FY2023.txt"
+        },
+        "inventories": {
+          "value": 2527293.0,
+          "source_filing": "SRC_002_AR_FY2023.txt"
         }
       }
     },

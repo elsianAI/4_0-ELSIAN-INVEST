@@ -126,6 +126,22 @@
         "fcf": {
           "value": 1142.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 324.0,
+          "source_filing": "SRC_002_ANNUAL_REPORT_2025-03-31.txt"
+        },
+        "cff": {
+          "value": 1319.0,
+          "source_filing": "SRC_002_ANNUAL_REPORT_2025-03-31.txt"
+        },
+        "cfi": {
+          "value": -2587.0,
+          "source_filing": "SRC_002_ANNUAL_REPORT_2025-03-31.txt"
+        },
+        "delta_cash": {
+          "value": 107.0,
+          "source_filing": "SRC_002_ANNUAL_REPORT_2025-03-31.txt"
         }
       }
     },
@@ -204,6 +220,22 @@
         "fcf": {
           "value": 1594.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 333.0,
+          "source_filing": "tp-press-release-2025-annual-results.txt"
+        },
+        "cff": {
+          "value": -1403.0,
+          "source_filing": "tp-press-release-2025-annual-results.txt"
+        },
+        "cfi": {
+          "value": -221.0,
+          "source_filing": "tp-press-release-2025-annual-results.txt"
+        },
+        "delta_cash": {
+          "value": 189.0,
+          "source_filing": "tp-press-release-2025-annual-results.txt"
         }
       }
     },
@@ -282,6 +314,22 @@
         "fcf": {
           "value": 1361.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 388.0,
+          "source_filing": "tp-press-release-2025-annual-results.txt"
+        },
+        "cff": {
+          "value": -831.0,
+          "source_filing": "tp-press-release-2025-annual-results.txt"
+        },
+        "cfi": {
+          "value": -737.0,
+          "source_filing": "tp-press-release-2025-annual-results.txt"
+        },
+        "delta_cash": {
+          "value": 46.0,
+          "source_filing": "tp-press-release-2025-annual-results.txt"
         }
       }
     },
@@ -336,6 +384,18 @@
         "fcf": {
           "value": 683.0,
           "source_filing": "DERIVED"
+        },
+        "cff": {
+          "value": -549.0,
+          "source_filing": "SRC_011_REGULATORY_FILING_2025-07-31.txt"
+        },
+        "cfi": {
+          "value": -86.0,
+          "source_filing": "SRC_011_REGULATORY_FILING_2025-07-31.txt"
+        },
+        "delta_cash": {
+          "value": 136.0,
+          "source_filing": "SRC_011_REGULATORY_FILING_2025-07-31.txt"
         }
       }
     },
@@ -410,6 +470,22 @@
         "fcf": {
           "value": 471.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 362.0,
+          "source_filing": "SRC_011_REGULATORY_FILING_2025-07-31.txt"
+        },
+        "cff": {
+          "value": 229.0,
+          "source_filing": "SRC_011_REGULATORY_FILING_2025-07-31.txt"
+        },
+        "cfi": {
+          "value": -596.0,
+          "source_filing": "SRC_011_REGULATORY_FILING_2025-07-31.txt"
+        },
+        "delta_cash": {
+          "value": 221.0,
+          "source_filing": "SRC_011_REGULATORY_FILING_2025-07-31.txt"
         }
       }
     }

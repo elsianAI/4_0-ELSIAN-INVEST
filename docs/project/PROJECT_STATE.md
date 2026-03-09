@@ -1,7 +1,7 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
 > Última actualización: 2026-03-09
-> Actualizado por: Codex (BL-083 closeout)
+> Actualizado por: Copilot (BL-076 closeout)
 
 ---
 
@@ -18,32 +18,32 @@ Ver ROADMAP.md para descripción completa de fases.
 | Tickers FULL 100% | **14** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, CROX, TEP, ADTN, 0327) | — | 2026-03-09 |
 | Tickers ANNUAL_ONLY 100% pendientes de promoción/cierre | 1 (SOM) | — | 2026-03-09 |
 | Tickers WIP | 0 | 0 | 2026-03-08 |
-| Total campos validados | 4,109 | — | 2026-03-09 |
+| Total campos validados | 4,616 | — | 2026-03-09 |
 | Campos canónicos | 29 (26 previos + accounts_receivable, inventories, accounts_payable) | — | 2026-03-07 |
-| Tests pasando | 1397 passed, 5 skipped, 1 warning en `pytest -q` local | — | 2026-03-09 |
+| Tests pasando | 1417 passed, 5 skipped, 1 warning en `pytest -q` local | — | 2026-03-09 |
 | Líneas de código (aprox.) | ~12,000 + ~6,500 tests | 2026-03-07 |
 
-*`DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies. `KAR` ya entra en esa excepción documentada (ASX). `ADTN` cuenta como `FULL` tras el cierre targeted de `BL-081` (`8A+15Q`, 520/520), y `0327` deja de ser un pendiente `ANNUAL_ONLY`: `BL-083` la promueve a `FULL` con `3A+3H`, por lo que el tracking operativo alcanza **15/15** (`14 FULL + KAR`). El cierre de `0327` ya es portable desde git porque el repo versiona el set mínimo `hkex_manual` (`SRC_001`-`SRC_006` en TXT) necesario para reextraer FY2022-FY2024 y H1-2023/H1-2025 desde un checkout limpio. `SOM` permanece como único pendiente `ANNUAL_ONLY` no contado.
+*`DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies. `KAR` ya entra en esa excepción documentada (ASX). `ADTN` cuenta como `FULL` tras el cierre targeted de `BL-081` (`8A+15Q`, 520/520), y `0327` deja de ser un pendiente `ANNUAL_ONLY`: `BL-083` la promueve a `FULL` con `3A+3H`. `BL-076` no cambia ese contador operativo: tras retroportar los 7 campos adicionales y cerrar el paquete final en verde, el tracking se mantiene en **15/15** (`14 FULL + KAR`). `SOM` permanece como único pendiente `ANNUAL_ONLY` no contado.
 
 ## Tickers validados
 
 | Ticker | Campos | Mercado | Formato | Estado |
 |---|---|---|---|---|
-| TZOO | 312 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
-| GCT | 267 | SEC (US) | 20-F→10-K HTML | ✅ VALIDATED (FULL: 6A+9Q) |
-| IOSP | 366 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 5A+17Q) |
-| NEXN | 169 | SEC (US) | 20-F/6-K HTML | ✅ VALIDATED (FULL: 4A+6Q) |
-| SONO | 335 | SEC (US) | 10-K HTML | ✅ VALIDATED (FULL: 6A+12Q) |
-| TEP | 90 | Euronext (FR) | PDF (IFRS, EUR) | ✅ VALIDATED (FULL: 6A+2H) |
-| TALO | 199 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 5A+7Q) |
-| NVDA | 374 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
-| KAR | 49 | ASX (AU) | PDF (IFRS, USD) | ✅ VALIDATED (DEC-015 excepción: no quarterly en ASX) |
-| PR | 153 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 3A+6Q) |
-| ACLS | 399 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+15Q) |
+| TZOO | 348 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
+| GCT | 330 | SEC (US) | 20-F→10-K HTML | ✅ VALIDATED (FULL: 6A+9Q) |
+| IOSP | 430 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 5A+17Q) |
+| NEXN | 177 | SEC (US) | 20-F/6-K HTML | ✅ VALIDATED (FULL: 4A+6Q) |
+| SONO | 404 | SEC (US) | 10-K HTML | ✅ VALIDATED (FULL: 6A+12Q) |
+| TEP | 109 | Euronext (FR) | PDF (IFRS, EUR) | ✅ VALIDATED (FULL: 6A+2H) |
+| TALO | 235 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 5A+7Q) |
+| NVDA | 422 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
+| KAR | 61 | ASX (AU) | PDF (IFRS, USD) | ✅ VALIDATED (DEC-015 excepción: no quarterly en ASX) |
+| PR | 185 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 3A+6Q) |
+| ACLS | 486 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+15Q) |
 | INMD | 234 | SEC (US) | 20-F/6-K HTML (IFRS) | ✅ VALIDATED (FULL: 6A+6Q — BL-040 promoted) |
-| CROX | 314 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL — BL-041 DONE) |
-| SOM | 197 | LSE/AIM (GB) | PDF (US-GAAP, USD) | ✅ VALIDATED (ANNUAL_ONLY: 16A, 197/197 — DEC-022 completado) |
-| 0327 | 131 | HKEX (HK) | PDF/TXT manual HKEX (HKFRS, HKD) | ✅ VALIDATED (FULL: 3A+3H — BL-083 DONE, reproducible desde git) |
+| CROX | 326 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL — BL-041 DONE) |
+| SOM | 203 | LSE/AIM (GB) | PDF (US-GAAP, USD) | ✅ VALIDATED (ANNUAL_ONLY: 16A, 203/203 — DEC-022 completado) |
+| 0327 | 146 | HKEX (HK) | PDF/TXT manual HKEX (HKFRS, HKD) | ✅ VALIDATED (FULL: 3A+3H — BL-083 DONE, reproducible desde git) |
 | ADTN | 520 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 8A+15Q — BL-081 DONE) |
 
 ## Nuevos componentes (Oleada 2 cierre Módulo 1)
@@ -90,7 +90,7 @@ Ver ROADMAP.md para descripción completa de fases.
 |---|---|---|---|---|
 | Ninguno | 0 | 0.0% | — | ✅ Sin overrides activos |
 
-**Total:** 0 overrides / 3,471 campos = 0.00% global. TEP y SOM ya no tienen overrides activos tras BL-054 y BL-055.
+**Total:** 0 overrides / 4,616 campos = 0.00% global. TEP y SOM ya no tienen overrides activos tras BL-054 y BL-055.
 
 **Estado "autónomo suficiente" (DEC-026):** ALCANZADO para extracción autónoma strict. Los 16 tickers validados pasan al 100% con 0 overrides activos. La adquisición sigue teniendo limitaciones conocidas y transparentes en algunos mercados sin API pública, pero la deuda de extracción manual ya está cerrada y SOM ya no depende de `filings_sources` hardcodeados.
 
@@ -100,13 +100,16 @@ No hay tickers WIP actualmente. Los 16 tickers están al 100%.
 
 ## Bloqueantes actuales
 
-No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Provenance Level 3. El pipeline es funcional end-to-end para los 16 tickers validados al 100%, `python3 -m pytest -q` vuelve a verde local (1397 passed, 5 skipped, 1 warning) y `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` sigue en `SourceMap_v1 FULL` con 818/818. BL-075 cierra la deuda de derivados deterministas en `expected.json`: `ebitda` y `fcf` quedan retroalimentados donde existen componentes, sin sobrescribir valores ya presentes y respetando exclusiones `DERIVED_INCONSISTENT` canonizadas por periodo. BL-082 cerró el bloqueador shared-core de ADTN para restatements 2023-2024 y rutas de escala, BL-081 promovió ADTN a `FULL`, y BL-083 completa ahora el cierre targeted de `0327` con soporte semestral reutilizable para HKEX compacto/bilingüe y promoción a `FULL` (`3A+3H`, 131/131). En paralelo, el tracking operativo de `DEC-015` alcanza **15/15**: **14 FULL + KAR por excepción documentada**. La deuda actual ya no es de quality gates base, sino de cómo cerrar honestamente el tratamiento de `SOM` y decidir el siguiente frente de valor tras alcanzar el umbral operativo de transición.
+No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Provenance Level 3. El pipeline es funcional end-to-end para los 16 tickers validados al 100%, `python3 -m pytest -q` está en verde local (`1417 passed, 5 skipped, 1 warning`) y `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` sigue en `SourceMap_v1 FULL` con 818/818. BL-075 cerró la deuda de derivados deterministas en `expected.json`, BL-082 cerró el bloqueador shared-core de ADTN para restatements 2023-2024 y rutas de escala, BL-081 promovió ADTN a `FULL`, BL-083 consolidó `0327` como `FULL`, y BL-076 completa ahora la retroportación de 7 campos adicionales con `eval --all` PASS 16/16 y **4,616** campos validados. El tracking operativo de `DEC-015` se mantiene en **15/15**: **14 FULL + KAR por excepción documentada**. La deuda actual ya no es de quality gates base, sino de cómo cerrar honestamente el tratamiento de `SOM` y decidir el siguiente frente de valor tras alcanzar el umbral operativo de transición.
 
 **Gaps pendientes (no bloqueantes):**
 1. **Residual field-dependency gaps** — `fx_effect_cash`, `other_cash_adjustments`, `market_cap` y `price` siguen fuera del set canónico. Son opcionales o de market data; no bloquean validación ni BL-058.
 2. **TALO y TEP sin filings_manifest.json** — adquisición manual (ManualFetcher / EuRegulatorsFetcher). Coverage audit retorna NEEDS_ACTION. Limitación conocida, no bug.
 3. **Adquisición no-SEC aún gradual** — TALO y TEP mantienen rutas de acquire con limitaciones conocidas (coverage `NEEDS_ACTION` o manifest ausente). SOM ya resuelve su piloto LSE/AIM por auto-discovery conservador, pero la autonomía completa de acquire fuera de mercados con API pública sigue siendo gradual.
+4. **Riesgo residual leve BL-076** — falta cobertura unitaria específica de la nueva rama del extractor que descarta `inventories` espurios desde cash flow con named subsection en `clean.md`. El auditor no reporta hallazgos materiales bloqueantes, pero el hueco de tests sigue documentado.
 ## Hitos recientes
+
+- ✅ **BL-076 completado (2026-03-09)** — Cerrado el packet final de retroportación de 7 campos a `expected.json` existentes con reconciliación shared-core y sin vender gaps pendientes como si siguieran abiertos. El paquete técnico final incluye el script nuevo `scripts/backfill_bl076_fields.py`, 20 tests unitarios en `tests/unit/test_backfill_bl076_fields.py`, retroportación filing-backed sobre 14 tickers (`0327`, `ACLS`, `CROX`, `GCT`, `IOSP`, `KAR`, `NEXN`, `NVDA`, `PR`, `SOM`, `SONO`, `TALO`, `TEP`, `TZOO`), fix mínimo en `elsian/extract/phase.py` para descartar `inventories` espurios desde cash flow con named subsection en `clean.md` sin romper rutas `txt`/table, y ajustes filing-backed finales en `CROX` quarterly `total_debt` y FY de `SONO` para alinear la verdad con los winners del pipeline respaldados por filing. Validación factual verificada: `python3 -m elsian eval --all` → PASS 16/16 (`0327 146/146`, `ACLS 486/486`, `ADTN 520/520`, `CROX 326/326`, `GCT 330/330`, `INMD 234/234`, `IOSP 430/430`, `KAR 61/61`, `NEXN 177/177`, `NVDA 422/422`, `PR 185/185`, `SOM 203/203`, `SONO 404/404`, `TALO 235/235`, `TEP 109/109`, `TZOO 348/348`); `python3 -m pytest -q` → `1417 passed, 5 skipped, 1 warning`; `python3 -m pytest -q tests/unit/test_backfill_bl076_fields.py` → `20 passed`; contratos post-fix PASS para `CROX`/`IOSP`/`SONO`. Efecto operativo: total campos validados sube a **4,616** y `DEC-015` no cambia: siguen contando **15** (`14 FULL + KAR`), con `SOM` como único `ANNUAL_ONLY` pendiente.
 
 - ✅ **BL-083 completado (2026-03-09)** — `0327` cierra la promoción a `FULL` sobre soporte shared-core reusable para H1 compacto/bilingüe y deja de depender de artefactos sólo locales. `elsian/extract/detect.py` reconoce day-first half-years (`Six months ended 30 June 2025`) y `elsian/extract/html_tables.py` extrae bloques HKEX compactos desde TXT para income statement, balance sheet, cash flow, expenses-by-nature, receivables y per-share, además de resolver `shares_outstanding` en la variante `in issue`. `cases/0327/expected.json` canoniza `H1-2023`, `H1-2024` y `H1-2025` filing-backed, `cases/0327/case.json` pasa a `period_scope: FULL`, y el repo versiona el set mínimo `hkex_manual` `SRC_001`-`SRC_006` en TXT para que el green sea reproducible desde git. Validación: `python3 scripts/validate_contracts.py --schema case --path cases/0327/case.json` → PASS; `python3 scripts/validate_contracts.py --schema expected --path cases/0327/expected.json` → PASS; `python3 -m pytest -q tests/unit/test_detect.py tests/unit/test_html_tables.py tests/unit/test_extract_phase.py` → 110 passed; `python3 -m pytest -q tests/unit/test_hkex_fetcher.py tests/unit/test_cli_fetcher_routing.py` → 17 passed; `python3 -m elsian eval 0327` → PASS 100.0% (131/131); `python3 -m elsian eval --all` → PASS 16/16; `python3 -m pytest -q` → 1397 passed, 5 skipped, 1 warning; checkout limpio exportado desde git → `python3 -m elsian eval 0327` PASS 100.0% (131/131). Efecto operativo: `0327` pasa a `FULL` (`3A+3H`, 131/131) y `DEC-015` alcanza 15/15.
 

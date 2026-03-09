@@ -624,6 +624,10 @@
         "fcf": {
           "value": -82610.0,
           "source_filing": "DERIVED"
+        },
+        "total_debt": {
+          "value": 1481725.0,
+          "source_filing": "SRC_009_10-Q_Q1-2025.htm"
         }
       }
     },
@@ -706,6 +710,10 @@
         "fcf": {
           "value": -43324.0,
           "source_filing": "DERIVED"
+        },
+        "total_debt": {
+          "value": 1727153.0,
+          "source_filing": "SRC_012_10-Q_Q1-2024.htm"
         }
       }
     },
@@ -788,6 +796,10 @@
         "fcf": {
           "value": -17650.0,
           "source_filing": "DERIVED"
+        },
+        "total_debt": {
+          "value": 2250288.0,
+          "source_filing": "SRC_015_10-Q_Q1-2023.htm"
         }
       }
     },
@@ -870,6 +882,10 @@
         "fcf": {
           "value": -108551.0,
           "source_filing": "DERIVED"
+        },
+        "total_debt": {
+          "value": 2851256.0,
+          "source_filing": "SRC_018_10-Q_Q1-2022.htm"
         }
       }
     },
@@ -932,6 +948,10 @@
         "total_equity": {
           "value": 1421137,
           "source_filing": "SRC_008_10-Q_Q2-2025.clean.md"
+        },
+        "total_debt": {
+          "value": 1379112.0,
+          "source_filing": "SRC_008_10-Q_Q2-2025.htm"
         }
       }
     },
@@ -994,6 +1014,10 @@
         "total_equity": {
           "value": 1653211,
           "source_filing": "SRC_011_10-Q_Q2-2024.clean.md"
+        },
+        "total_debt": {
+          "value": 1529566.0,
+          "source_filing": "SRC_011_10-Q_Q2-2024.htm"
         }
       }
     },
@@ -1056,6 +1080,10 @@
         "total_equity": {
           "value": 1189690,
           "source_filing": "SRC_014_10-Q_Q2-2023.clean.md"
+        },
+        "total_debt": {
+          "value": 2007485.0,
+          "source_filing": "SRC_014_10-Q_Q2-2023.htm"
         }
       }
     },
@@ -1118,6 +1146,10 @@
         "total_equity": {
           "value": 491965,
           "source_filing": "SRC_017_10-Q_Q2-2022.clean.md"
+        },
+        "total_debt": {
+          "value": 2743507.0,
+          "source_filing": "SRC_017_10-Q_Q2-2022.htm"
         }
       }
     },
@@ -1180,6 +1212,10 @@
         "total_equity": {
           "value": 1363140,
           "source_filing": "SRC_007_10-Q_Q3-2025.clean.md"
+        },
+        "total_debt": {
+          "value": 1318498.0,
+          "source_filing": "SRC_007_10-Q_Q3-2025.htm"
         }
       }
     },
@@ -1242,6 +1278,10 @@
         "total_equity": {
           "value": 1725118,
           "source_filing": "SRC_010_10-Q_Q3-2024.clean.md"
+        },
+        "total_debt": {
+          "value": 1421952.0,
+          "source_filing": "SRC_010_10-Q_Q3-2024.htm"
         }
       }
     },
@@ -1304,6 +1344,10 @@
         "total_equity": {
           "value": 1200258,
           "source_filing": "SRC_013_10-Q_Q3-2023.clean.md"
+        },
+        "total_debt": {
+          "value": 1918668.0,
+          "source_filing": "SRC_013_10-Q_Q3-2023.htm"
         }
       }
     },
@@ -1366,6 +1410,10 @@
         "total_equity": {
           "value": 630802,
           "source_filing": "SRC_016_10-Q_Q3-2022.clean.md"
+        },
+        "total_debt": {
+          "value": 2595767.0,
+          "source_filing": "SRC_016_10-Q_Q3-2022.htm"
         }
       }
     }

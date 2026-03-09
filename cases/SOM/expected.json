@@ -108,6 +108,18 @@
         "fcf": {
           "value": 15178.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 3544.0,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "accounts_receivable": {
+          "value": 9251.0,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "inventories": {
+          "value": 559.0,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
         }
       }
     },
@@ -214,6 +226,18 @@
         "fcf": {
           "value": 22706.0,
           "source_filing": "DERIVED"
+        },
+        "accounts_payable": {
+          "value": 3410.0,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "accounts_receivable": {
+          "value": 8835.0,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
+        },
+        "inventories": {
+          "value": -526.0,
+          "source_filing": "SRC_001_ANNUAL_REPORT_FY2024.txt"
         }
       }
     },

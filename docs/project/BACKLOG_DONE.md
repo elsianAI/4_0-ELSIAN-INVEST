@@ -9,6 +9,16 @@
 
 ---
 
+### BL-076 — Retroportar campos BL-035/BL-058 y total_debt a expected.json existentes
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-09)
+- **Asignado a:** engineer
+- **Depende de:** BL-074
+- **Descripción:** Se cierra BL-076 con el paquete técnico final realmente verificado, no con la versión intermedia que dejaba gaps abiertos. El cierre incorpora el script nuevo `scripts/backfill_bl076_fields.py` y sus 20 tests unitarios, retroporta los 7 campos objetivo (`cfi`, `cff`, `delta_cash`, `accounts_receivable`, `accounts_payable`, `inventories`, `total_debt`) a 14 `expected.json` existentes (`0327`, `ACLS`, `CROX`, `GCT`, `IOSP`, `KAR`, `NEXN`, `NVDA`, `PR`, `SOM`, `SONO`, `TALO`, `TEP`, `TZOO`), y deja explícito que `ADTN` e `INMD` no recibieron adiciones elegibles en esta ola. El paquete final también absorbió el fix shared-core mínimo en `elsian/extract/phase.py` para descartar `inventories` espurios provenientes de cash flow con named subsection en `clean.md` sin romper rutas `txt`/table, y cerró los ajustes filing-backed finales en `CROX` quarterly `total_debt` y en FY de `SONO` para alinear la verdad canonizada con los winners reales del pipeline respaldados por filing. El efecto operativo es una retroportación cerrada en verde con `eval --all` 16/16, 4,616 campos validados y sin cambiar el conteo efectivo de `DEC-015`, que permanece en **15** (`14 FULL + KAR`).
+- **Criterio de aceptación:** ✓ `python3 -m elsian eval --all` PASS 16/16 con conteos `0327 146/146`, `ACLS 486/486`, `ADTN 520/520`, `CROX 326/326`, `GCT 330/330`, `INMD 234/234`, `IOSP 430/430`, `KAR 61/61`, `NEXN 177/177`, `NVDA 422/422`, `PR 185/185`, `SOM 203/203`, `SONO 404/404`, `TALO 235/235`, `TEP 109/109`, `TZOO 348/348`. ✓ `python3 -m pytest -q` PASS (`1417 passed, 5 skipped, 1 warning`). ✓ `python3 -m pytest -q tests/unit/test_backfill_bl076_fields.py` PASS (`20 passed`). ✓ Contratos post-fix PASS para `cases/CROX/expected.json`, `cases/IOSP/expected.json` y `cases/SONO/expected.json`. ✓ Auditoría final sin hallazgos materiales bloqueantes; queda solo riesgo residual leve por falta de tests unitarios específicos de la nueva rama del extractor que descarta `inventories` espurios desde cash flow con named subsection.
+
+---
+
 ### BL-083 — Implementar HkexFetcher y ampliar 0327 con semestrales HKEX
 - **Prioridad:** ALTA
 - **Estado:** DONE ✅ (2026-03-09)

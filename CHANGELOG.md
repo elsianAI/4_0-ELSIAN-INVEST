@@ -1019,3 +1019,5 @@
 - **Tests:** 105 passed (82 unit + 16 extract phase + 7 regression)
 - **Regression:** TZOO 100%, GCT 100%, IOSP 100%, NEXN 100%, SONO 100%, TEP 100%
   (TALO 42.4% — pre-existing curation issue, same as 3.0's 48.2%)
+
+<!-- BL-076 closeout staged with backlog_done and project_state reconciliation -->
