@@ -43,6 +43,23 @@ _TARGET_LABELS: List[Tuple[re.Pattern, str, bool]] = [
      "_bridge_mezzanine_equity", False),
 ]
 
+# ── Finance lease fallback labels (BL-084 / DEC-028) ─────────────────
+# Current portion + long-term finance lease obligation may synthesise
+# ``total_debt`` ONLY as a fallback when no explicit debt aggregate
+# (current portion of long-term debt / long-term debt) is found.
+# Tracked separately; operating lease, lease expense, and principal
+# payments on finance lease are excluded by pattern specificity.
+_FINANCE_LEASE_LABELS: List[Tuple[re.Pattern, str]] = [
+    (
+        re.compile(r"^current\s+portion\s+of\s+finance\s+lease\s+obligation\b", re.I),
+        "_fl_current",
+    ),
+    (
+        re.compile(r"^long[\s-]term\s+finance\s+lease\s+obligation\b", re.I),
+        "_fl_longterm",
+    ),
+]
+
 # ── Section boundary detection ───────────────────────────────────────
 _SCHEDULE_I_RE = re.compile(
     r"Schedule\s+I"
@@ -177,12 +194,16 @@ def extract_vertical_bs(
     # ── Step 3: Scan for target labels and extract values ────────
     results: List[TableField] = []
     debt_by_period: Dict[str, float] = {}
+    fl_current_by_period: Dict[str, float] = {}   # finance lease current
+    fl_longterm_by_period: Dict[str, float] = {}  # finance lease long-term
 
     for j in range(bs_start, bs_end):
         stripped = lines[j].strip()
         if not stripped:
             continue
 
+        # ── Primary target labels (explicit BS totals and debt) ──────
+        _matched_primary = False
         for pat, canonical, is_debt in _TARGET_LABELS:
             if not pat.match(stripped):
                 continue
@@ -221,9 +242,37 @@ def extract_vertical_bs(
                         col_idx=vi,
                         table_index=0,
                     ))
+            _matched_primary = True
             break  # matched a pattern, move to next line
 
+        if _matched_primary:
+            continue
+
+        # ── Finance lease fallback labels (BL-084 / DEC-028) ────────
+        for fl_pat, fl_category in _FINANCE_LEASE_LABELS:
+            if not fl_pat.match(stripped):
+                continue
+            values = _collect_values(lines, j, n_periods)
+            for vi, val in enumerate(values):
+                if val is None or val < 0:
+                    continue
+                period = (
+                    period_years[vi]
+                    if vi < len(period_years)
+                    else f"period_{vi}"
+                )
+                if fl_category == "_fl_current":
+                    fl_current_by_period[period] = (
+                        fl_current_by_period.get(period, 0.0) + val
+                    )
+                else:
+                    fl_longterm_by_period[period] = (
+                        fl_longterm_by_period.get(period, 0.0) + val
+                    )
+            break  # matched a finance-lease pattern
+
     # ── Step 4: Synthesise total_debt ────────────────────────────
+    # Step 4a: Explicit debt components (existing behaviour)
     for period, debt_total in debt_by_period.items():
         results.append(TableField(
             label="Total debt (current + long-term)",
@@ -234,6 +283,31 @@ def extract_vertical_bs(
                 ":consolidated:total_debt"
             ),
             raw_text=str(debt_total),
+            col_label=period,
+            table_title="vertical_bs:consolidated",
+            row_idx=0,
+            col_idx=0,
+            table_index=0,
+        ))
+
+    # Step 4b: Finance lease fallback — only for periods without explicit debt
+    # (BL-084 / DEC-028): both current and long-term components must be present.
+    # The source_location carries `:finance_lease_fallback` sentinel so that
+    # phase.py can assign section_bonus_val=-1 (DEC-028 guarantee: an explicit
+    # debt signal from any filing always wins in cross-filing merge).
+    _explicit_debt_periods = set(debt_by_period)
+    _fl_both_periods = set(fl_current_by_period) & set(fl_longterm_by_period)
+    for period in _fl_both_periods - _explicit_debt_periods:
+        fl_total = fl_current_by_period[period] + fl_longterm_by_period[period]
+        results.append(TableField(
+            label="Finance lease obligations (current + long-term)",
+            value=fl_total,
+            column_header=period,
+            source_location=(
+                f"{source_filename}:vertical_bs"
+                ":consolidated:total_debt:finance_lease_fallback"
+            ),
+            raw_text=str(fl_total),
             col_label=period,
             table_title="vertical_bs:consolidated",
             row_idx=0,

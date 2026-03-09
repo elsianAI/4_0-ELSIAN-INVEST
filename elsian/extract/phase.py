@@ -399,6 +399,25 @@ def _is_balance_sheet_source(source_location: str) -> bool:
     return ":balance_sheet:" in loc_lower or ":vertical_bs:" in loc_lower
 
 
+# ── Finance lease fallback patterns (BL-084 / DEC-028) ──────────────
+# Match current portion and long-term finance lease obligation labels.
+# Used to synthesise total_debt as a fallback when no explicit better
+# debt aggregate exists.  Operating lease, lease expense, and principal
+# payments on finance lease (cash-flow) are excluded by distinct labels
+# and by the cash-flow source_location guard below.
+_FINANCE_LEASE_CURR_RE = re.compile(
+    r"^current\s+portion\s+of\s+finance\s+lease\s+obligation\b",
+    re.IGNORECASE,
+)
+_FINANCE_LEASE_LONG_RE = re.compile(
+    r"^long[\s-]term\s+finance\s+lease\s+obligation\b",
+    re.IGNORECASE,
+)
+_PRINCIPAL_PAYMENTS_FL_RE = re.compile(r"\bprincipal\s+payments?\b", re.IGNORECASE)
+_OPERATING_LEASE_EXCL_RE = re.compile(r"\boperating\s+lease\b", re.IGNORECASE)
+_LEASE_EXPENSE_EXCL_RE = re.compile(r"\blease\s+expense\b", re.IGNORECASE)
+
+
 def _source_anchor_prefix(source_location: str) -> str:
     """Return the stable table/section prefix for a source location."""
     return re.sub(r":row\d+(?::col\d+)?$", "", source_location)
@@ -1369,6 +1388,21 @@ class ExtractPhase(PipelinePhase):
                 preflight_result=preflight_result,
             )
 
+        # Finance lease fallback total_debt synthesis (BL-084 / DEC-028)
+        # Run after all iXBRL and HTML table extraction so explicit signals
+        # (if any) are already in period_fields and block synthesis.
+        self._synthesize_finance_lease_fallback_debt(
+            period_fields=period_fields,
+            raw_table_fields=raw_table_fields,
+            filing_path=filing_path,
+            filing_type=metadata.filing_type,
+            filing_scale=filing_scale,
+            filing_scale_confidence=filing_scale_confidence,
+            metadata_scale=metadata.scale,
+            rules=rules,
+            preflight_result=preflight_result,
+        )
+
         # Dividend per share from equity statement
         for dps_period, dps_value, dps_loc in _extract_dividends_per_share(
             text, filing_path.name
@@ -1521,11 +1555,21 @@ class ExtractPhase(PipelinePhase):
             label_pri = self._alias_resolver.label_priority(
                 canonical, tf.label
             )
-            vertical_bonus = (
-                _VERTICAL_BS_BONUS
-                if canonical in {"total_assets", "total_liabilities", "total_equity"}
-                else 0
-            )
+            # Finance lease fallback from vertical.py is marked with
+            # `:finance_lease_fallback` in source_location (BL-084/DEC-028).
+            # It must carry section_bonus_val=-1 so any explicit debt signal
+            # from any other filing wins in cross-filing merge.
+            if (
+                canonical == "total_debt"
+                and ":finance_lease_fallback" in tf.source_location
+            ):
+                vertical_bonus = -1
+            else:
+                vertical_bonus = (
+                    _VERTICAL_BS_BONUS
+                    if canonical in {"total_assets", "total_liabilities", "total_equity"}
+                    else 0
+                )
             candidate_restated = _candidate_restatement_detected(
                 canonical_field=canonical,
                 period_key=period_key,
@@ -1621,6 +1665,23 @@ class ExtractPhase(PipelinePhase):
                     use_section_bonus=False,
                     preflight_result=preflight_result,
                 )
+
+        # Finance lease fallback total_debt synthesis (BL-084 / DEC-028)
+        # Run after all table and vertical-BS extraction (and PDF) so explicit
+        # signals are already in period_fields.  Called before the
+        # suppress_narrative guard so it executes even when narrative is
+        # suppressed (i.e. for .txt files that have a .clean.md counterpart).
+        self._synthesize_finance_lease_fallback_debt(
+            period_fields=period_fields,
+            raw_table_fields=raw_table_fields,
+            filing_path=filing_path,
+            filing_type=metadata.filing_type,
+            filing_scale=filing_scale,
+            filing_scale_confidence=filing_scale_confidence,
+            metadata_scale=metadata.scale,
+            rules=rules,
+            preflight_result=preflight_result,
+        )
 
         # Narrative extraction — skipped when a .clean.md counterpart
         # already provided table-parsed values for this filing.
@@ -2372,6 +2433,124 @@ class ExtractPhase(PipelinePhase):
                 existing_prov.preflight_units_hint
             )
             period_result.fields["total_liabilities"] = adjusted
+
+    # ── Finance lease fallback debt synthesis (BL-084 / DEC-028) ────
+
+    def _synthesize_finance_lease_fallback_debt(
+        self,
+        period_fields: Dict[str, Dict[str, FieldResult]],
+        raw_table_fields: List[TableField],
+        filing_path: Path,
+        filing_type: str,
+        filing_scale: str,
+        filing_scale_confidence: str,
+        metadata_scale: str,
+        rules: Dict,
+        preflight_result: Optional["PreflightResult"] = None,
+    ) -> None:
+        """Synthesise total_debt from finance lease components when no explicit
+        better aggregate exists.
+
+        DEC-028 / BL-084 policy:
+        - Only current portion of finance lease obligation + long-term finance
+          lease obligation may contribute to the synthesis.
+        - Synthesis only activates when no total_debt candidate already exists
+          for the period in this filing's period_fields.
+        - Operating lease liabilities, lease expense, and principal payments on
+          finance lease obligation (cash-flow) are never included.
+        - The synthesised candidate carries section_bonus_val = -1 so that an
+          explicit total-debt signal from any other filing always wins in merge.
+        """
+        # Collect finance lease components from raw_table_fields.
+        fl_current: Dict[str, TableField] = {}
+        fl_longterm: Dict[str, TableField] = {}
+
+        for rtf in raw_table_fields:
+            period_key = rtf.column_header
+            if not period_key or period_key == "unknown":
+                continue
+            loc_lower = rtf.source_location.lower()
+            # Cash-flow context: principal payments and similar → always exclude.
+            if ":cash_flow:" in loc_lower:
+                continue
+            label = rtf.label
+            # Exclude operating lease, lease expense, and principal payments.
+            if _OPERATING_LEASE_EXCL_RE.search(label):
+                continue
+            if _LEASE_EXPENSE_EXCL_RE.search(label):
+                continue
+            if _PRINCIPAL_PAYMENTS_FL_RE.search(label):
+                continue
+            if _FINANCE_LEASE_CURR_RE.match(label):
+                if period_key not in fl_current:
+                    fl_current[period_key] = rtf
+            elif _FINANCE_LEASE_LONG_RE.match(label):
+                if period_key not in fl_longterm:
+                    fl_longterm[period_key] = rtf
+
+        # Synthesise only when both components are present.
+        for period_key in set(fl_current) & set(fl_longterm):
+            # Skip if an explicit total_debt is already present in this filing.
+            if period_key in period_fields and "total_debt" in period_fields[period_key]:
+                continue
+
+            curr_rtf = fl_current[period_key]
+            long_rtf = fl_longterm[period_key]
+            synth_value = curr_rtf.value + long_rtf.value
+
+            field_mult = self._alias_resolver.get_multiplier("total_debt")
+            pf_scale = _preflight_scale_for_field(
+                "total_debt", preflight_result, metadata_scale
+            )
+            scale, confidence = infer_scale_cascade(
+                filing_scale, "", pf_scale, field_mult
+            )
+            if not validate_scale_sanity(synth_value, "total_debt", scale):
+                continue
+
+            synth_loc = (
+                curr_rtf.source_location + ":finance_lease_fallback"
+            )
+            # section_bonus_val = -1 ensures this candidate ranks strictly
+            # below any neutral (0) explicit-debt signal in cross-filing merge.
+            new_sk = compute_sort_key(
+                period_key=period_key,
+                filing_type=filing_type,
+                source_type="table",
+                label_priority=0,
+                section_bonus_val=-1,
+                source_filing=filing_path.name,
+                source_location=synth_loc,
+                rules=rules,
+                canonical_field="total_debt",
+                restatement_detected=False,
+            )
+
+            if period_key not in period_fields:
+                period_fields[period_key] = {}
+
+            fr = _make_field_result(
+                synth_value,
+                scale,
+                filing_path.name,
+                synth_loc,
+                confidence,
+                table_index=(
+                    curr_rtf.table_index if curr_rtf.table_index >= 0 else None
+                ),
+                table_title=curr_rtf.table_title,
+                row_label=(
+                    "Current portion of finance lease obligation"
+                    " + Long-term finance lease obligation (fallback)"
+                ),
+                col_label=curr_rtf.col_label,
+                row=curr_rtf.row_idx if curr_rtf.row_idx >= 0 else None,
+                col=curr_rtf.col_idx if curr_rtf.col_idx >= 0 else None,
+                raw_text=f"{curr_rtf.value} + {long_rtf.value}",
+                extraction_method="table",
+            )
+            fr._sort_key = new_sk  # type: ignore[attr-defined]
+            period_fields[period_key]["total_debt"] = fr
 
     # ── MANUAL OVERRIDES ─────────────────────────────────────────────
 

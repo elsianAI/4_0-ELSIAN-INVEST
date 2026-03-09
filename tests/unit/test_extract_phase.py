@@ -908,3 +908,329 @@ def test_extract_phase_adtn_full_prefers_restated_quarters_and_preserves_da_scal
     assert result.periods["Q3-2024"].fields["total_equity"].value == 205578.0
     assert result.periods["Q3-2024"].fields["total_liabilities"].value == 1061487.0
     assert result.periods["Q2-2025"].fields["depreciation_amortization"].value == 7.6
+
+
+# ── BL-084 / DEC-028: Finance lease fallback total_debt synthesis ─────────────
+
+def _make_simple_tf(
+    label: str,
+    value: float,
+    period: str,
+    source_location: str = "",
+    *,
+    table_index: int = 0,
+    row_idx: int = 0,
+    col_idx: int = 0,
+) -> TableField:
+    """Helper: build a minimal TableField for BL-084 unit tests."""
+    return TableField(
+        label=label,
+        value=value,
+        column_header=period,
+        source_location=source_location or f"SRC_test.clean.md:balance_sheet:tbl0:row{row_idx}:col{col_idx}",
+        raw_text=str(value),
+        col_label=period,
+        table_title="balance_sheet",
+        row_idx=row_idx,
+        col_idx=col_idx,
+        table_index=table_index,
+    )
+
+
+def _run_fl_synthesis(
+    raw_fields: list,
+    existing_total_debt=None,  # float or None
+    filing_scale: str = "thousands",
+    period: str = "FY2025",
+):
+    """Run _synthesize_finance_lease_fallback_debt and return total_debt result."""
+    from types import SimpleNamespace
+    from elsian.extract.phase import ExtractPhase
+
+    phase = ExtractPhase()
+    period_fields: dict = {}
+    if existing_total_debt is not None:
+        period_fields[period] = {
+            "total_debt": _make_field_result(
+                existing_total_debt,
+                "thousands",
+                "SRC_explicit.clean.md",
+                "SRC_explicit.clean.md:balance_sheet:tbl0:row1:col1",
+                "high",
+            )
+        }
+
+    meta = SimpleNamespace(filing_type="10-K", scale="thousands")
+    from pathlib import Path
+    phase._synthesize_finance_lease_fallback_debt(
+        period_fields=period_fields,
+        raw_table_fields=raw_fields,
+        filing_path=Path("SRC_test.clean.md"),
+        filing_type="10-K",
+        filing_scale=filing_scale,
+        filing_scale_confidence="high",
+        metadata_scale="thousands",
+        rules={},
+        preflight_result=None,
+    )
+    return period_fields.get(period, {}).get("total_debt")
+
+
+def test_bl084_synthesizes_from_both_finance_lease_components():
+    """Positive: both current + long-term → total_debt fallback is created."""
+    fields = [
+        _make_simple_tf("Current portion of finance lease obligation", 1575.0, "FY2025"),
+        _make_simple_tf("Long-term finance lease obligation", 40754.0, "FY2025"),
+    ]
+    result = _run_fl_synthesis(fields)
+    assert result is not None, "Expected finance lease fallback to synthesise total_debt"
+    assert abs(result.value - 42329.0) < 1.0
+
+
+def test_bl084_requires_both_components_missing_longterm():
+    """Negative: only current component present → no synthesis."""
+    fields = [
+        _make_simple_tf("Current portion of finance lease obligation", 1575.0, "FY2025"),
+    ]
+    result = _run_fl_synthesis(fields)
+    assert result is None, "Should not synthesise with only current component"
+
+
+def test_bl084_requires_both_components_missing_current():
+    """Negative: only long-term component present → no synthesis."""
+    fields = [
+        _make_simple_tf("Long-term finance lease obligation", 40754.0, "FY2025"),
+    ]
+    result = _run_fl_synthesis(fields)
+    assert result is None, "Should not synthesise with only long-term component"
+
+
+def test_bl084_explicit_aggregate_blocks_synthesis():
+    """Precedence rule: existing explicit total_debt blocks finance lease synthesis."""
+    fields = [
+        _make_simple_tf("Current portion of finance lease obligation", 1575.0, "FY2025"),
+        _make_simple_tf("Long-term finance lease obligation", 40754.0, "FY2025"),
+    ]
+    explicit_debt = 85000.0
+    result = _run_fl_synthesis(fields, existing_total_debt=explicit_debt)
+    # Must return the EXPLICIT value, not the synthesised one.
+    assert result is not None
+    assert abs(result.value - explicit_debt) < 1.0, (
+        f"Explicit total_debt ({explicit_debt}) should win; got {result.value}"
+    )
+
+
+def test_bl084_no_duplication_when_explicit_and_components_coexist():
+    """No duplication: synthesis skipped when explicit total_debt already present."""
+    fields = [
+        _make_simple_tf("Current portion of finance lease obligation", 1575.0, "FY2025"),
+        _make_simple_tf("Long-term finance lease obligation", 40754.0, "FY2025"),
+    ]
+    explicit_debt = 120000.0
+    result = _run_fl_synthesis(fields, existing_total_debt=explicit_debt)
+    assert result is not None
+    assert result.value != 42329.0, "Synthesis must not overwrite explicit aggregate"
+    assert abs(result.value - explicit_debt) < 1.0
+
+
+def test_bl084_operating_lease_excluded():
+    """Negative: operating lease liabilities are excluded from synthesis."""
+    fields = [
+        _make_simple_tf("Operating lease liabilities, current", 2000.0, "FY2025"),
+        _make_simple_tf("Operating lease liabilities, non-current", 8000.0, "FY2025"),
+    ]
+    result = _run_fl_synthesis(fields)
+    assert result is None, "Operating lease liabilities must not enter total_debt"
+
+
+def test_bl084_lease_expense_excluded():
+    """Negative: lease expense label must not contribute to total_debt."""
+    fields = [
+        _make_simple_tf("Finance lease expense", 500.0, "FY2025"),
+        _make_simple_tf("Long-term finance lease obligation", 40754.0, "FY2025"),
+    ]
+    result = _run_fl_synthesis(fields)
+    # Finance lease expense must not match _FINANCE_LEASE_CURR_RE; only one
+    # component (long-term) is found → synthesis must not activate.
+    assert result is None, "lease expense must not be treated as current component"
+
+
+def test_bl084_principal_payments_excluded():
+    """Negative: principal payments on finance lease (cash flow) must be excluded."""
+    fields = [
+        _make_simple_tf(
+            "Principal payments on finance lease obligation",
+            1357.0,
+            "FY2025",
+            source_location="SRC_test.clean.md:cash_flow:tbl0:row5:col1",
+        ),
+        _make_simple_tf("Long-term finance lease obligation", 40754.0, "FY2025"),
+    ]
+    result = _run_fl_synthesis(fields)
+    # Principal payments label must not match current-component pattern; only
+    # long-term found → no synthesis.
+    assert result is None, "Principal payments must not be treated as current component"
+
+
+def test_bl084_cash_flow_context_excluded():
+    """Negative: finance lease components from :cash_flow: source are excluded."""
+    fields = [
+        _make_simple_tf(
+            "Current portion of finance lease obligation",
+            1575.0,
+            "FY2025",
+            source_location="SRC_test.clean.md:cash_flow:tbl1:row3:col1",
+        ),
+        _make_simple_tf("Long-term finance lease obligation", 40754.0, "FY2025"),
+    ]
+    result = _run_fl_synthesis(fields)
+    # Current component is from cash-flow section → excluded → only long-term
+    # remains → synthesis must not activate.
+    assert result is None, "Cash-flow-sourced current component must be excluded"
+
+
+def test_bl084_total_debt_from_cashflow_existing_guardrail():
+    """Regression: _candidate_context_bonus still penalises total_debt from CF."""
+    from elsian.extract.phase import _candidate_context_bonus
+    bonus = _candidate_context_bonus(
+        "total_debt",
+        "Repayment of long-term debt",
+        "SRC.clean.md:cash_flow:tbl1:row5:col1",
+        5000.0,
+        "thousands",
+    )
+    assert bonus <= -300, "Cash-flow repayment of debt must be heavily penalised"
+
+
+def test_bl084_negative_total_debt_in_IS_discarded_via_process_table_field(tmp_path):
+    """Regression: negative total_debt from income-statement is discarded."""
+    import shutil
+    src = _REPO_ROOT / "cases" / "ACLS"
+    dst = tmp_path / "ACLS"
+    shutil.copytree(src, dst)
+    result = ExtractPhase().extract(str(dst))
+    # total_debt must never be negative (IS sign convention guard).
+    for pk, pr in result.periods.items():
+        if "total_debt" in pr.fields:
+            assert pr.fields["total_debt"].value >= 0, (
+                f"total_debt for {pk} is negative: {pr.fields['total_debt'].value}"
+            )
+
+
+def test_bl084_fallback_synthesis_sort_key_loses_to_neutral_explicit():
+    """Sort key of fallback synthesis is strictly worse than neutral explicit signal."""
+    fallback_sk = compute_sort_key(
+        period_key="FY2025",
+        filing_type="10-K",
+        source_type="table",
+        label_priority=0,
+        section_bonus_val=-1,          # fallback uses -1
+        source_filing="SRC_001.clean.md",
+        source_location="SRC_001.clean.md:balance_sheet:tbl0:row10:col1:finance_lease_fallback",
+        rules={},
+        canonical_field="total_debt",
+        restatement_detected=False,
+    )
+    explicit_sk = compute_sort_key(
+        period_key="FY2025",
+        filing_type="10-K",
+        source_type="table",
+        label_priority=0,
+        section_bonus_val=0,           # neutral explicit signal
+        source_filing="SRC_001.clean.md",
+        source_location="SRC_001.clean.md:balance_sheet:tbl0:row5:col1",
+        rules={},
+        canonical_field="total_debt",
+        restatement_detected=False,
+    )
+    assert explicit_sk < fallback_sk, (
+        "Explicit debt signal sort key must be strictly better (lower) than "
+        "finance lease fallback sort key within the same filing"
+    )
+
+
+# ── BL-084 auditor fix: vertical.py/TXT path precedence alignment ─────────────
+
+def test_bl084_vertical_finance_lease_fallback_carries_sentinel():
+    """extract_vertical_bs finance lease fallback must carry :finance_lease_fallback
+    sentinel in source_location so phase.py assigns section_bonus_val=-1 (DEC-028).
+    """
+    from elsian.extract.vertical import extract_vertical_bs
+
+    # Minimal vertical-format .txt snippet with only finance lease labels
+    # (no explicit current portion of long-term debt / long-term debt)
+    # so the finance lease fallback path in Step 4b activates.
+    text = """\
+CONSOLIDATED BALANCE SHEETS
+    2025   2024
+ASSETS
+Cash and cash equivalents
+     1000
+      900
+Current portion of finance lease obligation
+      200
+      150
+Long-term finance lease obligation
+      800
+      600
+Total assets
+    10000
+     9000
+See accompanying notes
+"""
+    results = extract_vertical_bs(text, source_filename="SRC_001.txt")
+    fallback_fields = [
+        tf for tf in results
+        if "finance_lease_fallback" in tf.source_location
+    ]
+    assert fallback_fields, (
+        "extract_vertical_bs must emit at least one finance lease fallback "
+        "field with ':finance_lease_fallback' in source_location"
+    )
+    for tf in fallback_fields:
+        assert ":total_debt:finance_lease_fallback" in tf.source_location, (
+            f"source_location must include ':total_debt:finance_lease_fallback', got: "
+            f"{tf.source_location!r}"
+        )
+
+
+def test_bl084_vertical_finance_lease_fallback_sort_key_loses_to_neutral_explicit():
+    """Sort key of vertical.py finance lease fallback must be strictly worse
+    than a neutral explicit total_debt signal (DEC-028 cross-filing guarantee).
+
+    The sentinel ':finance_lease_fallback' in source_location causes phase.py to
+    assign section_bonus_val=-1; an explicit signal gets section_bonus_val=0.
+    A lower sort key wins, so the explicit signal must have a strictly lower key.
+    """
+    # Sort key that phase.py would assign to the vertical finance lease fallback
+    # after the BL-084 auditor fix (section_bonus_val=-1 from the sentinel).
+    fallback_sk = compute_sort_key(
+        period_key="FY2025",
+        filing_type="10-K",
+        source_type="table",
+        label_priority=0,
+        section_bonus_val=-1,          # assigned by phase.py via :finance_lease_fallback
+        source_filing="SRC_001.txt",
+        source_location="SRC_001.txt:vertical_bs:consolidated:total_debt:finance_lease_fallback",
+        rules={},
+        canonical_field="total_debt",
+        restatement_detected=False,
+    )
+    # Sort key of a neutral explicit total_debt signal from any other filing
+    # (section_bonus_val=0, same period, same filing_type).
+    explicit_sk = compute_sort_key(
+        period_key="FY2025",
+        filing_type="10-K",
+        source_type="table",
+        label_priority=0,
+        section_bonus_val=0,           # neutral explicit signal
+        source_filing="SRC_002.txt",
+        source_location="SRC_002.txt:vertical_bs:consolidated:total_debt",
+        rules={},
+        canonical_field="total_debt",
+        restatement_detected=False,
+    )
+    assert explicit_sk < fallback_sk, (
+        "Neutral explicit total_debt sort key must be strictly better (lower) "
+        "than vertical finance lease fallback sort key (DEC-028 guarantee)"
+    )
