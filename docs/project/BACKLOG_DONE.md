@@ -9,6 +9,15 @@
 
 ---
 
+### BL-063 — T05 — Descomposición real del pipeline
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-10)
+- **Asignado a:** engineer
+- **Depende de:** BL-062
+- **Descripción:** Se cierra BL-063 sobre el alcance mínimo real que el repo necesitaba en el runtime actual de `elsian run`, sin abrir una descomposición amplia del pipeline ni tocar extractores, config o casos. El cierre deja absorbidos los invariantes del packet: `PhaseResult` expresa severidad explícita y diagnósticos mínimos, `Pipeline` acumula resultados por fase y corta solo en fatales, y `elsian run` usa una secuencia real de fases (`acquire` opcional, `convert`, `extract`, `evaluate`, `assemble`) con observabilidad por fase y semántica no fatal para warnings operativos. El remate final de auditoría cierra además el path fatal que ya no pisa `extraction_result.json`, marca `warning` real cuando `ConvertPhase` acumula fallos y cubre el branch `--with-acquire` con tests del run path sin dependencia de red.
+- **Criterio de aceptación:** ✓ `BL-063` sale de `docs/project/BACKLOG.md` y queda archivada aquí. ✓ `python3 -m pytest -q tests/unit/test_pipeline.py tests/integration/test_run_command.py` PASS (`34 passed`). ✓ `python3 -m elsian run TZOO --skip-assemble` PASS 100.0% (`348/348`). ✓ `python3 -m elsian eval TZOO` PASS 100.0% (`348/348`). ✓ `python3 -m pytest -q` PASS (`1514 passed, 5 skipped, 1 warning`). ✓ `python3 -m elsian eval --all` exit 0 sin `FAIL`. ✓ `git diff --check` limpio. ✓ Auditoría final green sin hallazgos materiales bloqueantes.
+
+
 ### BL-062 — T04 — Service layer y registry de fetchers
 - **Prioridad:** MEDIA
 - **Estado:** DONE ✅ (2026-03-10)

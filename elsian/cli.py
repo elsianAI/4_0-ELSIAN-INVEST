@@ -253,17 +253,17 @@ def _run_pipeline_for_ticker(
     # ── Run ───────────────────────────────────────────────────────────
     Pipeline(phases, on_phase_done=_on_done).run(context)
 
-    # ── Save extraction result ────────────────────────────────────────
+    # ── Interpret results ─────────────────────────────────────────────
+    fatal = any(r.is_fatal for r in context.phase_results)
+    if fatal:
+        return False, "fatal error in pipeline"
+
+    # ── Save extraction result (only when no fatal phase) ─────────────
     out_path = case_dir / "extraction_result.json"
     out_path.write_text(
         json.dumps(context.result.to_dict(), indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
-
-    # ── Interpret results ─────────────────────────────────────────────
-    fatal = any(r.is_fatal for r in context.phase_results)
-    if fatal:
-        return False, "fatal error in pipeline"
 
     eval_result = next(
         (r for r in context.phase_results if r.phase_name == "EvaluatePhase"), None
@@ -285,6 +285,7 @@ def _run_pipeline_for_ticker(
     conv_total = conv_diag.get("total", 0)
     conv_new = conv_diag.get("converted", 0)
     conv_cached = conv_diag.get("skipped", 0)
+    conv_failed = conv_diag.get("failed", 0)
 
     assemble_result = next(
         (r for r in context.phase_results if r.phase_name == "AssemblePhase"), None
@@ -296,8 +297,9 @@ def _run_pipeline_for_ticker(
     else:
         assemble_str = "skipped"
 
+    conv_fail_str = f", {conv_failed} failed" if conv_failed else ""
     print(f"\n=== {ticker} Pipeline Complete ===")
-    print(f"  Convert:  {conv_total} filings ({conv_new} new, {conv_cached} cached)")
+    print(f"  Convert:  {conv_total} filings ({conv_new} new, {conv_cached} cached{conv_fail_str})")
     print(f"  Extract:  {total_fields} fields extracted")
     print(f"  Evaluate: {eval_str}")
     print(f"  Assemble: {assemble_str}")

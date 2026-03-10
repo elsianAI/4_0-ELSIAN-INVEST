@@ -83,10 +83,11 @@ class ConvertPhase(PipelinePhase):
             f"{ticker}: {total} filings -- "
             f"{converted} converted, {skipped} cached, {failed} failed"
         )
+        severity = "warning" if failed > 0 else "ok"
         return PhaseResult(
             phase_name="ConvertPhase",
             success=True,
-            severity="ok",
+            severity=severity,
             message=msg,
             diagnostics={
                 "total": total,

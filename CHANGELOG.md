@@ -2,6 +2,17 @@
 
 ## 2026-03-10
 
+### [4.0] Governance closeout — BL-063 archivada tras auditoría final green
+- BL-063 sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual sobre el alcance realmente absorbido en el runtime actual de `elsian run`: severidad explícita en `PhaseResult`, `Pipeline` con corte solo en fatales, secuencia real de fases (`acquire` opcional, `convert`, `extract`, `evaluate`, `assemble`) y remediación final del path fatal que ya no pisa `extraction_result.json`.
+- `docs/project/PROJECT_STATE.md` deja de presentar BL-063 como prioridad shared-core viva; la siguiente shared-core activa pasa a `BL-066`, mientras `BL-064` y `BL-065` quedan como frentes posteriores y `BL-072`/`BL-073` no cambian.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** closeout respaldado por auditoría final green, `python3 -m pytest -q` → `1514 passed, 5 skipped, 1 warning`, `python3 -m elsian eval --all` exit 0 sin `FAIL`, `git diff --check` clean.
+
+### [4.0] BL-063 audit fix — fatal no-overwrite, ConvertPhase warning severity, --with-acquire coverage
+- `elsian/cli.py`: `_run_pipeline_for_ticker` now checks for fatal phases **before** persisting `extraction_result.json`. A fatal AcquirePhase or ExtractPhase no longer overwrites a clean artifact with an empty/partial one. Added `conv_failed` counter to the pipeline summary print for traceability.
+- `elsian/convert/phase.py`: `ConvertPhase.run` now returns `severity='warning'` when `failed > 0` (instead of always `'ok'`). Non-fatal contract preserved.
+- `tests/integration/test_run_command.py`: added `TestWithAcquireRouting` (2 tests: `--with-acquire` invokes `AcquirePhase`, no-flag skips it), `TestFatalNoOverwrite` (2 tests: sentinel file survives fatal run; no file created if absent), and `test_convert_phase_warning_on_failed_conversions` in `TestPipelineOrchestrationSemantics`.
+
 ### [4.0] BL-063 — Severidad explícita en PhaseResult, Pipeline no-fatal y orquestación real de `elsian run`
 - `elsian/models/result.py`: añadido `Severity = Literal["ok","warning","error","fatal"]` y campo `severity`/`diagnostics`/`is_fatal` a `PhaseResult`. Backward compat: `success=False` sin `severity` explícita se promueve automáticamente a `"fatal"` via `__post_init__`.
 - `elsian/pipeline.py`: Pipeline corta **solo en `is_fatal`**; resultados `warning`/`error` se preservan y no detienen la ejecución. Añadido `on_phase_done` callback para observabilidad y `context.phase_results` para acumular resultados por fase.
