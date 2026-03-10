@@ -3,8 +3,9 @@
 Provides:
 - get_user_agent(): configurable User-Agent via env, bounded to safe length.
 - get_eu_user_agent(): browser-style UA for EU/IR sites, configurable via env.
-- load_json_ttl(): TTL file-cache for stable JSON resources.
 - bounded_get(): GET with bounded retry/exponential backoff and retry counter.
+- load_json_ttl(): TTL file-cache for stable JSON resources; uses bounded_get
+  on cache miss so that 429/5xx/timeout errors get retry+backoff treatment.
 
 All helpers are narrow-scoped for use within ``elsian/acquire/``.
 """
@@ -60,67 +61,6 @@ def get_eu_user_agent() -> str:
     if ua and len(ua) <= _UA_MAX_LEN:
         return ua
     return _DEFAULT_EU_UA
-
-
-# ── TTL JSON Cache ────────────────────────────────────────────────────
-
-_CACHE_DIR_ENV = "ELSIAN_CACHE_DIR"
-_DEFAULT_CACHE_ROOT = Path("/tmp") / "elsian_cache"
-
-
-def _cache_dir() -> Path:
-    raw = os.environ.get(_CACHE_DIR_ENV, "").strip()
-    d = Path(raw) if raw else _DEFAULT_CACHE_ROOT
-    d.mkdir(parents=True, exist_ok=True)
-    return d
-
-
-def load_json_ttl(
-    url: str,
-    *,
-    session: requests.Session,
-    headers: dict[str, str],
-    ttl_seconds: int = 86_400,
-    timeout: int = 40,
-) -> tuple[dict[str, Any], bool]:
-    """Fetch JSON from *url* with TTL file-based cache.
-
-    Args:
-        url: URL to fetch.
-        session: Requests session to reuse.
-        headers: HTTP headers for the request.
-        ttl_seconds: Cache validity in seconds (default 24 h).
-        timeout: Per-request timeout in seconds.
-
-    Returns:
-        (data, cache_hit) -- parsed JSON dict and whether the cache was used.
-    """
-    url_hash = hashlib.sha256(url.encode()).hexdigest()[:16]
-    cache_dir = _cache_dir()
-    data_file = cache_dir / f"json_{url_hash}.json"
-    meta_file = cache_dir / f"json_{url_hash}.ts"
-
-    if data_file.exists() and meta_file.exists():
-        try:
-            age = time.time() - float(meta_file.read_text(encoding="utf-8").strip())
-            if age < ttl_seconds:
-                data = json.loads(data_file.read_text(encoding="utf-8"))
-                logger.debug("Cache hit for %s (age=%.0fs)", url, age)
-                return data, True
-        except (ValueError, OSError, json.JSONDecodeError):
-            pass  # stale or corrupted -- fall through to fetch
-
-    resp = session.get(url, headers=headers, timeout=timeout)
-    resp.raise_for_status()
-    data = resp.json()
-
-    try:
-        data_file.write_text(json.dumps(data), encoding="utf-8")
-        meta_file.write_text(str(time.time()), encoding="utf-8")
-    except OSError:
-        logger.warning("Failed to write TTL cache for %s", url)
-
-    return data, False
 
 
 # ── Bounded retry GET ─────────────────────────────────────────────────
@@ -194,3 +134,78 @@ def bounded_get(
             raise
     # unreachable -- satisfies type checkers
     raise RuntimeError(f"bounded_get: unexpected exit after {max_retries} retries")
+
+
+# ── TTL JSON Cache ────────────────────────────────────────────────────
+
+_CACHE_DIR_ENV = "ELSIAN_CACHE_DIR"
+_DEFAULT_CACHE_ROOT = Path("/tmp") / "elsian_cache"
+
+
+def _cache_dir() -> Path:
+    raw = os.environ.get(_CACHE_DIR_ENV, "").strip()
+    d = Path(raw) if raw else _DEFAULT_CACHE_ROOT
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def load_json_ttl(
+    url: str,
+    *,
+    session: requests.Session,
+    headers: dict[str, str],
+    ttl_seconds: int = 86_400,
+    timeout: int = 40,
+    max_retries: int = 3,
+    base_backoff: float = 2.0,
+) -> tuple[dict[str, Any], bool]:
+    """Fetch JSON from *url* with TTL file-based cache.
+
+    On a cache miss or TTL expiry, fetches via :func:`bounded_get` so that
+    429/5xx/timeout errors get retry+backoff treatment instead of aborting
+    immediately (BL-066 audit fix).
+
+    Args:
+        url: URL to fetch.
+        session: Requests session to reuse.
+        headers: HTTP headers for the request.
+        ttl_seconds: Cache validity in seconds (default 24 h).
+        timeout: Per-request timeout in seconds.
+        max_retries: Maximum retries passed to :func:`bounded_get`.
+        base_backoff: Backoff base in seconds passed to :func:`bounded_get`.
+
+    Returns:
+        (data, cache_hit) -- parsed JSON dict and whether the cache was used.
+    """
+    url_hash = hashlib.sha256(url.encode()).hexdigest()[:16]
+    cache_dir = _cache_dir()
+    data_file = cache_dir / f"json_{url_hash}.json"
+    meta_file = cache_dir / f"json_{url_hash}.ts"
+
+    if data_file.exists() and meta_file.exists():
+        try:
+            age = time.time() - float(meta_file.read_text(encoding="utf-8").strip())
+            if age < ttl_seconds:
+                data = json.loads(data_file.read_text(encoding="utf-8"))
+                logger.debug("Cache hit for %s (age=%.0fs)", url, age)
+                return data, True
+        except (ValueError, OSError, json.JSONDecodeError):
+            pass  # stale or corrupted -- fall through to fetch
+
+    resp, _ = bounded_get(
+        url,
+        session=session,
+        headers=headers,
+        timeout=timeout,
+        max_retries=max_retries,
+        base_backoff=base_backoff,
+    )
+    data = resp.json()
+
+    try:
+        data_file.write_text(json.dumps(data), encoding="utf-8")
+        meta_file.write_text(str(time.time()), encoding="utf-8")
+    except OSError:
+        logger.warning("Failed to write TTL cache for %s", url)
+
+    return data, False

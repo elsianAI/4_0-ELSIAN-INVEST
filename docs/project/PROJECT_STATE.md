@@ -158,7 +158,7 @@ No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Proven
 
 ## Próximas prioridades
 
-`BL-062` y `BL-063` ya están cerradas y archivadas en `docs/project/BACKLOG_DONE.md`; ninguna sigue siendo una prioridad shared-core viva. En el backlog activo, la siguiente prioridad shared-core viva pasa a `BL-066` (hardening de adquisición), mientras `BL-064` y `BL-065` quedan como frentes posteriores dependientes del runtime ya reconciliado y `BL-072` mantiene abierta la línea de governance-only sobre criterio `parallel-ready`; `BL-073` permanece bloqueada por ese prerrequisito.
+`BL-062`, `BL-063` y `BL-066` ya están cerradas y archivadas en `docs/project/BACKLOG_DONE.md`; ninguna sigue siendo una prioridad shared-core viva. En el backlog activo, la siguiente prioridad shared-core viva pasa a `BL-065` (policies y rule packs), `BL-064` queda como frente posterior de menor prioridad y `BL-067` queda desbloqueada tras el cierre del hardening de adquisición; `BL-072` mantiene abierta la línea de governance-only sobre criterio `parallel-ready` y `BL-073` permanece bloqueada por ese prerrequisito.
 
 Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC010_WP1-WP6.md` (DEC-011).
 

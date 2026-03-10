@@ -218,3 +218,123 @@ class TestBoundedGet:
             )
         # Should fail immediately (no retries for 404)
         assert session.get.call_count == 1
+
+
+# ── load_json_ttl — retry on cache miss / TTL expiry (BL-066 audit fix) ──
+
+
+class TestLoadJsonTtlRetryOnCacheMiss:
+    """load_json_ttl must route through bounded_get (retry/backoff) on cache miss
+    and on TTL expiry — not a plain session.get. (BL-066 audit finding.)"""
+
+    def test_cache_miss_retries_on_429_then_succeeds(self, tmp_path, monkeypatch):
+        """On cache miss a 429 triggers a retry; success on second attempt."""
+        monkeypatch.setenv("ELSIAN_CACHE_DIR", str(tmp_path))
+        monkeypatch.setattr("elsian.acquire._http.time.sleep", lambda _: None)
+
+        err_resp = MagicMock()
+        err_resp.status_code = 429
+        http_err = requests.exceptions.HTTPError(response=err_resp)
+
+        ok_resp = MagicMock()
+        ok_resp.raise_for_status.return_value = None
+        ok_resp.json.return_value = {"k": "v"}
+
+        call_count = {"n": 0}
+
+        def _side_effect(*args, **kwargs):
+            call_count["n"] += 1
+            if call_count["n"] == 1:
+                raise http_err
+            return ok_resp
+
+        session = MagicMock(spec=requests.Session)
+        session.get.side_effect = _side_effect
+
+        data, hit = load_json_ttl(
+            "https://example.com/cache_miss_429.json",
+            session=session,
+            headers={},
+            ttl_seconds=3600,
+            max_retries=2,
+            base_backoff=0.01,
+        )
+
+        assert data == {"k": "v"}
+        assert hit is False
+        # First call raises; second call succeeds → total 2 attempts
+        assert session.get.call_count == 2
+
+    def test_cache_miss_exhausts_retries_and_raises(self, tmp_path, monkeypatch):
+        """On cache miss, persistent 503 exhausts retries and propagates the error."""
+        monkeypatch.setenv("ELSIAN_CACHE_DIR", str(tmp_path))
+        monkeypatch.setattr("elsian.acquire._http.time.sleep", lambda _: None)
+
+        err_resp = MagicMock()
+        err_resp.status_code = 503
+        http_err = requests.exceptions.HTTPError(response=err_resp)
+
+        session = MagicMock(spec=requests.Session)
+        session.get.side_effect = http_err
+
+        with pytest.raises(requests.exceptions.HTTPError):
+            load_json_ttl(
+                "https://example.com/always_503.json",
+                session=session,
+                headers={},
+                ttl_seconds=3600,
+                max_retries=2,
+                base_backoff=0.01,
+            )
+
+        # 1 original + 2 retries = 3 total attempts
+        assert session.get.call_count == 3
+
+    def test_ttl_expiry_retries_on_500_then_succeeds(self, tmp_path, monkeypatch):
+        """After TTL expiry a 500 triggers a retry; success on third attempt."""
+        monkeypatch.setenv("ELSIAN_CACHE_DIR", str(tmp_path))
+        monkeypatch.setattr("elsian.acquire._http.time.sleep", lambda _: None)
+
+        import hashlib as _hashlib
+
+        url = "https://example.com/ttl_expiry_500.json"
+        url_hash = _hashlib.sha256(url.encode()).hexdigest()[:16]
+        data_file = tmp_path / f"json_{url_hash}.json"
+        meta_file = tmp_path / f"json_{url_hash}.ts"
+
+        # Write stale cache (beyond TTL)
+        data_file.write_text(json.dumps({"stale": True}), encoding="utf-8")
+        meta_file.write_text(str(time.time() - 7_201), encoding="utf-8")
+
+        err_resp = MagicMock()
+        err_resp.status_code = 500
+        http_err = requests.exceptions.HTTPError(response=err_resp)
+
+        ok_resp = MagicMock()
+        ok_resp.raise_for_status.return_value = None
+        ok_resp.json.return_value = {"fresh": True}
+
+        call_count = {"n": 0}
+
+        def _side_effect(*args, **kwargs):
+            call_count["n"] += 1
+            if call_count["n"] <= 2:
+                raise http_err
+            return ok_resp
+
+        session = MagicMock(spec=requests.Session)
+        session.get.side_effect = _side_effect
+
+        data, hit = load_json_ttl(
+            url,
+            session=session,
+            headers={},
+            ttl_seconds=3600,
+            max_retries=3,
+            base_backoff=0.01,
+        )
+
+        assert data == {"fresh": True}
+        assert hit is False
+        # 2 failures + 1 success = 3 attempts
+        assert session.get.call_count == 3

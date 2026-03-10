@@ -9,6 +9,15 @@
 
 ---
 
+### BL-066 — T08 — Hardening de adquisición (scope filtrado restante)
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-10)
+- **Asignado a:** engineer
+- **Depende de:** BL-062
+- **Descripción:** Se cierra BL-066 sobre el hardening mínimo real del acquire path vivo de Module 1, sin abrir discover ni un framework HTTP horizontal. El cierre absorbe el paquete útil para `sec_edgar`, `asx` y `eu_regulators`: identidad HTTP configurable y acotada, retry/backoff bounded reutilizable, caché TTL explícita para `company_tickers.json` en SEC y metadatos factuales de observabilidad en `AcquisitionResult` y `filings_manifest.json`. La remediación final post-auditoría restaura además la robustez del path SEC en cache miss o TTL expiry haciendo que `load_json_ttl` pase por `bounded_get`, evitando la regresión que había eliminado retry/backoff en la resolución de CIK.
+- **Criterio de aceptación:** ✓ `BL-066` sale de `docs/project/BACKLOG.md` y queda archivada aquí. ✓ `python3 -m pytest -q tests/unit/test_sec_edgar.py tests/unit/test_asx.py tests/unit/test_eu_regulators.py tests/unit/test_acquisition_result.py` PASS (`68 passed`) y, tras el audit-fix final, `python3 -m pytest -q tests/unit/test_acquire_http_helpers.py tests/unit/test_sec_edgar.py tests/unit/test_asx.py tests/unit/test_eu_regulators.py tests/unit/test_acquisition_result.py` PASS (`84 passed`). ✓ `python3 -m pytest -q tests/unit/test_acquire_registry.py tests/unit/test_cli_fetcher_routing.py tests/unit/test_bl062_entrypoints.py` PASS (`32 passed`). ✓ `python3 -m pytest -q tests/integration/test_run_command.py` PASS (`22 passed`). ✓ `python3 -m pytest -q tests/integration/test_ir_crawler_integration.py` PASS (`15 passed`). ✓ `python3 -m elsian acquire TZOO` PASS con coverage 100.0%. ✓ `python3 -m elsian run TZOO --with-acquire` PASS 100.0% (`348/348`). ✓ `python3 -m pytest -q` PASS (`1538 passed, 5 skipped, 1 warning`). ✓ `git diff --check` limpio. ✓ Auditoría final green sin hallazgos materiales.
+
+
 ### BL-063 — T05 — Descomposición real del pipeline
 - **Prioridad:** MEDIA
 - **Estado:** DONE ✅ (2026-03-10)

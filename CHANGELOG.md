@@ -2,6 +2,18 @@
 
 ## 2026-03-10
 
+### [4.0] Governance closeout — BL-066 archivada tras auditoría final green
+- BL-066 sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual sobre el hardening mínimo absorbido en el acquire path vivo de Module 1: UA configurable y acotada, retry/backoff bounded compartido, caché TTL para `company_tickers.json` y manifest con observabilidad factual mínima.
+- El audit-fix final deja explícito que `load_json_ttl` usa `bounded_get` en cache miss o TTL expiry, por lo que SEC no pierde retry/backoff en la resolución de CIK.
+- `docs/project/PROJECT_STATE.md` deja de presentar BL-066 como prioridad shared-core viva; la siguiente shared-core activa pasa a `BL-065`, `BL-064` queda como frente posterior y `BL-067` queda desbloqueada.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** auditoría final green, `python3 -m pytest -q` → `1538 passed, 5 skipped, 1 warning`, `python3 -m elsian acquire TZOO` PASS 100.0%, `python3 -m elsian run TZOO --with-acquire` PASS 100.0%, `git diff --check` clean.
+
+### [4.0] BL-066 audit fix — load_json_ttl usa bounded_get en cache miss / TTL expiry
+- **`elsian/acquire/_http.py`**: `bounded_get` reordenado antes de `load_json_ttl`. `load_json_ttl` ya no hace `session.get(...)` plano en cache miss: llama a `bounded_get` con `max_retries` y `base_backoff` (nuevos kwargs con defaults compatibles). Parámetro `timeout` ya no se pierde en el path de retry.  Docstring actualizado.
+- **`tests/unit/test_acquire_http_helpers.py`**: 3 nuevos tests en `TestLoadJsonTtlRetryOnCacheMiss`: cache miss retries 429 y tiene éxito, cache miss agota retries y propaga error, TTL expiry retries 500 dos veces y tiene éxito en tercero.
+- **Files changed:** `elsian/acquire/_http.py`, `tests/unit/test_acquire_http_helpers.py`, `CHANGELOG.md`
+
 ### [4.0] BL-066 — Hardening del path de adquisición: UA configurable, retry/backoff acotado, TTL cache, observabilidad manifest
 - **`elsian/acquire/_http.py`** (nuevo): helper compartido para `elsian/acquire/`. Centraliza `get_user_agent()` (env `ELSIAN_USER_AGENT`, fallback research UA), `get_eu_user_agent()` (env `ELSIAN_EU_USER_AGENT`, fallback browser-style), `load_json_ttl()` (cache TTL 24 h en disco, env `ELSIAN_CACHE_DIR`) y `bounded_get()` (reintentos acotados max_retries+1 con backoff exponencial base_backoff×2^k).
 - **`elsian/models/result.py`**: `AcquisitionResult` gana 4 campos diagnósticos con defaults backward-compatible: `source_kind: str = ""`, `cache_hit: bool = False`, `retries_total: int = 0`, `throttle_ms: float = 0.0`. `to_dict()` los incluye.

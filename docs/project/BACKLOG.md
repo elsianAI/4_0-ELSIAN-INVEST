@@ -52,17 +52,6 @@
 - **Descripción:** Externalizar thresholds y quirks pendientes a policies y rule packs reutilizables por mercado/formato, tomando BL-047 como patrón y sin reabrir lo ya absorbido por fixes previos.
 - **Criterio de aceptación:** Reglas operativas salen del core donde hoy siguen embebidas y al menos un fix pasa a resolverse por config/rule pack sin tocar lógica central.
 
-### BL-066 — T08 — Hardening de adquisición (scope filtrado restante)
-- **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** BL-062
-- **Referencias:** T08-parcial, docs/project/PLAN_IMPLEMENTACION_FILTRADO.md
-- **Descripción:** Endurecer el path de adquisición que ya existe con límites y trazabilidad operativa reales: User-Agent configurable, rate limit duro, caching TTL, retries/backoff y manifests con metadatos de fiabilidad.
-- **Criterio de aceptación:** Los fetchers dejan rastro de confianza/caché/retries, no usan placeholders inseguros y degradan de forma controlada ante terceros inestables.
-
 ### BL-067 — T09 — Factoría de onboarding
 - **Prioridad:** MEDIA
 - **Estado:** TODO
