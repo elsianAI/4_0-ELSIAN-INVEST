@@ -210,3 +210,139 @@ class TestConvertStats:
 
         stats = _convert_filings(tmp_path)
         assert stats["converted"] + stats["skipped"] + stats["failed"] == stats["total"]
+
+
+# ── Tests: Pipeline orchestration (BL-063) ────────────────────────────
+
+class TestPipelineOrchestrationSemantics:
+    """Verify that _run_pipeline_for_ticker uses Pipeline with correct severity rules."""
+
+    def test_non_fatal_assemble_error_does_not_fail_pipeline(self, tmp_path: Path) -> None:
+        """AssemblePhase error must NOT cause _run_pipeline_for_ticker to return False.
+
+        We mock _run_pipeline_for_ticker at the Pipeline level by checking that
+        AssemblePhase is imported from elsian.assemble.phase and is non-fatal.
+        """
+        from elsian.assemble.phase import AssemblePhase
+        from elsian.context import PipelineContext
+        from elsian.models.case import CaseConfig
+
+        # Build a minimal context
+        case = CaseConfig()
+        case.ticker = "TEST"
+        case.case_dir = str(tmp_path)
+        context = PipelineContext(case=case)
+
+        phase = AssemblePhase()
+        result = phase.run(context)
+
+        # AssemblePhase must never be fatal — even on exception
+        assert not result.is_fatal, "AssemblePhase must be non-fatal"
+        assert result.severity in ("ok", "warning"), (
+            f"Unexpected severity: {result.severity}"
+        )
+
+    def test_evaluate_phase_non_fatal_on_score_below_100(self, tmp_path: Path) -> None:
+        """EvaluatePhase with score < 100% must return severity='warning', not fatal."""
+        import json
+        from unittest.mock import patch
+        from elsian.evaluate.phase import EvaluatePhase
+        from elsian.context import PipelineContext
+        from elsian.models.case import CaseConfig
+        from elsian.models.result import ExtractionResult, EvalReport
+
+        # Write minimal expected.json so EvaluatePhase doesn't skip
+        expected = {
+            "version": "1.0",
+            "ticker": "TEST",
+            "currency": "USD",
+            "scale": "thousands",
+            "periods": {
+                "FY2024": {
+                    "fecha_fin": "2024-12-31",
+                    "tipo_periodo": "anual",
+                    "fields": {
+                        "ingresos": {"value": 1000, "source_filing": "x.md"},
+                    },
+                }
+            },
+        }
+        (tmp_path / "expected.json").write_text(
+            json.dumps(expected), encoding="utf-8"
+        )
+
+        case = CaseConfig()
+        case.ticker = "TEST"
+        case.case_dir = str(tmp_path)
+        context = PipelineContext(case=case)
+        # context.result is empty → evaluate will produce score=0
+
+        phase = EvaluatePhase()
+        result = phase.run(context)
+
+        assert not result.is_fatal, "EvaluatePhase must never be fatal"
+        assert result.severity == "warning", (
+            f"Expected 'warning' severity for score<100, got '{result.severity}'"
+        )
+        assert result.success is True
+
+    def test_convert_phase_no_filings_ok(self, tmp_path: Path) -> None:
+        """ConvertPhase with no filings dir must return severity='ok', not fatal."""
+        from elsian.convert.phase import ConvertPhase
+        from elsian.context import PipelineContext
+        from elsian.models.case import CaseConfig
+
+        case = CaseConfig()
+        case.ticker = "TEST"
+        case.case_dir = str(tmp_path)
+        context = PipelineContext(case=case)
+
+        phase = ConvertPhase()
+        result = phase.run(context)
+
+        assert not result.is_fatal
+        assert result.severity == "ok"
+        assert result.diagnostics["total"] == 0
+
+    def test_pipeline_runs_assemble_after_eval_fail(self, tmp_path: Path) -> None:
+        """The pipeline must continue to AssemblePhase even when EvaluatePhase warns."""
+        import json
+        from elsian.pipeline import Pipeline
+        from elsian.context import PipelineContext
+        from elsian.models.case import CaseConfig
+        from elsian.evaluate.phase import EvaluatePhase
+        from elsian.assemble.phase import AssemblePhase
+
+        # Provide expected.json so EvaluatePhase runs and produces a FAIL
+        expected = {
+            "version": "1.0",
+            "ticker": "TEST",
+            "currency": "USD",
+            "scale": "thousands",
+            "periods": {
+                "FY2024": {
+                    "fecha_fin": "2024-12-31",
+                    "tipo_periodo": "anual",
+                    "fields": {
+                        "ingresos": {"value": 999999, "source_filing": "x.md"},
+                    },
+                }
+            },
+        }
+        (tmp_path / "expected.json").write_text(
+            json.dumps(expected), encoding="utf-8"
+        )
+
+        case = CaseConfig()
+        case.ticker = "TEST"
+        case.case_dir = str(tmp_path)
+        context = PipelineContext(case=case)
+
+        phases = [EvaluatePhase(), AssemblePhase()]
+        Pipeline(phases).run(context)
+
+        phase_names = [r.phase_name for r in context.phase_results]
+        assert "EvaluatePhase" in phase_names, "EvaluatePhase did not run"
+        assert "AssemblePhase" in phase_names, (
+            "AssemblePhase was skipped after EvaluatePhase warn — must not be"
+        )

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 
 from elsian.context import PipelineContext
 from elsian.models.result import PhaseResult
@@ -21,20 +22,41 @@ class PipelinePhase(ABC):
 
 
 class Pipeline:
-    """Lightweight orchestrator. Chains phases, manages context. No business logic."""
+    """Lightweight orchestrator. Chains phases, manages context. No business logic.
 
-    def __init__(self, phases: list[PipelinePhase]) -> None:
+    Stops only when a phase returns ``severity='fatal'``.  Non-fatal results
+    (``warning``, ``error``) are logged and preserved but do not interrupt the
+    sequence.
+
+    ``on_phase_done`` is an optional observability hook called with the
+    PhaseResult immediately after each phase; it carries no business logic.
+    """
+
+    def __init__(
+        self,
+        phases: list[PipelinePhase],
+        on_phase_done: Callable[[PhaseResult], None] | None = None,
+    ) -> None:
         self.phases = phases
+        self._on_phase_done = on_phase_done
 
     def run(self, context: PipelineContext) -> PipelineContext:
-        """Run all phases in sequence."""
+        """Run all phases in sequence. Stops only on fatal severity."""
         for phase in self.phases:
             name = phase.__class__.__name__
             logger.info("Running phase: %s", name)
             result = phase.run(context)
-            if not result.success:
-                logger.error("Phase %s failed: %s", name, result.message)
+            context.phase_results.append(result)
+            if self._on_phase_done is not None:
+                self._on_phase_done(result)
+            if result.is_fatal:
+                logger.error("Phase %s fatal: %s", name, result.message)
                 context.add_error(f"{name}: {result.message}")
                 break
-            logger.info("Phase %s completed: %s", name, result.message)
+            if result.severity in ("warning", "error"):
+                logger.warning(
+                    "Phase %s %s: %s", name, result.severity, result.message
+                )
+            else:
+                logger.info("Phase %s completed: %s", name, result.message)
         return context

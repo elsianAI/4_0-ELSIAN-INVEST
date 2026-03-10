@@ -4,9 +4,16 @@ from __future__ import annotations
 
 import datetime as dt
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 from elsian.models.field import FieldResult
+
+# Explicit severity levels for PhaseResult.
+# fatal  — pipeline must stop; the phase could not produce usable output.
+# error  — non-blocking problem worth recording; pipeline continues.
+# warning — informational degradation; pipeline continues.
+# ok     — normal completion.
+Severity = Literal["ok", "warning", "error", "fatal"]
 
 
 @dataclass
@@ -101,12 +108,32 @@ class ExtractionResult:
 
 @dataclass
 class PhaseResult:
-    """Result of a single pipeline phase execution."""
+    """Result of a single pipeline phase execution.
+
+    ``severity`` is the authoritative signal used by Pipeline to decide
+    whether to continue or stop.  ``success`` is kept for backward
+    compatibility only; new code should use ``severity`` and ``is_fatal``.
+
+    Backward-compat rule: constructing ``PhaseResult(success=False)`` with
+    no explicit severity automatically promotes severity to ``'fatal'``.
+    """
 
     phase_name: str = ""
     success: bool = True
     message: str = ""
     data: Any = None
+    severity: Severity = "ok"
+    diagnostics: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        # Backward compat: success=False without explicit severity → fatal.
+        if not self.success and self.severity == "ok":
+            self.severity = "fatal"
+
+    @property
+    def is_fatal(self) -> bool:
+        """True only when this result must halt the pipeline."""
+        return self.severity == "fatal"
 
 
 @dataclass

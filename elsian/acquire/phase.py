@@ -50,5 +50,7 @@ class AcquirePhase(PipelinePhase):
             return PhaseResult(
                 phase_name="AcquirePhase",
                 success=False,
+                severity="fatal",
                 message=f"Acquisition failed: {exc}",
+                diagnostics={"exception": str(exc), "ticker": case.ticker},
             )

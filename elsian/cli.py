@@ -192,15 +192,25 @@ def _run_pipeline_for_ticker(
     ticker: str,
     args: argparse.Namespace,
 ) -> tuple[bool, str]:
-    """Run the full processing pipeline for one ticker.
+    """Run the full processing pipeline for one ticker via Pipeline.
 
     Phases: [acquire →] convert → extract → evaluate → [assemble]
 
+    Severity contract (BL-063):
+      fatal   → pipeline stops; returns (False, "fatal error in pipeline")
+      warning → recorded, pipeline continues (e.g. EvaluatePhase FAIL, Assemble error)
+      ok      → normal
+
     Returns:
-        (success, one_line_summary)
+        (eval_ok, one_line_summary)  — eval_ok=False when score < 100%.
+        Returns (False, "fatal error…") on fatal phase errors.
     """
+    from elsian.context import PipelineContext
+    from elsian.pipeline import Pipeline
+    from elsian.convert.phase import ConvertPhase
     from elsian.extract.phase import ExtractPhase
-    from elsian.evaluate.evaluator import evaluate as _evaluate
+    from elsian.evaluate.phase import EvaluatePhase
+    from elsian.models.result import PhaseResult as _PhaseResult
 
     case_dir = _find_case_dir(ticker)
     if not case_dir:
@@ -208,132 +218,83 @@ def _run_pipeline_for_ticker(
         return False, "case not found"
 
     case = CaseConfig.from_file(case_dir)
+    context = PipelineContext(case=case)
 
-    # ── Acquire (optional) ────────────────────────────────────────────
+    # ── Build phase sequence ───────────────────────────────────────────
+    phases: list = []
     if getattr(args, "with_acquire", False):
-        print(f"[Acquire] {ticker} — running acquire...")
-        fetcher = get_fetcher(case)
-        try:
-            if hasattr(fetcher, "acquire"):
-                result = fetcher.acquire(case)
-                manifest_path = case_dir / "filings_manifest.json"
-                manifest_path.write_text(
-                    json.dumps(result.to_dict(), indent=2, ensure_ascii=False),
-                    encoding="utf-8",
-                )
-                print(
-                    f"[Acquire] {ticker} — {result.filings_downloaded} filings downloaded"
-                )
-            else:
-                filings = fetcher.fetch(case)
-                print(f"[Acquire] {ticker} — {len(filings)} filings found")
-        except Exception as exc:
-            print(f"[Acquire] {ticker} — ERROR: {exc}")
-            return False, f"acquire failed: {exc}"
+        from elsian.acquire.phase import AcquirePhase
+        phases.append(AcquirePhase())
 
-    # ── Convert ───────────────────────────────────────────────────────
-    force_convert = getattr(args, "force", False)
-    filings_dir = case_dir / "filings"
-    htm_count = len(list(filings_dir.glob("*.htm"))) if filings_dir.exists() else 0
-    pdf_count = len(list(filings_dir.glob("*.pdf"))) if filings_dir.exists() else 0
-    conv_total = htm_count + pdf_count
+    force = getattr(args, "force", False)
+    phases.append(ConvertPhase(force=force))
+    phases.append(ExtractPhase())
+    phases.append(EvaluatePhase())
 
-    if conv_total > 0:
-        print(f"[Convert] {ticker} — converting {conv_total} filings...")
-        conv_stats = _convert_filings(case_dir, force=force_convert)
-        print(
-            f"[Convert] {ticker} — "
-            f"{conv_stats['converted']} new, "
-            f"{conv_stats['skipped']} cached, "
-            f"{conv_stats['failed']} failed"
-        )
-    else:
-        print(f"[Convert] {ticker} — no .htm/.pdf filings found, skipping")
-        conv_stats = {"converted": 0, "skipped": 0, "failed": 0}
+    if not getattr(args, "skip_assemble", False):
+        from elsian.assemble.phase import AssemblePhase
+        phases.append(AssemblePhase())
 
-    # ── Extract ───────────────────────────────────────────────────────
-    print(f"[Extract] {ticker} — extracting fields...")
-    phase = ExtractPhase()
-    result = phase.extract(str(case_dir))
-
-    out_path = case_dir / "extraction_result.json"
-    out_path.write_text(
-        json.dumps(result.to_dict(), indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
-    total_fields = sum(len(pr.fields) for pr in result.periods.values())
-    print(
-        f"[Extract] {ticker} — {total_fields} fields across "
-        f"{len(result.periods)} periods from {result.filings_used} filings"
-    )
-
-    # ── Evaluate ──────────────────────────────────────────────────────
-    eval_score: float | None = None
-    eval_matched = 0
-    eval_total = 0
-    expected_path = case_dir / "expected.json"
-    eval_ok = True
-
-    if expected_path.exists():
-        print(f"[Evaluate] {ticker} — evaluating vs expected.json...")
-        report = _evaluate(result, str(expected_path))
-        eval_score = report.score
-        eval_matched = report.matched
-        eval_total = report.total_expected
-        eval_ok = report.score == 100.0
-        status = "PASS" if eval_ok else "FAIL"
-        print(
-            f"[Evaluate] {ticker} — {status} {report.score}% "
-            f"({report.matched}/{report.total_expected}) "
-            f"wrong={report.wrong} missed={report.missed} extra={report.extra}"
-        )
-        if not eval_ok:
+    # ── Per-phase progress reporter (observability only) ───────────────
+    def _on_done(result: _PhaseResult) -> None:
+        label = result.phase_name.replace("Phase", "")
+        sev = f" [{result.severity.upper()}]" if result.severity != "ok" else ""
+        print(f"[{label}]{sev} {ticker} — {result.message}")
+        # Print FAIL detail lines from EvaluatePhase
+        if result.phase_name == "EvaluatePhase" and result.data:
+            report = result.data
             for d in report.details:
                 if d.status != "matched":
                     print(
                         f"           {d.status} {d.period}/{d.field_name} "
                         f"exp={d.expected} got={d.actual}"
                     )
-    else:
-        print(f"[Evaluate] {ticker} — no expected.json, skipping")
 
-    # ── Assemble ──────────────────────────────────────────────────────
-    truth_pack_path: Path | None = None
-    if not getattr(args, "skip_assemble", False):
-        print(f"[Assemble] {ticker} — building truth_pack.json...")
-        try:
-            from elsian.assemble.truth_pack import TruthPackAssembler
-            assembler = TruthPackAssembler()
-            tp = assembler.assemble(case_dir)
-            truth_pack_path = case_dir / "truth_pack.json"
-            meta = tp.get("metadata", {})
-            dm = tp.get("derived_metrics", {})
-            derived_count = sum(
-                len(v) if isinstance(v, dict) else 1
-                for v in dm.values()
-                if v is not None and v != {}
-            )
-            print(
-                f"[Assemble] {ticker} — {truth_pack_path.name} "
-                f"({meta.get('total_periods', 0)} periods, "
-                f"{meta.get('total_fields', 0)} fields, "
-                f"{derived_count} derived)"
-            )
-        except Exception as exc:
-            print(f"[Assemble] {ticker} — WARNING: {exc}")
-            # Assemble failure is non-fatal — report but don't fail
-    else:
-        print(f"[Assemble] {ticker} — skipped (--skip-assemble)")
+    # ── Run ───────────────────────────────────────────────────────────
+    Pipeline(phases, on_phase_done=_on_done).run(context)
 
-    # ── Final report ──────────────────────────────────────────────────
-    conv_new = conv_stats["converted"]
-    conv_cached = conv_stats["skipped"]
-    eval_str = (
-        f"{eval_score:.1f}% ({eval_matched}/{eval_total})"
-        if eval_score is not None
-        else "N/A"
+    # ── Save extraction result ────────────────────────────────────────
+    out_path = case_dir / "extraction_result.json"
+    out_path.write_text(
+        json.dumps(context.result.to_dict(), indent=2, ensure_ascii=False),
+        encoding="utf-8",
     )
-    assemble_str = str(truth_pack_path) if truth_pack_path else "skipped"
+
+    # ── Interpret results ─────────────────────────────────────────────
+    fatal = any(r.is_fatal for r in context.phase_results)
+    if fatal:
+        return False, "fatal error in pipeline"
+
+    eval_result = next(
+        (r for r in context.phase_results if r.phase_name == "EvaluatePhase"), None
+    )
+    if eval_result and eval_result.data:
+        report = eval_result.data
+        eval_ok = report.score == 100.0
+        eval_str = f"{report.score:.1f}% ({report.matched}/{report.total_expected})"
+    else:
+        eval_ok = True
+        eval_str = "N/A"
+
+    # ── Final summary ─────────────────────────────────────────────────
+    total_fields = sum(len(pr.fields) for pr in context.result.periods.values())
+    conv_result = next(
+        (r for r in context.phase_results if r.phase_name == "ConvertPhase"), None
+    )
+    conv_diag = conv_result.diagnostics if conv_result else {}
+    conv_total = conv_diag.get("total", 0)
+    conv_new = conv_diag.get("converted", 0)
+    conv_cached = conv_diag.get("skipped", 0)
+
+    assemble_result = next(
+        (r for r in context.phase_results if r.phase_name == "AssemblePhase"), None
+    )
+    if assemble_result:
+        assemble_str = assemble_result.diagnostics.get(
+            "truth_pack_path", assemble_result.message
+        )
+    else:
+        assemble_str = "skipped"
 
     print(f"\n=== {ticker} Pipeline Complete ===")
     print(f"  Convert:  {conv_total} filings ({conv_new} new, {conv_cached} cached)")
@@ -341,8 +302,7 @@ def _run_pipeline_for_ticker(
     print(f"  Evaluate: {eval_str}")
     print(f"  Assemble: {assemble_str}")
 
-    one_line = f"{eval_str}"
-    return eval_ok, one_line
+    return eval_ok, eval_str
 
 
 def cmd_run(args: argparse.Namespace) -> None:

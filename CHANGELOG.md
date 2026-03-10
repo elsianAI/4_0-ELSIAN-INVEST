@@ -2,6 +2,25 @@
 
 ## 2026-03-10
 
+### [4.0] BL-063 — Severidad explícita en PhaseResult, Pipeline no-fatal y orquestación real de `elsian run`
+- `elsian/models/result.py`: añadido `Severity = Literal["ok","warning","error","fatal"]` y campo `severity`/`diagnostics`/`is_fatal` a `PhaseResult`. Backward compat: `success=False` sin `severity` explícita se promueve automáticamente a `"fatal"` via `__post_init__`.
+- `elsian/pipeline.py`: Pipeline corta **solo en `is_fatal`**; resultados `warning`/`error` se preservan y no detienen la ejecución. Añadido `on_phase_done` callback para observabilidad y `context.phase_results` para acumular resultados por fase.
+- `elsian/context.py`: añadido `phase_results: list[PhaseResult]`.
+- `elsian/acquire/phase.py`: error path con `severity="fatal"` y `diagnostics` mínimos.
+- `elsian/evaluate/phase.py`: `EvaluatePhase` nunca es fatal; score < 100% → `severity="warning"`, pipeline continúa hacia Assemble.
+- `elsian/convert/phase.py` (nuevo): `ConvertPhase` — wrappea conversión htm→md / pdf→txt; nunca fatal.
+- `elsian/assemble/phase.py` (nuevo): `AssemblePhase` — non-fatal by design; excepciones → `severity="warning"`.
+- `elsian/cli.py`: `_run_pipeline_for_ticker` reemplaza path ad hoc inline por `Pipeline([ConvertPhase, ExtractPhase, EvaluatePhase, AssemblePhase], on_phase_done=...)`. Assemble sigue como no-fatal por semántica de fase.
+- `tests/unit/test_pipeline.py`: 12 tests (preservados 2 originales + 10 nuevos de severidad/orquestación/backward-compat).
+- `tests/integration/test_run_command.py`: 4 tests nuevos de orquestación BL-063 (`TestPipelineOrchestrationSemantics`).
+- **Validation:** `pytest tests/unit/test_pipeline.py tests/integration/test_run_command.py` → 29 passed. BL-062 tests → 32 passed. `elsian run TZOO --skip-assemble` → PASS 100.0%. `elsian run TZOO` → PASS 100.0%, Assemble OK. `elsian eval TZOO` → PASS 100.0%. `elsian eval --all` → 16/16 PASS 100.0%. `pytest tests/unit/` → 1382 passed. `pytest tests/contracts/` → 28 passed. `pytest tests/integration/` → 69 passed, 5 skipped. `git diff --check` → CLEAN.
+
+### [4.0] Governance packaging — BL-063 reconciliada al gap real del runtime de `elsian run`
+- `docs/project/BACKLOG.md` deja de vender `BL-063` como una descomposición amplia del pipeline o una plataforma genérica de artefactos. El paquete vivo queda recortado al mínimo viable que el repo necesita hoy: endurecer `PhaseResult`/`Pipeline` con severidad explícita y metadatos diagnósticos de fase, y llevar el orchestration path actual de `elsian run` a una secuencia real de fases (`acquire` opcional, `convert`, `extract`, `evaluate`, `assemble`) sin tocar extractores ni abrir todavía `BL-066`.
+- `PROJECT_STATE.md` no cambia: ya reflejaba que `BL-063` es la siguiente prioridad shared-core viva y no requería reconciliación adicional.
+- **Files changed:** `docs/project/BACKLOG.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` → repo limpio y BL-063 sigue como siguiente prioridad shared-core viva. `git diff --check -- docs/project/BACKLOG.md CHANGELOG.md` → pendiente tras esta mutación.
+
 ### [4.0] Governance closeout — BL-062 archivada tras auditoría final green
 - BL-062 sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual sobre el alcance realmente absorbido: registry/selector único de fetchers dentro de acquire, reutilizado por `elsian/acquire/phase.py` y `elsian/cli.py`, manteniendo la CLI como adaptador fino del path de adquisición.
 - `docs/project/PROJECT_STATE.md` deja de presentar BL-062 como prioridad shared-core viva; la siguiente shared-core activa pasa a `BL-063`, mientras `BL-066` se mantiene solo como frente posterior dependiente y `BL-072`/`BL-073` no cambian.

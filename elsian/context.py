@@ -9,7 +9,7 @@ from typing import Any
 from elsian.models.field import FieldCandidate
 from elsian.models.filing import Filing
 from elsian.models.case import CaseConfig
-from elsian.models.result import ExtractionResult, AuditRecord
+from elsian.models.result import ExtractionResult, AuditRecord, PhaseResult
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,7 @@ class PipelineContext:
     audit: AuditRecord = field(default_factory=AuditRecord)
     config_dir: str = ""
     errors: list[str] = field(default_factory=list)
+    phase_results: list[PhaseResult] = field(default_factory=list)
 
     def add_candidates(self, new: list[FieldCandidate]) -> None:
         """Append new field candidates."""

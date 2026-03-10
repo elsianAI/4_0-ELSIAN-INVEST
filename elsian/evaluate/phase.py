@@ -25,11 +25,13 @@ class EvaluatePhase(PipelinePhase):
             return PhaseResult(
                 phase_name="EvaluatePhase",
                 success=True,
+                severity="ok",
                 message=f"{case.ticker}: no expected.json — skipping evaluation",
             )
 
         report = evaluate(context.result, str(expected_path))
         status = "PASS" if report.score == 100.0 else "FAIL"
+        severity = "ok" if report.score == 100.0 else "warning"
         msg = (
             f"{case.ticker}: {status} -- {report.score}% "
             f"({report.matched}/{report.total_expected}) "
@@ -38,7 +40,18 @@ class EvaluatePhase(PipelinePhase):
 
         return PhaseResult(
             phase_name="EvaluatePhase",
-            success=report.score == 100.0,
+            # EvaluatePhase is never fatal — a score < 100% is a quality signal,
+            # not a blocking error.  The pipeline (and Assemble) continue.
+            success=True,
+            severity=severity,
             message=msg,
             data=report,
+            diagnostics={
+                "score": report.score,
+                "matched": report.matched,
+                "total_expected": report.total_expected,
+                "wrong": report.wrong,
+                "missed": report.missed,
+                "extra": report.extra,
+            },
         )
