@@ -38,8 +38,8 @@
 - **Validation tier:** shared-core
 - **Depende de:** BL-062
 - **Referencias:** T05, docs/project/PLAN_IMPLEMENTACION_FILTRADO.md
-- **Descripción:** Separar el pipeline en fases reales con severidades explícitas y persistencia de artefactos diagnósticos cuando el fallo no sea fatal.
-- **Criterio de aceptación:** La arquitectura documentada y la real convergen en fases explícitas, con cobertura de fallos fatales y no fatales y sin degradar la ejecución actual.
+- **Descripción:** Reconciliar la arquitectura mínima del pipeline con el gap real del repo, sin rediseño amplio. Endurecer `PhaseResult` y `Pipeline` para expresar severidad explícita y metadatos diagnósticos de fase, y llevar `elsian run` a ejecutar el orchestration path actual mediante una secuencia real de fases (`acquire` opcional, `convert`, `extract`, `evaluate`, `assemble`) en vez de control ad hoc dentro de `cli.py`. El alcance se limita al runtime actual de `run`: no abrir todavía una descomposición completa `extract_candidates/normalize/merge`, no vender una capa genérica de persistencia de artefactos, y no tocar extractores ni adquisición más allá del cableado necesario.
+- **Criterio de aceptación:** `elsian run` usa `Pipeline` en su path actual sin perder la UX existente. Los fallos fatales siguen cortando la ejecución. Los fallos no fatales ya no dependen de ramas ad hoc de CLI y quedan expresados por severidad de fase y metadatos diagnósticos mínimos en el resultado (por ejemplo, warnings de assemble o skips explícitos). La convergencia entre arquitectura documentada y real queda acotada a este path de orchestration compartido, sin reescritura del módulo.
 
 ### BL-064 — T06 — Modelo unificado de readiness
 - **Prioridad:** BAJA
