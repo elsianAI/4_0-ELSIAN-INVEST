@@ -23,6 +23,7 @@ from urllib.parse import urlparse
 
 import requests
 
+from elsian.acquire._http import bounded_get, get_eu_user_agent
 from elsian.acquire.base import Fetcher
 from elsian.acquire.ir_crawler import (
     build_ir_pages,
@@ -63,11 +64,8 @@ _LSE_AIM_FALLBACK_PER_TYPE = {
 
 # ── HTTP client ──────────────────────────────────────────────────────
 
-USER_AGENT = (
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/121.0.0.0 Safari/537.36"
-)
+# Browser-style UA for IR-website fetchers; configurable via ELSIAN_EU_USER_AGENT.
+USER_AGENT = get_eu_user_agent()
 _HEADERS = {
     "User-Agent": USER_AGENT,
     "Accept": "application/pdf,text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
@@ -76,6 +74,17 @@ _HEADERS = {
 }
 _TIMEOUT = 60
 _RATE_LIMIT = 0.5
+
+# Module-level session for EU HTTP requests (connection reuse).
+_EU_SESSION: requests.Session | None = None
+
+
+def _eu_session() -> requests.Session:
+    """Return the module-level EU session, creating it on first use."""
+    global _EU_SESSION
+    if _EU_SESSION is None:
+        _EU_SESSION = requests.Session()
+    return _EU_SESSION
 
 
 def _uses_lse_aim_limits(exchange: str) -> bool:
@@ -96,7 +105,12 @@ def _tilde_media_fallback_url(url: str) -> Optional[str]:
 
 
 def _http_get(url: str, retries: int = 2) -> Optional[bytes]:
-    """Download url and return raw bytes, or None on failure."""
+    """Download url and return raw bytes, or None on failure.
+
+    Tries the original URL first; if it fails and a /~/media Investis-style
+    fallback can be constructed, tries that too. Each candidate uses
+    exponential backoff (1 s, 2 s, …) via ``bounded_get``.
+    """
     candidates = [url]
     alt_url = _tilde_media_fallback_url(url)
     if alt_url and alt_url not in candidates:
@@ -104,21 +118,19 @@ def _http_get(url: str, retries: int = 2) -> Optional[bytes]:
 
     last_exc: Optional[Exception] = None
     for candidate_url in candidates:
-        for attempt in range(retries + 1):
-            try:
-                resp = requests.get(
-                    candidate_url,
-                    headers=_HEADERS,
-                    timeout=_TIMEOUT,
-                    allow_redirects=True,
-                )
-                resp.raise_for_status()
-                return resp.content
-            except requests.RequestException as exc:
-                last_exc = exc
-                if attempt == retries:
-                    break
-                time.sleep(1.0)
+        try:
+            resp, _ = bounded_get(
+                candidate_url,
+                session=_eu_session(),
+                headers=_HEADERS,
+                timeout=_TIMEOUT,
+                max_retries=retries,
+                base_backoff=1.0,  # 1 s, 2 s, 4 s — conservative for IR sites
+            )
+            return resp.content
+        except Exception as exc:
+            last_exc = exc
+            continue
 
     logger.warning("Download failed: %s — %s", url, last_exc)
     return None
@@ -374,6 +386,7 @@ class EuRegulatorsFetcher(Fetcher):
             gaps=gaps,
             notes=" ".join(notes_parts),
             download_date=dt.date.today().isoformat(),
+            source_kind="filing",
         )
 
     # ── IR Crawler integration ────────────────────────────────────────

@@ -32,6 +32,11 @@ class AcquisitionResult:
     download_date: str = field(
         default_factory=lambda: dt.date.today().isoformat()
     )
+    # ── Reliability / observability fields (BL-066) ────────────────────
+    source_kind: str = ""        # e.g. "filing", "transcript", "market_data"
+    cache_hit: bool = False      # True when filings loaded from local cache
+    retries_total: int = 0       # Total HTTP retries across all requests
+    throttle_ms: float = 0.0    # Approximate total throttle wait in ms
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -45,6 +50,10 @@ class AcquisitionResult:
             "gaps": self.gaps,
             "notes": self.notes,
             "download_date": self.download_date,
+            "source_kind": self.source_kind,
+            "cache_hit": self.cache_hit,
+            "retries_total": self.retries_total,
+            "throttle_ms": self.throttle_ms,
         }
 
 

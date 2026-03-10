@@ -1,6 +1,7 @@
 """Tests for elsian.acquire.sec_edgar — helpers only (no network calls)."""
 
 import pytest
+import requests
 from unittest.mock import MagicMock
 
 from elsian.acquire.sec_edgar import (
@@ -308,6 +309,97 @@ class TestFindExhibit99:
         client = _mock_client(idx)
         result = _find_exhibit_99(client, 12345, _make_rec())
         assert result is None
+
+
+# ── BL-066: SecClient retries counter ────────────────────────────────
+
+class TestSecClientRetries:
+    def test_retries_starts_at_zero(self):
+        client = SecClient()
+        assert client.retries == 0
+
+    def test_retries_increments_on_retry(self, monkeypatch):
+        """Simulate a 503 response followed by success; retries should be 1."""
+        import time as time_module
+        monkeypatch.setattr(time_module, "sleep", lambda _: None)
+
+        call_count = 0
+
+        def fake_get(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                err_resp = MagicMock()
+                err_resp.status_code = 503
+                exc = requests.exceptions.HTTPError(response=err_resp)
+                raise exc
+            resp = MagicMock()
+            resp.raise_for_status.return_value = None
+            resp.encoding = "utf-8"
+            return resp
+
+        client = SecClient()
+        import unittest.mock as _mock
+        with _mock.patch.object(client._session, "get", side_effect=fake_get):
+            client.get("https://example.com/")
+
+        assert client.retries == 1
+
+
+# ── BL-066: resolve_cik uses load_json_ttl with cache_hit ────────────
+
+class TestResolveCikCacheHit:
+    def test_resolve_cik_returns_tuple_with_cache_flag(self, monkeypatch):
+        """resolve_cik returns (result, cache_hit) where cache_hit is a bool."""
+        payload = {"0": {"ticker": "TZOO", "cik_str": "1375966"}}
+
+        import unittest.mock as _mock
+        from elsian.acquire.sec_edgar import resolve_cik
+
+        client = SecClient()
+
+        with _mock.patch(
+            "elsian.acquire.sec_edgar.load_json_ttl",
+            return_value=(payload, True),
+        ):
+            result, hit = resolve_cik(client, "TZOO")
+
+        assert result == (1375966, "0001375966")
+        assert hit is True
+
+    def test_resolve_cik_miss_returns_false_cache_flag(self, monkeypatch):
+        payload = {}
+        import unittest.mock as _mock
+        from elsian.acquire.sec_edgar import resolve_cik
+
+        client = SecClient()
+
+        with _mock.patch(
+            "elsian.acquire.sec_edgar.load_json_ttl",
+            return_value=(payload, False),
+        ):
+            result, hit = resolve_cik(client, "ZZZNONE")
+
+        assert result is None
+        assert hit is False
+
+
+# ── BL-066: AcquisitionResult cache_hit in SEC cached path ───────────
+
+class TestSecEdgarCacheHitField:
+    def test_cached_filings_set_cache_hit_true(self, tmp_path):
+        filings_dir = tmp_path / "filings"
+        filings_dir.mkdir()
+        (filings_dir / "SRC_001_10-K_FY2024.htm").write_text("html")
+        (filings_dir / "SRC_001_10-K_FY2024.txt").write_text("text")
+
+        case = CaseConfig(ticker="TZOO", case_dir=str(tmp_path))
+        fetcher = SecEdgarFetcher()
+        result = fetcher.acquire(case)
+
+        assert result.cache_hit is True
+        assert result.source_kind == "filing"
+
 
     def test_find_exhibit_99_malformed_index(self):
         """Index JSON without 'directory' key → None."""

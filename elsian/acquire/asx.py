@@ -35,6 +35,7 @@ from typing import Any
 
 import requests
 
+from elsian.acquire._http import bounded_get, get_user_agent
 from elsian.acquire.base import Fetcher
 from elsian.acquire.dedup import content_hash
 from elsian.convert.pdf_to_text import extract_pdf_text
@@ -47,7 +48,8 @@ logger = logging.getLogger(__name__)
 # ── Constants ────────────────────────────────────────────────────────
 
 _BASE_URL = "https://www.asx.com.au/asx/1/announcement/list"
-_USER_AGENT = "ELSIAN-INVEST-Bot/1.0 (research; bot@elsian-invest.local)"
+# UA: centralised and configurable via ELSIAN_USER_AGENT env var (see _http.py).
+_USER_AGENT = get_user_agent()
 _HEADERS = {
     "User-Agent": _USER_AGENT,
     "Accept": "application/json,*/*;q=0.8",
@@ -56,6 +58,18 @@ _TIMEOUT = 60
 _RATE_LIMIT = 0.15  # Minimal delay between requests (API ignores page_size)
 _PAGE_SIZE = 2000
 _MAX_SCAN_DAYS = 15  # Max days to scan backward per target month
+
+# Module-level session for connection reuse across day-scan calls.
+# Lazy-initialised so tests that monkeypatch _scan_day entirely are unaffected.
+_ASX_SESSION: requests.Session | None = None
+
+
+def _get_asx_session() -> requests.Session:
+    """Return the module-level ASX session, creating it on first use."""
+    global _ASX_SESSION
+    if _ASX_SESSION is None:
+        _ASX_SESSION = requests.Session()
+    return _ASX_SESSION
 
 # Financial filing types we want to download (ASX announcement headers)
 _ANNUAL_PATTERNS = [
@@ -124,10 +138,15 @@ def _scan_day(ticker: str, d: dt.date) -> list[dict[str, Any]]:
         "end_date": int(dt.datetime.combine(d, dt.time.max).timestamp() * 1000),
     }
     try:
-        resp = requests.get(
-            _BASE_URL, headers=_HEADERS, params=params, timeout=_TIMEOUT,
+        resp, _ = bounded_get(
+            _BASE_URL,
+            session=_get_asx_session(),
+            headers=_HEADERS,
+            params=params,
+            timeout=_TIMEOUT,
+            max_retries=2,
+            base_backoff=1.0,
         )
-        resp.raise_for_status()
         items = resp.json().get("announcement_data", [])
     except Exception as exc:
         logger.warning("ASX API request failed for %s: %s", d, exc)
@@ -336,21 +355,30 @@ def _infer_period(header: str, filing_date: str, fy_end_month: int) -> str:
     return f"FY{d.year}"
 
 
-def _download_pdf(url: str, dest: Path) -> bool:
-    """Download a PDF from ASX announcements CDN."""
+def _download_pdf(url: str, dest: Path) -> tuple[bool, int]:
+    """Download a PDF from ASX announcements CDN.
+
+    Returns:
+        ``(success, retries_used)`` — whether the download succeeded and
+        how many HTTP retries were needed.
+    """
     try:
-        resp = requests.get(
-            url, headers=_HEADERS, timeout=_TIMEOUT, allow_redirects=True,
+        resp, retries_used = bounded_get(
+            url,
+            session=_get_asx_session(),
+            headers=_HEADERS,
+            timeout=_TIMEOUT,
+            max_retries=3,
+            base_backoff=2.0,
         )
-        resp.raise_for_status()
         if len(resp.content) < 100:
             logger.warning("PDF too small (%d bytes): %s", len(resp.content), url)
-            return False
+            return False, retries_used
         dest.write_bytes(resp.content)
-        return True
+        return True, retries_used
     except Exception as exc:
         logger.warning("PDF download failed: %s — %s", url, exc)
-        return False
+        return False, 0
 
 
 # ── AsxFetcher ───────────────────────────────────────────────────────
@@ -398,6 +426,8 @@ class AsxFetcher(Fetcher):
                 filings_downloaded=logical_filing_count,
                 filings_coverage_pct=100.0,
                 notes="Using cached filings (directory not empty).",
+                source_kind="filing",
+                cache_hit=True,
             )
 
         # Search ASX for all announcements
@@ -451,6 +481,7 @@ class AsxFetcher(Fetcher):
         downloaded = 0
         failed = 0
         seen_hashes: set[str] = set()
+        retries_total = 0
 
         for header, ann in selected:
             url = ann.get("url", "")
@@ -471,7 +502,9 @@ class AsxFetcher(Fetcher):
             pdf_path = out_path / f"{base_name}.pdf"
             logger.info("Downloading: %s -> %s", header, pdf_path.name)
 
-            if _download_pdf(url, pdf_path):
+            _ok, _r = _download_pdf(url, pdf_path)
+            retries_total += _r
+            if _ok:
                 # Convert PDF to text
                 txt_path = out_path / f"{base_name}.txt"
                 text = extract_pdf_text(pdf_path.read_bytes())
@@ -537,4 +570,6 @@ class AsxFetcher(Fetcher):
             },
             notes=f"ASX acquisition: {downloaded} financial filings downloaded.",
             download_date=dt.date.today().isoformat(),
+            source_kind="filing",
+            retries_total=retries_total,
         )

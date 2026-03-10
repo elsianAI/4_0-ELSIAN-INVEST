@@ -2,6 +2,23 @@
 
 ## 2026-03-10
 
+### [4.0] BL-066 — Hardening del path de adquisición: UA configurable, retry/backoff acotado, TTL cache, observabilidad manifest
+- **`elsian/acquire/_http.py`** (nuevo): helper compartido para `elsian/acquire/`. Centraliza `get_user_agent()` (env `ELSIAN_USER_AGENT`, fallback research UA), `get_eu_user_agent()` (env `ELSIAN_EU_USER_AGENT`, fallback browser-style), `load_json_ttl()` (cache TTL 24 h en disco, env `ELSIAN_CACHE_DIR`) y `bounded_get()` (reintentos acotados max_retries+1 con backoff exponencial base_backoff×2^k).
+- **`elsian/models/result.py`**: `AcquisitionResult` gana 4 campos diagnósticos con defaults backward-compatible: `source_kind: str = ""`, `cache_hit: bool = False`, `retries_total: int = 0`, `throttle_ms: float = 0.0`. `to_dict()` los incluye.
+- **`elsian/acquire/sec_edgar.py`**: UA leído de env vía `get_user_agent()`. `_TICKERS_URL` + `_TICKERS_TTL_SECONDS=86400` extraídos como constantes. `SecClient._retries` + propiedad `.retries`. `resolve_cik` retorna `(result, cache_hit)` usando `load_json_ttl`. Manifest: `source_kind="filing"`, `cache_hit`, `retries_total`.
+- **`elsian/acquire/asx.py`**: UA configurable. Sesión module-level lazy (`_get_asx_session()`). `_scan_day` y `_download_pdf` usan `bounded_get` (max_retries=2/3, base_backoff=1.0/2.0). `_download_pdf` retorna `tuple[bool, int]`. `acquire` acumula `retries_total`.
+- **`elsian/acquire/eu_regulators.py`**: UA EU configurable. Sesión lazy `_eu_session()`. `_http_get` usa `bounded_get` con backoff exponencial (1s, 2s, 4s) en vez de sleep fijo 1.0s. `source_kind="filing"` en todos los paths.
+- **Tests**: `tests/unit/test_acquire_http_helpers.py` (13 nuevos), `tests/unit/test_acquisition_result.py` (3 nuevos BL-066), `tests/unit/test_sec_edgar.py` (5 nuevos). Fixes en `test_asx.py` y `test_eu_regulators.py` por cambio de firma `_download_pdf` y mocking de `bounded_get`.
+- **Validation:** `python3 -m pytest tests/unit/` → 1403 passed, 1 warning. `python3 -m pytest tests/integration/ tests/contracts/ tests/regression/` → 53 passed, 3 skipped. `python3 -m elsian run TZOO --with-acquire` → EXIT:0, PASS 100.0% (348/348). `git diff --check` → CLEAN.
+
+
+
+### [4.0] Governance packaging — BL-066 reconciliada al gap real del acquire path
+- `docs/project/BACKLOG.md` deja de vender `BL-066` como hardening genérico de toda la superficie de adquisición. El paquete vivo queda recortado al runtime actual de Module 1: `sec_edgar`, `asx`, `eu_regulators` y el contrato mínimo de `filings_manifest.json` emitido por `AcquirePhase`, con foco en User-Agent configurable, rate limit con tope duro, retries/backoff acotados, caching factual y metadatos diagnósticos mínimos por run.
+- Quedan explícitamente fuera de alcance en esta ola `discover/`, `market_data`, `transcripts`, un framework horizontal nuevo de servicios HTTP y cualquier expansión de crawler/IR no imprescindible para cerrar el hardening real de esos tres fetchers.
+- **Files changed:** `docs/project/BACKLOG.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` → repo limpio en `HEAD 5ca20fa`, sin drift documental. `git status --short --untracked-files=all` → clean. `git diff --check` → expected clean tras esta mutación.
+
 ### [4.0] Governance closeout — BL-063 archivada tras auditoría final green
 - BL-063 sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual sobre el alcance realmente absorbido en el runtime actual de `elsian run`: severidad explícita en `PhaseResult`, `Pipeline` con corte solo en fatales, secuencia real de fases (`acquire` opcional, `convert`, `extract`, `evaluate`, `assemble`) y remediación final del path fatal que ya no pisa `extraction_result.json`.
 - `docs/project/PROJECT_STATE.md` deja de presentar BL-063 como prioridad shared-core viva; la siguiente shared-core activa pasa a `BL-066`, mientras `BL-064` y `BL-065` quedan como frentes posteriores y `BL-072`/`BL-073` no cambian.

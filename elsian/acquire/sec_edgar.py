@@ -17,6 +17,7 @@ from typing import Any, Optional
 import requests
 from bs4 import BeautifulSoup
 
+from elsian.acquire._http import get_user_agent, load_json_ttl
 from elsian.acquire.base import Fetcher
 from elsian.convert.html_to_markdown import convert as html_to_markdown
 from elsian.convert.pdf_to_text import extract_pdf_text
@@ -28,11 +29,14 @@ logger = logging.getLogger(__name__)
 
 # ── Constants ────────────────────────────────────────────────────────
 
-USER_AGENT = "ELSIAN-INVEST-Bot/1.0 (research; bot@elsian-invest.local)"
+# Centralised UA: configurable via ELSIAN_USER_AGENT env var (see _http.py).
+USER_AGENT = get_user_agent()
 HEADERS = {
     "User-Agent": USER_AGENT,
     "Accept": "application/json,text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
 }
+# TTL for the stable SEC company_tickers.json mapping (24 h by default).
+_TICKERS_TTL_SECONDS = 86_400
 TIMEOUT = 40
 RATE_LIMIT_SECONDS = 0.12
 
@@ -52,6 +56,12 @@ class SecClient:
     def __init__(self) -> None:
         self._session = requests.Session()
         self._last_req = 0.0
+        self._retries: int = 0  # cumulative retry counter (BL-066)
+
+    @property
+    def retries(self) -> int:
+        """Total HTTP retries accumulated since this client was created."""
+        return self._retries
 
     def _throttle(self) -> None:
         elapsed = time.time() - self._last_req
@@ -96,6 +106,7 @@ class SecClient:
                                  attempt, max_retries, url, status, wait)
                     time.sleep(wait)
                     eff_timeout = (timeout or TIMEOUT) + 20  # more generous on retry
+                    self._retries += 1
                     continue
                 raise
         if not binary:
@@ -155,16 +166,28 @@ def _strip_html_to_text(raw: str) -> str:
 
 # ── CIK Resolution ──────────────────────────────────────────────────
 
-def resolve_cik(client: SecClient, ticker: str) -> Optional[tuple[int, str]]:
-    """Resolve ticker -> (cik_int, cik10). Returns None if not found."""
-    ticker_map = client.get_json(
-        "https://www.sec.gov/files/company_tickers.json"
+_TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
+
+
+def resolve_cik(
+    client: SecClient, ticker: str
+) -> tuple[Optional[tuple[int, str]], bool]:
+    """Resolve ticker -> ((cik_int, cik10), cache_hit). Returns (None, <bool>) if not found.
+
+    Uses a TTL file-cache (default 24 h) for the stable company_tickers.json
+    mapping to avoid a network round-trip on every acquire run.
+    """
+    ticker_map, cache_hit = load_json_ttl(
+        _TICKERS_URL,
+        session=client._session,
+        headers=HEADERS,
+        ttl_seconds=_TICKERS_TTL_SECONDS,
     )
     for val in ticker_map.values():
         if str(val.get("ticker", "")).upper() == ticker.upper():
             cik_int = int(val["cik_str"])
-            return cik_int, str(cik_int).zfill(10)
-    return None
+            return (cik_int, str(cik_int).zfill(10)), cache_hit
+    return None, cache_hit
 
 
 # ── Filing record (internal exchange type) ───────────────────────────
@@ -362,24 +385,28 @@ class SecEdgarFetcher(Fetcher):
                 filings_downloaded=logical_filing_count,
                 filings_coverage_pct=100.0,
                 notes="Using cached filings (directory not empty).",
+                source_kind="filing",
+                cache_hit=True,
             )
 
         client = SecClient()
+        cik_cache_hit = False
 
         # Resolve CIK — use pre-configured cik from case.json if available
         if case.cik:
             cik_int = int(case.cik)
             cik10 = str(cik_int).zfill(10)
             logger.info("Using pre-configured CIK %s for %s", cik10, ticker)
-            cik_result = (cik_int, cik10)
+            cik_result: Optional[tuple[int, str]] = (cik_int, cik10)
         else:
-            cik_result = resolve_cik(client, ticker)
+            cik_result, cik_cache_hit = resolve_cik(client, ticker)
         if cik_result is None:
             return AcquisitionResult(
                 ticker=ticker,
                 source="sec_edgar",
                 notes=f"Ticker {ticker} not found in SEC EDGAR.",
                 gaps=[f"CIK not found for {ticker}"],
+                source_kind="filing",
             )
 
         cik_int, cik10 = cik_result
@@ -505,4 +532,7 @@ class SecEdgarFetcher(Fetcher):
             },
             notes="All available filings processed.",
             download_date=dt.date.today().isoformat(),
+            source_kind="filing",
+            cache_hit=cik_cache_hit,
+            retries_total=client.retries,
         )

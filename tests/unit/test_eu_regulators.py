@@ -40,21 +40,21 @@ class TestTildeMediaFallback:
         url = "https://investors.somero.com/~/media/Files/S/Somero-IR/documents/2024/annual-report-2024.pdf"
         assert _tilde_media_fallback_url(url) is None
 
-    @patch("elsian.acquire.eu_regulators.requests.get")
+    @patch("elsian.acquire.eu_regulators.bounded_get")
     def test_http_get_retries_with_tilde_media_variant(
-        self, mock_get: MagicMock
+        self, mock_bounded_get: MagicMock
     ) -> None:
-        resp_404 = MagicMock()
-        resp_404.raise_for_status.side_effect = Exception("404")
+        # Original URL: bounded_get raises (all retries exhausted)
+        from requests import ConnectionError as _ReqConnErr
 
-        from requests import HTTPError
-        resp_404.raise_for_status.side_effect = HTTPError("404")
+        resp_ok = MagicMock()
+        resp_ok.content = b"pdf-bytes"
 
-        resp_200 = MagicMock()
-        resp_200.raise_for_status.return_value = None
-        resp_200.content = b"pdf-bytes"
-
-        mock_get.side_effect = [resp_404, resp_404, resp_404, resp_200]
+        # First bounded_get call (original URL) raises; second (tilde URL) succeeds.
+        mock_bounded_get.side_effect = [
+            _ReqConnErr("simulated failure"),
+            (resp_ok, 1),
+        ]
 
         content = _http_get(
             "https://investors.somero.com/media/Files/S/Somero-IR/documents/2024/annual-report-2024.pdf",
@@ -62,8 +62,9 @@ class TestTildeMediaFallback:
         )
 
         assert content == b"pdf-bytes"
-        called_urls = [call.args[0] for call in mock_get.call_args_list]
-        assert called_urls[-1] == (
+        # The last bounded_get call was for the tilde-media variant.
+        last_url = mock_bounded_get.call_args_list[-1].args[0]
+        assert last_url == (
             "https://investors.somero.com/~/media/Files/S/Somero-IR/documents/2024/annual-report-2024.pdf"
         )
 

@@ -141,9 +141,9 @@ class TestAcquireBehavior:
                     },
                 ]
 
-            def fake_download(_url: str, dest: Path) -> bool:
+            def fake_download(_url: str, dest: Path) -> tuple[bool, int]:
                 dest.write_bytes(b"%PDF-1.4 fake")
-                return True
+                return True, 0
 
             counter = {"n": 0}
 
