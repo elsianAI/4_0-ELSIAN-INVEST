@@ -20,7 +20,7 @@ WORKSPACE_ONLY_SUFFIXES = (".code-workspace",)
 GOVERNANCE_FILES = {"CHANGELOG.md", "VISION.md", "ROADMAP.md", "README.md"}
 GOVERNANCE_PREFIXES = ("docs/project/", ".github/agents/")
 TECHNICAL_FILES = {"pyproject.toml"}
-TECHNICAL_PREFIXES = ("cases/", "config/", "elsian/", "scripts/", "tests/")
+TECHNICAL_PREFIXES = ("cases/", "config/", "elsian/", "schemas/", "scripts/", "tasks/", "tests/")
 BACKLOG_ID_RE = re.compile(r"^###\s+(BL-\d+)\b")
 PROJECT_STATE_DATE_RE = re.compile(r"^>\s+Última actualización:\s*(\d{4}-\d{2}-\d{2})", re.MULTILINE)
 CHANGELOG_DATE_RE = re.compile(r"^##\s+(\d{4}-\d{2}-\d{2})\b", re.MULTILINE)
@@ -252,6 +252,84 @@ def format_text(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _path_in_surface(path: str, surface: str) -> bool:
+    """Return True if path equals or is nested under surface prefix."""
+    if path == surface:
+        return True
+    prefix = surface if surface.endswith("/") else surface + "/"
+    return path.startswith(prefix)
+
+
+def check_manifest_scope(
+    manifest: dict[str, Any],
+    dirty_paths: list[str],
+) -> list[str]:
+    """Check that repo dirty paths respect a task manifest contract.
+
+    Args:
+        manifest: Loaded task manifest dict.
+        dirty_paths: Repo-relative dirty paths (workspace noise already excluded).
+
+    Returns:
+        List of violation strings.  Empty list means the scope is clean.
+    """
+    violations: list[str] = []
+    write_set: list[str] = manifest.get("write_set") or []
+    blocked_surfaces: list[str] = manifest.get("blocked_surfaces") or []
+    _egu_raw = manifest.get("expected_governance_updates")
+    expected_governance_updates: list[str] = [] if _egu_raw == "none" else (_egu_raw or [])
+    claimed_bl_status: str = manifest.get("claimed_bl_status", "")
+    validation_tier: str = manifest.get("validation_tier", "")
+
+    write_set_set: set[str] = set(write_set)
+    dirty_set: set[str] = set(dirty_paths)
+    governance_update_set: set[str] = set(expected_governance_updates)
+
+    # 1. Dirty path outside write_set
+    # Paths declared in expected_governance_updates are additional permitted surfaces
+    # for reconciliation, but only when they classify as governance_dirty.  This
+    # prevents misuse of the field to bypass write_set for technical files.
+    for path in dirty_paths:
+        in_write_set = path in write_set_set
+        in_governance_updates = (
+            path in governance_update_set
+            and classify_dirty_path(path) == "governance_dirty"
+        )
+        if not in_write_set and not in_governance_updates:
+            violations.append(
+                f"write_set_violation: {path!r} is dirty but not declared in write_set"
+            )
+
+    # 2. Dirty path touches a blocked surface
+    for path in dirty_paths:
+        for blocked in blocked_surfaces:
+            if _path_in_surface(path, blocked):
+                violations.append(
+                    f"blocked_surface_violation: {path!r} touches blocked surface {blocked!r}"
+                )
+                break
+
+    # 3. Missing governance reconciliation (required when claimed_bl_status='done')
+    if claimed_bl_status == "done":
+        for doc in expected_governance_updates:
+            if doc not in dirty_set:
+                violations.append(
+                    f"missing_reconciliation: {doc!r} is required by expected_governance_updates"
+                    f" but is not in the diff (claimed_bl_status='done')"
+                )
+
+    # 4. Tier coherence: governance-only must not touch technical files
+    if validation_tier == "governance-only":
+        for path in dirty_paths:
+            if classify_dirty_path(path) == "technical_dirty":
+                violations.append(
+                    f"tier_violation: {path!r} is a technical file"
+                    f" but validation_tier='governance-only'"
+                )
+
+    return violations
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Deterministic governance/worktree checker for ELSIAN.")
     parser.add_argument(
@@ -260,6 +338,15 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         default="text",
         help="Output format.",
     )
+    parser.add_argument(
+        "--task-manifest",
+        metavar="PATH",
+        help=(
+            "Path to a task_manifest JSON. When provided, checks the current diff against "
+            "the manifest's write_set, blocked_surfaces, expected_governance_updates, "
+            "validation_tier, and claimed_bl_status."
+        ),
+    )
     return parser.parse_args(argv)
 
 
@@ -267,12 +354,59 @@ def main(argv: list[str]) -> int:
     args = parse_args(argv)
     repo_root = resolve_repo_root()
     report = build_report(repo_root)
+
+    manifest_violations: list[str] = []
+    if args.task_manifest:
+        manifest_path = Path(args.task_manifest)
+        if not manifest_path.is_absolute():
+            manifest_path = repo_root / manifest_path
+        try:
+            manifest: dict[str, Any] = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            sys.stderr.write(f"check_governance: cannot load task manifest {args.task_manifest!r}: {exc}\n")
+            return 1
+        # Fail-closed: validate manifest against task_manifest contract before enforcement (BL-061 audit fix)
+        _vc_script = Path(__file__).parent / "validate_contracts.py"
+        _vc_result = subprocess.run(
+            [sys.executable, str(_vc_script), "--schema", "task_manifest", "--path", str(manifest_path)],
+            capture_output=True,
+            text=True,
+        )
+        if _vc_result.returncode != 0:
+            sys.stderr.write(
+                f"check_governance: manifest {manifest_path.name!r} failed contract validation:\n"
+            )
+            sys.stderr.write(_vc_result.stdout or "(no output)\n")
+            return 1
+        # Exclude workspace noise from the scope check
+        dirty_paths = [
+            entry["path"]
+            for entry in report["worktree"]["entries"]
+            if entry["category"] != "workspace_only_dirty"
+        ]
+        manifest_violations = check_manifest_scope(manifest, dirty_paths)
+        report["task_manifest"] = {
+            "task_id": manifest.get("task_id"),
+            "manifest_path": str(manifest_path.relative_to(repo_root)),
+            "write_set": manifest.get("write_set", []),
+            "blocked_surfaces": manifest.get("blocked_surfaces", []),
+            "expected_governance_updates": manifest.get("expected_governance_updates", []),
+            "claimed_bl_status": manifest.get("claimed_bl_status"),
+            "validation_tier": manifest.get("validation_tier"),
+            "violations": manifest_violations,
+            "scope_clean": not manifest_violations,
+        }
+
     if args.format == "json":
         json.dump(report, sys.stdout, indent=2, ensure_ascii=False)
         sys.stdout.write("\n")
     else:
         sys.stdout.write(format_text(report) + "\n")
-    return 0
+        if args.task_manifest and manifest_violations:
+            for v in manifest_violations:
+                sys.stdout.write(f"manifest_violation: {v}\n")
+
+    return 1 if manifest_violations else 0
 
 
 if __name__ == "__main__":

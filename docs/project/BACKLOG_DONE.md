@@ -9,6 +9,14 @@
 
 ---
 
+### BL-061 — T03 — Aterrizar task_manifest real y enforcement mínimo de scope
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-10)
+- **Asignado a:** engineer
+- **Depende de:** BL-059
+- **Descripción:** Se cierra BL-061 sobre el alcance mínimo ya implementado y validado en el repo, sin abrir `BL-062` ni `BL-072`. El cierre deja absorbidos los invariantes que definían la ola: existe un `task_manifest` real repo-trackeado bajo `tasks/`, `scripts/check_governance.py` ya puede ejecutar comprobación manifest-aware contra `write_set`, `blocked_surfaces`, `validation_tier`, `claimed_bl_status` y reconciliación documental requerida, y la reconciliación de closeout queda alineada con el manifest real en `CHANGELOG.md`, `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md` y `docs/project/PROJECT_STATE.md`.
+- **Criterio de aceptación:** ✓ `python3 scripts/check_governance.py --format json` ejecutado como control de gobernanza del repo. ✓ `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md docs/project/PROJECT_STATE.md CHANGELOG.md` limpio. ✓ `BL-061` sale de `docs/project/BACKLOG.md`, queda archivada en `docs/project/BACKLOG_DONE.md`, y `docs/project/PROJECT_STATE.md` deja de presentarla como prioridad viva.
+
 ### BL-059 — Reconciliación y hardening de la capa contractual existente
 - **Prioridad:** ALTA
 - **Estado:** DONE ✅ (2026-03-10)

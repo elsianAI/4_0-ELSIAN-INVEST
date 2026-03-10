@@ -1,0 +1,31 @@
+{
+  "task_id": "BL-061",
+  "title": "Aterrizar task_manifest real y enforcement mínimo de scope",
+  "kind": "technical",
+  "validation_tier": "shared-core",
+  "claimed_bl_status": "done",
+  "references": ["BL-059", "BL-061"],
+  "write_set": [
+    "schemas/v1/task_manifest.schema.json",
+    "scripts/validate_contracts.py",
+    "scripts/check_governance.py",
+    "tests/contracts/test_validate_contracts.py",
+    "tests/unit/test_check_governance.py",
+    "tasks/BL-061.task_manifest.json",
+    "CHANGELOG.md"
+  ],
+  "blocked_surfaces": [
+    "elsian/",
+    ".github/",
+    "config/",
+    "cases/",
+    "pyproject.toml"
+  ],
+  "expected_governance_updates": [
+    "CHANGELOG.md",
+    "docs/project/BACKLOG.md",
+    "docs/project/BACKLOG_DONE.md",
+    "docs/project/PROJECT_STATE.md"
+  ],
+  "notes": "Ola mínima BL-061: manifest repo-trackeado real bajo tasks/ y enforcement mínimo en check_governance.py (write_set, blocked_surfaces, expected_governance_updates, tier coherence). No abre BL-062 ni BL-072."
+}

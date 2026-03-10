@@ -2,6 +2,56 @@
 
 ## 2026-03-10
 
+### [4.0] BL-061 cierre último finding — schemas/ y tasks/ clasifican como technical_dirty
+- `scripts/check_governance.py`: añadidos `schemas/` y `tasks/` a `TECHNICAL_PREFIXES`; ya no caen en `other_dirty`, cerrando la vía de escape en `tier_violation` para packets `governance-only`.
+- `tests/unit/test_check_governance.py`: 3 tests nuevos cubren clasificación y `tier_violation` para ambos prefijos.
+
+### [4.0] BL-061 finding final — Rechazar expected_governance_updates vacío
+- `schemas/v1/task_manifest.schema.json`: `expected_governance_updates` array requiere `minItems:1`; `[]` ya no es válido.
+- `scripts/validate_contracts.py`: `validate_task_manifest_data` añade guardia `not egu` para rechazar lista vacía.
+- `tests/contracts/test_validate_contracts.py`: nuevo test `test_task_manifest_expected_governance_updates_empty_list_rejected`.
+
+### [4.0] Governance closeout — BL-061 archivada tras reconciliación mínima de cierre
+- BL-061 sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual sobre el alcance ya implementado: `task_manifest` repo-trackeado real, enforcement mínimo manifest-aware en governance y reconciliación documental final completa.
+- `docs/project/PROJECT_STATE.md` deja de presentar BL-061 como prioridad shared-core viva; la siguiente prioridad shared-core activa queda en `BL-062`, mientras `BL-072` permanece como frente `governance-only` y `BL-073` sigue bloqueada por ese prerrequisito.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` → ejecutado tras la reconciliación mínima. `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md docs/project/PROJECT_STATE.md CHANGELOG.md` → clean.
+
+### [4.0] BL-061 closeout-prep — Alinear expected_governance_updates con semántica de ROLES.md
+- `schemas/v1/task_manifest.schema.json`: `expected_governance_updates` ahora acepta lista de rutas O la string literal `"none"` mediante `oneOf`.
+- `scripts/validate_contracts.py`: `validate_task_manifest_data` valida `expected_governance_updates` separadamente: acepta array de strings no vacíos o `"none"`; rechaza cualquier otra string.
+- `scripts/check_governance.py`: `check_manifest_scope` normaliza `expected_governance_updates="none"` a lista vacía antes del enforcement; sin relajar semántica de write_set ni blocked_surfaces.
+- `tasks/BL-061.task_manifest.json`: `expected_governance_updates` ampliado con `docs/project/BACKLOG_DONE.md` y `docs/project/PROJECT_STATE.md` para cubrir la reconciliación final completa de esta ola.
+- `tests/contracts/test_validate_contracts.py`: 2 nuevos tests (acepta `"none"`, rechaza string arbitraria).
+- `tests/unit/test_check_governance.py`: 1 nuevo test (`"none"` omite reconciliación).
+
+### [4.0] BL-061 auditoría — remediar huecos de garantía repo-wide en validate_contracts y check_governance
+- `scripts/validate_contracts.py`: `validate_all_contracts()` extiende el sweep global para incluir `tasks/*.task_manifest.json` git-trackeados; mensaje de éxito actualizado con conteo de manifests validados.
+- `scripts/check_governance.py`: `--task-manifest` valida el manifest contra el contrato `task_manifest` vía `validate_contracts.py --schema task_manifest` antes de llamar a `check_manifest_scope`; falla con salida útil si el manifest no cumple el contrato (fail-closed).
+- `tests/contracts/test_validate_contracts.py`: nuevo test `test_validate_all_contracts_sweeps_task_manifests_and_catches_bad_kind`.
+- `tests/unit/test_check_governance.py`: nuevo test `test_check_governance_fails_closed_on_contract_invalid_manifest`.
+
+### [4.0] BL-061 — Aterrizar task_manifest real y enforcement mínimo de scope
+- `tasks/BL-061.task_manifest.json`: primer manifest repo-trackeado real bajo `tasks/`. Declara `write_set`, `blocked_surfaces`, `expected_governance_updates`, `validation_tier` y `claimed_bl_status` conforme al contrato existente.
+- `schemas/v1/task_manifest.schema.json`: añadido campo opcional `expected_governance_updates` (array de non-empty strings) alineado con la semántica `Post-mutation summary` de `docs/project/ROLES.md`.
+- `scripts/validate_contracts.py`: `validate_task_manifest_data` actualizado para permitir y validar `expected_governance_updates` como lista de strings no vacíos.
+- `scripts/check_governance.py`: añadidos `_path_in_surface`, `check_manifest_scope` y flag `--task-manifest PATH`. Cuando se pasa el flag, el checker contrasta el diff actual contra el contrato del manifest y falla (exit 1) si: (1) dirty path fuera del `write_set`, (2) dirty path en `blocked_surfaces`, (3) `expected_governance_updates` no reconciliado cuando `claimed_bl_status=done`, (4) `validation_tier=governance-only` con ficheros técnicos sucios. El resultado se incluye en la clave `task_manifest` del output JSON.
+- `tests/contracts/test_validate_contracts.py`: 3 nuevos tests para `expected_governance_updates` (accepted, rejected, BL-061 real).
+- `tests/unit/test_check_governance.py`: 8 nuevos tests para `check_manifest_scope` cubriendo todos los paths de violación y los casos limpios.
+- **Files changed:** `tasks/BL-061.task_manifest.json`, `schemas/v1/task_manifest.schema.json`, `scripts/validate_contracts.py`, `scripts/check_governance.py`, `tests/contracts/test_validate_contracts.py`, `tests/unit/test_check_governance.py`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/validate_contracts.py --schema task_manifest --path tasks/BL-061.task_manifest.json` → PASS. `python3 scripts/validate_contracts.py --all` → PASS. `python3 -m pytest -q tests/contracts/test_validate_contracts.py tests/unit/test_check_governance.py` → all pass. `python3 scripts/check_governance.py --format json --task-manifest tasks/BL-061.task_manifest.json` → scope_clean per diff state.
+
+### [4.0] BL-061 — Corrección semántica de expected_governance_updates como superficie permitida
+- `scripts/check_governance.py`: `check_manifest_scope` ahora trata los paths declarados en `expected_governance_updates` como superficies adicionales permitidas al `write_set`, pero solo cuando el path se clasifica como `governance_dirty`. Los ficheros técnicos siguen requiriendo declaración explícita en `write_set`.
+- `tasks/BL-061.task_manifest.json`: añadido `docs/project/BACKLOG.md` a `expected_governance_updates` para reflejar la reconciliación de gobernanza real de esta ola.
+- `tests/unit/test_check_governance.py`: 2 nuevos tests (`test_check_manifest_scope_governance_update_exempt_from_write_set_violation`, `test_check_manifest_scope_technical_path_in_governance_updates_still_flagged`).
+
+### [4.0] Governance packaging — BL-061 reconciled to the repo's real task-manifest baseline
+- Repackaged `BL-061` so it no longer reads as greenfield contract work that the repo already has. The live scope is now the minimal missing slice: land at least one repo-tracked `task_manifest` under `tasks/` and add manifest-aware enforcement in the existing checker/runtime for `write_set`, `blocked_surfaces`, `validation_tier`, `claimed_bl_status`, and required governance reconciliation.
+- `BL-062` service layer / registry, `BL-072` parallel-ready governance, and any broader packet system remain explicitly out of scope for this wave.
+- **Files changed:** `docs/project/BACKLOG.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` → expected clean governance metadata after packaging. `git diff --check -- docs/project/BACKLOG.md CHANGELOG.md` → expected clean.
+
 ### [4.0] Governance corrective closeout — BL-059 sin prioridad viva residual en PROJECT_STATE
 - Reconciliado `docs/project/PROJECT_STATE.md` tras la auditoría de closeout para que deje de presentar `BL-059` como prioridad shared-core inmediata viva ahora que la BL ya está archivada en `docs/project/BACKLOG_DONE.md`.
 - La siguiente cola activa queda expresada de forma factual: `BL-061` y `BL-062` como continuación shared-core dependiente del cierre ya completado, y `BL-072` como frente de governance-only aún abierto. No se reabre `BL-059` ni se altera `BACKLOG.md`/`BACKLOG_DONE.md`.

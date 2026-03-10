@@ -665,6 +665,7 @@ def validate_task_manifest_data(data: Any, path: Path) -> list[str]:
             "references",
             "write_set",
             "blocked_surfaces",
+            "expected_governance_updates",
             "notes",
         },
         path=path,
@@ -687,6 +688,17 @@ def validate_task_manifest_data(data: Any, path: Path) -> list[str]:
             continue
         if not isinstance(value, list) or any(not _is_non_empty_string(item) for item in value):
             issues.append(f"{path}: {key} must be a list of non-empty strings")
+    egu = data.get("expected_governance_updates")
+    if egu is not None:
+        if egu != "none" and (
+            not isinstance(egu, list)
+            or not egu
+            or any(not _is_non_empty_string(item) for item in egu)
+        ):
+            issues.append(
+                f"{path}: expected_governance_updates must be a non-empty list of paths"
+                " or the string 'none'"
+            )
     if not isinstance(data.get("write_set"), list) or not data["write_set"]:
         issues.append(f"{path}: write_set must be a non-empty list")
     if "notes" in data and not isinstance(data["notes"], str):
@@ -977,6 +989,18 @@ def validate_all_contracts() -> dict[str, list[str]]:
     if cross_issues:
         issues["cross_case_consistency"] = cross_issues
 
+    # tasks/*.task_manifest.json — repo-tracked task manifests (BL-061 audit fix)
+    for manifest_path in _read_git_tracked_paths("tasks"):
+        if not manifest_path.name.endswith(".task_manifest.json"):
+            continue
+        manifest_issues = validate_single_contract("task_manifest", manifest_path)
+        if manifest_issues:
+            try:
+                key = str(manifest_path.relative_to(ROOT))
+            except ValueError:
+                key = str(manifest_path)
+            issues[key] = manifest_issues
+
     return issues
 
 
@@ -1012,9 +1036,13 @@ def main(argv: list[str] | None = None) -> int:
             _print_issues(issues)
             return 1
         tracked_cases = len([p for p in _read_git_tracked_paths("cases") if p.name == "case.json"])
+        tracked_task_manifests = len(
+            [p for p in _read_git_tracked_paths("tasks") if p.name.endswith(".task_manifest.json")]
+        )
         print(
             "PASS contracts: "
-            f"{tracked_cases} tracked cases + tracked derived artifacts + prompt/model alignment"
+            f"{tracked_cases} tracked cases + tracked derived artifacts"
+            f" + {tracked_task_manifests} task manifest(s) + prompt/model alignment"
         )
         return 0
 

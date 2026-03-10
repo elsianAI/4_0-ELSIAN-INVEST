@@ -30,17 +30,6 @@
 
 ## Tareas activas
 
-### BL-061 — T03 — Task manifests y core protegido
-- **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** BL-059
-- **Referencias:** T03, docs/project/PLAN_IMPLEMENTACION_FILTRADO.md
-- **Descripción:** Añadir manifests de tarea ejecutables y extender la protección del core para que el runtime pueda verificar scope, superficies protegidas, validación requerida y documentos a reconciliar sin depender solo del prompt.
-- **Criterio de aceptación:** Existe al menos un manifest real, el checker detecta cambios fuera de scope y el sistema puede ejecutar paquetes con contrato técnico explícito.
-
 ### BL-062 — T04 — Service layer y registry de fetchers
 - **Prioridad:** MEDIA
 - **Estado:** TODO
@@ -164,11 +153,11 @@
 
 ### BL-073 — Piloto controlado de paralelización multiagente
 - **Prioridad:** MEDIA
-- **Estado:** BLOCKED (espera `BL-072` y `BL-061`)
+- **Estado:** BLOCKED (espera `BL-072`)
 - **Asignado a:** sin asignar
 - **Módulo:** Module 1
 - **Validation tier:** shared-core
-- **Depende de:** BL-072, BL-061
+- **Depende de:** BL-072
 - **Referencias:** BL-059, BL-060, docs/project/KNOWLEDGE_BASE.md
 - **Descripción:** Ejecutar un primer piloto real de paralelización mutante con dos BL independientes y write sets disjuntos, usando exclusivamente el proceso definido en `BL-072`. El piloto debe demostrar aislamiento por `git worktree` y rama, integración serial en el padre, cierre independiente por BL y aborto limpio si aparece solape material.
 - **Criterio de aceptación:** Se ejecuta un piloto con dos BL válidas y una BL por worktree/rama. Ningún agente sale de su write set. Cada BL pasa `gates -> auditor -> closeout` por separado. La integración se hace en serie y genera un commit por BL. Si aparece conflicto estructural, el piloto aborta sin contaminar `main`. Queda una decisión explícita de mantener, ajustar o descartar el modelo antes de extenderlo a más trabajo.

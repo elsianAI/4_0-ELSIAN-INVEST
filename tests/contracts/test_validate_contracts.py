@@ -300,3 +300,202 @@ def test_cross_case_derived_truth_pack_no_period_scope_in_metadata_not_flagged()
     issues = module._check_cross_ticker_data("FOO", case_data, expected_data, derived)
 
     assert not any("period_scope" in i for i in issues)
+
+
+# ---------------------------------------------------------------------------
+# BL-061: expected_governance_updates field in task_manifest contract
+# ---------------------------------------------------------------------------
+
+
+def test_task_manifest_with_expected_governance_updates_accepted(tmp_path: Path):
+    """task_manifest validator accepts expected_governance_updates as a list of strings."""
+    module = _load_module()
+    manifest_path = tmp_path / "task_manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "task_id": "BL-061",
+                "title": "Test manifest with governance updates",
+                "kind": "technical",
+                "validation_tier": "targeted",
+                "claimed_bl_status": "done",
+                "write_set": ["CHANGELOG.md"],
+                "expected_governance_updates": ["CHANGELOG.md"],
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    issues = module.validate_single_contract("task_manifest", manifest_path)
+
+    assert issues == []
+
+
+def test_task_manifest_with_empty_string_in_expected_governance_updates_rejected(tmp_path: Path):
+    """task_manifest validator rejects expected_governance_updates containing empty strings."""
+    module = _load_module()
+    manifest_path = tmp_path / "task_manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "task_id": "BL-061",
+                "title": "Bad governance updates",
+                "kind": "technical",
+                "validation_tier": "targeted",
+                "claimed_bl_status": "none",
+                "write_set": ["CHANGELOG.md"],
+                "expected_governance_updates": [""],
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    issues = module.validate_single_contract("task_manifest", manifest_path)
+
+    assert any("expected_governance_updates" in i for i in issues)
+
+
+def test_bl_061_manifest_passes_validate_single_contract():
+    """The real BL-061.task_manifest.json passes the task_manifest contract."""
+    module = _load_module()
+    manifest_path = ROOT / "tasks" / "BL-061.task_manifest.json"
+    assert manifest_path.exists(), f"Manifest not found: {manifest_path}"
+
+    issues = module.validate_single_contract("task_manifest", manifest_path)
+
+    assert issues == []
+
+
+# ---------------------------------------------------------------------------
+# BL-061 audit fix: validate_all_contracts sweeps tasks/*.task_manifest.json
+# ---------------------------------------------------------------------------
+
+
+def test_validate_all_contracts_sweeps_task_manifests_and_catches_bad_kind(
+    tmp_path: Path, monkeypatch
+):
+    """validate_all_contracts includes tasks/*.task_manifest.json in the global sweep.
+
+    A manifest with an invalid 'kind' under tasks/ must be reported as a contract
+    violation by --all, closing the gap identified in the BL-061 audit.
+    """
+    module = _load_module()
+
+    bad_manifest = tmp_path / "BL-bad.task_manifest.json"
+    bad_manifest.write_text(
+        json.dumps(
+            {
+                "task_id": "BL-bad",
+                "title": "Bad kind",
+                "kind": "INVALID_KIND",
+                "validation_tier": "targeted",
+                "claimed_bl_status": "none",
+                "write_set": ["scripts/test.py"],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    original_read = module._read_git_tracked_paths
+
+    def fake_read(*patterns: str):
+        if patterns == ("tasks",):
+            return [bad_manifest]
+        return original_read(*patterns)
+
+    monkeypatch.setattr(module, "_read_git_tracked_paths", fake_read)
+
+    issues = module.validate_all_contracts()
+
+    assert any("BL-bad.task_manifest.json" in key for key in issues)
+
+
+# ---------------------------------------------------------------------------
+# BL-061 closeout-prep: expected_governance_updates accepts "none" literal
+# ---------------------------------------------------------------------------
+
+
+def test_task_manifest_expected_governance_updates_none_string_accepted(tmp_path: Path):
+    """task_manifest validator accepts expected_governance_updates='none' as explicit no-op."""
+    module = _load_module()
+    manifest_path = tmp_path / "task_manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "task_id": "BL-062",
+                "title": "None governance updates",
+                "kind": "governance",
+                "validation_tier": "governance-only",
+                "claimed_bl_status": "none",
+                "write_set": ["CHANGELOG.md"],
+                "expected_governance_updates": "none",
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    issues = module.validate_single_contract("task_manifest", manifest_path)
+
+    assert issues == []
+
+
+def test_task_manifest_expected_governance_updates_invalid_string_rejected(tmp_path: Path):
+    """task_manifest validator rejects expected_governance_updates with an arbitrary string."""
+    module = _load_module()
+    manifest_path = tmp_path / "task_manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "task_id": "BL-062",
+                "title": "Bad governance updates",
+                "kind": "governance",
+                "validation_tier": "governance-only",
+                "claimed_bl_status": "none",
+                "write_set": ["CHANGELOG.md"],
+                "expected_governance_updates": "some-arbitrary-string",
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    issues = module.validate_single_contract("task_manifest", manifest_path)
+
+    assert any("expected_governance_updates" in i for i in issues)
+
+
+# ---------------------------------------------------------------------------
+# BL-061 final finding: empty list must be rejected
+# ---------------------------------------------------------------------------
+
+
+def test_task_manifest_expected_governance_updates_empty_list_rejected(tmp_path: Path):
+    """task_manifest validator rejects expected_governance_updates=[] (empty list).
+
+    ROLES.md mandates concrete paths or the literal 'none'.
+    An empty list is not a concrete path declaration and must be rejected.
+    """
+    module = _load_module()
+    manifest_path = tmp_path / "task_manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "task_id": "BL-061",
+                "title": "Empty governance updates",
+                "kind": "technical",
+                "validation_tier": "targeted",
+                "claimed_bl_status": "none",
+                "write_set": ["CHANGELOG.md"],
+                "expected_governance_updates": [],
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    issues = module.validate_single_contract("task_manifest", manifest_path)
+
+    assert any("expected_governance_updates" in i for i in issues)
