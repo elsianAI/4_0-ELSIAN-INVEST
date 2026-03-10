@@ -125,6 +125,9 @@ class PhaseResult:
 
     Backward-compat rule: constructing ``PhaseResult(success=False)`` with
     no explicit severity automatically promotes severity to ``'fatal'``.
+
+    ``duration_ms`` is set by Pipeline after ``phase.run()`` returns; it is
+    0.0 until then.
     """
 
     phase_name: str = ""
@@ -133,6 +136,7 @@ class PhaseResult:
     data: Any = None
     severity: Severity = "ok"
     diagnostics: dict[str, Any] = field(default_factory=dict)
+    duration_ms: float = 0.0  # filled by Pipeline orchestrator after run()
 
     def __post_init__(self) -> None:
         # Backward compat: success=False without explicit severity → fatal.

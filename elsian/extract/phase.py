@@ -1103,7 +1103,16 @@ class ExtractPhase(PipelinePhase):
             f"{result.ticker}: extracted {total_fields} fields across "
             f"{len(result.periods)} periods from {result.filings_used} filings"
         )
-        return PhaseResult(phase_name="ExtractPhase", success=True, message=msg)
+        return PhaseResult(
+            phase_name="ExtractPhase",
+            success=True,
+            message=msg,
+            diagnostics={
+                "filings_used": result.filings_used,
+                "periods": len(result.periods),
+                "fields": total_fields,
+            },
+        )
 
     def _load_selection_rules(self) -> Dict:
         """Load selection_rules.json from config dir."""

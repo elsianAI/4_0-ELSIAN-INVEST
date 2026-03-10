@@ -9,6 +9,14 @@
 
 ---
 
+### BL-068 — T11 — Logging estructurado y métricas por run
+- **Prioridad:** BAJA
+- **Estado:** DONE ✅ (2026-03-10)
+- **Asignado a:** engineer
+- **Depende de:** BL-063
+- **Descripción:** Se cierra BL-068 sobre el scope estrecho y factual ya absorbido en el runtime actual de `elsian run`, sin abrir un framework horizontal de observabilidad. El cierre deja observabilidad machine-readable por run mediante `run_metrics.json`, con identidad de ejecución, timestamps, flags, `final_status`, métricas agregadas por fase y duraciones estructuradas (`duration_ms`) alimentadas desde `PhaseResult` y `Pipeline`. La extracción aporta diagnósticos estructurados mínimos (`filings_used`, `periods`, `fields`) y el artefacto se escribe en best-effort incluso en paths fatales, de modo que el diagnóstico no depende de parsear texto libre ni rompe el contrato actual del pipeline.
+- **Criterio de aceptación:** ✓ `BL-068` sale de `docs/project/BACKLOG.md` y queda archivada aquí. ✓ El cierre factual se mantiene estrecho: observabilidad machine-readable por run, no framework horizontal. ✓ `python3 -m pytest -q tests/unit/test_pipeline.py tests/integration/test_run_command.py` PASS (`46 passed`). ✓ `python3 -m elsian run TZOO --skip-assemble` PASS 100.0% (`348/348`). ✓ `python3 -m elsian run TZOO --with-acquire` PASS 100.0% (`348/348`). ✓ `python3 -m pytest -q --disable-warnings` PASS (`1550 passed, 5 skipped, 1 warning`). ✓ `python3 -m elsian eval --all` PASS 16/16. ✓ `git diff --check` limpio.
+
 ### BL-077 — Investigar inconsistencias de campos derivados
 - **Prioridad:** MEDIA
 - **Estado:** DONE ✅ (2026-03-10)

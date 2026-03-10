@@ -6,6 +6,8 @@ import argparse
 import json
 import logging
 import sys
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 from elsian.acquire.registry import get_fetcher
@@ -13,6 +15,7 @@ from elsian.evaluate.evaluator import evaluate
 from elsian.evaluate.dashboard import format_dashboard
 from elsian.models.case import CaseConfig
 from elsian.models.result import ExtractionResult, DashboardRow
+from elsian.run_metrics import write_run_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -220,18 +223,23 @@ def _run_pipeline_for_ticker(
     case = CaseConfig.from_file(case_dir)
     context = PipelineContext(case=case)
 
+    with_acquire = getattr(args, "with_acquire", False)
+    skip_assemble = getattr(args, "skip_assemble", False)
+    force = getattr(args, "force", False)
+    run_id = str(uuid.uuid4())
+    started_at = datetime.now(timezone.utc).isoformat()
+
     # ── Build phase sequence ───────────────────────────────────────────
     phases: list = []
-    if getattr(args, "with_acquire", False):
+    if with_acquire:
         from elsian.acquire.phase import AcquirePhase
         phases.append(AcquirePhase())
 
-    force = getattr(args, "force", False)
     phases.append(ConvertPhase(force=force))
     phases.append(ExtractPhase())
     phases.append(EvaluatePhase())
 
-    if not getattr(args, "skip_assemble", False):
+    if not skip_assemble:
         from elsian.assemble.phase import AssemblePhase
         phases.append(AssemblePhase())
 
@@ -252,9 +260,50 @@ def _run_pipeline_for_ticker(
 
     # ── Run ───────────────────────────────────────────────────────────
     Pipeline(phases, on_phase_done=_on_done).run(context)
+    finished_at = datetime.now(timezone.utc).isoformat()
 
     # ── Interpret results ─────────────────────────────────────────────
     fatal = any(r.is_fatal for r in context.phase_results)
+    eval_result = next(
+        (r for r in context.phase_results if r.phase_name == "EvaluatePhase"), None
+    )
+    # eval_ok_json: True=passed, False=failed, None=skipped or fatal (not applicable)
+    if fatal:
+        eval_ok_json: bool | None = None
+        eval_str = "FATAL"
+    elif eval_result is not None and eval_result.data is not None:
+        report = eval_result.data
+        eval_ok_json = report.score == 100.0
+        eval_str = f"{report.score:.1f}% ({report.matched}/{report.total_expected})"
+    elif eval_result is not None and not eval_result.diagnostics:
+        # EvaluatePhase ran but skipped (no expected.json): no data, no diagnostics
+        eval_ok_json = None
+        eval_str = "skipped"
+    else:
+        eval_ok_json = None
+        eval_str = "N/A"
+    # Exit code: None (skipped) counts as success; only False (quality FAIL) causes failure
+    exit_ok = (not fatal) and (eval_ok_json is not False)
+
+    # ── Write run_metrics.json (best-effort, always — even on fatal) ───
+    _metrics_path: Path | None = None
+    try:
+        _metrics_path = write_run_metrics(
+            case_dir,
+            run_id=run_id,
+            started_at=started_at,
+            finished_at=finished_at,
+            ticker=ticker,
+            source_hint=case.source_hint,
+            with_acquire=with_acquire,
+            skip_assemble=skip_assemble,
+            force=force,
+            context=context,
+            eval_ok=eval_ok_json,
+        )
+    except Exception as exc:
+        logger.warning("Failed to write run_metrics.json: %s", exc)
+
     if fatal:
         return False, "fatal error in pipeline"
 
@@ -264,17 +313,6 @@ def _run_pipeline_for_ticker(
         json.dumps(context.result.to_dict(), indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
-
-    eval_result = next(
-        (r for r in context.phase_results if r.phase_name == "EvaluatePhase"), None
-    )
-    if eval_result and eval_result.data:
-        report = eval_result.data
-        eval_ok = report.score == 100.0
-        eval_str = f"{report.score:.1f}% ({report.matched}/{report.total_expected})"
-    else:
-        eval_ok = True
-        eval_str = "N/A"
 
     # ── Final summary ─────────────────────────────────────────────────
     total_fields = sum(len(pr.fields) for pr in context.result.periods.values())
@@ -303,8 +341,10 @@ def _run_pipeline_for_ticker(
     print(f"  Extract:  {total_fields} fields extracted")
     print(f"  Evaluate: {eval_str}")
     print(f"  Assemble: {assemble_str}")
+    if _metrics_path:
+        print(f"  Metrics:  {_metrics_path.name}")
 
-    return eval_ok, eval_str
+    return exit_ok, eval_str
 
 
 def cmd_run(args: argparse.Namespace) -> None:

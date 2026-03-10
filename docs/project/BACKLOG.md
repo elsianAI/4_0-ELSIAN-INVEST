@@ -63,17 +63,6 @@
 - **Descripción:** Industrializar el onboarding con un único entrypoint que recorra discover, acquire, convert, preflight, draft y reporte de gaps, reduciendo el trabajo manual repetitivo.
 - **Criterio de aceptación:** Existe un flujo único de onboarding que funciona al menos para un ticker SEC y uno no-SEC y deja un reporte claro de estado, gaps y siguiente paso.
 
-### BL-068 — T11 — Logging estructurado y métricas por run
-- **Prioridad:** BAJA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** BL-063
-- **Referencias:** T11, docs/project/PLAN_IMPLEMENTACION_FILTRADO.md
-- **Descripción:** Añadir logging estructurado y artefactos de métricas por run para observar tiempos, ratios y cobertura sin parsear texto libre.
-- **Criterio de aceptación:** Cada ejecución deja métricas agregables por run con contexto suficiente para diagnóstico y comparación.
-
 ### BL-069 — T12 — Motor de diagnose
 - **Prioridad:** BAJA
 - **Estado:** TODO

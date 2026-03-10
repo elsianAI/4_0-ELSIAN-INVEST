@@ -16,6 +16,7 @@ htmlcov/
 # Generated pipeline outputs (regenerable)
 cases/*/extraction_result.json
 cases/*/filings_manifest.json
+cases/*/run_metrics.json
 cases/*/expected_draft.json
 
 # Downloaded filings (large, not tracked)

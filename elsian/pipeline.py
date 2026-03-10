@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 
@@ -45,7 +46,9 @@ class Pipeline:
         for phase in self.phases:
             name = phase.__class__.__name__
             logger.info("Running phase: %s", name)
+            _t0 = time.perf_counter()
             result = phase.run(context)
+            result.duration_ms = (time.perf_counter() - _t0) * 1000
             context.phase_results.append(result)
             if self._on_phase_done is not None:
                 self._on_phase_done(result)

@@ -2,6 +2,22 @@
 
 ## 2026-03-10
 
+### [4.0] Governance closeout — BL-068 archivada con scope estrecho de observabilidad por run
+- BL-068 sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual sobre el paquete ya auditado en verde: métricas machine-readable por run en `run_metrics.json`, duraciones por fase (`duration_ms`), agregados/flags/final_status y diagnósticos mínimos de extracción, sin vender un framework horizontal de logging.
+- `docs/project/PROJECT_STATE.md` no cambia porque BL-068 no alteraba la prioridad shared-core viva ni el estado operativo ya canonizado.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `CHANGELOG.md`
+- **Validation:** closeout respaldado por evidencia ya verificada: `python3 -m pytest -q tests/unit/test_pipeline.py tests/integration/test_run_command.py` → `46 passed`, `python3 -m elsian run TZOO --skip-assemble` PASS 100.0% (`348/348`), `python3 -m elsian run TZOO --with-acquire` PASS 100.0% (`348/348`), `python3 -m pytest -q --disable-warnings` → `1550 passed, 5 skipped, 1 warning`, `python3 -m elsian eval --all` PASS 16/16, `git diff --check` clean.
+
+### [4.0] BL-068 — Logging estructurado y métricas por run
+- `PhaseResult` (elsian/models/result.py) ahora expone `duration_ms: float = 0.0`, rellenado por `Pipeline` después de cada `phase.run()`.
+- `Pipeline.run()` (elsian/pipeline.py) mide tiempo con `time.perf_counter()` y guarda `result.duration_ms` en cada fase.
+- `ExtractPhase.run()` (elsian/extract/phase.py) devuelve diagnostics estructurados con `filings_used`, `periods`, `fields`.
+- Nuevo helper estrecho `elsian/run_metrics.py`: `build_run_metrics()` + `write_run_metrics()` producen `run_metrics.json` por ejecución con `schema_version`, `run_id`, timestamps, flags, `final_status`, `phases` (con `duration_ms`) y `aggregates` por fase (acquire, convert, extract, evaluate, assemble).
+- `elsian/cli.py` captura `run_id` y `started_at` antes del pipeline, `finished_at` después, calcula `eval_ok` antes del check fatal y llama `write_run_metrics()` (best-effort, siempre, incluso en fatal). Añade línea `Metrics: run_metrics.json` al summary humano.
+- `cases/*/run_metrics.json` añadido a `.gitignore` como artefacto runtime regenerable.
+- **Tests nuevos:** `tests/unit/test_pipeline.py` (+4 tests BL-068: `duration_ms` en PhaseResult y en Pipeline). `tests/integration/test_run_command.py` (+6 tests BL-068 en `TestRunMetrics`: schema keys, duration_ms por fase, with_acquire aggregate, skip_assemble flag, fatal sin corrupción de extraction_result, score desde diagnostics no desde texto libre).
+- **Files changed:** `elsian/models/result.py`, `elsian/pipeline.py`, `elsian/extract/phase.py`, `elsian/run_metrics.py` (nuevo), `elsian/cli.py`, `tests/unit/test_pipeline.py`, `tests/integration/test_run_command.py`, `.gitignore`, `CHANGELOG.md`
+
 ### [4.0] BL-077 — Resolución de inconsistencias de campos derivados (end-to-end)
 - Investigación filing-backed de las 17 discrepancias derivadas detectadas en `docs/reports/AUDIT_EXPECTED_JSON.md` para ACLS (ebitda Q1-Q3 2024/2025 × 6), NEXN (gross_profit FY2021-FY2024 × 4), SONO (gross_profit Q3-2023 × 1), SOM (delta_cash FY2023-FY2024 × 2), TZOO (delta_cash FY2019/2022/2023/2024 × 4).
 - Clasificaciones finales: 16 discrepancias **(b) fórmula inaplicable**, 1 discrepancia **(c) componente mal capturado** (SONO Q3-2023 cost_of_revenue: curado desde fiscal Q3 10-Q en lugar de fiscal Q4 de 10-K; valor correcto = 177,093; fix pendiente como deuda técnica candidata sin BL asignada, requiere ajuste simultáneo de pipeline y truth).

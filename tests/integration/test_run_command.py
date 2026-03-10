@@ -580,3 +580,337 @@ class TestFatalNoOverwrite:
         assert not result_path.exists(), (
             "extraction_result.json must not be created when the pipeline is fatal"
         )
+
+
+# ── Tests: run_metrics.json (BL-068) ─────────────────────────────────
+
+def _patch_minimal_pipeline(
+    tmp_path: "Path",
+    *,
+    acquire_result=None,
+    eval_score: float = 0.0,
+):
+    """Return a context manager that patches all pipeline phases for a minimal fake run.
+
+    Patches _find_case_dir to tmp_path and provides deterministic PhaseResult
+    objects with structured diagnostics (no free-text parsing needed).
+    """
+    from contextlib import ExitStack
+    from unittest.mock import patch
+    from elsian.models.result import PhaseResult, AcquisitionResult
+
+    def fake_convert(self, context):  # noqa: ANN001
+        return PhaseResult(
+            phase_name="ConvertPhase", success=True, message="ok",
+            diagnostics={"total": 0, "converted": 0, "skipped": 0, "failed": 0},
+        )
+
+    def fake_extract(self, context):  # noqa: ANN001
+        return PhaseResult(
+            phase_name="ExtractPhase", success=True, message="ok",
+            diagnostics={"filings_used": 0, "periods": 0, "fields": 0},
+        )
+
+    sev = "ok" if eval_score == 100.0 else "warning"
+
+    def fake_evaluate(self, context):  # noqa: ANN001
+        return PhaseResult(
+            phase_name="EvaluatePhase",
+            success=True,
+            severity=sev,
+            message=f"score={eval_score}",
+            diagnostics={
+                "score": eval_score,
+                "matched": 0,
+                "total_expected": 0,
+                "wrong": 0,
+                "missed": 0,
+                "extra": 0,
+            },
+        )
+
+    stack = ExitStack()
+    stack.enter_context(patch("elsian.cli._find_case_dir", return_value=tmp_path))
+    stack.enter_context(patch("elsian.convert.phase.ConvertPhase.run", fake_convert))
+    stack.enter_context(patch("elsian.extract.phase.ExtractPhase.run", fake_extract))
+    stack.enter_context(patch("elsian.evaluate.phase.EvaluatePhase.run", fake_evaluate))
+
+    if acquire_result is not None:
+        def fake_acquire(self, context):  # noqa: ANN001
+            return PhaseResult(
+                phase_name="AcquirePhase", success=True,
+                message="ok", data=acquire_result,
+            )
+        stack.enter_context(
+            patch("elsian.acquire.phase.AcquirePhase.run", fake_acquire)
+        )
+
+    return stack
+
+
+def _write_minimal_case(tmp_path: "Path") -> None:
+    """Write minimal case.json and expected.json to tmp_path."""
+    import json
+    (tmp_path / "case.json").write_text(
+        json.dumps({"ticker": "FAKEX", "source_hint": "sec", "currency": "USD"}),
+        encoding="utf-8",
+    )
+    (tmp_path / "expected.json").write_text(
+        json.dumps({"version": "1.0", "ticker": "FAKEX", "currency": "USD",
+                    "periods": {}}),
+        encoding="utf-8",
+    )
+
+
+class TestRunMetrics:
+    """Verify run_metrics.json is written with correct schema and content (BL-068)."""
+
+    def test_run_metrics_schema_keys(self, tmp_path: Path) -> None:
+        """run_metrics.json must have all required top-level schema keys."""
+        import json
+        _write_minimal_case(tmp_path)
+
+        with _patch_minimal_pipeline(tmp_path):
+            from elsian.cli import _run_pipeline_for_ticker
+            _run_pipeline_for_ticker("FAKEX", _make_args(ticker="FAKEX", skip_assemble=True))
+
+        metrics_path = tmp_path / "run_metrics.json"
+        assert metrics_path.exists(), "run_metrics.json must be written"
+
+        metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+        required_keys = {
+            "schema_version", "run_id", "started_at", "finished_at",
+            "duration_ms", "ticker", "command", "flags",
+            "source_hint", "final_status", "phases", "aggregates",
+        }
+        missing = required_keys - set(metrics.keys())
+        assert not missing, f"run_metrics.json missing keys: {missing}"
+        assert metrics["schema_version"] == "run_metrics_v1"
+        assert metrics["ticker"] == "FAKEX"
+        assert metrics["command"] == "run"
+        assert isinstance(metrics["run_id"], str) and len(metrics["run_id"]) > 0
+        assert isinstance(metrics["phases"], list)
+        assert len(metrics["phases"]) >= 3  # convert, extract, evaluate
+
+    def test_run_metrics_phase_duration_ms(self, tmp_path: Path) -> None:
+        """Each phase entry in run_metrics.phases must have duration_ms >= 0."""
+        import json
+        _write_minimal_case(tmp_path)
+
+        with _patch_minimal_pipeline(tmp_path):
+            from elsian.cli import _run_pipeline_for_ticker
+            _run_pipeline_for_ticker("FAKEX", _make_args(ticker="FAKEX", skip_assemble=True))
+
+        metrics = json.loads((tmp_path / "run_metrics.json").read_text(encoding="utf-8"))
+        for phase in metrics["phases"]:
+            assert "duration_ms" in phase, f"duration_ms missing from phase {phase!r}"
+            assert isinstance(phase["duration_ms"], (int, float))
+            assert phase["duration_ms"] >= 0.0, (
+                f"duration_ms must be >= 0, got {phase['duration_ms']}"
+            )
+
+    def test_run_metrics_with_acquire_aggregate(self, tmp_path: Path) -> None:
+        """with_acquire=True must produce an acquire aggregate in run_metrics."""
+        import json
+        from elsian.models.result import AcquisitionResult
+
+        _write_minimal_case(tmp_path)
+        acq = AcquisitionResult(
+            ticker="FAKEX",
+            source="sec",
+            filings_downloaded=5,
+            filings_coverage_pct=100.0,
+            cache_hit=True,
+            retries_total=2,
+            throttle_ms=120.0,
+            source_kind="filing",
+            gaps=[],
+        )
+
+        with _patch_minimal_pipeline(tmp_path, acquire_result=acq):
+            from elsian.cli import _run_pipeline_for_ticker
+            _run_pipeline_for_ticker(
+                "FAKEX", _make_args(ticker="FAKEX", with_acquire=True, skip_assemble=True)
+            )
+
+        metrics = json.loads((tmp_path / "run_metrics.json").read_text(encoding="utf-8"))
+        assert "acquire" in metrics["aggregates"], "acquire aggregate missing"
+        agg = metrics["aggregates"]["acquire"]
+        assert agg["filings_downloaded"] == 5
+        assert agg["cache_hit"] is True
+        assert agg["retries_total"] == 2
+        assert metrics["flags"]["with_acquire"] is True
+
+    def test_run_metrics_skip_assemble_reflected(self, tmp_path: Path) -> None:
+        """skip_assemble=True must be reflected in flags and assemble aggregate."""
+        import json
+        _write_minimal_case(tmp_path)
+
+        with _patch_minimal_pipeline(tmp_path):
+            from elsian.cli import _run_pipeline_for_ticker
+            _run_pipeline_for_ticker(
+                "FAKEX", _make_args(ticker="FAKEX", skip_assemble=True)
+            )
+
+        metrics = json.loads((tmp_path / "run_metrics.json").read_text(encoding="utf-8"))
+        assert metrics["flags"]["skip_assemble"] is True
+        assemble = metrics["aggregates"].get("assemble", {})
+        assert assemble.get("skipped") is True, (
+            f"assemble.skipped must be True when skip_assemble=True; got {assemble!r}"
+        )
+
+    def test_run_metrics_fatal_writes_file_without_overwriting_extraction_result(
+        self, tmp_path: Path
+    ) -> None:
+        """A fatal phase must write run_metrics.json but NOT overwrite extraction_result.json."""
+        import json
+        from unittest.mock import patch
+        from elsian.models.result import PhaseResult
+
+        _write_minimal_case(tmp_path)
+        sentinel = {"schema_version": "SENTINEL", "ticker": "FAKEX", "periods": {}}
+        (tmp_path / "extraction_result.json").write_text(
+            json.dumps(sentinel), encoding="utf-8"
+        )
+
+        def fatal_convert(self, context):  # noqa: ANN001
+            return PhaseResult(
+                phase_name="ConvertPhase", success=False,
+                severity="fatal", message="simulated fatal",
+            )
+
+        with (
+            patch("elsian.cli._find_case_dir", return_value=tmp_path),
+            patch("elsian.convert.phase.ConvertPhase.run", fatal_convert),
+        ):
+            from elsian.cli import _run_pipeline_for_ticker
+            ok, _ = _run_pipeline_for_ticker("FAKEX", _make_args(ticker="FAKEX", skip_assemble=True))
+
+        assert not ok, "fatal pipeline must return False"
+        # extraction_result.json must be preserved
+        written = json.loads((tmp_path / "extraction_result.json").read_text(encoding="utf-8"))
+        assert written["schema_version"] == "SENTINEL", (
+            "extraction_result.json must NOT be overwritten after fatal"
+        )
+        # run_metrics.json MUST be written even on fatal
+        metrics_path = tmp_path / "run_metrics.json"
+        assert metrics_path.exists(), "run_metrics.json must be written even when pipeline is fatal"
+        metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+        assert metrics["final_status"]["fatal"] is True
+
+    def test_run_metrics_score_from_structured_diagnostics_not_message(
+        self, tmp_path: Path
+    ) -> None:
+        """Score in run_metrics.aggregates.evaluate must come from diagnostics, not text."""
+        import json
+        from unittest.mock import patch
+        from elsian.models.result import PhaseResult
+
+        _write_minimal_case(tmp_path)
+
+        # Message intentionally misleads; diagnostics carry the real score
+        def fake_convert(self, context):  # noqa: ANN001
+            return PhaseResult(
+                phase_name="ConvertPhase", success=True, message="ok",
+                diagnostics={"total": 0, "converted": 0, "skipped": 0, "failed": 0},
+            )
+
+        def fake_extract(self, context):  # noqa: ANN001
+            return PhaseResult(
+                phase_name="ExtractPhase", success=True, message="ok",
+                diagnostics={"filings_used": 0, "periods": 0, "fields": 0},
+            )
+
+        def fake_evaluate(self, context):  # noqa: ANN001
+            return PhaseResult(
+                phase_name="EvaluatePhase", success=True, severity="warning",
+                message="FAKE 99%",  # must NOT be parsed by run_metrics helper
+                diagnostics={
+                    "score": 75.0,
+                    "matched": 3,
+                    "total_expected": 4,
+                    "wrong": 1,
+                    "missed": 0,
+                    "extra": 0,
+                },
+            )
+
+        with (
+            patch("elsian.cli._find_case_dir", return_value=tmp_path),
+            patch("elsian.convert.phase.ConvertPhase.run", fake_convert),
+            patch("elsian.extract.phase.ExtractPhase.run", fake_extract),
+            patch("elsian.evaluate.phase.EvaluatePhase.run", fake_evaluate),
+        ):
+            from elsian.cli import _run_pipeline_for_ticker
+            _run_pipeline_for_ticker("FAKEX", _make_args(ticker="FAKEX", skip_assemble=True))
+
+        metrics = json.loads((tmp_path / "run_metrics.json").read_text(encoding="utf-8"))
+        eval_agg = metrics["aggregates"]["evaluate"]
+        assert eval_agg["score"] == 75.0, (
+            f"Score must come from diagnostics (75.0), not text parsing; got {eval_agg['score']}"
+        )
+        assert eval_agg["matched"] == 3
+
+    def test_run_metrics_eval_skipped_null_eval_ok_and_skip_aggregate(
+        self, tmp_path: Path
+    ) -> None:
+        """When EvaluatePhase skips (no expected.json), final_status.eval_ok must be null
+        and aggregates.evaluate must be {"skipped": true} — not an all-zeros PASS."""
+        import json
+        from unittest.mock import patch
+        from elsian.models.result import PhaseResult
+
+        _write_minimal_case(tmp_path)
+
+        def fake_convert(self, context):  # noqa: ANN001
+            return PhaseResult(
+                phase_name="ConvertPhase", success=True, message="ok",
+                diagnostics={"total": 0, "converted": 0, "skipped": 0, "failed": 0},
+            )
+
+        def fake_extract(self, context):  # noqa: ANN001
+            return PhaseResult(
+                phase_name="ExtractPhase", success=True, message="ok",
+                diagnostics={"filings_used": 0, "periods": 0, "fields": 0},
+            )
+
+        def fake_evaluate_skip(self, context):  # noqa: ANN001
+            # Mirrors EvaluatePhase real skip path: no data, no diagnostics
+            return PhaseResult(
+                phase_name="EvaluatePhase",
+                success=True,
+                severity="ok",
+                message="TEST: no expected.json — skipping evaluation",
+            )
+
+        with (
+            patch("elsian.cli._find_case_dir", return_value=tmp_path),
+            patch("elsian.convert.phase.ConvertPhase.run", fake_convert),
+            patch("elsian.extract.phase.ExtractPhase.run", fake_extract),
+            patch("elsian.evaluate.phase.EvaluatePhase.run", fake_evaluate_skip),
+        ):
+            from elsian.cli import _run_pipeline_for_ticker
+            ok, summary = _run_pipeline_for_ticker(
+                "FAKEX", _make_args(ticker="FAKEX", skip_assemble=True)
+            )
+
+        # A skipped eval must NOT cause pipeline failure
+        assert ok is True, f"Pipeline must succeed when eval is skipped; got ok={ok!r}"
+        assert summary == "skipped", f"Expected 'skipped' summary, got {summary!r}"
+
+        metrics = json.loads((tmp_path / "run_metrics.json").read_text(encoding="utf-8"))
+
+        # eval_ok must be null — skip is NOT a PASS
+        assert metrics["final_status"]["eval_ok"] is None, (
+            f"final_status.eval_ok must be null when eval is skipped; "
+            f"got {metrics['final_status']['eval_ok']!r}"
+        )
+
+        # evaluate aggregate must signal skip, not produce an all-zeros score
+        eval_agg = metrics["aggregates"]["evaluate"]
+        assert eval_agg.get("skipped") is True, (
+            f"aggregates.evaluate must have skipped=true when eval skipped; got {eval_agg!r}"
+        )
+        assert "score" not in eval_agg, (
+            f"aggregates.evaluate must not contain 'score' when skipped; got {eval_agg!r}"
+        )
