@@ -23,13 +23,24 @@ class AssemblePhase(PipelinePhase):
     def run(self, context: PipelineContext) -> PhaseResult:
         ticker = context.case.ticker
         case_dir = Path(context.case.case_dir)
+        # BL-070: use workspace runtime_dir when provided, else fall back to case_dir
+        output_dir: Path | None = (
+            Path(context.runtime_dir) if context.runtime_dir else None
+        )
 
         try:
             from elsian.assemble.truth_pack import TruthPackAssembler
 
             assembler = TruthPackAssembler()
-            tp = assembler.assemble(case_dir)
-            truth_pack_path = case_dir / "truth_pack.json"
+            # BL-070 audit fix: pass in-memory extraction result so that
+            # AssemblePhase is not dependent on extraction_result.json being
+            # present on disk.  cli.py writes extraction_result.json only
+            # AFTER Pipeline.run() returns, so on a first workspace run the
+            # file does not exist yet; using context.result avoids stale-data
+            # or FileNotFoundError regressions.
+            in_memory_er = context.result.to_dict()
+            tp = assembler.assemble(case_dir, output_dir=output_dir, extraction_result=in_memory_er)
+            truth_pack_path = (output_dir if output_dir else case_dir) / "truth_pack.json"
             meta = tp.get("metadata", {})
             dm = tp.get("derived_metrics", {})
             derived_count = sum(

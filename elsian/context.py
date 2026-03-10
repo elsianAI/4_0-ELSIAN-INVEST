@@ -26,6 +26,8 @@ class PipelineContext:
     config_dir: str = ""
     errors: list[str] = field(default_factory=list)
     phase_results: list[PhaseResult] = field(default_factory=list)
+    # BL-070: external workspace dir for runtime artifacts; empty = use case_dir
+    runtime_dir: str = ""
 
     def add_candidates(self, new: list[FieldCandidate]) -> None:
         """Append new field candidates."""

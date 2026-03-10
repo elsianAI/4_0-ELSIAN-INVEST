@@ -223,6 +223,18 @@ def _run_pipeline_for_ticker(
     case = CaseConfig.from_file(case_dir)
     context = PipelineContext(case=case)
 
+    # BL-070: workspace path resolution — runtime artifacts land outside cases/
+    # Use canonical ticker from case.json so the runtime subdir is always uppercase
+    # regardless of the casing the user typed (e.g. "tzoo" → "TZOO").
+    workspace = getattr(args, "workspace", None)
+    if workspace:
+        canonical_ticker = case.ticker if case.ticker else ticker
+        runtime_dir = Path(workspace) / canonical_ticker
+        runtime_dir.mkdir(parents=True, exist_ok=True)
+        context.runtime_dir = str(runtime_dir)
+    else:
+        runtime_dir = case_dir
+
     with_acquire = getattr(args, "with_acquire", False)
     skip_assemble = getattr(args, "skip_assemble", False)
     force = getattr(args, "force", False)
@@ -286,10 +298,11 @@ def _run_pipeline_for_ticker(
     exit_ok = (not fatal) and (eval_ok_json is not False)
 
     # ── Write run_metrics.json (best-effort, always — even on fatal) ───
+    # BL-070: write to runtime_dir (workspace when provided, else case_dir)
     _metrics_path: Path | None = None
     try:
         _metrics_path = write_run_metrics(
-            case_dir,
+            runtime_dir,
             run_id=run_id,
             started_at=started_at,
             finished_at=finished_at,
@@ -308,7 +321,8 @@ def _run_pipeline_for_ticker(
         return False, "fatal error in pipeline"
 
     # ── Save extraction result (only when no fatal phase) ─────────────
-    out_path = case_dir / "extraction_result.json"
+    # BL-070: write to runtime_dir (workspace when provided, else case_dir)
+    out_path = runtime_dir / "extraction_result.json"
     out_path.write_text(
         json.dumps(context.result.to_dict(), indent=2, ensure_ascii=False),
         encoding="utf-8",
@@ -931,6 +945,16 @@ def main() -> None:
     p_run.add_argument("--with-acquire", dest="with_acquire", action="store_true", help="Run acquire before convert")
     p_run.add_argument("--skip-assemble", dest="skip_assemble", action="store_true", help="Skip truth_pack generation")
     p_run.add_argument("--force", action="store_true", help="Re-convert filings even if .clean.md already exists")
+    p_run.add_argument(
+        "--workspace",
+        default=None,
+        metavar="PATH",
+        help=(
+            "Write runtime artifacts (extraction_result.json, run_metrics.json, "
+            "truth_pack.json) to PATH/<TICKER>/ instead of cases/<TICKER>/. "
+            "cases/ is still read for case.json, expected.json and existing filings/."
+        ),
+    )
     p_run.set_defaults(func=cmd_run)
 
     p_eval = sub.add_parser("eval", help="Evaluate extraction vs expected.json")

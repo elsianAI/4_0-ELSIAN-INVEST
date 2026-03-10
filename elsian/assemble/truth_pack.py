@@ -73,12 +73,27 @@ class TruthPackAssembler:
 
     SCHEMA_VERSION = "TruthPack_v1"
 
-    def assemble(self, case_dir: Path) -> dict[str, Any]:
-        """Main entry point. Returns TruthPack_v1 dict and saves to case_dir.
+    def assemble(
+        self,
+        case_dir: Path,
+        output_dir: Path | None = None,
+        extraction_result: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Main entry point. Returns TruthPack_v1 dict and saves to output_dir.
 
         Args:
-            case_dir: Path to a case directory containing extraction_result.json
-                      and optionally _market_data.json.
+            case_dir: Canonical case directory. Always used for case.json and
+                      _market_data.json. Also used as fallback for
+                      extraction_result.json when it is absent from output_dir.
+            output_dir: Directory where truth_pack.json is written. Defaults to
+                        case_dir when not provided (legacy / no-workspace behaviour).
+                        When set (--workspace runs) extraction_result.json is
+                        looked up in output_dir first, then in case_dir.
+            extraction_result: Optional in-memory dict. When provided the disk
+                        lookup for extraction_result.json is skipped entirely.
+                        Used by AssemblePhase to avoid a timing dependency on
+                        the file that cli.py writes after Pipeline.run() returns
+                        (BL-070 audit fix).
 
         Returns:
             TruthPack_v1 dict.
@@ -87,9 +102,22 @@ class TruthPackAssembler:
             FileNotFoundError: If extraction_result.json or case.json is missing.
         """
         case_dir = Path(case_dir)
+        output_dir = Path(output_dir) if output_dir is not None else case_dir
 
-        # a) Load extraction_result.json
-        extraction_result = self._load_extraction_result(case_dir)
+        # a) Load extraction_result
+        if extraction_result is None:
+            # BL-070: prefer output_dir (workspace) so that repeated workspace
+            # runs pick up the artifact from the previous run; fall back to
+            # case_dir for legacy no-workspace runs or cmd_assemble standalone.
+            er_path = output_dir / "extraction_result.json"
+            if not er_path.exists():
+                er_path = case_dir / "extraction_result.json"
+            if not er_path.exists():
+                raise FileNotFoundError(
+                    f"extraction_result.json not found in {case_dir} or {output_dir}"
+                )
+            extraction_result = json.loads(er_path.read_text(encoding="utf-8"))
+        # else: in-memory dict provided by AssemblePhase — no disk read needed.
 
         # b) Load _market_data.json (optional)
         market_data = self._load_market_data(case_dir)
@@ -114,8 +142,8 @@ class TruthPackAssembler:
             quality=quality,
         )
 
-        # g) Save as truth_pack.json
-        out_path = case_dir / "truth_pack.json"
+        # g) Save as truth_pack.json to output_dir (workspace or case_dir)
+        out_path = output_dir / "truth_pack.json"
         out_path.write_text(
             json.dumps(truth_pack, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
@@ -129,7 +157,7 @@ class TruthPackAssembler:
 
     @staticmethod
     def _load_extraction_result(case_dir: Path) -> dict[str, Any]:
-        """Load extraction_result.json from case directory."""
+        """Load extraction_result.json from case directory (legacy helper)."""
         path = case_dir / "extraction_result.json"
         if not path.exists():
             raise FileNotFoundError(

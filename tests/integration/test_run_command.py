@@ -36,6 +36,7 @@ def _make_args(**kwargs: Any) -> argparse.Namespace:
         "with_acquire": False,
         "skip_assemble": False,
         "force": False,
+        "workspace": None,  # BL-070: no workspace by default (legacy behaviour)
     }
     defaults.update(kwargs)
     ns = argparse.Namespace(**defaults)
@@ -155,18 +156,38 @@ class TestRunCommandTZOO:
         # truth_pack.json may or may not exist depending on prior runs — we only
         # verify that the pipeline runs successfully with skip_assemble=True
 
-    def test_run_tzoo_with_assemble(self) -> None:
-        """Default run should produce truth_pack.json."""
+    def test_run_tzoo_with_assemble(self, tmp_path: Path) -> None:
+        """--workspace with assemble writes truth_pack.json outside cases/."""
         from elsian.cli import _run_pipeline_for_ticker
-        args = _make_args(ticker="TZOO", skip_assemble=False)
+        # BL-070: use workspace so truth_pack.json lands outside cases/
+        args = _make_args(ticker="TZOO", skip_assemble=False, workspace=str(tmp_path))
         ok, _ = _run_pipeline_for_ticker("TZOO", args)
         assert ok
-        truth_pack = CASES_DIR / "TZOO" / "truth_pack.json"
-        # If assemble ran, truth_pack.json should exist
-        assert truth_pack.exists(), "truth_pack.json should have been generated"
+        runtime_dir = tmp_path / "TZOO"
+        truth_pack = runtime_dir / "truth_pack.json"
+        # If assemble ran, truth_pack.json should exist in the workspace
+        assert truth_pack.exists(), "truth_pack.json should have been generated in workspace"
         data = json.loads(truth_pack.read_text(encoding="utf-8"))
         assert data["schema_version"] == "TruthPack_v1"
         assert data["ticker"] == "TZOO"
+
+    def test_run_tzoo_workspace_no_assemble(self, tmp_path: Path) -> None:
+        """--workspace --skip-assemble writes extraction_result.json and run_metrics.json outside cases/."""
+        from elsian.cli import _run_pipeline_for_ticker
+        args = _make_args(ticker="TZOO", skip_assemble=True, workspace=str(tmp_path))
+        ok, summary = _run_pipeline_for_ticker("TZOO", args)
+        assert ok, f"Pipeline failed: {summary}"
+        runtime_dir = tmp_path / "TZOO"
+        assert (runtime_dir / "extraction_result.json").exists(), (
+            "extraction_result.json must land in workspace, not in cases/"
+        )
+        assert (runtime_dir / "run_metrics.json").exists(), (
+            "run_metrics.json must land in workspace, not in cases/"
+        )
+        # Verify the extraction result is valid JSON with expected structure
+        er = json.loads((runtime_dir / "extraction_result.json").read_text(encoding="utf-8"))
+        assert er["ticker"] == "TZOO"
+        assert "periods" in er
 
     def test_run_tzoo_force(self) -> None:
         """--force flag should run pipeline successfully."""
@@ -913,4 +934,268 @@ class TestRunMetrics:
         )
         assert "score" not in eval_agg, (
             f"aggregates.evaluate must not contain 'score' when skipped; got {eval_agg!r}"
+        )
+
+
+# ── Tests: BL-070 audit fix — AssemblePhase in-memory extraction_result ──
+
+class TestAssemblePhaseWorkspaceBL070:
+    """BL-070 audit fix: AssemblePhase must use context.result in-memory,
+    never fall back to a stale or missing extraction_result.json on disk."""
+
+    def test_assembler_accepts_in_memory_extraction_result_ignores_disk(
+        self, tmp_path: Path
+    ) -> None:
+        """TruthPackAssembler.assemble() must use the in-memory dict when
+        provided, ignoring any extraction_result.json on disk."""
+        import json
+        from elsian.assemble.truth_pack import TruthPackAssembler
+
+        # Write case.json (required by assembler)
+        (tmp_path / "case.json").write_text(
+            json.dumps({"ticker": "TEST", "source_hint": "sec", "currency": "USD"}),
+            encoding="utf-8",
+        )
+        # Write a STALE extraction_result.json on disk — must be ignored
+        stale_er = {
+            "schema_version": "ExtractionResult_v1",
+            "ticker": "STALE",
+            "currency": "USD",
+            "extraction_date": "2020-01-01",
+            "filings_used": 0,
+            "periods": {"FY2019": {"fecha_fin": "2019-12-31", "tipo_periodo": "anual", "fields": {}}},
+            "audit": {"fields_extracted": 0, "fields_discarded": 0, "discarded_reasons": {}},
+        }
+        (tmp_path / "extraction_result.json").write_text(
+            json.dumps(stale_er), encoding="utf-8"
+        )
+        # Fresh in-memory dict — different state from disk
+        fresh_er = {
+            "schema_version": "ExtractionResult_v1",
+            "ticker": "TEST",
+            "currency": "USD",
+            "extraction_date": "2026-03-10",
+            "filings_used": 5,
+            "periods": {},
+            "audit": {"fields_extracted": 0, "fields_discarded": 0, "discarded_reasons": {}},
+        }
+
+        assembler = TruthPackAssembler()
+        tp = assembler.assemble(tmp_path, extraction_result=fresh_er)
+
+        # truth_pack must reflect the fresh in-memory data, not the stale disk file
+        assert tp["schema_version"] == "TruthPack_v1"
+        assert tp["ticker"] == "TEST", (
+            f"truth_pack.ticker must be 'TEST' (from fresh in-memory), "
+            f"got {tp['ticker']!r} (stale disk had ticker='STALE')"
+        )
+        assert (tmp_path / "truth_pack.json").exists()
+
+    def test_assembler_raises_when_no_in_memory_and_no_disk_file(
+        self, tmp_path: Path
+    ) -> None:
+        """Without in-memory dict and without disk file, assembler must raise FileNotFoundError."""
+        import json
+        from elsian.assemble.truth_pack import TruthPackAssembler
+
+        (tmp_path / "case.json").write_text(
+            json.dumps({"ticker": "TEST", "source_hint": "sec", "currency": "USD"}),
+            encoding="utf-8",
+        )
+        # No extraction_result.json on disk, no in-memory provided
+        assembler = TruthPackAssembler()
+        with pytest.raises(FileNotFoundError, match="extraction_result.json not found"):
+            assembler.assemble(tmp_path)
+
+    def test_assemble_phase_passes_context_result_in_memory(
+        self, tmp_path: Path
+    ) -> None:
+        """AssemblePhase.run() must pass context.result.to_dict() to the assembler
+        so that it does NOT require extraction_result.json to be present on disk."""
+        import json
+        from elsian.assemble.phase import AssemblePhase
+        from elsian.context import PipelineContext
+        from elsian.models.case import CaseConfig
+
+        # case_dir has case.json but NO extraction_result.json on disk
+        (tmp_path / "case.json").write_text(
+            json.dumps({"ticker": "TEST", "source_hint": "sec", "currency": "USD"}),
+            encoding="utf-8",
+        )
+        assert not (tmp_path / "extraction_result.json").exists(), (
+            "Pre-condition: no extraction_result.json on disk"
+        )
+
+        case = CaseConfig()
+        case.ticker = "TEST"
+        case.case_dir = str(tmp_path)
+        context = PipelineContext(case=case)
+        # Populate context.result (simulates ExtractPhase having run)
+        context.result.ticker = "TEST"
+        context.result.currency = "USD"
+
+        phase = AssemblePhase()
+        result = phase.run(context)
+
+        # AssemblePhase must succeed despite no disk file — uses in-memory result
+        assert not result.is_fatal, (
+            f"AssemblePhase must not be fatal when using in-memory result; "
+            f"got severity={result.severity!r}, message={result.message!r}"
+        )
+        # truth_pack.json written to case_dir (no workspace in this test)
+        tp_path = tmp_path / "truth_pack.json"
+        assert tp_path.exists(), "truth_pack.json must be written by AssemblePhase"
+        tp = json.loads(tp_path.read_text(encoding="utf-8"))
+        assert tp["schema_version"] == "TruthPack_v1"
+
+    def test_workspace_first_run_no_prior_extraction_result_on_disk(
+        self, tmp_path: Path
+    ) -> None:
+        """BL-070 blocker: first workspace run with clean workspace dir must
+        assemble truth_pack from in-memory pipeline result, not fail or read
+        stale/missing extraction_result.json from disk."""
+        import json
+        from unittest.mock import patch
+
+        from elsian.models.result import PhaseResult
+
+        case_dir = tmp_path / "case"
+        case_dir.mkdir()
+        workspace_dir = tmp_path / "workspace"
+        workspace_dir.mkdir()
+
+        (case_dir / "case.json").write_text(
+            json.dumps({"ticker": "FAKEX", "source_hint": "sec", "currency": "USD"}),
+            encoding="utf-8",
+        )
+        (case_dir / "expected.json").write_text(
+            json.dumps({"version": "1.0", "ticker": "FAKEX", "currency": "USD", "periods": {}}),
+            encoding="utf-8",
+        )
+        # Explicitly confirm: no extraction_result.json anywhere
+        assert not (case_dir / "extraction_result.json").exists()
+        assert not (workspace_dir / "FAKEX" / "extraction_result.json").exists()
+
+        def fake_convert(self, context):  # noqa: ANN001
+            return PhaseResult(
+                phase_name="ConvertPhase",
+                success=True,
+                message="mocked-convert",
+                diagnostics={"total": 0, "converted": 0, "skipped": 0, "failed": 0},
+            )
+
+        def fake_extract(self, context):  # noqa: ANN001
+            context.result.ticker = "FAKEX"
+            context.result.currency = "USD"
+            return PhaseResult(phase_name="ExtractPhase", success=True, message="mocked-extract")
+
+        def fake_evaluate(self, context):  # noqa: ANN001
+            return PhaseResult(
+                phase_name="EvaluatePhase",
+                success=True,
+                severity="ok",
+                message="TEST: no expected.json — skipping evaluation",
+            )
+
+        with (
+            patch("elsian.cli._find_case_dir", return_value=case_dir),
+            patch("elsian.convert.phase.ConvertPhase.run", fake_convert),
+            patch("elsian.extract.phase.ExtractPhase.run", fake_extract),
+            patch("elsian.evaluate.phase.EvaluatePhase.run", fake_evaluate),
+        ):
+            from elsian.cli import _run_pipeline_for_ticker
+
+            args = _make_args(
+                ticker="FAKEX",
+                skip_assemble=False,
+                workspace=str(workspace_dir),
+            )
+            ok, summary = _run_pipeline_for_ticker("FAKEX", args)
+
+        assert ok is True, f"Pipeline must succeed on first workspace run; got ok={ok!r}, summary={summary!r}"
+
+        runtime_dir = workspace_dir / "FAKEX"
+        # truth_pack.json must exist in workspace (assembled from in-memory result)
+        tp_path = runtime_dir / "truth_pack.json"
+        assert tp_path.exists(), (
+            "truth_pack.json must be present in workspace after first run "
+            "even when no extraction_result.json existed on disk beforehand"
+        )
+        tp = json.loads(tp_path.read_text(encoding="utf-8"))
+        assert tp["schema_version"] == "TruthPack_v1"
+        # extraction_result.json written after pipeline by cli.py — must also exist
+        er_path = runtime_dir / "extraction_result.json"
+        assert er_path.exists(), "extraction_result.json must be written to workspace"
+
+
+# ── Tests: workspace canonical ticker (BL-070 audit fix) ─────────────
+
+class TestWorkspaceCanonicalTicker:
+    """Verify runtime workspace path uses canonical ticker from case.json, not raw arg.
+
+    Regression coverage for: same case must not write to PATH/tzoo AND PATH/TZOO
+    depending on how the user spelled the ticker at invocation time.
+    """
+
+    def test_workspace_path_uses_canonical_ticker_not_raw_arg(self, tmp_path: Path) -> None:
+        """Invoking with lowercase ticker must create PATH/<CANONICAL>/, not PATH/<raw>/.
+
+        The canonical ticker is read from case.json (e.g. 'FAKEX').
+        The invoke argument uses a different casing (e.g. 'fakex').
+        After the fix, runtime_dir must be tmp_path/'FAKEX', never tmp_path/'fakex'.
+        """
+        import json
+        from unittest.mock import patch
+
+        from elsian.models.result import PhaseResult
+
+        # case.json declares canonical ticker as uppercase "FAKEX"
+        case_dir = tmp_path / "case_root"
+        case_dir.mkdir()
+        (case_dir / "case.json").write_text(
+            json.dumps({"ticker": "FAKEX", "source_hint": "sec", "currency": "USD"}),
+            encoding="utf-8",
+        )
+
+        workspace_dir = tmp_path / "workspace"
+
+        def fake_convert(self, context):  # noqa: ANN001
+            return PhaseResult(phase_name="ConvertPhase", success=True, message="ok")
+
+        def fake_extract(self, context):  # noqa: ANN001
+            return PhaseResult(phase_name="ExtractPhase", success=True, message="ok")
+
+        def fake_evaluate(self, context):  # noqa: ANN001
+            return PhaseResult(
+                phase_name="EvaluatePhase", success=True, severity="ok",
+                message="no expected.json — skipping",
+            )
+
+        with (
+            patch("elsian.cli._find_case_dir", return_value=case_dir),
+            patch("elsian.convert.phase.ConvertPhase.run", fake_convert),
+            patch("elsian.extract.phase.ExtractPhase.run", fake_extract),
+            patch("elsian.evaluate.phase.EvaluatePhase.run", fake_evaluate),
+        ):
+            from elsian.cli import _run_pipeline_for_ticker
+
+            # Invoke with LOWERCASE ticker — simulates user typing 'elsian run fakex'
+            args = _make_args(
+                ticker="fakex",
+                skip_assemble=True,
+                workspace=str(workspace_dir),
+            )
+            _run_pipeline_for_ticker("fakex", args)
+
+        # Use os.listdir to get the actual entry name on disk (preserves casing
+        # even on case-insensitive filesystems like macOS APFS).
+        import os
+        created = os.listdir(workspace_dir)
+        assert "FAKEX" in created, (
+            f"Runtime dir must use canonical ticker 'FAKEX' from case.json; "
+            f"workspace contains: {created}"
+        )
+        assert "fakex" not in created, (
+            f"Raw-casing 'fakex' must NOT appear as a separate entry; "
+            f"workspace contains: {created}"
         )

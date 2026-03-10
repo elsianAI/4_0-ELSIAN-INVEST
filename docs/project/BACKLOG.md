@@ -63,17 +63,6 @@
 - **Descripción:** Construir un motor de diagnose que agrupe fallos y gaps por patrón técnico para abrir trabajo de mejora con menos inspección manual.
 - **Criterio de aceptación:** El sistema genera un informe de hotspots reutilizable para decidir próximas BL sin revisar ticker por ticker a mano.
 
-### BL-070 — T14 — Separación fixtures vs artefactos runtime
-- **Prioridad:** BAJA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** BL-062
-- **Referencias:** T14, docs/project/PLAN_IMPLEMENTACION_FILTRADO.md
-- **Descripción:** Separar fixtures versionadas de artefactos runtime y permitir workspaces externos sin ensuciar el repo con outputs generados.
-- **Criterio de aceptación:** El runtime puede ejecutarse en workspace externo y el repo deja de depender de artefactos generados para funcionar o testear.
-
 ### BL-071 — T15 — Scaffolding y plantillas
 - **Prioridad:** BAJA
 - **Estado:** TODO

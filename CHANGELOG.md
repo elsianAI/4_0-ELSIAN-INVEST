@@ -1,6 +1,34 @@
 # Changelog
 
+## 2026-03-11
+
+### [4.0] Governance closeout — BL-070 archivada con scope estrecho de runtime workspace
+- BL-070 sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual limitado al path actual de `elsian run --workspace`: los artefactos runtime `extraction_result.json`, `run_metrics.json` y `truth_pack.json` se escriben en `PATH/<ticker_canónico>/`, usando el ticker canónico del caso y no el casing raw del invoke.
+- `cases/` sigue siendo la raíz canónica de lectura para `case.json`, `expected.json` y `filings/` existentes. Este closeout no promete aislar `ConvertPhase`, `source-map` ni todos los artefactos generados del repo, y tampoco declara `cases/` como fully read-only.
+- `docs/project/PROJECT_STATE.md` se reconcilia solo de forma mínima para reflejar que `BL-070` ya no está viva en el backlog, manteniendo intacta la jerarquía operativa: la siguiente prioridad shared-core viva sigue siendo `BL-067`.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** closeout respaldado por evidencia ya verificada del paquete técnico y reconciliada con las suites vigentes del paquete BL-070: `python3 -m pytest -q tests/integration/test_run_command.py tests/integration/test_assemble.py tests/integration/test_source_map.py` → `44 passed`, `python3 -m pytest tests/unit/test_pipeline.py tests/integration/test_run_command.py -q --tb=no` → `52 passed, EXIT:0`, `python3 -m elsian run TZOO --workspace /tmp/elsian-bl070 --skip-assemble` PASS, `python3 -m elsian run TZOO --workspace /tmp/elsian-bl070` PASS, `python3 -m elsian eval TZOO` PASS 100.0% (`348/348`), `git diff --check` clean.
+
 ## 2026-03-10
+
+### [4.0] BL-070 audit fix — workspace runtime path normalizado al ticker canónico del caso
+- `elsian/cli.py`: `_run_pipeline_for_ticker` construye el subdirectorio de workspace con `case.ticker` (ticker canónico leído de `case.json`) en lugar del argumento raw del usuario. Elimina la divergencia `PATH/tzoo` vs `PATH/TZOO` según el casing del invoke; el lookup de caso ya era case-insensitive, por lo que el path runtime debe coincidir.
+- `tests/integration/test_run_command.py`: nueva clase `TestWorkspaceCanonicalTicker` con test `test_workspace_path_uses_canonical_ticker_not_raw_arg` que cubre el invoke con casing distinto al canónico y confirma que el path creado usa el ticker de `case.json`.
+- **Files changed:** `elsian/cli.py`, `tests/integration/test_run_command.py`, `CHANGELOG.md`
+
+### [4.0] BL-070 audit fix — AssemblePhase usa context.result en memoria para eliminar dependencia de extraction_result.json en primer run con workspace
+- `elsian/assemble/truth_pack.py`: `TruthPackAssembler.assemble()` acepta nuevo parámetro opcional `extraction_result: dict | None = None`. Cuando se provee, salta el lookup en disco completamente. El fallback a disco se conserva para uso standalone (`elsian assemble`) y backward compatibility.
+- `elsian/assemble/phase.py`: `AssemblePhase.run()` pasa `context.result.to_dict()` como `extraction_result` al assembler. Esto elimina la dependencia de timing: `cli.py` escribe `extraction_result.json` a `runtime_dir` solo DESPUÉS de `Pipeline.run()`, por lo que en un primer run con workspace vacío el archivo no existe cuando `AssemblePhase` corre. Con el fix, el truth_pack siempre se ensambla a partir del resultado del run actual, nunca de un artefacto previo en casos.
+- `tests/integration/test_run_command.py`: nueva clase `TestAssemblePhaseWorkspaceBL070` con 4 tests: `test_assembler_accepts_in_memory_extraction_result_ignores_disk`, `test_assembler_raises_when_no_in_memory_and_no_disk_file`, `test_assemble_phase_passes_context_result_in_memory`, `test_workspace_first_run_no_prior_extraction_result_on_disk`.
+- **Riesgo residual conocido:** `ConvertPhase` sigue escribiendo `.clean.md`/`.txt` en `cases/filings/`; scope de BL-070 no incluye storage framework para artefactos de conversión.
+
+
+- `elsian/cli.py`: nuevo argumento `--workspace PATH` en `elsian run`. Cuando se provee, los artefactos runtime (`extraction_result.json`, `run_metrics.json`, `truth_pack.json`) se escriben en `PATH/<TICKER>/` en lugar de `cases/<TICKER>/`. `cases/` se sigue usando para leer case.json, expected.json y filings/ existentes; `ConvertPhase` puede seguir escribiendo `.clean.md`/`.txt` en `cases/filings/` (fuera del scope de BL-070). Comportamiento legacy sin `--workspace` queda intacto.
+- `elsian/context.py`: nuevo campo `runtime_dir: str = ""` en `PipelineContext` para transportar la ruta de workspace a las fases que escriben artefactos.
+- `elsian/assemble/truth_pack.py`: `TruthPackAssembler.assemble()` acepta `output_dir: Path | None = None`. Escribe `truth_pack.json` en `output_dir` (workspace) cuando se provee; busca `extraction_result.json` en `output_dir` primero y cae sobre `case_dir` como fallback. Sin cambios de schema ni payload.
+- `elsian/assemble/phase.py`: `AssemblePhase.run()` lee `context.runtime_dir` y lo pasa como `output_dir` al assembler.
+- `tests/integration/test_run_command.py`: `_make_args` añade `workspace=None`; `test_run_tzoo_with_assemble` usa `workspace=tmp_path` y verifica que `truth_pack.json` cae en la ruta de workspace; nuevo `test_run_tzoo_workspace_no_assemble` verifica que `extraction_result.json` y `run_metrics.json` caen en workspace.
+- **Validation:** `python3 -m pytest -q tests/integration/test_run_command.py tests/integration/test_assemble.py tests/integration/test_source_map.py` → `44 passed`. `python3 -m pytest tests/unit/test_pipeline.py tests/integration/test_run_command.py -q --tb=no` → `52 passed, EXIT:0`. `python3 -m elsian run TZOO --workspace /tmp/elsian-bl070 --skip-assemble` PASS, artifacts en `/tmp/elsian-bl070/TZOO/`. `python3 -m elsian run TZOO --workspace /tmp/elsian-bl070` PASS, `truth_pack.json` en `/tmp/elsian-bl070/TZOO/`. TZOO eval 100.0% (348/348). `git diff --check` clean.
 
 ### [4.0] Governance closeout — BL-065 archivada con scope estrecho en extract
 - BL-065 sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual sobre la externalización declarativa de policy en extract ya auditada en verde: `config/extraction_rules.json`, packs por mercado/formato y precedencia base → pack → `config_overrides`, sin abrir un policy engine ni rediseñar merge/runtime.

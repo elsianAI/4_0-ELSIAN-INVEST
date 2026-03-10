@@ -9,6 +9,14 @@
 
 ---
 
+### BL-070 — T14 — Separación fixtures vs artefactos runtime
+- **Prioridad:** BAJA
+- **Estado:** DONE ✅ (2026-03-11)
+- **Asignado a:** engineer
+- **Depende de:** BL-062
+- **Descripción:** Se cierra BL-070 con alcance estrecho y factual sobre el path actual de `elsian run` cuando se usa `--workspace PATH`, sin vender una separación total entre fixtures versionadas y todos los artefactos del repo. El cierre absorbido y ya auditado en verde limita la escritura runtime a `PATH/<ticker_canónico>/` para `extraction_result.json`, `run_metrics.json` y `truth_pack.json`, usando el ticker canónico del caso. `cases/` sigue siendo la raíz canónica de lectura para `case.json`, `expected.json` y `filings/` existentes. Quedan explícitamente fuera de este cierre el aislamiento de `ConvertPhase`, `source-map` y cualquier afirmación de que el repo entero ya no dependa de artefactos generados o de que `cases/` sea fully read-only.
+- **Criterio de aceptación:** ✓ `BL-070` sale de `docs/project/BACKLOG.md` y queda archivada aquí. ✓ El cierre factual se mantiene estrecho: `elsian run --workspace` escribe solo `extraction_result.json`, `run_metrics.json` y `truth_pack.json` en `PATH/<ticker_canónico>/`; `cases/` permanece como raíz canónica de lectura para inputs existentes. ✓ `python3 -m pytest -q tests/integration/test_run_command.py tests/integration/test_assemble.py tests/integration/test_source_map.py` PASS (`44 passed`). ✓ `python3 -m pytest tests/unit/test_pipeline.py tests/integration/test_run_command.py -q --tb=no` PASS (`52 passed, EXIT:0`). ✓ `python3 -m elsian run TZOO --workspace /tmp/elsian-bl070 --skip-assemble` PASS con artefactos runtime en `/tmp/elsian-bl070/TZOO/`. ✓ `python3 -m elsian run TZOO --workspace /tmp/elsian-bl070` PASS con `truth_pack.json` en `/tmp/elsian-bl070/TZOO/`. ✓ `python3 -m elsian eval TZOO` PASS 100.0% (`348/348`). ✓ `git diff --check` limpio.
+
 ### BL-065 — T07 — Policies y rule packs (scope filtrado restante)
 - **Prioridad:** MEDIA
 - **Estado:** DONE ✅ (2026-03-10)
