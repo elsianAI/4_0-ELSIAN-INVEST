@@ -107,26 +107,15 @@
 - **Descripción:** Añadir scaffolding y plantillas para tareas, casos y reportes, reduciendo pasos manuales y forzando metadatos mínimos de aceptación, riesgos y validación.
 - **Criterio de aceptación:** Crear una nueva tarea o un nuevo caso requiere menos pasos manuales y las plantillas obligan a declarar validación y criterio de cierre.
 
-### BL-072 — Habilitación de paralelismo: criterio `parallel-ready` y proceso operativo
-- **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Governance
-- **Validation tier:** governance-only
-- **Depende de:** —
-- **Referencias:** BL-061, docs/project/KNOWLEDGE_BASE.md
-- **Descripción:** Definir el modelo oficial de paralelización mutante para ELSIAN y dejar explícito cuándo el sistema puede considerarse `parallel-ready`. La tarea debe fijar un único proceso operativo, preferentemente con `git worktree + una rama por BL`, incluyendo preflight, criterios go/no-go, surfaces seriales, reglas de write set, rol del padre neutral, integración serial, closeout por BL y criterios de aborto/rollback.
-- **Criterio de aceptación:** Existe una definición explícita de `parallel-ready`. Existe un checklist go/no-go antes de lanzar trabajo mutante en paralelo. Queda fijado el proceso end-to-end de creación de worktree/rama, ejecución por agente, validación, auditoría, closeout, integración y commit. Quedan definidas las surfaces que nunca se paralelizan. Queda explícito que la implementación mutante en paralelo sigue deshabilitada mientras no se cumplan al menos los prerrequisitos definidos en esta BL, incluyendo `BL-061`.
-
 ### BL-073 — Piloto controlado de paralelización multiagente
 - **Prioridad:** MEDIA
-- **Estado:** BLOCKED (espera `BL-072`)
+- **Estado:** TODO
 - **Asignado a:** sin asignar
 - **Módulo:** Module 1
 - **Validation tier:** shared-core
 - **Depende de:** BL-072
-- **Referencias:** BL-059, BL-060, docs/project/KNOWLEDGE_BASE.md
-- **Descripción:** Ejecutar un primer piloto real de paralelización mutante con dos BL independientes y write sets disjuntos, usando exclusivamente el proceso definido en `BL-072`. El piloto debe demostrar aislamiento por `git worktree` y rama, integración serial en el padre, cierre independiente por BL y aborto limpio si aparece solape material.
+- **Referencias:** BL-059, BL-060, DEC-029, docs/project/ROLES.md
+- **Descripción:** Ejecutar un primer piloto real de paralelización mutante con dos BL independientes y write sets disjuntos, usando exclusivamente el proceso definido y canonizado por `BL-072`. El piloto debe demostrar aislamiento por `git worktree` y rama, integración serial en el padre, cierre independiente por BL y aborto limpio si aparece solape material.
 - **Criterio de aceptación:** Se ejecuta un piloto con dos BL válidas y una BL por worktree/rama. Ningún agente sale de su write set. Cada BL pasa `gates -> auditor -> closeout` por separado. La integración se hace en serie y genera un commit por BL. Si aparece conflicto estructural, el piloto aborta sin contaminar `main`. Queda una decisión explícita de mantener, ajustar o descartar el modelo antes de extenderlo a más trabajo.
 
 ### BL-077 — Investigar inconsistencias de campos derivados

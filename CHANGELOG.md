@@ -2,6 +2,13 @@
 
 ## 2026-03-10
 
+### [4.0] Governance closeout — BL-072 canoniza `parallel-ready` y desbloquea documentalmente BL-073
+- `BL-072` sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` como cierre estrictamente de governance-only. `docs/project/ROLES.md` fija la definición oficial de `parallel-ready` como elegibilidad operativa controlada, el checklist go/no-go, el modelo `git worktree + una rama por BL`, la disciplina de `write_set`, las surfaces seriales por defecto, el rol exclusivo del padre neutral en integración serial y la política de aborto/rollback.
+- `docs/project/KNOWLEDGE_BASE.md` deja de duplicar doctrina incompleta y remite al contrato oficial de `docs/project/ROLES.md` y `DEC-029`. `docs/project/DECISIONS.md` canoniza la decisión. `docs/project/PROJECT_STATE.md` se reconcilia para reflejar que `BL-072` ya no está viva.
+- `BL-073` deja de estar bloqueada solo en sentido documental, pero no queda habilitada por defecto: cada piloto futuro deberá pasar el checklist `parallel-ready` en la sesión concreta antes de lanzar trabajo mutante en paralelo.
+- **Files changed:** `docs/project/ROLES.md`, `docs/project/KNOWLEDGE_BASE.md`, `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `docs/project/DECISIONS.md`, `.github/agents/elsian-orchestrator.agent.md`, `.github/agents/elsian-kickoff.agent.md`, `.github/agents/project-director.agent.md`, `.github/agents/elsian-4.agent.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` → repo limpio antes de la mutación y sin drift documental tras reconciliación. `git diff --check` → clean.
+
 ### [4.0] Governance closeout — BL-066 archivada tras auditoría final green
 - BL-066 sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual sobre el hardening mínimo absorbido en el acquire path vivo de Module 1: UA configurable y acotada, retry/backoff bounded compartido, caché TTL para `company_tickers.json` y manifest con observabilidad factual mínima.
 - El audit-fix final deja explícito que `load_json_ttl` usa `bounded_get` en cache miss o TTL expiry, por lo que SEC no pierde retry/backoff en la resolución de CIK.

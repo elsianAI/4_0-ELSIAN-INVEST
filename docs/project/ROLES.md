@@ -311,6 +311,75 @@ El orquestador neutral decide que hijo lanzar segun la intencion y el posible bl
 
 - Toda tarea mutante debe mapearse a una unica BL o a `none`. Si un cambio afecta materialmente a varias BL, el `director` debe partir el paquete antes de ejecucion.
 
+### 3.1 Paralelizacion mutante controlada
+
+`parallel-ready` es una **elegibilidad operativa controlada**, no un permiso general para mutar el repo en paralelo ni para escribir concurrentemente sobre el mismo arbol principal.
+
+**Prerequisitos duros para declarar una ejecucion como `parallel-ready`**
+
+- `BL-061` y `BL-072` deben estar cerradas en canonicals.
+- el preflight del padre neutral debe dar repo limpio al inicio, salvo `workspace_only_dirty`;
+- cada hijo mutante debe tener exactamente una BL;
+- cada BL debe tener `write_set` explicito y `blocked_surfaces` explicitadas en su packet;
+- no puede existir solape material entre `write_set` de BL concurrentes;
+- las surfaces seriales por defecto deben quedar fuera de todos los `write_set` paralelos;
+- el modelo de aislamiento debe ser `git worktree + una rama por BL` partiendo del mismo `HEAD` base;
+- `gates -> auditor -> closeout` deben ejecutarse por BL y antes de cualquier integracion de esa BL;
+- la integracion final debe seguir siendo serial y propiedad exclusiva del padre neutral.
+
+**Checklist go/no-go del padre neutral antes de lanzar mutacion paralela**
+
+- el checker factual no reporta `technical_dirty`, `governance_dirty` ni `other_dirty` en el arbol principal;
+- las BL candidatas son realmente independientes y no comparten objetivo material;
+- existe un `write_set` acotado por BL, con granularidad de archivo o subtree concreto, sin comodines amplios innecesarios;
+- el solape entre `write_set` es nulo o trivial y no toca surfaces seriales;
+- cada BL tiene ruta de validacion y cierre independiente;
+- el padre neutral tiene plan explicito de integracion serial y de aborto/rollback;
+- si cualquiera de estos checks falla, la ejecucion vuelve al modelo secuencial.
+
+**Proceso operativo canonico**
+
+1. El `director` empaqueta cada BL por separado, fija `write_set`, `blocked_surfaces`, tier de validacion y criterio de cierre.
+2. El padre neutral ejecuta preflight sobre el arbol principal y decide si la sesion es elegible como `parallel-ready`.
+3. Si el go/no-go es verde, el padre crea exactamente una `worktree` y una rama por BL desde el mismo commit base.
+4. Cada hijo mutante trabaja solo dentro de su `worktree`/rama y no sale de su BL ni de su `write_set`.
+5. Cada BL pasa su propia ruta completa `... -> gates -> auditor -> closeout` antes de ser candidata a integracion.
+6. El padre neutral integra las BL **una a una** en serie; no existe closeout conjunto ni commit conjunto de varias BL.
+7. Tras integrar una BL, el padre reevalua el estado vivo antes de integrar la siguiente.
+
+**Write set y surfaces seriales**
+
+- Una BL paralela no puede reclamar surfaces de cierre compartido ni superficies de alto acoplamiento transversal.
+- El solape material se define como cualquier coincidencia de archivo, subtree o superficie comun donde un cambio de una BL pueda invalidar o recontextualizar la otra.
+- Por defecto siguen serializadas:
+  - `docs/project/ROLES.md`
+  - `docs/project/BACKLOG.md`
+  - `docs/project/BACKLOG_DONE.md`
+  - `docs/project/PROJECT_STATE.md`
+  - `ROADMAP.md`
+  - `CHANGELOG.md`
+  - `.github/agents/elsian-orchestrator.agent.md`
+  - `.github/agents/elsian-kickoff.agent.md`
+  - `.github/agents/project-director.agent.md`
+  - `.github/agents/elsian-4.agent.md`
+  - `elsian/cli.py`
+  - `elsian/extract/phase.py`
+  - `elsian/extract/html_tables.py`
+  - `elsian/evaluate/validation.py`
+
+**Rol del padre neutral**
+
+- Solo el padre neutral puede declarar una sesion como `parallel-ready`.
+- Solo el padre neutral puede integrar, ejecutar `closeout` final por BL y decidir `auto-commit`.
+- Ningun hijo puede integrar otra rama, mutar otra `worktree` o cerrar varias BL a la vez.
+
+**Aborto y rollback**
+
+- Si aparece dirty inesperado en el arbol principal, se abortan nuevos lanzamientos mutantes.
+- Si una BL rompe su `write_set`, toca una surface serial o falla gates/auditoria/closeout, esa BL se excluye de integracion y se reconcilia fuera del flujo paralelo.
+- Si la integracion serial de una BL encuentra conflicto estructural, el padre neutral aborta esa integracion, conserva intacto el `main` limpio previo y devuelve la BL a reempaquetado o rebase aislado.
+- El exito de una BL no autoriza a forzar la integracion de las demas.
+
 ## 4. Packets y handoff
 
 Todos los hijos deben recibir prompts autosuficientes. No se asume herencia fiable del contexto del padre.

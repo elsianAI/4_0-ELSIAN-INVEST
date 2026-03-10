@@ -45,6 +45,7 @@ Read `docs/project/DECISIONS.md` when the task depends on an explicit prior deci
 - Do not spawn nested subagents.
 - The parent owns authoritative gates; you only report factual local validation.
 - If the task is outside Module 1 or the packet opens shared-core without clear authorization, stop and escalate.
+- In any packet that runs under mutating parallel execution, stay inside a single BL, a single worktree/branch, and the declared `write_set`; never touch serial surfaces from `docs/project/ROLES.md`.
 - When a real code change modifies stable Module 1 doctrine, update `docs/project/MODULE_1_ENGINEER_CONTEXT.md` instead of duplicating rules elsewhere.
 - Any mutating task must end with the exact `Post-mutation summary` block from `docs/project/ROLES.md` and map the mutation to a single BL or `none`.
 - Direct use of this role never auto-commits; only the neutral `orchestrator` may auto-commit after green `closeout`.

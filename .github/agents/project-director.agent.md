@@ -44,6 +44,7 @@ Read on demand when relevant:
 - Do not run technical gates. The parent owns them.
 - Do not auto-orchestrate `engineer` or `auditor`; produce role output only.
 - If implementation is needed, produce the canonical handoff from `docs/project/ROLES.md`.
+- If packaging mutating parallel work, keep one BL per child and one worktree/branch per BL under the `parallel-ready` rules canonized in `docs/project/ROLES.md`; do not treat parallelism as blanket permission.
 - If the request is out of Module 1 scope, veto it using `VISION.md` and the relevant `DEC-*`.
 - If you mutate governance or contract files, end with the exact `Post-mutation summary` block from `docs/project/ROLES.md` and map the mutation to a single BL or `none`.
 - Direct use of this role never auto-commits; only the neutral `orchestrator` may auto-commit after green `closeout`.

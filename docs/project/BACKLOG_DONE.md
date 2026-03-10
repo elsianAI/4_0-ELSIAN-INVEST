@@ -9,6 +9,14 @@
 
 ---
 
+### BL-072 — Habilitación de paralelismo: criterio `parallel-ready` y proceso operativo
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-10)
+- **Asignado a:** director
+- **Depende de:** BL-061
+- **Descripción:** Se cierra BL-072 como mutación estrictamente de governance y canonicals, sin tocar código técnico ni abrir nuevas BL. El cierre deja explícito y consistente el criterio oficial de `parallel-ready` como elegibilidad operativa controlada, no como permiso general de mutación concurrente. `docs/project/ROLES.md` fija el checklist go/no-go, el modelo obligatorio `git worktree + una rama por BL`, la regla de una BL por hijo mutante, las surfaces seriales por defecto, la disciplina de `write_set`, el rol exclusivo del padre neutral en integración serial y `closeout`, y la política de aborto/rollback. `docs/project/KNOWLEDGE_BASE.md` pasa a remitir a esa fuente de verdad, `DEC-029` canoniza la decisión y `BL-073` deja de estar bloqueada solo en sentido documental: el piloto ya puede empaquetarse, pero sigue condicionado a pasar el checklist `parallel-ready` en cada ejecución concreta.
+- **Criterio de aceptación:** ✓ Existe definición explícita de `parallel-ready` en canonicals. ✓ Existe checklist go/no-go antes de lanzar mutación paralela. ✓ Queda fijado el proceso end-to-end con `git worktree + una rama por BL`, ejecución aislada por agente, `gates -> auditor -> closeout` por BL, integración serial y aborto/rollback. ✓ Quedan definidas las surfaces que nunca se paralelizan por defecto. ✓ `BL-072` sale de `docs/project/BACKLOG.md` y queda archivada aquí. ✓ `BL-073` queda desbloqueada documentalmente sin convertirse en permiso general de paralelización. ✓ Validación de governance ejecutada con `python3 scripts/check_governance.py --format json` y `git diff --check`.
+
 ### BL-066 — T08 — Hardening de adquisición (scope filtrado restante)
 - **Prioridad:** MEDIA
 - **Estado:** DONE ✅ (2026-03-10)

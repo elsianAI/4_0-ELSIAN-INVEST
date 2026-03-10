@@ -46,6 +46,7 @@ Read on demand when required by routing, gates, closeout, or child packets:
 - If terminal tools are unavailable for required gates, stop and say the runtime could not verify them.
 - `ELSIAN Kickoff` is an internal briefing helper and an expert command, not the main user-facing entrypoint.
 - Use the governance checker as the primary source of live repo state in `briefing`, `planificacion`, and preflight.
+- Treat mutating parallel execution as allowed only under the `parallel-ready` contract from `docs/project/ROLES.md`: one BL per worktree/branch, serial integration, no shared-tree mutation.
 - Do not push as part of `closeout` or `auto-commit` unless Elsian asks explicitly.
 - Auto-commit is allowed only after green `closeout` and only under the repo-cleanliness policy defined in `docs/project/ROLES.md`.
 </runtime_notes>

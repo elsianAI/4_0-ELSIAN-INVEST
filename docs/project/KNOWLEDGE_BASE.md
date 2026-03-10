@@ -57,11 +57,11 @@ Este documento no es el manual técnico del módulo. Su función es ayudarte a a
 - Si necesitas doctrina técnica de Módulo 1, ve a `docs/project/MODULE_1_ENGINEER_CONTEXT.md`.
 - No dupliques aquí métricas vivas, backlog activo, decisiones completas ni detalle técnico profundo del módulo.
 
-## 7. Paralelismo multiagente: estado actual y criterio futuro
+## 7. Paralelismo multiagente: estado actual y criterio oficial
 
 ### Estado actual
 
-- El repositorio no debe tratarse hoy como `parallel-ready` para mutaciones concurrentes sobre el mismo árbol principal.
+- El repositorio no debe tratarse como apto para mutaciones concurrentes sobre el mismo árbol principal.
 - El paralelismo sí es útil ya para exploración, packaging, auditoría y validación read-only.
 - La implementación mutante por defecto sigue siendo secuencial sobre `main`, con integración y cierre seriales.
 
@@ -72,18 +72,14 @@ Este documento no es el manual técnico del módulo. Su función es ayudarte a a
 - `CHANGELOG.md`, backlog/gobernanza y varias superficies transversales siguen siendo puntos de serialización natural.
 - Tener tareas razonablemente bien descritas en `BACKLOG.md` ayuda, pero no sustituye reglas de write set, aislamiento de workspace y proceso de integración.
 
-### Criterio mínimo de `parallel-ready`
+### Qué significa ahora `parallel-ready`
 
-ELSIAN solo podrá considerarse `parallel-ready` para mutaciones reales cuando, como mínimo, se cumpla todo lo siguiente:
+La definición oficial ya no vive aquí sino en `docs/project/ROLES.md` y `DEC-029`.
 
-- repo limpio al inicio, salvo `workspace_only_dirty`;
-- una sola BL por agente;
-- write set explícito por BL;
-- sin solape material entre write sets;
-- surfaces seriales declaradas y respetadas;
-- integración siempre serial en el padre neutral;
-- `gates -> auditor -> closeout` ejecutados por BL, no en cierre conjunto;
-- política explícita de aborto y rollback si aparece conflicto, drift o contaminación del worktree.
+- `parallel-ready` significa elegibilidad operativa controlada para una sesión concreta, no permiso general ni mutación concurrente sobre el mismo árbol principal.
+- El modelo oficial es `git worktree + una rama por BL`, con una sola BL por hijo mutante.
+- El padre neutral sigue siendo el único integrador y el único que puede decidir `closeout` y `auto-commit` por BL.
+- Las surfaces seriales, el checklist go/no-go, las reglas de `write_set` y la política de aborto/rollback son las definidas en `docs/project/ROLES.md`.
 
 ### Modelo objetivo recomendado
 
@@ -95,9 +91,14 @@ ELSIAN solo podrá considerarse `parallel-ready` para mutaciones reales cuando, 
 
 - `docs/project/ROLES.md`
 - `docs/project/BACKLOG.md`
+- `docs/project/BACKLOG_DONE.md`
 - `docs/project/PROJECT_STATE.md`
 - `ROADMAP.md`
 - `CHANGELOG.md`
+- `.github/agents/elsian-orchestrator.agent.md`
+- `.github/agents/elsian-kickoff.agent.md`
+- `.github/agents/project-director.agent.md`
+- `.github/agents/elsian-4.agent.md`
 - `elsian/cli.py`
 - `elsian/extract/phase.py`
 - `elsian/extract/html_tables.py`
@@ -105,6 +106,6 @@ ELSIAN solo podrá considerarse `parallel-ready` para mutaciones reales cuando, 
 
 ### Backlog asociado
 
-- `BL-072` define el criterio oficial de `parallel-ready` y el proceso operativo de paralelización.
-- `BL-073` ejecuta el primer piloto real solo cuando `BL-072` y `BL-061` estén cerradas.
-- Hasta entonces, el paralelismo mutante debe tratarse como no habilitado de forma general.
+- `BL-072` ya cerró la definición oficial de `parallel-ready` y del proceso operativo.
+- `BL-073` queda desbloqueada documentalmente, pero solo puede ejecutarse si el packet concreto pasa el checklist `parallel-ready` definido en `docs/project/ROLES.md`.
+- Fuera de ese marco, el paralelismo mutante sigue tratándose como no habilitado de forma general.
