@@ -30,17 +30,6 @@
 
 ## Tareas activas
 
-### BL-062 — T04 — Service layer y registry de fetchers
-- **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** BL-059, BL-060, BL-061
-- **Referencias:** T04, docs/project/PLAN_IMPLEMENTACION_FILTRADO.md
-- **Descripción:** Reabrir las fronteras internas del sistema con una service layer clara y un registry centralizado de fetchers, dejando la CLI como adaptador fino.
-- **Criterio de aceptación:** El routing de fetchers vive en un único punto, la lógica principal sale de la CLI y la nueva capa queda cubierta por tests unitarios e integración.
-
 ### BL-063 — T05 — Descomposición real del pipeline
 - **Prioridad:** MEDIA
 - **Estado:** TODO

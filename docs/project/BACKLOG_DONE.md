@@ -9,6 +9,14 @@
 
 ---
 
+### BL-062 — T04 — Service layer y registry de fetchers
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-10)
+- **Asignado a:** engineer
+- **Depende de:** —
+- **Descripción:** Se cierra BL-062 sobre el alcance real ya absorbido y auditado en verde en el repo, sin abrir todavía `BL-063` ni `BL-066`. El cierre factual reconoce un único registry/selector de fetchers dentro de acquire, reutilizado por `elsian/acquire/phase.py` y `elsian/cli.py`, con la CLI reducida a adaptador fino del path de adquisición. La reconciliación documental deja explícito que la ola cerrada fue la eliminación del routing duplicado SEC/ASX/EU/HKEX/manual hacia un único punto reusable en `elsian/acquire/registry.py`, junto con la cobertura unitaria de registry, routing CLI y entrypoints de acquire.
+- **Criterio de aceptación:** ✓ `BL-062` sale de `docs/project/BACKLOG.md` y queda archivada aquí. ✓ `python3 -m pytest -q tests/unit/test_cli_fetcher_routing.py tests/unit/test_acquire_registry.py tests/unit/test_bl062_entrypoints.py` PASS (`32 passed`). ✓ `python3 -m elsian eval --all` exit 0 sin `FAIL`. ✓ `python3 -m pytest -q` PASS (`1487 passed, 5 skipped, 1 warning`). ✓ `git diff --check` limpio. ✓ `docs/project/PROJECT_STATE.md` deja a `BL-063` como siguiente prioridad shared-core viva y mantiene `BL-066` solo como frente posterior dependiente.
+
 ### BL-061 — T03 — Aterrizar task_manifest real y enforcement mínimo de scope
 - **Prioridad:** MEDIA
 - **Estado:** DONE ✅ (2026-03-10)

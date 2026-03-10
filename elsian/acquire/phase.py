@@ -6,6 +6,7 @@ import json
 import logging
 from pathlib import Path
 
+from elsian.acquire.registry import get_fetcher
 from elsian.context import PipelineContext
 from elsian.models.case import CaseConfig
 from elsian.models.result import PhaseResult
@@ -14,33 +15,13 @@ from elsian.pipeline import PipelinePhase
 logger = logging.getLogger(__name__)
 
 
-def _get_fetcher(case: CaseConfig):
-    """Return the appropriate fetcher for a case."""
-    hint = case.source_hint.lower()
-    if hint in ("sec", "sec_edgar"):
-        from elsian.acquire.sec_edgar import SecEdgarFetcher
-        return SecEdgarFetcher()
-    elif hint in ("asx",):
-        from elsian.acquire.asx import AsxFetcher
-        return AsxFetcher()
-    elif hint in ("eu", "eu_manual", "manual_http"):
-        from elsian.acquire.eu_regulators import EuRegulatorsFetcher
-        return EuRegulatorsFetcher()
-    elif hint in ("hkex", "hkex_manual"):
-        from elsian.acquire.hkex import HkexFetcher
-        return HkexFetcher()
-    else:
-        from elsian.acquire.manual import ManualFetcher
-        return ManualFetcher()
-
-
 class AcquirePhase(PipelinePhase):
     """Acquire filings for a case. Wraps fetcher routing + download logic."""
 
     def run(self, context: PipelineContext) -> PhaseResult:
         case = context.case
         case_dir = Path(case.case_dir)
-        fetcher = _get_fetcher(case)
+        fetcher = get_fetcher(case)
 
         try:
             if hasattr(fetcher, "acquire"):

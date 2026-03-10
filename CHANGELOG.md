@@ -2,6 +2,30 @@
 
 ## 2026-03-10
 
+### [4.0] Governance closeout — BL-062 archivada tras auditoría final green
+- BL-062 sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual sobre el alcance realmente absorbido: registry/selector único de fetchers dentro de acquire, reutilizado por `elsian/acquire/phase.py` y `elsian/cli.py`, manteniendo la CLI como adaptador fino del path de adquisición.
+- `docs/project/PROJECT_STATE.md` deja de presentar BL-062 como prioridad shared-core viva; la siguiente shared-core activa pasa a `BL-063`, mientras `BL-066` se mantiene solo como frente posterior dependiente y `BL-072`/`BL-073` no cambian.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` → ejecutado tras la reconciliación mínima. `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md docs/project/PROJECT_STATE.md CHANGELOG.md` → clean.
+
+### [4.0] BL-062 — Audit remediation: cobertura de entrypoints cmd_acquire y AcquirePhase.run
+- `tests/unit/test_bl062_entrypoints.py` (nuevo): 8 tests que verifican que `cmd_acquire` y `AcquirePhase.run` delegan a `get_fetcher` del registry sin lógica local; cubren path `acquire()`, fallback `fetch()`, escritura de manifest y coherencia de tipo con llamada directa al registry.
+- **Validation:** `python3 -m pytest -q tests/unit/test_cli_fetcher_routing.py tests/unit/test_acquire_registry.py` → 24 passed. `python3 -m pytest tests/unit/test_bl062_entrypoints.py -v` → 8 passed. `git diff --check` → clean.
+
+### [4.0] BL-062 — Registry de fetchers: elimina routing duplicado en cli.py y acquire/phase.py
+- `elsian/acquire/registry.py` (nuevo): único punto de routing con `get_fetcher(case)` y tabla `_HINT_TO_KEY` que colapsa aliases antes del branch de importación.
+- `elsian/acquire/phase.py`: elimina `_get_fetcher` local; importa y delega a `registry.get_fetcher`.
+- `elsian/cli.py`: elimina `_get_fetcher` local; importa y delega a `registry.get_fetcher` en los dos call sites (cmd_acquire y cmd_run con `--with-acquire`). CLI permanece como adaptador fino.
+- `tests/unit/test_cli_fetcher_routing.py`: actualizado para importar desde registry en lugar de los módulos eliminados; cubre todos los hints canónicos con parametrize.
+- `tests/unit/test_acquire_registry.py` (nuevo): tests unitarios acotados del registry: verificación de `_HINT_TO_KEY`, routing parametrizado por hint y case-insensitivity.
+- **Validation:** `python3 -m pytest -q tests/unit/test_cli_fetcher_routing.py tests/unit/test_acquire_registry.py` → 24 passed. `git diff --check` → clean. `python3 -m pytest -q` (suite completa) en ejecución. `python3 -m elsian eval --all` → sin regresión de extracción.
+
+### [4.0] Governance packaging — BL-062 reconciliada al gap real de fetcher routing duplicado
+- `docs/project/BACKLOG.md`: BL-062 deja de vender una service layer horizontal greenfield y se acota al paquete mínimo viable que el repo realmente necesita hoy: un único punto reusable para el selector/registry de fetchers compartido por `elsian/cli.py` y `elsian/acquire/phase.py`, manteniendo la CLI como adaptador fino del path de acquire.
+- La dependencia operativa se limpia (`Depende de: —`) porque `BL-059`, `BL-060` y `BL-061` ya están cerradas y no bloquean la ejecución inmediata del packet. `BL-063` y `BL-066` permanecen explícitamente fuera de alcance de esta reconciliación.
+- **Files changed:** `docs/project/BACKLOG.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` → expected clean governance metadata after packaging. `git diff --check -- docs/project/BACKLOG.md CHANGELOG.md` → expected clean.
+
 ### [4.0] Reproducibility fix — missing_reconciliation no se dispara en worktree limpio
 - `scripts/check_governance.py`: `check_manifest_scope` solo exige `missing_reconciliation` cuando `dirty_paths` es no vacío; manifest histórico cerrado en repo limpio ya no genera falsos positivos.
 - `tests/unit/test_check_governance.py`: 2 tests nuevos cubren `done`+`dirty_paths=[]` (sin violación) y `done`+diff parcial (sigue fallando).

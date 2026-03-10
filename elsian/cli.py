@@ -8,6 +8,7 @@ import logging
 import sys
 from pathlib import Path
 
+from elsian.acquire.registry import get_fetcher
 from elsian.evaluate.evaluator import evaluate
 from elsian.evaluate.dashboard import format_dashboard
 from elsian.models.case import CaseConfig
@@ -62,26 +63,6 @@ def _load_extraction_result(case_dir: Path) -> ExtractionResult | None:
     return result
 
 
-def _get_fetcher(case: CaseConfig):
-    """Return the appropriate fetcher for a case."""
-    hint = case.source_hint.lower()
-    if hint in ("sec", "sec_edgar"):
-        from elsian.acquire.sec_edgar import SecEdgarFetcher
-        return SecEdgarFetcher()
-    elif hint in ("asx",):
-        from elsian.acquire.asx import AsxFetcher
-        return AsxFetcher()
-    elif hint in ("eu", "eu_manual", "manual_http"):
-        from elsian.acquire.eu_regulators import EuRegulatorsFetcher
-        return EuRegulatorsFetcher()
-    elif hint in ("hkex", "hkex_manual"):
-        from elsian.acquire.hkex import HkexFetcher
-        return HkexFetcher()
-    else:
-        from elsian.acquire.manual import ManualFetcher
-        return ManualFetcher()
-
-
 def cmd_acquire(args: argparse.Namespace) -> None:
     """Download filings for a ticker."""
     case_dir = _find_case_dir(args.ticker)
@@ -90,7 +71,7 @@ def cmd_acquire(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     case = CaseConfig.from_file(case_dir)
-    fetcher = _get_fetcher(case)
+    fetcher = get_fetcher(case)
 
     # For fetchers with acquire(), use it for detailed output
     if hasattr(fetcher, 'acquire'):
@@ -231,7 +212,7 @@ def _run_pipeline_for_ticker(
     # ── Acquire (optional) ────────────────────────────────────────────
     if getattr(args, "with_acquire", False):
         print(f"[Acquire] {ticker} — running acquire...")
-        fetcher = _get_fetcher(case)
+        fetcher = get_fetcher(case)
         try:
             if hasattr(fetcher, "acquire"):
                 result = fetcher.acquire(case)
