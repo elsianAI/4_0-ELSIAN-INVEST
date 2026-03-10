@@ -1,7 +1,7 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
-> Última actualización: 2026-03-09
-> Actualizado por: Copilot (BL-076 closeout)
+> Última actualización: 2026-03-10
+> Actualizado por: Copilot (BL-059 governance closeout correction)
 
 ---
 
@@ -157,6 +157,8 @@ No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Proven
 - ✅ **BL-038 DONE** — Table parser fix: parenthetical collapse, currency prefix normalization.
 
 ## Próximas prioridades
+
+`BL-059` ya está cerrada y archivada en `docs/project/BACKLOG_DONE.md`; no sigue siendo una prioridad shared-core viva. En el backlog activo, la siguiente secuencia shared-core dependiente de ese cierre es `BL-061` (task manifests y core protegido) seguida de `BL-062` (service layer y registry de fetchers), mientras `BL-072` mantiene abierta la línea de governance-only sobre criterio `parallel-ready`.
 
 Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC010_WP1-WP6.md` (DEC-011).
 

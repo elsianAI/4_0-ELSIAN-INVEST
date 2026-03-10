@@ -695,34 +695,39 @@ def validate_task_manifest_data(data: Any, path: Path) -> list[str]:
     return issues
 
 
-def validate_curate_prompt_contract() -> list[str]:
+_CURATE_LEGACY_NEEDLES: tuple[str, ...] = (
+    "deterministic/cases/${TICKER}",
+    "deterministic/config/field_aliases.json",
+    "python3 -m deterministic.cli eval ${TICKER}",
+    "Los 22 campos canónicos",
+    "22 campos canónicos",
+    "restated_in_filing",
+)
+_CURATE_REQUIRED_NEEDLES: tuple[str, ...] = (
+    "cases/${TICKER}/expected.json",
+    "cases/${TICKER}/case.json",
+    "config/field_aliases.json",
+    "29 campos canónicos",
+    "python3 -m elsian eval ${TICKER}",
+    "evidence_filing",
+)
+
+
+def _check_curate_prompt_text(text: str, prompt_label: str = "<prompt>") -> list[str]:
+    """Validate curate-prompt text for legacy markers and required content (no I/O)."""
     issues: list[str] = []
-    text = PROMPT_PATH.read_text(encoding="utf-8")
-    legacy_needles = (
-        "deterministic/cases/${TICKER}",
-        "deterministic/config/field_aliases.json",
-        "python3 -m deterministic.cli eval ${TICKER}",
-        "Los 22 campos canónicos",
-        "22 campos canónicos",
-        "restated_in_filing",
-    )
-    for needle in legacy_needles:
+    for needle in _CURATE_LEGACY_NEEDLES:
         if needle in text:
-            issues.append(f"{PROMPT_PATH}: legacy marker still present: {needle}")
-
-    required_needles = (
-        "cases/${TICKER}/expected.json",
-        "cases/${TICKER}/case.json",
-        "config/field_aliases.json",
-        "29 campos canónicos",
-        "python3 -m elsian eval ${TICKER}",
-        "evidence_filing",
-    )
-    for needle in required_needles:
+            issues.append(f"{prompt_label}: legacy marker still present: {needle}")
+    for needle in _CURATE_REQUIRED_NEEDLES:
         if needle not in text:
-            issues.append(f"{PROMPT_PATH}: required marker missing: {needle}")
-
+            issues.append(f"{prompt_label}: required marker missing: {needle}")
     return issues
+
+
+def validate_curate_prompt_contract() -> list[str]:
+    text = PROMPT_PATH.read_text(encoding="utf-8")
+    return _check_curate_prompt_text(text, str(PROMPT_PATH))
 
 
 def validate_case_model_alignment() -> list[str]:
@@ -746,6 +751,177 @@ def validate_case_model_alignment() -> list[str]:
                 )
         if case.extra:
             issues.append(f"{case_path}: CaseConfig.extra should be empty for tracked keys")
+    return issues
+
+
+# ---------------------------------------------------------------------------
+# BL-059 invariants
+# ---------------------------------------------------------------------------
+
+
+def _check_canonical_drift(
+    schema_enum: set[str],
+    aliases_keys: set[str],
+    validation_canon: set[str],
+) -> list[str]:
+    """Report set drift between the three canonical-field sources (no I/O)."""
+    issues: list[str] = []
+    for label, other in (
+        ("field_aliases.json", aliases_keys),
+        ("_CANONICAL_FIELDS", validation_canon),
+    ):
+        only_schema = sorted(schema_enum - other)
+        only_other = sorted(other - schema_enum)
+        if only_schema:
+            issues.append(
+                f"canonical drift: schema enum has fields not in {label}: {only_schema}"
+            )
+        if only_other:
+            issues.append(
+                f"canonical drift: {label} has fields not in schema enum: {only_other}"
+            )
+    return issues
+
+
+def validate_canonical_set_alignment() -> list[str]:
+    """Invariant (a): schema enum, field_aliases.json keys, and _CANONICAL_FIELDS must be identical."""
+    import importlib.util as _ilu  # local to keep top-level imports minimal
+
+    schema_enum = set(_canonical_fields())
+
+    aliases_data = _load_json(ROOT / "config" / "field_aliases.json")
+    aliases_keys: set[str] = {k for k in aliases_data if not k.startswith("_")}
+
+    spec = _ilu.spec_from_file_location(
+        "_elsian_validation_bl059",
+        ROOT / "elsian" / "evaluate" / "validation.py",
+    )
+    if spec is None or spec.loader is None:
+        return ["canonical alignment: cannot load elsian/evaluate/validation.py"]
+    mod = _ilu.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    except Exception as exc:
+        return [f"canonical alignment: error loading validation.py: {exc}"]
+    validation_canon: set[str] = set(getattr(mod, "_CANONICAL_FIELDS", ()))
+
+    return _check_canonical_drift(schema_enum, aliases_keys, validation_canon)
+
+
+def _check_cross_ticker_data(
+    ticker: str,
+    case_data: dict[str, Any],
+    expected_data: dict[str, Any],
+    derived_artifacts: list[tuple[str, dict[str, Any]]] | None = None,
+) -> list[str]:
+    """Check cross-file consistency for one ticker (no I/O)."""
+    issues: list[str] = []
+
+    if case_data.get("ticker") != expected_data.get("ticker"):
+        issues.append(
+            f"cases/{ticker}: ticker mismatch — "
+            f"case.json={case_data.get('ticker')!r} vs expected.json={expected_data.get('ticker')!r}"
+        )
+    if case_data.get("currency") != expected_data.get("currency"):
+        issues.append(
+            f"cases/{ticker}: currency mismatch — "
+            f"case.json={case_data.get('currency')!r} vs expected.json={expected_data.get('currency')!r}"
+        )
+    case_scope = case_data.get("period_scope")
+    expected_scope = expected_data.get("period_scope")
+    if expected_scope is not None and case_scope != expected_scope:
+        issues.append(
+            f"cases/{ticker}: period_scope mismatch — "
+            f"case.json={case_scope!r} vs expected.json={expected_scope!r}"
+        )
+
+    # Derived artifacts — only validated when git-tracked (invariant c)
+    for fname, artifact_data in (derived_artifacts or []):
+        artifact_ticker = artifact_data.get("ticker")
+        if artifact_ticker != case_data.get("ticker"):
+            issues.append(
+                f"cases/{ticker}/{fname}: ticker mismatch — "
+                f"artifact={artifact_ticker!r} vs case.json={case_data.get('ticker')!r}"
+            )
+        # Additional metadata checks per artifact type (only when key present in artifact)
+        if fname in ("extraction_result.json", "truth_pack.json"):
+            artifact_currency = artifact_data.get("currency")
+            if artifact_currency is not None and artifact_currency != case_data.get("currency"):
+                issues.append(
+                    f"cases/{ticker}/{fname}: currency mismatch — "
+                    f"artifact={artifact_currency!r} vs case.json={case_data.get('currency')!r}"
+                )
+        if fname == "truth_pack.json":
+            metadata = artifact_data.get("metadata")
+            if isinstance(metadata, dict) and "period_scope" in metadata:
+                artifact_scope = metadata["period_scope"]
+                if artifact_scope != case_data.get("period_scope"):
+                    issues.append(
+                        f"cases/{ticker}/{fname}: metadata.period_scope mismatch — "
+                        f"artifact={artifact_scope!r} vs case.json={case_data.get('period_scope')!r}"
+                    )
+
+    return issues
+
+
+_DERIVED_ARTIFACT_NAMES: tuple[str, ...] = (
+    "filings_manifest.json",
+    "extraction_result.json",
+    "truth_pack.json",
+    "source_map.json",
+)
+
+
+def validate_cross_case_consistency() -> list[str]:
+    """Invariant (b+c): per-ticker cross-file consistency; derived artifacts only when tracked."""
+    issues: list[str] = []
+    tracked_set: set[Path] = set(_read_git_tracked_paths("cases"))
+
+    cases_dir = ROOT / "cases"
+    ticker_dirs: set[Path] = set()
+    for path in tracked_set:
+        try:
+            rel = path.relative_to(cases_dir)
+            ticker_dirs.add(cases_dir / rel.parts[0])
+        except (ValueError, IndexError):
+            pass
+
+    for ticker_dir in sorted(ticker_dirs):
+        ticker = ticker_dir.name
+        case_path = ticker_dir / "case.json"
+        expected_path = ticker_dir / "expected.json"
+
+        case_tracked = case_path in tracked_set
+        expected_tracked = expected_path in tracked_set
+
+        # Co-presence invariant
+        if case_tracked and not expected_tracked:
+            issues.append(f"cases/{ticker}: case.json is tracked but expected.json is not")
+        if expected_tracked and not case_tracked:
+            issues.append(f"cases/{ticker}: expected.json is tracked but case.json is not")
+        if not (case_tracked and expected_tracked):
+            continue
+
+        try:
+            case_data = _load_json(case_path)
+            expected_data = _load_json(expected_path)
+        except Exception as exc:
+            issues.append(f"cases/{ticker}: cannot load case or expected: {exc}")
+            continue
+
+        # Derived artifacts only when git-tracked (invariant c: no promotion of tracking)
+        derived: list[tuple[str, dict[str, Any]]] = []
+        for fname in _DERIVED_ARTIFACT_NAMES:
+            artifact_path = ticker_dir / fname
+            if artifact_path not in tracked_set:
+                continue
+            try:
+                derived.append((fname, _load_json(artifact_path)))
+            except Exception as exc:
+                issues.append(f"cases/{ticker}/{fname}: cannot load tracked artifact: {exc}")
+
+        issues.extend(_check_cross_ticker_data(ticker, case_data, expected_data, derived))
+
     return issues
 
 
@@ -791,6 +967,15 @@ def validate_all_contracts() -> dict[str, list[str]]:
     model_issues = validate_case_model_alignment()
     if model_issues:
         issues["CaseConfig"] = model_issues
+
+    # BL-059 invariants
+    alignment_issues = validate_canonical_set_alignment()
+    if alignment_issues:
+        issues["canonical_set_alignment"] = alignment_issues
+
+    cross_issues = validate_cross_case_consistency()
+    if cross_issues:
+        issues["cross_case_consistency"] = cross_issues
 
     return issues
 

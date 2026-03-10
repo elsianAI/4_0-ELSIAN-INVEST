@@ -30,17 +30,6 @@
 
 ## Tareas activas
 
-### BL-059 — T01 — Contratos y esquemas versionados
-- **Prioridad:** ALTA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** —
-- **Referencias:** T01, docs/project/PLAN_IMPLEMENTACION_FILTRADO.md
-- **Descripción:** Crear la capa de contratos versionados para los artefactos principales del sistema (`case.json`, `expected.json`, manifests, extraction results, truth pack y source map) y validar que prompts y tooling usen el set canónico real actual sin drift.
-- **Criterio de aceptación:** Existen esquemas versionados y una validación centralizada que cubre los artefactos activos; los casos reales validan contra contrato y desaparecen referencias obsoletas al set canónico o a rutas legacy.
-
 ### BL-061 — T03 — Task manifests y core protegido
 - **Prioridad:** MEDIA
 - **Estado:** TODO

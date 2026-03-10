@@ -1,5 +1,43 @@
 # Changelog
 
+## 2026-03-10
+
+### [4.0] Governance corrective closeout — BL-059 sin prioridad viva residual en PROJECT_STATE
+- Reconciliado `docs/project/PROJECT_STATE.md` tras la auditoría de closeout para que deje de presentar `BL-059` como prioridad shared-core inmediata viva ahora que la BL ya está archivada en `docs/project/BACKLOG_DONE.md`.
+- La siguiente cola activa queda expresada de forma factual: `BL-061` y `BL-062` como continuación shared-core dependiente del cierre ya completado, y `BL-072` como frente de governance-only aún abierto. No se reabre `BL-059` ni se altera `BACKLOG.md`/`BACKLOG_DONE.md`.
+- **Files changed:** `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` → expected clean governance metadata after corrective reconciliation. `git diff --check -- docs/project/PROJECT_STATE.md CHANGELOG.md` → expected clean.
+
+### [4.0] Governance closeout — BL-059 archivada tras gates y auditoría verdes
+- BL-059 sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual sobre el alcance realmente absorbido: hardening de la capa contractual existente, gates contractuales en CI y coherencia cross-file para artefactos repo-trackeados.
+- Ese closeout no tocó `docs/project/PROJECT_STATE.md`; la reconciliación residual de ese archivo se corrige aparte en una entrada correctiva de governance de esta misma fecha para retirar la prioridad viva residual de `BL-059`.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` → `duplicate_ids=[]`, `project_state_lags_changelog=false`. `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md CHANGELOG.md` → clean.
+
+### [4.0] BL-059 auditor-fix — Ampliar coherencia básica de derivados trackeados (currency + metadata.period_scope)
+- `scripts/validate_contracts.py`: `_check_cross_ticker_data` ahora compara, además del ticker, la `currency` de `extraction_result.json` y `truth_pack.json`, y `metadata.period_scope` de `truth_pack.json` (solo cuando la clave existe en el artefacto; sin inventar requisito cuando no está expuesta).
+- `tests/contracts/test_validate_contracts.py`: 5 nuevos tests negativos: mismatch de currency en extraction_result derivado, mismatch de currency en truth_pack derivado, mismatch de metadata.period_scope en truth_pack derivado, no-flag cuando el artefacto no expone currency (filings_manifest), no-flag cuando truth_pack omite metadata.period_scope.
+- **Files changed:** `scripts/validate_contracts.py`, `tests/contracts/test_validate_contracts.py`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/validate_contracts.py --all` → PASS. `python3 -m pytest -q tests/contracts` → todos pasan.
+
+### [4.0] BL-059 — Hardening de la capa contractual (canonical alignment + cross-case consistency + CI gate)
+- `scripts/validate_contracts.py`: añadas dos nuevos invariantes en `--all`:
+  (a) **Canonical set alignment** — `_check_canonical_drift` + `validate_canonical_set_alignment`: verifica que el enum de `schemas/v1/common.schema.json`, las claves canónicas de `config/field_aliases.json` y `_CANONICAL_FIELDS` de `elsian/evaluate/validation.py` son idénticos (fallaría si hay drift entre las tres fuentes).
+  (b+c) **Cross-case consistency** — `_check_cross_ticker_data` + `validate_cross_case_consistency`: para cada ticker trackeado, verifica co-presencia de `case.json`/`expected.json`, coherencia de `ticker`/`currency`/`period_scope` entre ellos, y ticker de artefactos derivados **solo cuando están trackeados** (invariant c: no promotion of tracking).
+  Curate-prompt contract refactorizado para exponer `_check_curate_prompt_text(text, label)` con las constantes `_CURATE_LEGACY_NEEDLES`/`_CURATE_REQUIRED_NEEDLES` como objetos testables.
+- `elsian/evaluate/validation.py`: corregidas tres referencias legacy a "22 canonical fields" y "26-field set" — reemplazadas por referencias a los 29 campos canónicos actuales en módulo-docstring, docstring de `_gate_cashflow_identity`, y mensaje de runtime SKIP.
+- `tests/contracts/test_validate_contracts.py`: ampliados de 3 a 16 tests, incluyendo negativos para drift de schema vs aliases, drift de schema vs `_CANONICAL_FIELDS`, marcadores legacy en curate, incoherencia ticker/currency/period_scope entre case.json y expected.json, mismatch en artefactos derivados, y regresión de task_manifest inválido.
+- `.github/workflows/ci.yml`: añadido job `contracts` (independiente, sin necesitar otros jobs) que ejecuta `python3 scripts/validate_contracts.py --all` + `python3 -m pytest -q tests/contracts`. `eval-all` ahora necesita `contracts` además de los jobs previos.
+- **Files changed:** `scripts/validate_contracts.py`, `elsian/evaluate/validation.py`, `tests/contracts/test_validate_contracts.py`, `.github/workflows/ci.yml`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/validate_contracts.py --all` → PASS 16 tracked cases. `python3 -m pytest tests/contracts` → 16 passed. `git diff --check` → clean.
+
+### [4.0] Governance packaging — BL-059 reconciled to existing contract-layer hardening scope
+- Repackaged `BL-059` so it no longer describes a greenfield contract layer that the repo already has. The live scope is now the factual one: harden the existing versioned contracts and `scripts/validate_contracts.py --all` around three concrete invariants only: canonical-set alignment across schema/aliases/validator, cross-file coherence for tracked case artifacts, and explicit opt-in validation of derived artifacts only when they are repo-tracked.
+- `BL-061` task manifests and `BL-062` service-layer / registry work stay explicitly out of scope for this wave, as do generic JSON Schema migration and broad legacy-doc normalization.
+- `docs/project/PROJECT_STATE.md` was reconciled minimally so the repo-tracked state reflects the live next shared-core priority without reopening broader operational reporting.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` → expected clean governance metadata after packaging. `git diff --check -- docs/project/BACKLOG.md CHANGELOG.md` → expected clean.
+
 ## 2026-03-09
 
 ### [4.0] BL-084 — Shared-core fix: cross-filing isolation of finance-lease fallback synthesis (DEC-028)

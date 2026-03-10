@@ -9,8 +9,8 @@ WITHOUT requiring expected.json.  This is intrinsic consistency validation
 Gates:
   N1) BALANCE_IDENTITY:   Assets ≈ Liabilities + Equity (±2%)
   N2) CASHFLOW_IDENTITY:  CFO + CFI + CFF ≈ ΔCash (±5%)
-                          cfi/cff/delta_cash are canonical fields (26-field set).
-                          Gate SKIPs only when all 13 tickers provide these fields.
+                          cfi/cff/delta_cash are in the 29 canonical fields.
+                          Gate SKIPs when CF components are absent from annual periods.
   N3) UNIDADES_SANITY:    No 1000x jumps between consecutive annual periods.
                           Distinct from sanity.py's 10x YoY check:
                           1000x = unit-error indicator (thousands vs raw).
@@ -286,8 +286,8 @@ def _gate_balance_identity(annual: list[dict]) -> dict:
 def _gate_cashflow_identity(annual: list[dict]) -> dict:
     """N2: CFO + CFI + CFF approx DeltaCash (+-5%). Most-recent FY with complete CF data.
 
-    NOTE: cfi, cff, and delta_cash are NOT in the 22 canonical fields.
-    This gate SKIPs gracefully when those fields are absent (common in 4.0).
+    cfi, cff, and delta_cash are in the 29 canonical fields.
+    This gate SKIPs gracefully when those fields are absent from annual periods.
     Intentionally non-critical -- a SKIP does not cascade to overall FAIL.
     DISTINCT from sanity.py (capex sign, revenue sign, gp>revenue, yoy 10x).
     """
@@ -313,8 +313,7 @@ def _gate_cashflow_identity(annual: list[dict]) -> dict:
             "status": "SKIP",
             "note": (
                 "No annual period has complete CF components (cfo+cfi+cff). "
-                "cfi and cff are not in the 22 canonical fields -- "
-                "this gate is optional for most 4.0 tickers."
+                "Gate is non-critical; SKIP does not propagate to overall FAIL."
             ),
         }
 

@@ -9,6 +9,14 @@
 
 ---
 
+### BL-059 — Reconciliación y hardening de la capa contractual existente
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-10)
+- **Asignado a:** engineer
+- **Depende de:** —
+- **Descripción:** Se cierra BL-059 sobre el alcance real ya implementado en el repo, sin vender una capa contractual greenfield. El cierre deja absorbidos los tres invariantes que definían la BL: alineación del set canónico entre `schemas/v1/common.schema.json`, `config/field_aliases.json` y `elsian/evaluate/validation.py`; coherencia cross-file básica entre `case.json`, `expected.json` y artefactos derivados solo cuando están repo-trackeados; y validación contractual explícita en CI mediante `scripts/validate_contracts.py --all` y `tests/contracts`. `BL-061` y `BL-062` permanecen fuera de alcance, y el archivo de BL-059 reconoce ahora el cierre real: la archivación inicial no agotó toda la reconciliación documental, porque después sí fue necesaria una reconciliación mínima adicional de `PROJECT_STATE.md` para retirar a BL-059 como prioridad viva residual.
+- **Criterio de aceptación:** ✓ `python3 scripts/validate_contracts.py --all` PASS. ✓ `python3 -m pytest -q tests/contracts` PASS (`21 passed`). ✓ `python3 -m elsian eval --all` PASS 16/16. ✓ `python3 -m pytest -q` PASS (`1450 passed, 5 skipped, 1 warning`). ✓ `git diff --check` limpio. ✓ Auditoría final del padre sin findings materiales.
+
 ### BL-084 — Implementar fallback no duplicativo de `finance lease obligation` hacia `total_debt`
 - **Prioridad:** ALTA
 - **Estado:** DONE ✅ (2026-03-09)
