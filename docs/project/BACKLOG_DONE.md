@@ -9,6 +9,14 @@
 
 ---
 
+### BL-065 — T07 — Policies y rule packs (scope filtrado restante)
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-10)
+- **Asignado a:** engineer
+- **Depende de:** BL-063
+- **Descripción:** Se cierra BL-065 sobre el alcance estrecho ya absorbido en el extract path de Module 1, sin abrir un policy engine, sin rediseñar merge/runtime y sin vender una capa genérica de rules fuera del problema real. El paquete técnico externaliza de forma declarativa thresholds y quirks de extracción en `config/extraction_rules.json`, resuelve packs reutilizables por mercado/formato (`sec_html`, `pdf_ifrs`, `pdf_asx`) con precedencia base → pack → `config_overrides` de caso, y cablea esa policy solo donde hoy aporta valor factual: `ExtractPhase`, `html_tables` y su routing de `source_hint`. El audit-fix final restaura además la precedencia real del tercer nivel (`config_overrides` desde `CaseConfig`) para que el override de `case.json` no quede silenciosamente ignorado.
+- **Criterio de aceptación:** ✓ `BL-065` sale de `docs/project/BACKLOG.md` y queda archivada aquí. ✓ El cierre factual se mantiene estrecho: externalización declarativa de policy en extract, no policy engine ni rediseño de merge/runtime. ✓ `python3 -m pytest -q tests/unit/test_config.py tests/unit/test_extract_phase.py tests/unit/test_html_tables.py` PASS (`121 passed`). ✓ `python3 -m pytest -q --disable-warnings` PASS (`1560 passed, 5 skipped, 1 warning`). ✓ `python3 -m elsian eval --all` PASS 16/16. ✓ `git diff --check` limpio. ✓ Auditoría técnica del paquete ya cerrada en verde.
+
 ### BL-068 — T11 — Logging estructurado y métricas por run
 - **Prioridad:** BAJA
 - **Estado:** DONE ✅ (2026-03-10)

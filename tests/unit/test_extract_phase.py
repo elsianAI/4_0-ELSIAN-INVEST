@@ -1321,3 +1321,103 @@ def test_bl084_crossfiling_total_debt_does_not_block_filing_local_synthesis():
         "Filing A explicit sort key must be strictly better (lower) than "
         "filing B finance-lease fallback sort key (DEC-028 cross-filing guarantee)."
     )
+
+
+# ── BL-065: extraction_rules pack drives _candidate_context_bonus ──────────
+
+def test_bl065_candidate_context_bonus_custom_threshold_disables_note_penalty():
+    """Threshold=0 in extraction_rules disables the small-note penalty entirely."""
+    from elsian.extract.phase import _candidate_context_bonus
+
+    rules_zero = {
+        "context_bonus": {
+            "small_note_value_threshold": 0,
+            "hard_penalty": -300,
+            "auxiliary_note_markers": ["results_of_operations"],
+        }
+    }
+    # With threshold=0, abs(value) < 0 is never True → no penalty
+    bonus = _candidate_context_bonus(
+        "cost_of_revenue",
+        "Cost of revenue",
+        "SRC.clean.md:results_of_operations:tbl0:row1:col1",
+        500.0,
+        "thousands",
+        rules_zero,
+    )
+    assert bonus == 0, "Zero threshold must disable note-section penalty"
+
+
+def test_bl065_candidate_context_bonus_empty_markers_disables_note_penalty():
+    """Empty auxiliary_note_markers list disables the note-section penalty."""
+    from elsian.extract.phase import _candidate_context_bonus
+
+    rules_empty = {
+        "context_bonus": {
+            "small_note_value_threshold": 10000,
+            "hard_penalty": -300,
+            "auxiliary_note_markers": [],
+        }
+    }
+    bonus = _candidate_context_bonus(
+        "cost_of_revenue",
+        "Cost of revenue",
+        "SRC.clean.md:results_of_operations:tbl0:row1:col1",
+        500.0,
+        "thousands",
+        rules_empty,
+    )
+    assert bonus == 0, "Empty marker list must disable note-section penalty"
+
+
+def test_bl065_candidate_context_bonus_custom_ni_exclusions():
+    """Empty net_income_exclusion_tokens allows a candidate that would normally be penalised."""
+    from elsian.extract.phase import _candidate_context_bonus
+
+    rules_no_excl = {
+        "context_bonus": {
+            "small_note_value_threshold": 10000,
+            "hard_penalty": -300,
+            "primary_label_bonus": 100,
+            "auxiliary_note_markers": [],
+            "net_income_exclusion_tokens": [],
+        }
+    }
+    # "on disposal" is a default exclusion — with empty list it must NOT be penalised
+    bonus = _candidate_context_bonus(
+        "net_income",
+        "Gain on disposal of subsidiary",
+        "SRC.clean.md:income_statement:tbl0:row5:col1",
+        1200.0,
+        "thousands",
+        rules_no_excl,
+    )
+    assert bonus == 0, "Empty exclusion list must prevent net_income disposal penalty"
+
+
+def test_bl065_case_config_overrides_reach_extraction_pack(tmp_path):
+    """End-to-end: config_overrides from case.json reaches resolve_extraction_pack.
+
+    Contract: base → pack (via source_hint routing) → config_overrides.
+    The third precedence level must use the typed CaseConfig field 'config_overrides',
+    not the implicit channel 'extraction_overrides' (which was the pre-fix bug).
+    """
+    import json
+
+    case_json = {
+        "ticker": "TEST",
+        "source_hint": "sec",  # routes to sec_html pack via _pack_routing
+        "config_overrides": {"context_bonus": {"hard_penalty": -999}},
+    }
+    (tmp_path / "case.json").write_text(json.dumps(case_json), encoding="utf-8")
+    (tmp_path / "filings").mkdir()
+
+    phase = ExtractPhase()
+    phase.extract(str(tmp_path))
+
+    # _resolved_extraction_rules must reflect the override from config_overrides.
+    # Without the fix, config.get("extraction_overrides") returned None and
+    # hard_penalty would keep the pack/base default (not -999).
+    assert phase._resolved_extraction_rules["context_bonus"]["hard_penalty"] == -999, (
+        "config_overrides from case.json must win over base and pack values"
+    )

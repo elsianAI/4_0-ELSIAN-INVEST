@@ -36,6 +36,7 @@ from elsian.merge.merger import merge_extractions
 from elsian.context import PipelineContext
 from elsian.pipeline import PipelinePhase
 from elsian.extract.ixbrl_extractor import IxbrlExtractor, make_ixbrl_sort_key
+from elsian.config import resolve_extraction_pack
 
 
 # ── Sign normalisation ───────────────────────────────────────────────
@@ -929,73 +930,110 @@ def _period_affinity(period_key: str, source_filing: str,
     return 1
 
 
+def _get_cb(extraction_rules: Optional[Dict], key: str, default: object) -> object:
+    """Get a value from extraction_rules['context_bonus'] with fallback to default."""
+    if not extraction_rules:
+        return default
+    return extraction_rules.get("context_bonus", {}).get(key, default)
+
+
 def _candidate_context_bonus(
     canonical: str,
     raw_label: str,
     source_location: str,
     value: float,
     scale: str,
+    extraction_rules: Optional[Dict] = None,
 ) -> int:
-    """Return field-specific context adjustments for candidate ranking."""
+    """Return field-specific context adjustments for candidate ranking.
+
+    All policy literals are resolved from *extraction_rules* (context_bonus
+    sub-key) with hard-coded defaults as fallback.  Pass a resolved pack dict
+    from ``resolve_extraction_pack`` to override behaviour per filing format.
+    """
     label_lower = raw_label.lower()
     loc_lower = source_location.lower()
     bonus = 0
 
+    _threshold = _get_cb(extraction_rules, "small_note_value_threshold", 10000)
+    _hard_penalty = _get_cb(extraction_rules, "hard_penalty", -300)
+    _primary_bonus = _get_cb(extraction_rules, "primary_label_bonus", 100)
+    _aux_markers = _get_cb(
+        extraction_rules, "auxiliary_note_markers", _AUXILIARY_NOTE_MARKERS
+    )
+    _cfo_exclusions = _get_cb(
+        extraction_rules, "cfo_exclusion_labels", ("operating lease",)
+    )
+    _capex_counterparts = _get_cb(
+        extraction_rules,
+        "capex_included_in_counterparts",
+        (
+            "accounts payable",
+            "other non-current liabilities",
+            "other current liabilities",
+            "liabilities",
+        ),
+    )
+    _ni_exclusions = _get_cb(
+        extraction_rules,
+        "net_income_exclusion_tokens",
+        (
+            "on disposal",
+            "reclassification adjustment",
+            "redeemable non-controlling",
+            "non-controlling interest",
+            "included in net income",
+            "included in net (loss) income",
+        ),
+    )
+    _eps_location_token = _get_cb(
+        extraction_rules,
+        "eps_share_count_location_token",
+        "weighted_average_number_of_ordinary_shares_used_to_calculate",
+    )
+    _td_verbs = _get_cb(
+        extraction_rules,
+        "total_debt_cashflow_exclusion_verbs",
+        ("payment", "payments", "repayment", "proceeds", "receipt"),
+    )
+
     if (
         canonical in _NOTE_SMALL_VALUE_FIELDS
         and scale in _MONETARY_SCALES
-        and abs(value) < 10000
-        and any(marker in loc_lower for marker in _AUXILIARY_NOTE_MARKERS)
+        and abs(value) < _threshold
+        and any(marker in loc_lower for marker in _aux_markers)
     ):
-        bonus -= 300
+        bonus += _hard_penalty
 
     if canonical == "cfo":
-        if "operating lease" in label_lower:
-            bonus -= 300
+        if any(excl in label_lower for excl in _cfo_exclusions):
+            bonus += _hard_penalty
         elif _PRIMARY_CFO_LABEL_RE.search(raw_label):
-            bonus += 100
+            bonus += _primary_bonus
     elif canonical == "capex":
         if _PRIMARY_CAPEX_LABEL_RE.search(raw_label):
-            bonus += 100
+            bonus += _primary_bonus
         if (
             "included in" in label_lower
-            and any(
-                token in label_lower
-                for token in (
-                    "accounts payable",
-                    "other non-current liabilities",
-                    "other current liabilities",
-                    "liabilities",
-                )
-            )
+            and any(token in label_lower for token in _capex_counterparts)
         ):
-            bonus -= 300
+            bonus += _hard_penalty
         if label_lower.lstrip().startswith("accrued "):
-            bonus -= 300
+            bonus += _hard_penalty
     elif canonical == "net_income":
         if _STANDALONE_NET_RESULT_RE.fullmatch(raw_label.strip()):
-            bonus += 100
-        if any(
-            token in label_lower
-            for token in (
-                "on disposal",
-                "reclassification adjustment",
-                "redeemable non-controlling",
-                "non-controlling interest",
-                "included in net income",
-                "included in net (loss) income",
-            )
-        ):
-            bonus -= 300
+            bonus += _primary_bonus
+        if any(token in label_lower for token in _ni_exclusions):
+            bonus += _hard_penalty
     elif canonical in {"eps_basic", "eps_diluted"}:
-        if "weighted_average_number_of_ordinary_shares_used_to_calculate" in loc_lower:
-            bonus -= 300
+        if _eps_location_token in loc_lower:
+            bonus += _hard_penalty
     elif canonical == "total_debt":
-        if (
-            ":cash_flow:" in loc_lower
-            and re.search(r"\b(payment|payments|repayment|proceeds|receipt)\b", label_lower)
+        if ":cash_flow:" in loc_lower and any(
+            re.search(r"\b" + re.escape(v) + r"\b", label_lower)
+            for v in _td_verbs
         ):
-            bonus -= 300
+            bonus += _hard_penalty
 
     return bonus
 
@@ -1077,6 +1115,7 @@ class ExtractPhase(PipelinePhase):
         self._alias_resolver = AliasResolver(
             str(Path(config_dir) / "field_aliases.json")
         )
+        self._resolved_extraction_rules: Dict = {}
 
     def run(self, context: PipelineContext) -> PhaseResult:
         """PipelinePhase interface: extract from filings in context.case.case_dir."""
@@ -1121,6 +1160,13 @@ class ExtractPhase(PipelinePhase):
             return json.loads(path.read_text(encoding="utf-8"))
         return {}
 
+    def _load_extraction_rules(self) -> Dict:
+        """Load extraction_rules.json from config dir."""
+        path = Path(self._config_dir) / "extraction_rules.json"
+        if path.exists():
+            return json.loads(path.read_text(encoding="utf-8"))
+        return {}
+
     def extract(self, case_dir: str) -> ExtractionResult:
         """Extract financial data from filings in a case directory."""
         case_path = Path(case_dir)
@@ -1141,6 +1187,16 @@ class ExtractPhase(PipelinePhase):
         case_overrides = config.get("selection_overrides")
         if case_overrides and isinstance(case_overrides, dict):
             rules.update(case_overrides)
+
+        # Load and resolve extraction pack (base ← pack ← case config_overrides)
+        raw_extraction_rules = self._load_extraction_rules()
+        _source_hint = config.get("source_hint", "sec")
+        _pack_routing = raw_extraction_rules.get("_pack_routing", {})
+        _pack_name = _pack_routing.get(_source_hint, "sec_html")
+        _case_extraction_overrides = config.get("config_overrides")
+        self._resolved_extraction_rules = resolve_extraction_pack(
+            raw_extraction_rules, _pack_name, _case_extraction_overrides
+        )
 
         # Per-case additive_fields: temporarily promote specific canonical
         # fields to additive accumulation for this case only.  This allows
@@ -1386,6 +1442,7 @@ class ExtractPhase(PipelinePhase):
         table_fields = extract_tables_from_clean_md(
             text, source_filename=filing_path.name,
             filing_type=metadata.filing_type,
+            extraction_rules=self._resolved_extraction_rules,
         )
         raw_table_fields.extend(table_fields)
 
@@ -2043,6 +2100,7 @@ class ExtractPhase(PipelinePhase):
             tf.source_location,
             tf.value,
             scale,
+            self._resolved_extraction_rules,
         )
         candidate_restated = _candidate_restatement_detected(
             canonical_field=canonical,

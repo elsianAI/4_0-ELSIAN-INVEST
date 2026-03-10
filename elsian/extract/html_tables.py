@@ -616,6 +616,7 @@ def _identify_period_columns(
 def extract_from_markdown_table(
     table_text: str, section_name: str = "", table_idx: int = 0,
     filing_type: str = "",
+    extraction_rules: dict | None = None,
 ) -> List[TableField]:
     """Extract field-value pairs from a single markdown table.
 
@@ -635,8 +636,15 @@ def extract_from_markdown_table(
     # "% Change", QoQ/YoY change, constant-currency deltas) are not primary
     # financial statements. Their mixed layout causes misleading period maps,
     # while the same filing already contains the actual statement table.
-    if any(_COMPARISON_HEADER_RE.search(h) for h in headers if h):
-        return []
+    _comp_tokens = (extraction_rules or {}).get("html", {}).get(
+        "comparison_header_tokens"
+    )
+    if _comp_tokens is not None:
+        if any(any(tok in h.lower() for tok in _comp_tokens) for h in headers if h):
+            return []
+    else:
+        if any(_COMPARISON_HEADER_RE.search(h) for h in headers if h):
+            return []
 
     period_map = _identify_period_columns(headers, filing_type=filing_type)
     if not period_map:
@@ -1053,6 +1061,7 @@ def extract_from_markdown_table(
 def extract_tables_from_clean_md(
     clean_md_text: str, source_filename: str = "",
     filing_type: str = "",
+    extraction_rules: dict | None = None,
 ) -> List[TableField]:
     """Extract all fields from a .clean.md file containing financial tables.
 
@@ -1111,6 +1120,7 @@ def extract_tables_from_clean_md(
                     table_text, section_label,
                     table_idx=global_tbl_idx,
                     filing_type=filing_type,
+                    extraction_rules=extraction_rules,
                 )
                 global_tbl_idx += 1
                 for f in fields:

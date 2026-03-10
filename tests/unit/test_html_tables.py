@@ -858,3 +858,35 @@ def test_half_year_date_header_in_text_extractor():
     assert by_period.get(("Total assets", "FY2024")) == 12074.0
     # Must NOT produce Q2-2025
     assert ("Total assets", "Q2-2025") not in by_period
+
+
+# ── BL-065: extraction_rules comparison_header_tokens from config ───────────
+
+def test_bl065_comparison_header_custom_tokens_skip_table():
+    """Custom comparison_header_tokens in extraction_rules skips the table."""
+    from elsian.extract.html_tables import extract_from_markdown_table
+
+    table = (
+        "|  | 2024 | Custom Delta |\n"
+        "| --- | --- | --- |\n"
+        "| Revenue | 1000 | 50 |\n"
+    )
+    rules = {"html": {"comparison_header_tokens": ["custom delta"]}}
+    fields = extract_from_markdown_table(table, filing_type="10-K", extraction_rules=rules)
+    assert fields == [], "Custom token must skip table"
+
+
+def test_bl065_comparison_header_empty_tokens_allows_table():
+    """Empty comparison_header_tokens list allows a table that regex would skip."""
+    from elsian.extract.html_tables import extract_from_markdown_table
+
+    # This header has '$ Change' which would be caught by _COMPARISON_HEADER_RE;
+    # with an empty token list the table must pass through.
+    table = (
+        "|  | 2024 | $ Change |\n"
+        "| --- | --- | --- |\n"
+        "| Revenue | 1000 | 50 |\n"
+    )
+    rules = {"html": {"comparison_header_tokens": []}}
+    fields = extract_from_markdown_table(table, filing_type="10-K", extraction_rules=rules)
+    assert len(fields) > 0, "Empty token list must not skip the table"

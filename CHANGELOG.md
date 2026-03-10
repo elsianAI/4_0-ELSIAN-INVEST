@@ -2,6 +2,27 @@
 
 ## 2026-03-10
 
+### [4.0] Governance closeout — BL-065 archivada con scope estrecho en extract
+- BL-065 sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual sobre la externalización declarativa de policy en extract ya auditada en verde: `config/extraction_rules.json`, packs por mercado/formato y precedencia base → pack → `config_overrides`, sin abrir un policy engine ni rediseñar merge/runtime.
+- `docs/project/PROJECT_STATE.md` deja de presentar BL-065 como siguiente prioridad shared-core viva; la siguiente pasa a `BL-067`, mientras `BL-064` queda como frente posterior de menor prioridad.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** closeout respaldado por gates ya verificados del paquete técnico: `python3 -m pytest -q tests/unit/test_config.py tests/unit/test_extract_phase.py tests/unit/test_html_tables.py` → `121 passed`, `python3 -m pytest -q --disable-warnings` → `1560 passed, 5 skipped, 1 warning`, `python3 -m elsian eval --all` → PASS 16/16, `git diff --check` clean.
+
+### [4.0] BL-065 audit fix — precedencia base→pack→config_overrides restaurada en ExtractPhase
+- `elsian/extract/phase.py`: corregido canal del tercer nivel de precedencia: `config.get("extraction_overrides")` → `config.get("config_overrides")` para alinearse con el campo tipado `config_overrides` de `CaseConfig`. Sin el fix, el override de case.json era silenciosamente ignorado.
+- `elsian/config.py`: docstring de `resolve_extraction_pack` actualizado: `extraction_overrides from case.json` → `config_overrides from case.json`.
+- `tests/unit/test_config.py`: docstring de `test_precedence_base_pack_case_overrides` corregido al mismo término.
+- `tests/unit/test_extract_phase.py`: nuevo test `test_bl065_case_config_overrides_reach_extraction_pack` cubre el camino real end-to-end: `case.json (config_overrides)` → `ExtractPhase.extract()` → `source_hint` → pack routing → `resolve_extraction_pack` → `_resolved_extraction_rules`.
+- **Files changed:** `elsian/extract/phase.py`, `elsian/config.py`, `tests/unit/test_config.py`, `tests/unit/test_extract_phase.py`, `CHANGELOG.md`
+
+### [4.0] BL-065 — Policies y rule packs (extraction_rules)
+- Nuevo `config/extraction_rules.json`: packs declarativos `sec_html`, `pdf_ifrs`, `pdf_asx` con routing `source_hint → pack`. Layer merge: base ← pack ← case `config_overrides`.
+- `elsian/config.py`: añadidos `load_extraction_rules()` y `resolve_extraction_pack()`. Deep merge a nivel de sub-clave `context_bonus`/`html`.
+- `elsian/extract/phase.py`: `_get_cb()` helper + `_candidate_context_bonus()` parametrizado sobre `extraction_rules` (threshold, hard_penalty, primary_label_bonus, auxiliary_note_markers, cfo/capex/net_income/eps/total_debt políticas). `ExtractPhase` carga y resuelve el pack en `extract()`, lo pasa a `_candidate_context_bonus` y a `extract_tables_from_clean_md`.
+- `elsian/extract/html_tables.py`: `extract_from_markdown_table` y `extract_tables_from_clean_md` aceptan `extraction_rules`; comparison-header check usa `html.comparison_header_tokens` con fallback a `_COMPARISON_HEADER_RE`.
+- **Tests nuevos:** `test_config.py` (+4 BL-065), `test_extract_phase.py` (+3 BL-065), `test_html_tables.py` (+2 BL-065).
+- **Files changed:** `config/extraction_rules.json` (nuevo), `elsian/config.py`, `elsian/extract/phase.py`, `elsian/extract/html_tables.py`, `tests/unit/test_config.py`, `tests/unit/test_extract_phase.py`, `tests/unit/test_html_tables.py`, `CHANGELOG.md`
+
 ### [4.0] Governance closeout — BL-068 archivada con scope estrecho de observabilidad por run
 - BL-068 sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual sobre el paquete ya auditado en verde: métricas machine-readable por run en `run_metrics.json`, duraciones por fase (`duration_ms`), agregados/flags/final_status y diagnósticos mínimos de extracción, sin vender un framework horizontal de logging.
 - `docs/project/PROJECT_STATE.md` no cambia porque BL-068 no alteraba la prioridad shared-core viva ni el estado operativo ya canonizado.

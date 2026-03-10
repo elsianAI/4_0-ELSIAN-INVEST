@@ -41,17 +41,6 @@
 - **Descripción:** Introducir un readiness compuesto que complemente el score histórico con cobertura real, validator, provenance y penalización de extras.
 - **Criterio de aceptación:** `elsian eval` expone readiness compuesto junto al score legado y permite ordenar tickers por preparación operativa real.
 
-### BL-065 — T07 — Policies y rule packs (scope filtrado restante)
-- **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** BL-063
-- **Referencias:** T07-parcial, docs/project/PLAN_IMPLEMENTACION_FILTRADO.md
-- **Descripción:** Externalizar thresholds y quirks pendientes a policies y rule packs reutilizables por mercado/formato, tomando BL-047 como patrón y sin reabrir lo ya absorbido por fixes previos.
-- **Criterio de aceptación:** Reglas operativas salen del core donde hoy siguen embebidas y al menos un fix pasa a resolverse por config/rule pack sin tocar lógica central.
-
 ### BL-067 — T09 — Factoría de onboarding
 - **Prioridad:** MEDIA
 - **Estado:** TODO
