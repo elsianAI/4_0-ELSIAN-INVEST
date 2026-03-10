@@ -309,8 +309,10 @@ def check_manifest_scope(
                 )
                 break
 
-    # 3. Missing governance reconciliation (required when claimed_bl_status='done')
-    if claimed_bl_status == "done":
+    # 3. Missing governance reconciliation (required when claimed_bl_status='done'
+    #    AND there is an active diff; an empty diff means the manifest is a
+    #    historical closed record — no reconciliation can be pending).
+    if claimed_bl_status == "done" and dirty_paths:
         for doc in expected_governance_updates:
             if doc not in dirty_set:
                 violations.append(

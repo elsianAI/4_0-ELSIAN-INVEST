@@ -280,6 +280,51 @@ def test_check_manifest_scope_none_string_governance_updates_skips_reconciliatio
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Reproducibility fix: missing_reconciliation must NOT fire on clean worktree
+# ---------------------------------------------------------------------------
+
+
+def test_check_manifest_scope_done_clean_worktree_no_missing_reconciliation():
+    """manifest done + dirty_paths=[] (clean repo) must NOT raise missing_reconciliation.
+
+    A historical manifest already committed produces no diff; enforcing
+    reconciliation here would break reproducibility for every closed packet.
+    """
+    manifest = {
+        **_BASE_MANIFEST,
+        "claimed_bl_status": "done",
+        "expected_governance_updates": [
+            "CHANGELOG.md",
+            "docs/project/BACKLOG.md",
+            "docs/project/BACKLOG_DONE.md",
+            "docs/project/PROJECT_STATE.md",
+        ],
+    }
+    violations = check_governance.check_manifest_scope(manifest, [])
+    assert not any("missing_reconciliation" in v for v in violations)
+
+
+def test_check_manifest_scope_done_partial_diff_still_enforces_reconciliation():
+    """manifest done + some dirty paths present but governance doc absent → missing_reconciliation.
+
+    Only the no-diff (clean worktree) case is exempt; an active packet being
+    closed must still reconcile all expected governance documents.
+    """
+    manifest = {
+        **_BASE_MANIFEST,
+        "claimed_bl_status": "done",
+        "write_set": ["CHANGELOG.md", "scripts/check_governance.py"],
+        "expected_governance_updates": ["CHANGELOG.md", "docs/project/BACKLOG.md"],
+    }
+    # scripts/check_governance.py is dirty but docs/project/BACKLOG.md is not
+    violations = check_governance.check_manifest_scope(
+        manifest,
+        ["scripts/check_governance.py"],
+    )
+    assert any("missing_reconciliation" in v and "BACKLOG.md" in v for v in violations)
+
+
 def test_classify_dirty_path_schemas_and_tasks_are_technical():
     """schemas/ and tasks/ paths must be technical_dirty, not other_dirty."""
     assert check_governance.classify_dirty_path("schemas/v1/task_manifest.schema.json") == "technical_dirty"

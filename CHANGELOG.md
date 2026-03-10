@@ -2,6 +2,10 @@
 
 ## 2026-03-10
 
+### [4.0] Reproducibility fix — missing_reconciliation no se dispara en worktree limpio
+- `scripts/check_governance.py`: `check_manifest_scope` solo exige `missing_reconciliation` cuando `dirty_paths` es no vacío; manifest histórico cerrado en repo limpio ya no genera falsos positivos.
+- `tests/unit/test_check_governance.py`: 2 tests nuevos cubren `done`+`dirty_paths=[]` (sin violación) y `done`+diff parcial (sigue fallando).
+
 ### [4.0] BL-061 cierre último finding — schemas/ y tasks/ clasifican como technical_dirty
 - `scripts/check_governance.py`: añadidos `schemas/` y `tasks/` a `TECHNICAL_PREFIXES`; ya no caen en `other_dirty`, cerrando la vía de escape en `tier_violation` para packets `governance-only`.
 - `tests/unit/test_check_governance.py`: 3 tests nuevos cubren clasificación y `tier_violation` para ambos prefijos.
