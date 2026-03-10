@@ -118,17 +118,6 @@
 - **Descripción:** Ejecutar un primer piloto real de paralelización mutante con dos BL independientes y write sets disjuntos, usando exclusivamente el proceso definido y canonizado por `BL-072`. El piloto debe demostrar aislamiento por `git worktree` y rama, integración serial en el padre, cierre independiente por BL y aborto limpio si aparece solape material.
 - **Criterio de aceptación:** Se ejecuta un piloto con dos BL válidas y una BL por worktree/rama. Ningún agente sale de su write set. Cada BL pasa `gates -> auditor -> closeout` por separado. La integración se hace en serie y genera un commit por BL. Si aparece conflicto estructural, el piloto aborta sin contaminar `main`. Queda una decisión explícita de mantener, ajustar o descartar el modelo antes de extenderlo a más trabajo.
 
-### BL-077 — Investigar inconsistencias de campos derivados
-- **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** engineer
-- **Módulo:** Module 1
-- **Validation tier:** targeted
-- **Depende de:** BL-075, BL-076
-- **Referencias:** DEC-027
-- **Descripción:** Investigar caso por caso las inconsistencias de campos derivados detectadas en la auditoría. ACLS: `ebitda` reportado vs `ebit + D&A` difiere hasta 47%. NEXN: `gross_profit` diverge de `ingresos - cost_of_revenue` hasta 18.8%. SONO: `gross_profit` diverge 23.7% en Q3-2023. SOM: `delta_cash` diverge 398% en FY2023. TZOO: `delta_cash` diverge 27–30% en múltiples FY. Para cada caso, determinar si (a) el `expected.json` tiene un valor incorrecto que debe corregirse, (b) la fórmula simplificada no aplica y debe documentarse, o (c) falta o está mal capturado un campo componente.
-- **Criterio de aceptación:** Cada `DERIVED_INCONSISTENT` queda clasificado como (a), (b) o (c). Los casos (a) quedan corregidos. Los casos (b) y (c) quedan documentados. Se genera un mini-informe en `docs/reports/DERIVED_INCONSISTENCIES_RESOLUTION.md`.
-
 ### BL-005 — Expandir cobertura de tickers (diversidad de mercados/formatos)
 - **Prioridad:** BAJA
 - **Estado:** TODO

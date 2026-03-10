@@ -3,11 +3,11 @@
 ## 2026-03-10
 
 ### [4.0] BL-077 — Resolución de inconsistencias de campos derivados (end-to-end)
-- Investigación filing-backed de las 15 discrepancias derivadas detectadas en `docs/reports/AUDIT_EXPECTED_JSON.md` para ACLS (ebitda Q1-Q3 2024/2025), NEXN (gross_profit FY2021-FY2024), SONO (gross_profit Q3-2023), SOM (delta_cash FY2023-FY2024), TZOO (delta_cash FY2019/2022/2023/2024).
-- Clasificaciones finales: 9 casos **(b) fórmula inaplicable**, 1 caso **(c) componente mal capturado** (SONO Q3-2023 cost_of_revenue: curado desde fiscal Q3 10-Q en lugar de fiscal Q4 de 10-K; valor correcto = 177,093; fix delegado a BL futura con ajuste simultáneo de pipeline y truth).
+- Investigación filing-backed de las 17 discrepancias derivadas detectadas en `docs/reports/AUDIT_EXPECTED_JSON.md` para ACLS (ebitda Q1-Q3 2024/2025 × 6), NEXN (gross_profit FY2021-FY2024 × 4), SONO (gross_profit Q3-2023 × 1), SOM (delta_cash FY2023-FY2024 × 2), TZOO (delta_cash FY2019/2022/2023/2024 × 4).
+- Clasificaciones finales: 16 discrepancias **(b) fórmula inaplicable**, 1 discrepancia **(c) componente mal capturado** (SONO Q3-2023 cost_of_revenue: curado desde fiscal Q3 10-Q en lugar de fiscal Q4 de 10-K; valor correcto = 177,093; fix pendiente como deuda técnica candidata sin BL asignada, requiere ajuste simultáneo de pipeline y truth).
 - Ningún valor de expected.json ha sido modificado en esta BL. No se han añadido manual_overrides. Baselines de evaluación 100% mantenidos en los cinco tickers.
-- `docs/reports/DERIVED_INCONSISTENCIES_RESOLUTION.md` creado con evidencia completa por ticker y periodo.
-- **Files changed:** `docs/reports/DERIVED_INCONSISTENCIES_RESOLUTION.md`, `CHANGELOG.md`
+- El cierre final archivó `BL-077`: sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md`. `docs/reports/DERIVED_INCONSISTENCIES_RESOLUTION.md` queda como informe filing-backed de soporte con la evidencia completa por ticker y periodo, sin recontar esta ola como fix shared-core amplio.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/reports/DERIVED_INCONSISTENCIES_RESOLUTION.md`, `CHANGELOG.md`
 - **Validation:** `python3 -m elsian eval ACLS NEXN SONO SOM TZOO` → todos 100%. `git diff --check` clean.
 
 ### [4.0] Governance closeout — BL-072 canoniza `parallel-ready` y desbloquea documentalmente BL-073

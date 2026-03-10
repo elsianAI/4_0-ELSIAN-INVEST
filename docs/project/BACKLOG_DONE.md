@@ -9,6 +9,14 @@
 
 ---
 
+### BL-077 — Investigar inconsistencias de campos derivados
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-10)
+- **Asignado a:** engineer
+- **Depende de:** BL-075, BL-076
+- **Descripción:** Se cierra BL-077 como trabajo de clasificación y documentación filing-backed de inconsistencias derivadas, no como una ola de fixes shared-core generalizados. La investigación consolidada en `docs/reports/DERIVED_INCONSISTENCIES_RESOLUTION.md` resuelve el universo auditado de 17 discrepancias dejando 16 casos clasificados como **(b) fórmula inaplicable** y 1 caso como **(c) componente mal capturado** (`SONO` Q3-2023), sin abrir correcciones oportunistas sobre `expected.json` ni vender cambios de pipeline que esta BL no ejecutó. El cierre factual deja explícito que la evidencia técnica ya existía en el informe y en `CHANGELOG.md`: no hubo casos **(a)** corregidos en esta ola, no se añadieron `manual_overrides`, y la única deuda técnica remanente queda documentada solo como candidata futura porque requiere reconciliación simultánea de pipeline y truth, sin BL asignada en este cierre.
+- **Criterio de aceptación:** ✓ Cada una de las 17 discrepancias `DERIVED_INCONSISTENT` del alcance investigado queda clasificada con evidencia filing-backed en `docs/reports/DERIVED_INCONSISTENCIES_RESOLUTION.md`. ✓ El cierre de BL-077 queda reflejado sin reabrir la parte técnica ni recontar esta ola como fix shared-core amplio. ✓ `BL-077` sale de `docs/project/BACKLOG.md` y queda archivada aquí. ✓ La trazabilidad técnica ya documentada se mantiene veraz: `python3 -m elsian eval ACLS NEXN SONO SOM TZOO` → todos 100.0% y `git diff --check` clean según la evidencia ya registrada en `CHANGELOG.md`.
+
 ### BL-072 — Habilitación de paralelismo: criterio `parallel-ready` y proceso operativo
 - **Prioridad:** MEDIA
 - **Estado:** DONE ✅ (2026-03-10)

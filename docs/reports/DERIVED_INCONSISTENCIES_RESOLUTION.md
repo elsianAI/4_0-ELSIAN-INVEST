@@ -12,11 +12,11 @@
 |--------|-------|----------|---------------|---------------|
 | ACLS | ebitda | Q1-2024, Q2-2024, Q3-2024, Q1-2025, Q2-2025, Q3-2025 | (b) Fórmula inaplicable | Sin cambio en truth |
 | NEXN | gross_profit | FY2021, FY2022, FY2023, FY2024 | (b) Fórmula inaplicable | Sin cambio en truth |
-| SONO | gross_profit | Q3-2023 | (c) Componente mal capturado | Documentado; fix en BL futura |
+| SONO | gross_profit | Q3-2023 | (c) Componente mal capturado | Documentado; deuda técnica candidata sin BL asignada |
 | SOM | delta_cash | FY2023, FY2024 | (b) Fórmula inaplicable | Sin cambio en truth |
 | TZOO | delta_cash | FY2019, FY2022, FY2023, FY2024 | (b) Fórmula inaplicable | Sin cambio en truth |
 
-**Resultado:** 9 sobre 12 casos son (b), 1 es (c). 0 casos son (a) — ningún valor curado en expected.json es incorrecto en los tickers de tipo (b) o ha sido corregido. El caso (c) queda trazado sin mutación de truth para evitar romper el eval hasta que el pipeline del período sea reconciliado.
+**Resultado:** 16 sobre 17 discrepancias son caso (b), 1 es caso (c). 0 son caso (a) — ningún valor curado en expected.json es incorrecto en los periodos de tipo (b) ni ha sido corregido. El caso (c) queda trazado sin mutación de truth para evitar romper el eval hasta que el pipeline del período sea reconciliado.
 
 ---
 
@@ -210,9 +210,9 @@ El `cost_of_revenue` para SONO Q3-2023 fue curado desde el 10-Q de Sonos fiscal 
 **Por qué no se corrige truth en esta BL:**
 La corrección de `cost_of_revenue` en expected.json a 177,093 haría que el eval de SONO mostrara WRONG para ese campo (porque el pipeline extrae 201,594 del 10-Q fiscal Q3). Modificar truth sin simultáneamente corregir el pipeline rompería el eval score de SONO (de 100% a <100%), lo cual constituye una regresión en la evaluación del pipeline actual. La corrección correcta requiere: (a) actualizar el mapeo de período del filing fiscal Q3 de Sonos en la capa de adquisición/merge para que no se interprete como calendar Q3, y (b) corrección simultánea de truth. Esto es una intervención shared-core y debe ir en una BL separada.
 
-**Acción pendiente en BL futura:** Reconciliar el mapeo de períodos de Sonos fiscal quarters a calendar quarters en la capa de acquire/merge. Aplicar simultáneamente la corrección de truth: cambiar `cost_of_revenue` Q3-2023 de 201,594 a 177,093, con `source_filing` = SRC_003_10-K_FY2023.clean.md.
+**Acción pendiente (deuda técnica candidata, sin BL asignada):** Reconciliar el mapeo de períodos de Sonos fiscal quarters a calendar quarters en la capa de acquire/merge. Aplicar simultáneamente la corrección de truth: cambiar `cost_of_revenue` Q3-2023 de 201,594 a 177,093, con `source_filing` = SRC_003_10-K_FY2023.clean.md. Esta corrección requiere intervención shared-core futura; no existe BL abierta para ello en el backlog activo.
 
-**No se toca truth en esta BL. La discrepancia sale de BL-077 clasificada con evidencia completa y delegada a BL futura.**
+**No se toca truth en esta BL. La discrepancia sale de BL-077 clasificada con evidencia completa; la corrección queda como deuda técnica candidata a tarea shared-core futura (sin BL asignada en el backlog activo).**
 
 ---
 
@@ -330,13 +330,13 @@ TZOO es una empresa con operaciones internacionales (US GAAP, ticker Nasdaq). Su
 
 Todas las inconsistencias derivadas identificadas en `docs/reports/AUDIT_EXPECTED_JSON.md` para los cinco tickers en scope han sido clasificadas con evidencia filing-backed:
 
-- **9 casos (b):** La fórmula simplificada no aplica. Los valores curados son correctos. No se necesita ninguna acción sobre truth.
+- **16 discrepancias caso (b):** La fórmula simplificada no aplica. Los valores curados son correctos. No se necesita ninguna acción sobre truth.
   - ACLS ebitda × 6 periodos: "Adjusted EBITDA" = GAAP EBITDA + SBC + Restructuring + otros ajustes
   - NEXN gross_profit × 4 periodos: CoR excl. DA en IS → GP = Rev - CoR(excl.DA) - DA_CoR
   - SOM delta_cash × 2 periodos: delta_cash = cfo + cfi + cff + FX_effect
   - TZOO delta_cash × 4 periodos: delta_cash = cfo + cfi + cff + FX_effect
 
-- **1 caso (c):** Componente mal capturado. Evidencia filing-backed completa. Sin mutación de truth en esta BL (requiere fix simultáneo de pipeline y truth en BL futura).
+- **1 discrepancia caso (c):** Componente mal capturado. Evidencia filing-backed completa. Sin mutación de truth en esta BL (requiere fix simultáneo de pipeline y truth; deuda técnica candidata sin BL asignada en el backlog activo).
   - SONO cost_of_revenue Q3-2023: curado desde Sonos fiscal Q3 10-Q (July 1) cuando Q3-2023 = calendar Q3 (Sep 30); valor correcto = 177,093 (= 305,147 - 128,054 de 10-K)
 
 **El bucket BL-077 queda cerrado.** Cada discrepancia ha salido del bucket con clasificación, evidencia y resolución/recomendación. No se han añadido manual_overrides, no se ha debilitado ningún expected.json y no se han abierto nuevas olas de derivados.
