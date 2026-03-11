@@ -9,6 +9,14 @@
 
 ---
 
+### BL-073 — Piloto controlado de paralelización multiagente
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-11)
+- **Asignado a:** director
+- **Depende de:** BL-072
+- **Descripción:** Se archiva BL-073 como no ejecutada y no aplicable en el snapshot actual del repo. El contrato `parallel-ready` quedó canonizado por `BL-072` y `DEC-029`, pero el piloto no llegó a ejecutarse porque ya no existen dos BL reales, concurrentes e independientes elegibles para lanzarlo sin fabricar trabajo artificial. Este cierre no declara ningún piloto realizado ni cambia doctrina. Si en el futuro reaparecen dos BL válidas, deberá abrirse una tarea nueva en lugar de reanimar BL-073.
+- **Criterio de aceptación:** ✓ `BL-073` sale de `docs/project/BACKLOG.md` y queda archivada aquí. ✓ Queda explícito que no hubo piloto ejecutado en este snapshot. ✓ El contrato `parallel-ready` sigue vigente por `BL-072` y `DEC-029`. ✓ Cualquier piloto futuro requerirá una BL nueva. ✓ Validación de governance ejecutada con `python3 scripts/check_governance.py --format json` y `git diff --check`.
+
 ### BL-064 — T06 — Modelo unificado de readiness
 - **Prioridad:** BAJA
 - **Estado:** DONE ✅ (2026-03-11)

@@ -2,6 +2,12 @@
 
 ## 2026-03-11
 
+### [4.0] Governance reconciliation — BL-073 archivada como no ejecutada en el snapshot actual
+- `BL-073` sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre veraz: el contrato `parallel-ready` ya quedó canonizado en `BL-072` y `DEC-029`, pero el piloto no se ejecutó porque en este snapshot no existen dos BL reales, concurrentes e independientes elegibles.
+- `docs/project/PROJECT_STATE.md` se reconcilia para dejar explícito que no queda backlog vivo ejecutable y que `parallel-ready` sigue vigente solo como contrato canónico; cualquier piloto futuro deberá abrirse como una BL nueva, no reanimar `BL-073`.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` y `git diff --check`.
+
 ### [4.0] BL-064 — Readiness v1: dual score+readiness en elsian eval
 - `elsian/evaluate/evaluator.py` ampliado con tres helpers privados: `_compute_provenance_coverage()` (fracción de campos del expected con `source_filing` y `extraction_method` no vacíos), `_compute_validator_confidence()` (llama a `validate()` de `validation.py` y devuelve `confidence_score` [0-100]), y `_compute_readiness()` (fórmula fija: `readiness_base = 0.40·score + 0.20·required_fields_coverage_pct + 0.20·validator_confidence_score + 0.20·provenance_coverage_pct`; `extra_penalty = min(15.0, extra/max(total_expected,1)·100)`; `readiness_score = max(0.0, round(...))`). `evaluate()` retorna ahora `EvalReport` con los 4 campos nuevos poblados.
 - `elsian/models/result.py` — `EvalReport` ampliado con `readiness_score`, `validator_confidence_score`, `provenance_coverage_pct` y `extra_penalty`; `to_dict()` actualizado.
