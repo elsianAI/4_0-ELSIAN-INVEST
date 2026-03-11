@@ -976,6 +976,90 @@ def cmd_diagnose(args: argparse.Namespace) -> None:
     print(f"  MD:   {md_path}")
 
 
+def cmd_scaffold_task(args: argparse.Namespace) -> None:
+    """Generate a task manifest seed with enforced risks, validation plan, and acceptance criteria."""
+    from elsian.scaffold import write_task_seed
+
+    risks: list[str] = args.risks or []
+    if not risks:
+        print("ERROR: --risks is required. Declare at least one risk.")
+        sys.exit(1)
+    if not args.validation_plan:
+        print("ERROR: --validation-plan is required.")
+        sys.exit(1)
+    if not args.acceptance_criteria:
+        print("ERROR: --acceptance-criteria is required.")
+        sys.exit(1)
+    write_set: list[str] = args.write_set or []
+    if not write_set:
+        print("ERROR: --write-set is required (at least one file path).")
+        sys.exit(1)
+
+    output_dir = Path(args.output) if getattr(args, "output", None) else None
+
+    try:
+        manifest_path, notes_path = write_task_seed(
+            task_id=args.task_id,
+            title=args.title,
+            kind=args.kind,
+            validation_tier=args.validation_tier,
+            write_set=write_set,
+            risks=risks,
+            validation_plan=args.validation_plan,
+            acceptance_criteria=args.acceptance_criteria,
+            references=getattr(args, "references", None) or None,
+            blocked_surfaces=getattr(args, "blocked_surfaces", None) or None,
+            notes=getattr(args, "notes", "") or "",
+            force=getattr(args, "force", False),
+            output_dir=output_dir,
+        )
+    except (ValueError, FileExistsError) as exc:
+        print(f"ERROR: {exc}")
+        sys.exit(1)
+
+    print(f"Scaffold task: {args.task_id}")
+    print(f"  Manifest:  {manifest_path}")
+    print(f"  Notes:     {notes_path}")
+    print(f"  Risks:     {len(risks)} declared")
+    print(f"  Tier:      {args.validation_tier}")
+    print(f"  Write set: {len(write_set)} file(s)")
+
+
+def cmd_scaffold_case(args: argparse.Namespace) -> None:
+    """Generate a case seed (case.json + CASE_NOTES.md) for a new ticker."""
+    from elsian.scaffold import write_case_seed
+
+    output_dir = Path(args.output) if getattr(args, "output", None) else None
+    fiscal_month = getattr(args, "fiscal_year_end_month", None)
+
+    try:
+        case_json_path, notes_md_path = write_case_seed(
+            ticker=args.ticker,
+            source_hint=args.source_hint,
+            currency=args.currency,
+            period_scope=getattr(args, "period_scope", "ANNUAL_ONLY"),
+            exchange=getattr(args, "exchange", None),
+            country=getattr(args, "country", None),
+            cik=getattr(args, "cik", None),
+            fiscal_year_end_month=fiscal_month,
+            notes=getattr(args, "notes", "") or "",
+            force=getattr(args, "force", False),
+            output_dir=output_dir,
+        )
+    except (ValueError, FileExistsError) as exc:
+        print(f"ERROR: {exc}")
+        sys.exit(1)
+
+    ticker_upper = args.ticker.strip().upper()
+    print(f"Scaffold case: {ticker_upper}")
+    print(f"  case.json:    {case_json_path}")
+    print(f"  CASE_NOTES:   {notes_md_path}")
+    print(f"  Source:       {args.source_hint}")
+    print(f"  Currency:     {args.currency.upper()}")
+    print(f"  Period scope: {getattr(args, 'period_scope', 'ANNUAL_ONLY')}")
+    print(f"  Next:         review CASE_NOTES.md, then run: elsian acquire {ticker_upper}")
+
+
 def cmd_discover(args: argparse.Namespace) -> None:
     """Auto-discover ticker metadata and generate case.json."""
     from elsian.discover.discover import TickerDiscoverer, parse_ticker_suffix
@@ -1162,6 +1246,108 @@ def main() -> None:
         ),
     )
     p_onboard.set_defaults(func=cmd_onboard)
+
+    p_scaffold_task = sub.add_parser(
+        "scaffold-task",
+        help="Generate a task manifest seed enforcing risks, validation plan, and acceptance criteria",
+    )
+    p_scaffold_task.add_argument("task_id", help="Task ID, e.g. BL-071")
+    p_scaffold_task.add_argument("--title", required=True, help="Short human-readable title")
+    p_scaffold_task.add_argument(
+        "--kind",
+        choices=["technical", "governance", "mixed"],
+        default="technical",
+        help="Task kind (default: technical)",
+    )
+    p_scaffold_task.add_argument(
+        "--validation-tier",
+        dest="validation_tier",
+        choices=["targeted", "shared-core", "governance-only"],
+        default="targeted",
+        help="Validation tier (default: targeted)",
+    )
+    p_scaffold_task.add_argument(
+        "--write-set",
+        dest="write_set",
+        nargs="+",
+        metavar="FILE",
+        required=True,
+        help="Files this task is allowed to write (at least one required)",
+    )
+    p_scaffold_task.add_argument(
+        "--risks",
+        nargs="+",
+        metavar="RISK",
+        required=True,
+        help="Declared risks (at least one required — enforced)",
+    )
+    p_scaffold_task.add_argument(
+        "--validation-plan",
+        dest="validation_plan",
+        required=True,
+        help="Validation approach (required — enforced)",
+    )
+    p_scaffold_task.add_argument(
+        "--acceptance-criteria",
+        dest="acceptance_criteria",
+        required=True,
+        help="Closure / acceptance criteria (required — enforced)",
+    )
+    p_scaffold_task.add_argument("--references", nargs="*", metavar="BL_ID", default=None)
+    p_scaffold_task.add_argument("--blocked-surfaces", dest="blocked_surfaces", nargs="*", metavar="PATH", default=None)
+    p_scaffold_task.add_argument("--notes", default="", help="Optional free-text notes")
+    p_scaffold_task.add_argument("--force", action="store_true", help="Overwrite existing manifest")
+    p_scaffold_task.add_argument(
+        "--output",
+        default=None,
+        metavar="DIR",
+        help="Write to this directory instead of tasks/",
+    )
+    p_scaffold_task.set_defaults(func=cmd_scaffold_task)
+
+    p_scaffold_case = sub.add_parser(
+        "scaffold-case",
+        help="Generate a case seed (case.json + CASE_NOTES.md) for a new ticker",
+    )
+    p_scaffold_case.add_argument("ticker", help="Ticker symbol, e.g. NEWCO")
+    p_scaffold_case.add_argument(
+        "--source-hint",
+        dest="source_hint",
+        required=True,
+        help="Filing source: sec, asx, eu, etc.",
+    )
+    p_scaffold_case.add_argument(
+        "--currency",
+        required=True,
+        help="ISO currency code, e.g. USD, AUD, EUR",
+    )
+    p_scaffold_case.add_argument(
+        "--period-scope",
+        dest="period_scope",
+        choices=["ANNUAL_ONLY", "FULL"],
+        default="ANNUAL_ONLY",
+        help="Period scope (default: ANNUAL_ONLY)",
+    )
+    p_scaffold_case.add_argument("--exchange", default=None, help="Exchange name, e.g. NASDAQ")
+    p_scaffold_case.add_argument("--country", default=None, help="ISO country code, e.g. US")
+    p_scaffold_case.add_argument("--cik", default=None, help="SEC CIK or equivalent regulator ID")
+    p_scaffold_case.add_argument(
+        "--fiscal-year-end-month",
+        dest="fiscal_year_end_month",
+        type=int,
+        default=None,
+        metavar="MONTH",
+        help="Fiscal year end month 1-12 (default: 12)",
+    )
+    p_scaffold_case.add_argument("--notes", default="", help="Optional free-text notes")
+    p_scaffold_case.add_argument("--force", action="store_true", help="Overwrite existing case.json")
+    p_scaffold_case.add_argument(
+        "--output",
+        default=None,
+        metavar="DIR",
+        help="Write to DIR/<TICKER>/ instead of cases/<TICKER>/",
+    )
+    p_scaffold_case.set_defaults(func=cmd_scaffold_case)
 
     args = parser.parse_args()
     if not args.command:

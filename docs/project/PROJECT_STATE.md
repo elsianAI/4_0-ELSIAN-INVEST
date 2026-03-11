@@ -161,7 +161,7 @@ No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Proven
 
 ## Próximas prioridades
 
-`BL-005`, `BL-062`, `BL-063`, `BL-065`, `BL-066`, `BL-067`, `BL-069`, `BL-070` y `BL-072` ya están cerradas y archivadas en `docs/project/BACKLOG_DONE.md`; ninguna sigue siendo una prioridad shared-core viva. En el backlog activo, la siguiente prioridad operativa pasa a `BL-071`, seguida por `BL-064`, y `BL-073` solo puede ejecutarse si el packet concreto pasa el checklist `parallel-ready` fijado en `docs/project/ROLES.md` y `DEC-029`.
+`BL-005`, `BL-062`, `BL-063`, `BL-065`, `BL-066`, `BL-067`, `BL-069`, `BL-070`, `BL-071` y `BL-072` ya están cerradas y archivadas en `docs/project/BACKLOG_DONE.md`; ninguna sigue siendo una prioridad shared-core viva. En el backlog activo, la siguiente prioridad operativa es `BL-064`, y `BL-073` solo puede ejecutarse si el packet concreto pasa el checklist `parallel-ready` fijado en `docs/project/ROLES.md` y `DEC-029`.
 
 Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC010_WP1-WP6.md` (DEC-011).
 

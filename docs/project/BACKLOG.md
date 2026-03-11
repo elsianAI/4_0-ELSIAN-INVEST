@@ -30,17 +30,6 @@
 
 ## Tareas activas
 
-### BL-071 — T15 — Scaffolding y plantillas
-- **Prioridad:** BAJA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** BL-069, BL-070
-- **Referencias:** T15, docs/project/PLAN_IMPLEMENTACION_FILTRADO.md
-- **Descripción:** Añadir scaffolding y plantillas para tareas, casos y reportes, reduciendo pasos manuales y forzando metadatos mínimos de aceptación, riesgos y validación.
-- **Criterio de aceptación:** Crear una nueva tarea o un nuevo caso requiere menos pasos manuales y las plantillas obligan a declarar validación y criterio de cierre.
-
 ### BL-064 — T06 — Modelo unificado de readiness
 - **Prioridad:** BAJA
 - **Estado:** TODO

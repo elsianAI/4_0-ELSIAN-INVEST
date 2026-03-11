@@ -1,0 +1,30 @@
+{
+  "task_id": "BL-071",
+  "title": "Scaffolding estrecho para crear tareas y casos nuevos",
+  "kind": "technical",
+  "validation_tier": "targeted",
+  "claimed_bl_status": "done",
+  "references": ["BL-061"],
+  "write_set": [
+    "elsian/scaffold.py",
+    "elsian/cli.py",
+    "tasks/BL-071.task_manifest.json",
+    "tests/unit/test_scaffold.py",
+    "tests/integration/test_scaffold_command.py",
+    "CHANGELOG.md"
+  ],
+  "blocked_surfaces": [
+    "elsian/acquire/",
+    "elsian/convert/",
+    "elsian/extract/",
+    "elsian/merge/",
+    "elsian/evaluate/",
+    "config/",
+    "cases/",
+    "docs/project/BACKLOG.md",
+    "docs/project/PROJECT_STATE.md",
+    "docs/project/DECISIONS.md"
+  ],
+  "expected_governance_updates": ["CHANGELOG.md"],
+  "notes": "RISKS: scaffold-task/case generan artefactos en tasks/ y cases/ que podrian confundir al governance checker si se commitean sin revision; el helper depende de la estructura de case.json y task_manifest.schema.json que podrian cambiar | VALIDATION: smoke tests unitarios en tmp_path; validate_contracts sobre manifests generados; python3 -m pytest -q sin regresion; check_governance sin drift ni suciedad nueva | ACCEPTANCE: scaffold-task y scaffold-case exitosos en tmp_path; manifest generado pasa validate_task_manifest_data; suite targeted en verde; check_governance clean"
+}

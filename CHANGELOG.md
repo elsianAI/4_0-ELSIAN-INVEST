@@ -2,6 +2,14 @@
 
 ## 2026-03-11
 
+### [4.0] BL-071 — scaffold-task / scaffold-case: entrypoints de andamiaje con risks/acceptance enforced
+- `elsian/scaffold.py` nuevo módulo estrecho (`build_task_seed`, `write_task_seed`, `build_case_seed`, `write_case_seed`). Genera seeds para tareas (`tasks/{ID}.task_manifest.json` + `{ID}.task_notes.md`) y casos (`cases/{TICKER}/case.json` + `CASE_NOTES.md`). Enforces declaration de `risks`, `validation_plan` y `acceptance_criteria` en tiempo de creación mediante `ValueError` / `sys.exit(1)`; sin esos tres campos la seed no se escribe.
+- `elsian/cli.py` ampliado con dos nuevos comandos: `scaffold-task` y `scaffold-case`. Sigue el patrón CLI existente (función `cmd_*` + parser block). `--risks`, `--validation-plan`, `--acceptance-criteria` y `--write-set` son obligatorios en `scaffold-task`. `--source-hint`, `--currency` obligatorios en `scaffold-case`.
+- `tasks/BL-071.task_manifest.json` creado y conforme a `schemas/v1/task_manifest.schema.json` (`additionalProperties: false`); risks/validation/acceptance embebidos en el campo `notes`.
+- Tests: 100 tests nuevos (65 unit en `tests/unit/test_scaffold.py`, 35 integration en `tests/integration/test_scaffold_command.py`). Incluye test de contrato para `BL-071.task_manifest.json` via `validate_single_contract`.
+- **Files changed:** `elsian/scaffold.py`, `elsian/cli.py`, `tasks/BL-071.task_manifest.json`, `tests/unit/test_scaffold.py`, `tests/integration/test_scaffold_command.py`, `CHANGELOG.md`
+- **Validation:** `python3 -m pytest tests/unit/test_scaffold.py tests/integration/test_scaffold_command.py -v` → `100 passed in 0.15s`; suite targeted verde; `check_governance` clean.
+
 ### [4.0] Governance closeout — BL-069 archivada tras alineación final diagnose/eval
 - `BL-069` sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual completo: slice 1 (`elsian diagnose --all`, artefactos JSON/MD y ranking de hotspots), slice 2 (clustering adicional y `root_cause_hint`) y audit-fix final que alinea diagnose con el path canónico de `eval` mediante re-extracción on-the-fly, eliminando el drift stale de artefactos persistidos.
 - `docs/project/PROJECT_STATE.md` deja de presentar `BL-069` como prioridad activa y mueve la siguiente prioridad operativa a `BL-071`, seguida de `BL-064`, manteniendo `BL-073` como piloto condicionado por `parallel-ready`. La reconciliación mínima también deja explícitos los 17 tickers validados actuales y 4,652 campos validados.

@@ -9,6 +9,14 @@
 
 ---
 
+### BL-071 — T15 — Scaffolding y plantillas
+- **Prioridad:** BAJA
+- **Estado:** DONE ✅ (2026-03-11)
+- **Asignado a:** engineer
+- **Depende de:** BL-069
+- **Descripción:** Andamiaje estrecho para crear nuevas tareas y casos con menos pasos manuales, forzando declaración de `risks`, `validation_plan` y `acceptance_criteria` desde el momento de creación. Genera seeds de task manifest + notes MD (conformes a `schemas/v1/task_manifest.schema.json`) y case.json + CASE_NOTES.md (conformes a `schemas/v1/case.schema.json`) sin llamadas LLM ni de red.
+- **Criterio de aceptación:** ✓ `scaffold-task` y `scaffold-case` exitosos en `tmp_path`. ✓ Manifest generado pasa `validate_task_manifest_data` (contract test incluido en suite). ✓ `--risks`, `--validation-plan`, `--acceptance-criteria` vacíos → `sys.exit(1)`. ✓ `python3 -m pytest tests/unit/test_scaffold.py tests/integration/test_scaffold_command.py -v` → `100 passed in 0.15s`. ✓ `check_governance` clean.
+
 ### BL-069 — T12 — Motor de diagnose
 - **Prioridad:** BAJA
 - **Estado:** DONE ✅ (2026-03-11)
