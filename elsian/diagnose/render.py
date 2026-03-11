@@ -37,21 +37,28 @@ def render_markdown(report: dict[str, Any]) -> str:
     hotspots = report.get("hotspots", [])
     if hotspots:
         lines.append("## Top Hotspots\n")
-        lines.append("Ranked by occurrence count across all evaluated tickers. "
-                     "Use this table to prioritize next BL targets.\n")
-        lines.append("| Rank | Field | Gap Type | Occ | Affected Tickers |")
-        lines.append("|-----:|-------|----------|----:|-----------------|")
+        lines.append(
+            "Ranked by occurrence count across all evaluated tickers. "
+            "``Root Cause Hint`` is a heuristic signal to prioritise next BL targets "
+            "without manual ticker review.\n"
+        )
+        lines.append("| Rank | Field | Category | Gap Type | Root Cause Hint | Occ | Affected Tickers |")
+        lines.append("|-----:|-------|----------|----------|-----------------|----:|-----------------|")
         for h in hotspots[:20]:
             tickers_str = ", ".join(h.get("affected_tickers", []))
             lines.append(
-                f"| {h['rank']} | `{h['field']}` | {h['gap_type']} "
+                f"| {h['rank']} | `{h['field']}` | {h.get('field_category', '')} "
+                f"| {h['gap_type']} | **{h.get('root_cause_hint', '')}** "
                 f"| {h['occurrences']} | {tickers_str} |"
             )
         lines.append("")
 
         lines.append("### Evidence (top 5 hotspots)\n")
         for h in hotspots[:5]:
-            lines.append(f"**#{h['rank']} `{h['field']}` ({h['gap_type']})**\n")
+            lines.append(
+                f"**#{h['rank']} `{h['field']}` ({h['gap_type']}) — "
+                f"hint: `{h.get('root_cause_hint', '')}`**\n"
+            )
             for ev in h.get("evidence", []):
                 actual_str = str(ev["actual"]) if ev.get("actual") is not None else "—"
                 lines.append(
@@ -92,6 +99,45 @@ def render_markdown(report: dict[str, Any]) -> str:
             lines.append(
                 f"| {sh} | {tickers_str} | {d.get('avg_score_pct', 0):.1f}% "
                 f"| {d['total_wrong']} | {d['total_missed']} | {d['total_expected']} |"
+            )
+        lines.append("")
+
+    root_cause_summary = report.get("root_cause_summary", {})
+    if root_cause_summary:
+        lines.append("## Root Cause Hint Summary\n")
+        lines.append(
+            "Heuristic summary of gap patterns. Use to identify dominant failure "
+            "modes before ticker-by-ticker inspection.\n"
+        )
+        lines.append("| Root Cause Hint | Total Gap Occurrences |")
+        lines.append("|-----------------|----------------------:|")
+        for hint, count in root_cause_summary.items():
+            lines.append(f"| `{hint}` | {count} |")
+        lines.append("")
+
+    by_period = report.get("by_period_type", {})
+    if by_period:
+        lines.append("## By Period Type\n")
+        lines.append("| Period Type | Occurrences | Wrong | Missed | Affected Tickers |")
+        lines.append("|-------------|------------:|------:|-------:|-----------------|")
+        for tipo, d in by_period.items():
+            tickers_str = ", ".join(d.get("affected_tickers", []))
+            lines.append(
+                f"| {tipo} | {d['occurrences']} | {d['wrong']} | {d['missed']} "
+                f"| {tickers_str} |"
+            )
+        lines.append("")
+
+    by_cat = report.get("by_field_category", {})
+    if by_cat:
+        lines.append("## By Field Category\n")
+        lines.append("| Category | Occurrences | Wrong | Missed | Fields with Gaps |")
+        lines.append("|----------|------------:|------:|-------:|-----------------|")
+        for cat, d in by_cat.items():
+            fields_str = ", ".join(f"`{f}`" for f in d.get("fields_with_gaps", []))
+            lines.append(
+                f"| {cat} | {d['occurrences']} | {d['wrong']} | {d['missed']} "
+                f"| {fields_str} |"
             )
         lines.append("")
 

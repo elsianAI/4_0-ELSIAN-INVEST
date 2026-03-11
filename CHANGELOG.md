@@ -2,6 +2,15 @@
 
 ## 2026-03-11
 
+### [4.0] BL-069 slice 2 — Clustering adicional y root-cause hints en diagnose
+- `elsian/diagnose/engine.py` ampliado con tres nuevas capacidades: (1) `_FIELD_CATEGORY` + `field_category()` mapea cada campo canónico a categoría de estado financiero (`income_statement`, `per_share`, `balance_sheet`, `cash_flow`, `other`); (2) `_classify_root_cause_hint()` emite hints heurísticos acotados por tipo de gap (missed: `fatal_upstream`, `period_mapping_failure`, `missing_extraction`; wrong: `scale_1k`, `scale_001`, `scale_100k`, `scale_100`, `sign_mismatch`, `value_deviation`); (3) `aggregate_by_period_type()` y `aggregate_by_field_category()` añaden dos nuevos ejes de clustering sobre `tipo_periodo` y categoría de campo.
+- `aggregate_hotspots()` extiende cada hotspot con `root_cause_hint` y `field_category`. El clasificador detecta automáticamente la regresión `scale_1k` de ADTN (#1 hotspot, ratio=1000) sin inspección manual.
+- `build_report()` expone cinco ejes: hotspots, by_ticker, by_source_hint, `by_period_type`, `by_field_category`, `root_cause_summary`.
+- `elsian/diagnose/render.py` actualizado: tabla de hotspots incluye columnas `Category` y `Root Cause Hint`; se añaden secciones `Root Cause Hint Summary`, `By Period Type`, `By Field Category`.
+- Tests nuevos: 35 tests añadidos — `TestFieldCategory` (5), `TestClassifyRootCauseHint` (11), `TestAggregateByPeriodType` (4), `TestAggregateByFieldCategory` (4), `TestAggregateHotspotsSlice2` (5), `TestBuildReportSlice2` (7), `TestRenderMarkdownSlice2` (5) — más 5 tests de integración en `test_diagnose_command.py`.
+- **Files changed:** `elsian/diagnose/engine.py`, `elsian/diagnose/render.py`, `tests/unit/test_diagnose.py`, `tests/integration/test_diagnose_command.py`, `CHANGELOG.md`
+- **Validation:** `python3 -m pytest tests/unit/test_diagnose.py tests/integration/test_diagnose_command.py -q` → `78 passed`; `python3 -m elsian diagnose --all --output /tmp/elsian-bl069-slice2` → exit 0, `scale_1k` detectado automáticamente para `depreciation_amortization/ADTN`; `python3 -m pytest tests/unit/test_diagnose.py tests/integration/test_diagnose_command.py tests/unit/test_evaluator.py tests/integration/test_run_command.py -q` → `121 passed in 55s`; `python3 -m elsian eval --all` → EVAL_EXIT:0, 17 tickers PASS 100.0%; `git diff --check` → limpio.
+
 ### [4.0] Governance reconciliation — BL-069 sigue abierta tras aceptación del primer slice técnico
 - `docs/project/BACKLOG.md` deja de presentar `BL-069` como `TODO` y la pasa a `IN_PROGRESS` para reflejar el progreso real aceptado en `HEAD d05e7cb`: `elsian diagnose --all`, reportes `diagnose_report.json`/`diagnose_report.md` y ranking reutilizable de hotspots.
 - `docs/project/PROJECT_STATE.md` se reconcilia de forma mínima: `BL-069` sigue siendo la siguiente prioridad operativa, pero ya no como trabajo no arrancado sino como BL viva con un primer slice aceptado para governance.

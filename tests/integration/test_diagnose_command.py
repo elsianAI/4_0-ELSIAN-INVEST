@@ -75,8 +75,63 @@ class TestDiagnoseAll:
         cmd_diagnose(_make_args(output=str(tmp_path)))
         data = json.loads((tmp_path / "diagnose_report.json").read_text(encoding="utf-8"))
         for key in ("schema_version", "generated_at", "summary", "hotspots",
-                    "by_ticker", "by_source_hint"):
+                    "by_ticker", "by_source_hint",
+                    "by_period_type", "by_field_category", "root_cause_summary"):
             assert key in data, f"Missing top-level key: {key}"
+
+    @pytest.mark.skipif(
+        not _has_any_evaluable_case(),
+        reason="No evaluable cases found",
+    )
+    def test_hotspots_have_root_cause_hint_and_field_category(self, tmp_path: Path) -> None:
+        """Each hotspot in the JSON report has root_cause_hint and field_category fields."""
+        from elsian.cli import cmd_diagnose
+
+        cmd_diagnose(_make_args(output=str(tmp_path)))
+        data = json.loads((tmp_path / "diagnose_report.json").read_text(encoding="utf-8"))
+        for h in data.get("hotspots", []):
+            assert "root_cause_hint" in h, f"Hotspot missing root_cause_hint: {h}"
+            assert "field_category" in h, f"Hotspot missing field_category: {h}"
+            assert isinstance(h["root_cause_hint"], str) and h["root_cause_hint"]
+            assert isinstance(h["field_category"], str) and h["field_category"]
+
+    @pytest.mark.skipif(
+        not _has_any_evaluable_case(),
+        reason="No evaluable cases found",
+    )
+    def test_by_period_type_is_dict(self, tmp_path: Path) -> None:
+        """by_period_type is a dict (possibly empty) in the JSON report."""
+        from elsian.cli import cmd_diagnose
+
+        cmd_diagnose(_make_args(output=str(tmp_path)))
+        data = json.loads((tmp_path / "diagnose_report.json").read_text(encoding="utf-8"))
+        assert isinstance(data["by_period_type"], dict)
+
+    @pytest.mark.skipif(
+        not _has_any_evaluable_case(),
+        reason="No evaluable cases found",
+    )
+    def test_by_field_category_is_dict(self, tmp_path: Path) -> None:
+        """by_field_category is a dict in the JSON report."""
+        from elsian.cli import cmd_diagnose
+
+        cmd_diagnose(_make_args(output=str(tmp_path)))
+        data = json.loads((tmp_path / "diagnose_report.json").read_text(encoding="utf-8"))
+        assert isinstance(data["by_field_category"], dict)
+
+    @pytest.mark.skipif(
+        not _has_any_evaluable_case(),
+        reason="No evaluable cases found",
+    )
+    def test_markdown_contains_new_sections(self, tmp_path: Path) -> None:
+        """diagnose_report.md contains the new Slice-2 sections."""
+        from elsian.cli import cmd_diagnose
+
+        cmd_diagnose(_make_args(output=str(tmp_path)))
+        md = (tmp_path / "diagnose_report.md").read_text(encoding="utf-8")
+        assert "Root Cause Hint" in md
+        assert "By Period Type" in md
+        assert "By Field Category" in md
 
     @pytest.mark.skipif(
         not _has_any_evaluable_case(),
