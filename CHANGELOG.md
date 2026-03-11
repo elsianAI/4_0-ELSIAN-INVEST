@@ -2,6 +2,11 @@
 
 ## 2026-03-11
 
+### [4.0] fix BL-005 — Remove gap_coverage unknown key from cases/JBH/expected.json
+- Contrato corregido: eliminado `gap_coverage` (clave no permitida por `validate_expected_data`) de `cases/JBH/expected.json`. El atributo no tiene semántica en el validador y fue añadido por error en el commit de onboarding.
+- Residuos técnicos eliminados: `cases/ALL/case.json` y `cases/ALL/expected.json` (untracked, candidato descartado).
+- **Validation:** `python3 -m pytest -q tests/contracts/` → 28 passed; `python3 -m elsian eval JBH` → PASS 100.0% (36/36).
+
 ### [4.0] BL-005 — JBH (JB Hi-Fi Limited) onboarded — cierre definitivo BL-005 (ASX/AUD/ANNUAL_ONLY)
 - `cases/JBH/case.json` creado: exchange=ASX, currency=AUD, fiscal_year_end_month=6, period_scope=ANNUAL_ONLY, accounting_standard=IFRS.
 - `cases/JBH/expected.json` creado con 36 campos verificados contra filing primario: FY2024 (19 campos) + FY2023 (17 campos). Valores curados directamente de SRC_001_annual_FY2024.txt (income statement, balance sheet, cash flow).

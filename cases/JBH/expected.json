@@ -5,7 +5,6 @@
   "scale": "millions",
   "scale_notes": "AUD m. EPS in cents per share. shares_outstanding in millions (weighted average basic). FY ends 30 June.",
   "restatement_policy": "as_reported_unless_explicit_restatement",
-  "gap_coverage": "ASX in AUD local (vs KAR USD), non-calendar FY June-30 (vs KAR Dec-31), retail sector (vs KAR energy), no FY transition.",
   "periods": {
     "FY2024": {
       "fecha_fin": "2024-06-30",
