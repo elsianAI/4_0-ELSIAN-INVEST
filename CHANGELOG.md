@@ -2,6 +2,12 @@
 
 ## 2026-03-11
 
+### [4.0] Governance-only reconciliation — DEC-015/JBH y bloque histórico de SOM en PROJECT_STATE
+- `docs/project/PROJECT_STATE.md` se reconcilia con write set mínimo para fijar una única lectura operativa de `DEC-015`: hoy cuentan **16** tickers exactamente como **14 FULL + KAR + JBH**, con `JBH` formalizado de manera explícita bajo la misma excepción ASX ya documentada para tickers `ANNUAL_ONLY` sin quarterly.
+- El bloque legado `Siguiente fase — Oleada 4 (DEC-016)` pasa a leerse como **histórico archivado**, no como estado operativo vigente. La mención histórica de `BL-042 (SOM)` deja de competir con la taxonomía actual: `SOM` sigue siendo la única **frontera abierta** y no cuenta hoy para `DEC-015`.
+- **Files changed:** `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` y `git diff --check`
+
 ### [4.0] Governance-only wave — programa de capacidad Module 1 y reconstrucción factual del backlog
 - Se acota el "Programa de Capacidad de Module 1 y Reconstrucción de Backlog" al perímetro real de Module 1 sin tocar código, tests, config ni casos. `docs/project/PROJECT_STATE.md` pasa a distinguir de forma explícita `FULL`, `ANNUAL_ONLY justificado`, `ANNUAL_ONLY promocionable` y `frontera abierta`, con clasificación factual por ticker y por mercado, y con autonomía operativa `autonomous`, `gradual` o `documented exception` según la evidencia canónica disponible.
 - `docs/project/BACKLOG.md` deja de afirmar que no existe backlog vivo y se reconstruye con un único packet BL-ready, pequeño y serial (`BL-085`), derivado del único riesgo residual técnico documentado y acotado tras el cierre de `BL-076`.

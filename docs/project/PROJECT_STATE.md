@@ -25,7 +25,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | Tests pasando | 1620 passed, 5 skipped, 1 warning en `python3 -m pytest -q --disable-warnings` local | — | 2026-03-11 |
 | Líneas de código (aprox.) | ~12,000 + ~6,500 tests | 2026-03-07 |
 
-*`DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies. `KAR` y `JBH` entran hoy en esa excepción documentada (ASX). `ADTN` cuenta como `FULL` tras el cierre targeted de `BL-081` (`8A+15Q`, 520/520), y `0327` queda validado como `FULL` con `3A+3H` bajo un path de acquire `hkex_manual` reproducible desde git. `BL-076` no alteró el hito previo de **15/15**; el cómputo factual actual de `DEC-015` asciende a **16** (`14 FULL + KAR + JBH`). `SOM` deja de describirse aquí como "pendiente de promoción/cierre" y pasa a tratarse como la única **frontera abierta** actual: ticker validado `ANNUAL_ONLY`, pero todavía no cerrado canónicamente ni como `ANNUAL_ONLY justificado` ni como promoción empaquetable.
+*Interpretación canónica vigente de `DEC-015`: cuentan hoy **16** tickers, exactamente **14 `FULL` + `KAR` + `JBH`**. `DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies, y la lectura operativa actual formaliza de forma explícita que `KAR` y `JBH` entran bajo esa misma excepción documentada de ASX. `ADTN` cuenta como `FULL` tras el cierre targeted de `BL-081` (`8A+15Q`, 520/520), y `0327` queda validado como `FULL` con `3A+3H` bajo un path de acquire `hkex_manual` reproducible desde git. `BL-076` no alteró el hito previo de **15/15**; el cómputo factual actual de `DEC-015` asciende a **16** (`14 FULL + KAR + JBH`) y no coexiste aquí con una lectura alternativa. `SOM` no cuenta hoy para `DEC-015`: deja de describirse como "pendiente de promoción/cierre" y pasa a tratarse como la única **frontera abierta** actual, es decir, ticker validado `ANNUAL_ONLY` pero todavía no cerrado canónicamente ni como `ANNUAL_ONLY justificado` ni como promoción empaquetable.
 
 ## Tickers validados
 
@@ -221,7 +221,7 @@ Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC
 - ~~WP-5~~ — DONE. CI + Python 3.11.
 - **WP-6** — IxbrlExtractor en producción. **DONE** (BL-048).
 
-**Siguiente fase — Oleada 4 (DEC-016):**
+**Histórico — Oleada 4 (DEC-016, snapshot archivado; no describe el estado operativo vigente):**
 - ✅ **BL-039 (ACLS)** — DONE. SEC semiconductor, iXBRL, FULL 375/375.
 - ✅ **BL-040 (INMD)** — DONE. SEC 20-F/6-K, healthcare (IFRS), FULL 210/210.
 - ✅ **BL-044 (TEP→FULL)** — DONE. Euronext semestrales, FULL 80/80. Regresión por BL-042 corregida en BL-046.
@@ -231,10 +231,13 @@ Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC
 - ✅ **BL-051 (Auto-discovery)** — DONE. elsian discover funcional. 38 tests.
 - ✅ **BL-043 (0327)** — DONE. HKEX, primer ticker asiático. 3A, 59/59, 100%.
 
-**Tracking operativo de DEC-015:**
+Ese bloque conserva el cierre factual de aquella oleada, pero queda supersedido por la taxonomía viva de este documento. En particular, la línea histórica de `BL-042 (SOM)` no debe leerse como estado operativo actual de `SOM` ni como cierre vigente del frente LSE/AIM.
+
+**Lectura canónica vigente de DEC-015:**
 - Cuentan hoy: **16** (14 FULL + KAR + JBH por excepción ASX documentada)
-- ANNUAL_ONLY pendientes: **1** (SOM)
+- No cuenta hoy: **SOM**, mientras siga clasificado como **frontera abierta** en LSE/AIM.
 - `ADTN` y `0327` ya no quedan fuera del cómputo: `BL-081` promueve ADTN a `FULL` con 15 trimestrales filing-backed y `BL-083` promueve `0327` a `FULL` con 3 semestrales HKEX extractor-backed.
+- `JBH` sí cuenta hoy dentro del cómputo operativo de `DEC-015` bajo la misma excepción ASX ya aplicada a `KAR`; esta es la única lectura vigente en los canonicals actuales.
 - **DEC-015 target operativo alcanzado y superado factualmente** sin convertir `SOM` en excepción implícita ni cerrar su tratamiento documental antes de tiempo.
 
 **WP-6** — IxbrlExtractor en producción. **DONE** (BL-048).
