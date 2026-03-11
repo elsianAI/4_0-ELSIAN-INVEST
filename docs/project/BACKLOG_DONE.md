@@ -9,6 +9,14 @@
 
 ---
 
+### BL-069 — T12 — Motor de diagnose
+- **Prioridad:** BAJA
+- **Estado:** DONE ✅ (2026-03-11)
+- **Asignado a:** engineer
+- **Depende de:** BL-068
+- **Descripción:** Se cierra BL-069 con el alcance factual completo ya absorbido en Module 1 para decidir próximas BL sin inspección manual ticker por ticker. El cierre integra los tres tramos reales del paquete: `elsian diagnose --all` con artefactos JSON/MD y ranking reutilizable de hotspots; el segundo slice de clustering por `period_type`, `field_category` y `root_cause_hint`; y el audit-fix final que alinea diagnose con el path canónico de `eval` mediante re-extracción on-the-fly, eliminando el drift por artefactos stale que todavía contaminaba casos como ADTN. El resultado final deja diagnose como vista diagnóstica factual del estado actual del pipeline, no de snapshots persistidos desalineados.
+- **Criterio de aceptación:** ✓ `BL-069` sale de `docs/project/BACKLOG.md` y queda archivada aquí. ✓ El informe de diagnose ya es reutilizable para decidir trabajo siguiente sin revisar ticker por ticker a mano. ✓ El cierre incorpora clustering adicional y root-cause hints suficientes para reducir inspección manual residual. ✓ `python3 -m pytest tests/unit/test_diagnose.py tests/integration/test_diagnose_command.py -q` PASS (`78 passed`). ✓ `python3 -m pytest tests/unit/ -q` PASS (`1523 passed, 1 warning`). ✓ `python3 -m elsian eval --all` PASS (`17/17` PASS 100%). ✓ `python3 -m elsian diagnose --all --output /tmp/elsian-bl069-parent3` PASS (`17/17 evaluated`, overall 100.0%, `wrong=0`, `missed=0`). ✓ Auditoría final: ACCEPT FOR CLOSEOUT sin hallazgos materiales.
+
 ### BL-005 — Expandir cobertura de tickers (diversidad de mercados/formatos)
 - **Prioridad:** BAJA
 - **Estado:** DONE ✅ (2026-03-11)

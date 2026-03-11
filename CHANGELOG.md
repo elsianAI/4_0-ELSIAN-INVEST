@@ -2,6 +2,12 @@
 
 ## 2026-03-11
 
+### [4.0] Governance closeout — BL-069 archivada tras alineación final diagnose/eval
+- `BL-069` sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual completo: slice 1 (`elsian diagnose --all`, artefactos JSON/MD y ranking de hotspots), slice 2 (clustering adicional y `root_cause_hint`) y audit-fix final que alinea diagnose con el path canónico de `eval` mediante re-extracción on-the-fly, eliminando el drift stale de artefactos persistidos.
+- `docs/project/PROJECT_STATE.md` deja de presentar `BL-069` como prioridad activa y mueve la siguiente prioridad operativa a `BL-071`, seguida de `BL-064`, manteniendo `BL-073` como piloto condicionado por `parallel-ready`. La reconciliación mínima también deja explícitos los 17 tickers validados actuales y 4,652 campos validados.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** `python3 -m pytest tests/unit/test_diagnose.py tests/integration/test_diagnose_command.py -q` → `78 passed`; `python3 -m pytest tests/unit/ -q` → `1523 passed, 1 warning`; `python3 -m elsian eval --all` → `17/17 PASS 100%`; `python3 -m elsian diagnose --all --output /tmp/elsian-bl069-parent3` → `17/17 evaluated`, overall 100.0%, `wrong=0`, `missed=0`; auditoría final `ACCEPT FOR CLOSEOUT`.
+
 ### [4.0] BL-069 audit-fix — diagnose re-extrae on-the-fly en lugar de leer artefacto stale
 - `elsian/diagnose/engine.py`: `collect_case_eval()` reemplaza `_load_extraction_result()` (que leía el `extraction_result.json` persistido/potencialmente stale) por `ExtractPhase().extract(str(case_dir))` — el mismo path canónico que usa `cmd_eval`. `skipped` es siempre `False`; la BL "stale" desaparece. Se elimina `_load_extraction_result()` y los imports de modelos internos que ya no son necesarios.
 - Efecto: `elsian diagnose --all` ya no puede reportar drift resuelto (e.g. ADTN con 37 wrong de artifact pre-fix) como hotspot actual. Los scores de diagnose ahora son idénticos a los de `eval --all`.

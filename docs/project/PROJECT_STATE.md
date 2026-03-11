@@ -1,7 +1,7 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
 > Última actualización: 2026-03-11
-> Actualizado por: Copilot (BL-067 governance closeout)
+> Actualizado por: Copilot (BL-069 governance closeout)
 
 ---
 
@@ -13,17 +13,17 @@ Ver ROADMAP.md para descripción completa de fases.
 
 | Métrica | Valor | Target Fase 1→2 | Fecha |
 |---|---|---|---|
-| Tickers validados 100% | **16** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, CROX, TEP, SOM, 0327, KAR, ADTN) | — | 2026-03-09 |
+| Tickers validados 100% | **17** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, CROX, TEP, SOM, 0327, KAR, ADTN, JBH) | — | 2026-03-11 |
 | Tickers que cuentan para DEC-015 | **15** (14 FULL + KAR por excepción documentada) | ≥15 | 2026-03-09 |
 | Tickers FULL 100% | **14** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, CROX, TEP, ADTN, 0327) | — | 2026-03-09 |
 | Tickers ANNUAL_ONLY 100% pendientes de promoción/cierre | 1 (SOM) | — | 2026-03-09 |
-| Tickers WIP | 0 | 0 | 2026-03-08 |
-| Total campos validados | 4,616 | — | 2026-03-09 |
+| Tickers WIP | 0 | 0 | 2026-03-11 |
+| Total campos validados | 4,652 | — | 2026-03-11 |
 | Campos canónicos | 29 (26 previos + accounts_receivable, inventories, accounts_payable) | — | 2026-03-07 |
 | Tests pasando | 1620 passed, 5 skipped, 1 warning en `python3 -m pytest -q --disable-warnings` local | — | 2026-03-11 |
 | Líneas de código (aprox.) | ~12,000 + ~6,500 tests | 2026-03-07 |
 
-*`DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies. `KAR` ya entra en esa excepción documentada (ASX). `ADTN` cuenta como `FULL` tras el cierre targeted de `BL-081` (`8A+15Q`, 520/520), y `0327` deja de ser un pendiente `ANNUAL_ONLY`: `BL-083` la promueve a `FULL` con `3A+3H`. `BL-076` no cambia ese contador operativo: tras retroportar los 7 campos adicionales y cerrar el paquete final en verde, el tracking se mantiene en **15/15** (`14 FULL + KAR`). `SOM` permanece como único pendiente `ANNUAL_ONLY` no contado.
+*`DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies. `KAR` ya entra en esa excepción documentada (ASX). `ADTN` cuenta como `FULL` tras el cierre targeted de `BL-081` (`8A+15Q`, 520/520), y `0327` deja de ser un pendiente `ANNUAL_ONLY`: `BL-083` la promueve a `FULL` con `3A+3H`. `BL-076` no cambia ese contador operativo: tras retroportar los 7 campos adicionales y cerrar el paquete final en verde, el tracking se mantiene en **15/15** (`14 FULL + KAR`). `BL-005` añade `JBH` como ticker validado de diversidad, pero no altera ese contador operativo. `SOM` permanece como único pendiente `ANNUAL_ONLY` no contado.
 
 ## Tickers validados
 
@@ -38,6 +38,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | TALO | 235 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 5A+7Q) |
 | NVDA | 422 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+12Q) |
 | KAR | 61 | ASX (AU) | PDF (IFRS, USD) | ✅ VALIDATED (DEC-015 excepción: no quarterly en ASX) |
+| JBH | 36 | ASX (AU) | PDF (IFRS, AUD) | ✅ VALIDATED (ANNUAL_ONLY: 2A — BL-005 DONE) |
 | PR | 185 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 3A+6Q) |
 | ACLS | 486 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+15Q) |
 | INMD | 234 | SEC (US) | 20-F/6-K HTML (IFRS) | ✅ VALIDATED (FULL: 6A+6Q — BL-040 promoted) |
@@ -90,17 +91,17 @@ Ver ROADMAP.md para descripción completa de fases.
 |---|---|---|---|---|
 | Ninguno | 0 | 0.0% | — | ✅ Sin overrides activos |
 
-**Total:** 0 overrides / 4,616 campos = 0.00% global. TEP y SOM ya no tienen overrides activos tras BL-054 y BL-055.
+**Total:** 0 overrides / 4,652 campos = 0.00% global. TEP y SOM ya no tienen overrides activos tras BL-054 y BL-055.
 
-**Estado "autónomo suficiente" (DEC-026):** ALCANZADO para extracción autónoma strict. Los 16 tickers validados pasan al 100% con 0 overrides activos. La adquisición sigue teniendo limitaciones conocidas y transparentes en algunos mercados sin API pública, pero la deuda de extracción manual ya está cerrada y SOM ya no depende de `filings_sources` hardcodeados.
+**Estado "autónomo suficiente" (DEC-026):** ALCANZADO para extracción autónoma strict. Los 17 tickers validados pasan al 100% con 0 overrides activos. La adquisición sigue teniendo limitaciones conocidas y transparentes en algunos mercados sin API pública, pero la deuda de extracción manual ya está cerrada y SOM ya no depende de `filings_sources` hardcodeados.
 
 ## Tickers WIP
 
-No hay tickers WIP actualmente. Los 16 tickers están al 100%.
+No hay tickers WIP actualmente. Los 17 tickers están al 100%.
 
 ## Bloqueantes actuales
 
-No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Provenance Level 3. El pipeline es funcional end-to-end para los 16 tickers validados al 100%, `python3 -m pytest -q --disable-warnings` está en verde local (`1620 passed, 5 skipped, 1 warning`) y `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` sigue en `SourceMap_v1 FULL` con 818/818. BL-075 cerró la deuda de derivados deterministas en `expected.json`, BL-082 cerró el bloqueador shared-core de ADTN para restatements 2023-2024 y rutas de escala, BL-081 promovió ADTN a `FULL`, BL-083 consolidó `0327` como `FULL`, BL-076 completó la retroportación de 7 campos adicionales con `eval --all` PASS 16/16 y **4,616** campos validados, y BL-067 deja ahora una factoría de onboarding usable para flujos offline de QA sobre un ticker SEC y uno no-SEC. El tracking operativo de `DEC-015` se mantiene en **15/15**: **14 FULL + KAR por excepción documentada**. La deuda actual ya no es de quality gates base, sino de cómo cerrar honestamente el tratamiento de `SOM` y decidir el siguiente frente de valor tras alcanzar el umbral operativo de transición.
+No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Provenance Level 3. El pipeline es funcional end-to-end para los 17 tickers validados al 100%, `python3 -m pytest -q --disable-warnings` sigue documentado en verde local en `PROJECT_STATE`, `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` mantiene `SourceMap_v1 FULL` con 818/818, y BL-069 deja además `python3 -m elsian diagnose --all --output /tmp/elsian-bl069-parent3` alineado con el path canónico de `eval` (`17/17 evaluated`, overall 100.0%, `wrong=0`, `missed=0`). BL-075 cerró la deuda de derivados deterministas en `expected.json`, BL-082 cerró el bloqueador shared-core de ADTN para restatements 2023-2024 y rutas de escala, BL-081 promovió ADTN a `FULL`, BL-083 consolidó `0327` como `FULL`, BL-005 añadió `JBH` como ticker validado de diversidad, BL-076 completó la retroportación de 7 campos adicionales con **4,652** campos validados, y BL-067 deja ahora una factoría de onboarding usable para flujos offline de QA sobre un ticker SEC y uno no-SEC. El tracking operativo de `DEC-015` se mantiene en **15/15**: **14 FULL + KAR por excepción documentada**. La deuda actual ya no es de quality gates base, sino de priorización operativa posterior al cierre de diagnose.
 
 **Gaps pendientes (no bloqueantes):**
 1. **Residual field-dependency gaps** — `fx_effect_cash`, `other_cash_adjustments`, `market_cap` y `price` siguen fuera del set canónico. Son opcionales o de market data; no bloquean validación ni BL-058.
@@ -108,6 +109,8 @@ No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Proven
 3. **Adquisición no-SEC aún gradual** — TALO y TEP mantienen rutas de acquire con limitaciones conocidas (coverage `NEEDS_ACTION` o manifest ausente). SOM ya resuelve su piloto LSE/AIM por auto-discovery conservador, pero la autonomía completa de acquire fuera de mercados con API pública sigue siendo gradual.
 4. **Riesgo residual leve BL-076** — falta cobertura unitaria específica de la nueva rama del extractor que descarta `inventories` espurios desde cash flow con named subsection en `clean.md`. El auditor no reporta hallazgos materiales bloqueantes, pero el hueco de tests sigue documentado.
 ## Hitos recientes
+
+- ✅ **BL-069 completado (2026-03-11)** — El motor de diagnose queda cerrado end-to-end como superficie diagnóstica factual del pipeline actual. El paquete ya absorbido deja `elsian diagnose --all` con reportes JSON/MD, ranking de hotspots reutilizable, clustering adicional por `period_type`/`field_category` y `root_cause_hint`, y el audit-fix final que re-extrae on-the-fly para alinearse con `eval` y eliminar drift stale de artefactos persistidos. Validación de closeout: `python3 -m pytest tests/unit/test_diagnose.py tests/integration/test_diagnose_command.py -q` → `78 passed`; `python3 -m pytest tests/unit/ -q` → `1523 passed, 1 warning`; `python3 -m elsian eval --all` → `17/17 PASS 100%`; `python3 -m elsian diagnose --all --output /tmp/elsian-bl069-parent3` → `17/17 evaluated`, overall 100.0%, `wrong=0`, `missed=0`.
 
 - ✅ **BL-076 completado (2026-03-09)** — Cerrado el packet final de retroportación de 7 campos a `expected.json` existentes con reconciliación shared-core y sin vender gaps pendientes como si siguieran abiertos. El paquete técnico final incluye el script nuevo `scripts/backfill_bl076_fields.py`, 20 tests unitarios en `tests/unit/test_backfill_bl076_fields.py`, retroportación filing-backed sobre 14 tickers (`0327`, `ACLS`, `CROX`, `GCT`, `IOSP`, `KAR`, `NEXN`, `NVDA`, `PR`, `SOM`, `SONO`, `TALO`, `TEP`, `TZOO`), fix mínimo en `elsian/extract/phase.py` para descartar `inventories` espurios desde cash flow con named subsection en `clean.md` sin romper rutas `txt`/table, y ajustes filing-backed finales en `CROX` quarterly `total_debt` y FY de `SONO` para alinear la verdad con los winners del pipeline respaldados por filing. Validación factual verificada: `python3 -m elsian eval --all` → PASS 16/16 (`0327 146/146`, `ACLS 486/486`, `ADTN 520/520`, `CROX 326/326`, `GCT 330/330`, `INMD 234/234`, `IOSP 430/430`, `KAR 61/61`, `NEXN 177/177`, `NVDA 422/422`, `PR 185/185`, `SOM 203/203`, `SONO 404/404`, `TALO 235/235`, `TEP 109/109`, `TZOO 348/348`); `python3 -m pytest -q` → `1417 passed, 5 skipped, 1 warning`; `python3 -m pytest -q tests/unit/test_backfill_bl076_fields.py` → `20 passed`; contratos post-fix PASS para `CROX`/`IOSP`/`SONO`. Efecto operativo: total campos validados sube a **4,616** y `DEC-015` no cambia: siguen contando **15** (`14 FULL + KAR`), con `SOM` como único `ANNUAL_ONLY` pendiente.
 
@@ -158,7 +161,7 @@ No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Proven
 
 ## Próximas prioridades
 
-`BL-005`, `BL-062`, `BL-063`, `BL-065`, `BL-066`, `BL-067`, `BL-070` y `BL-072` ya están cerradas y archivadas en `docs/project/BACKLOG_DONE.md`; ninguna sigue siendo una prioridad shared-core viva. En el backlog activo, `BL-069` sigue como siguiente prioridad operativa, ahora en `IN_PROGRESS` tras aceptar para governance un primer slice en `HEAD d05e7cb` (`elsian diagnose --all`, reportes JSON/MD y ranking reutilizable de hotspots) sin cerrar todavía la BL completa. `BL-071` y `BL-064` quedan detrás en ese orden, y `BL-073` solo puede ejecutarse si el packet concreto pasa el checklist `parallel-ready` fijado en `docs/project/ROLES.md` y `DEC-029`.
+`BL-005`, `BL-062`, `BL-063`, `BL-065`, `BL-066`, `BL-067`, `BL-069`, `BL-070` y `BL-072` ya están cerradas y archivadas en `docs/project/BACKLOG_DONE.md`; ninguna sigue siendo una prioridad shared-core viva. En el backlog activo, la siguiente prioridad operativa pasa a `BL-071`, seguida por `BL-064`, y `BL-073` solo puede ejecutarse si el packet concreto pasa el checklist `parallel-ready` fijado en `docs/project/ROLES.md` y `DEC-029`.
 
 Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC010_WP1-WP6.md` (DEC-011).
 
