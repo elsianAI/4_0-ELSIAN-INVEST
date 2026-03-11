@@ -9,6 +9,14 @@
 
 ---
 
+### BL-005 — Expandir cobertura de tickers (diversidad de mercados/formatos)
+- **Prioridad:** BAJA
+- **Estado:** DONE ✅ (2026-03-11)
+- **Asignado a:** engineer
+- **Depende de:** BL-067
+- **Descripción:** Se cierra BL-005 con outcome factual estrecho y ya validado: el candidato primario `ALL` fue abortado y limpiado del repo por no ser el cierre aceptado de diversidad, y el fallback único `JBH` queda canonizado como el ticker aceptado para esta ola. El gap de diversidad cubierto frente a `KAR` queda explícito y acotado: ASX en AUD local (no USD), cierre fiscal en junio no calendario (no diciembre), retail/consumer discretionary (no energy) y sin FY de transición. El cierre no deja una segunda rama activa de onboarding ni un frente abierto de curación residual para `ALL`.
+- **Criterio de aceptación:** ✓ `BL-005` sale de `docs/project/BACKLOG.md` y queda archivada aquí. ✓ El candidato `ALL` queda descartado y limpio como intento no aceptado de esta BL. ✓ `JBH` queda como único ticker aceptado del closeout de diversidad. ✓ `python3 -m elsian run JBH --skip-assemble` PASS 100.0% (`36/36`). ✓ `python3 -m elsian eval JBH` PASS 100.0% (`36/36`). ✓ `python3 -m elsian eval --all` PASS con todos los tickers al 100%. ✓ `python3 -m pytest -q` PASS (`1621 passed, 5 skipped, 1 warning`).
+
 ### BL-067 — T09 — Factoría de onboarding
 - **Prioridad:** MEDIA
 - **Estado:** DONE ✅ (2026-03-11)

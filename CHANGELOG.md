@@ -2,19 +2,26 @@
 
 ## 2026-03-11
 
+### [4.0] Governance closeout — BL-005 archivada con JBH como fallback único aceptado
+- `BL-005` sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual consistente: el candidato primario `ALL` queda abortado y limpiado, y `JBH` queda como único ticker aceptado para cubrir el gap de diversidad frente a `KAR`.
+- `docs/project/PROJECT_STATE.md` deja de presentar `BL-005` como siguiente prioridad operativa; la cola activa pasa a `BL-069`, seguida de `BL-071` y `BL-064`. No cambia la condición de `BL-073` bajo `parallel-ready`.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** closeout respaldado por evidencia técnica ya verificada del paquete BL-005: `python3 -m elsian run JBH --skip-assemble` PASS 100.0% (`36/36`), `python3 -m elsian eval JBH` PASS 100.0% (`36/36`), `python3 -m elsian eval --all` PASS con todos los tickers al 100%, `python3 -m pytest -q` PASS (`1621 passed, 5 skipped, 1 warning`).
+
 ### [4.0] fix BL-005 — Remove gap_coverage unknown key from cases/JBH/expected.json
 - Contrato corregido: eliminado `gap_coverage` (clave no permitida por `validate_expected_data`) de `cases/JBH/expected.json`. El atributo no tiene semántica en el validador y fue añadido por error en el commit de onboarding.
 - Residuos técnicos eliminados: `cases/ALL/case.json` y `cases/ALL/expected.json` (untracked, candidato descartado).
 - **Validation:** `python3 -m pytest -q tests/contracts/` → 28 passed; `python3 -m elsian eval JBH` → PASS 100.0% (36/36).
 
-### [4.0] BL-005 — JBH (JB Hi-Fi Limited) onboarded — cierre definitivo BL-005 (ASX/AUD/ANNUAL_ONLY)
+### [4.0] BL-005 — JBH (JB Hi-Fi Limited) onboarded como fallback aceptado tras abortar ALL (ASX/AUD/ANNUAL_ONLY)
+- Outcome factual de BL-005: `ALL` se aborta y se limpia como candidato primario no aceptado; `JBH` queda como único fallback aceptado para el cierre de la ola.
 - `cases/JBH/case.json` creado: exchange=ASX, currency=AUD, fiscal_year_end_month=6, period_scope=ANNUAL_ONLY, accounting_standard=IFRS.
 - `cases/JBH/expected.json` creado con 36 campos verificados contra filing primario: FY2024 (19 campos) + FY2023 (17 campos). Valores curados directamente de SRC_001_annual_FY2024.txt (income statement, balance sheet, cash flow).
 - **Gap cubierto vs KAR:** moneda AUD local (no USD), cierre de ejercicio junio (no diciembre), sector Consumer Discretionary/Retail (no energía), sin período de transición fiscal.
 - **Filings adquiridos:** 2 de 3 objetivo (FY2024 + FY2023 via ASX announcement API; FY2025 fuera de ventana scan de 15 días).
 - **Exclusiones documentadas:** FY2023/eps_basic y FY2023/eps_diluted (extracción incorrecta: 0.1 vs ~480 cps); FY2024/total_debt (36.0 vs 15.0 real); FY2024/cfo (no extraído; real=752.6 AUD M).
 - **Files changed:** `cases/JBH/case.json` (nuevo), `cases/JBH/expected.json` (nuevo), `CHANGELOG.md`
-- **Validation:** `python3 -m elsian run JBH --skip-assemble` → EXIT:0, PASS 100.0% (36/36) wrong=0 missed=0 extra=29; `python3 -m elsian eval JBH` → PASS 100.0%; `python3 -m elsian eval --all 2>/dev/null` → todos los tickers previos sin regresión (ALL FAIL 73.91% pre-existente); `python3 -m pytest -q` → 1622 passed, 5 skipped, 1 warning, EXIT:0.
+- **Validation:** `python3 -m elsian run JBH --skip-assemble` → EXIT:0, PASS 100.0% (36/36) wrong=0 missed=0 extra=29; `python3 -m elsian eval JBH` → PASS 100.0%; `python3 -m elsian eval --all` → PASS con todos los tickers al 100%; `python3 -m pytest -q` → 1621 passed, 5 skipped, 1 warning, EXIT:0.
 
 ### [4.0] BL-005 — ALL (Aristocrat Leisure) onboarded como primer ticker ASX/AUD/ANNUAL_ONLY
 - `cases/ALL/expected.json` creado con ground truth manual verificado desde la cara de los estados financieros auditados de los informes anuales de Aristocrat Leisure Ltd (SRC_001_annual_FY2024, SRC_002_annual_FY2023): 3 períodos (FY2022, FY2023, FY2024) × 23 campos canónicos = 69 targets.
