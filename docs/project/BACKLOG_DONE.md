@@ -9,6 +9,16 @@
 
 ---
 
+### BL-085 — Cubrir con regresión unitaria el descarte de `inventories` espurios desde cash flow con named subsection
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-11)
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** shared-core
+- **Depende de:** —
+- **Descripción:** Se cierra BL-085 como packet estrecho de regresión sobre la única deuda shared-core residual documentada al cerrar BL-076. El resultado técnico queda acotado a `tests/unit/test_extract_phase.py`, donde se añaden dos tests nuevos que fijan el contrato correcto del guard de `inventories`: en `clean.md`, una named subsection de cash flow debe descartarse como fuente espuria; en la ruta `.txt` sin named subsection, el patrón sigue permitido. No fue necesario tocar `elsian/extract/phase.py`, por lo que el closeout absorbe cobertura y no un nuevo cambio funcional en extractor.
+- **Criterio de aceptación:** ✓ `BL-085` sale de `docs/project/BACKLOG.md` y queda archivada aquí. ✓ Existe regresión unitaria específica para el patrón `inventories` desde cash flow con named subsection. ✓ `elsian/extract/phase.py` permanece sin cambios en este packet. ✓ `python3 -m pytest -q tests/unit/test_extract_phase.py` PASS (`70 passed`). ✓ `python3 -m elsian eval --all` PASS (`17/17` PASS 100%). ✓ `python3 -m pytest -q` PASS (`1824 passed, 5 skipped, 1 warning`). ✓ Auditoría independiente: ACCEPT FOR CLOSEOUT sin hallazgos materiales.
+
 ### BL-073 — Piloto controlado de paralelización multiagente
 - **Prioridad:** MEDIA
 - **Estado:** DONE ✅ (2026-03-11)

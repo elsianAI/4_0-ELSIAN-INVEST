@@ -1421,3 +1421,97 @@ def test_bl065_case_config_overrides_reach_extraction_pack(tmp_path):
     assert phase._resolved_extraction_rules["context_bonus"]["hard_penalty"] == -999, (
         "config_overrides from case.json must win over base and pack values"
     )
+
+
+# ── BL-076 regression: inventories cash_flow named-subsection guard ──────────
+
+def test_inventories_cash_flow_clean_md_named_subsection_is_discarded():
+    """BL-076: inventories from a clean.md cash_flow section with a named subsection
+    must be rejected as a spurious working-capital movement, not a balance-sheet stock.
+
+    clean.md pattern:  :cash_flow:<named_subsection>:tblN:rowR:colC  → discard
+    txt pattern:       :cash_flow:tblN:rowR:colC                     → allow
+    """
+    phase = ExtractPhase()
+    metadata = SimpleNamespace(filing_type="10-K", scale="thousands", scale_confidence="high")
+    filing_path = Path("SRC_001_10-K_FY2024.clean.md")
+    rules = phase._load_selection_rules()
+    audit = AuditLog()
+    period_fields: dict[str, dict] = {"FY2024": {}}
+    additive_labels: dict[str, dict[str, set]] = {}
+
+    phase._process_table_field(
+        TableField(
+            label="Inventories",
+            value=5000.0,
+            column_header="FY2024",
+            source_location=(
+                "SRC_001_10-K_FY2024.clean.md:table:cash_flow"
+                ":consolidated_statements_of_cash_flows:tbl3:row25:col2"
+            ),
+            raw_text="5,000",
+            col_label="FY2024",
+            table_title="cash_flow:consolidated_statements_of_cash_flows",
+            row_idx=25,
+            col_idx=2,
+            table_index=3,
+        ),
+        filing_path,
+        metadata,
+        metadata.scale,
+        metadata.scale_confidence,
+        rules,
+        audit,
+        period_fields,
+        additive_labels,
+    )
+
+    assert "inventories" not in period_fields["FY2024"], (
+        "Inventories from clean.md cash_flow with named subsection must be discarded (BL-076)"
+    )
+
+
+def test_inventories_cash_flow_txt_no_named_subsection_is_allowed():
+    """BL-076: inventories from a .txt cash_flow section without a named subsection
+    must NOT be rejected — txt sources go directly to :cash_flow:tblN and represent
+    balance-sheet-backed candidates, not cash-movement lines.
+
+    txt pattern: :cash_flow:tblN:rowR:colC → allow
+    """
+    phase = ExtractPhase()
+    metadata = SimpleNamespace(filing_type="10-K", scale="thousands", scale_confidence="high")
+    filing_path = Path("SRC_001_10-K_FY2024.txt")
+    rules = phase._load_selection_rules()
+    audit = AuditLog()
+    period_fields: dict[str, dict] = {"FY2024": {}}
+    additive_labels: dict[str, dict[str, set]] = {}
+
+    phase._process_table_field(
+        TableField(
+            label="Inventories",
+            value=261557.0,
+            column_header="FY2024",
+            source_location=(
+                "SRC_001_10-K_FY2024.txt:table:cash_flow:tbl2:row13:col1"
+            ),
+            raw_text="261,557",
+            col_label="FY2024",
+            table_title="cash_flow",
+            row_idx=13,
+            col_idx=1,
+            table_index=2,
+        ),
+        filing_path,
+        metadata,
+        metadata.scale,
+        metadata.scale_confidence,
+        rules,
+        audit,
+        period_fields,
+        additive_labels,
+    )
+
+    assert "inventories" in period_fields["FY2024"], (
+        "Inventories from .txt cash_flow without named subsection must be allowed (BL-076)"
+    )
+    assert period_fields["FY2024"]["inventories"].value == 261557.0

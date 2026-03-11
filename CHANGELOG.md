@@ -2,6 +2,12 @@
 
 ## 2026-03-11
 
+### [4.0] Governance closeout — BL-085 archivada tras packet técnico green
+- `BL-085` sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual estrecho: el packet técnico ya verde añade dos regresiones en `tests/unit/test_extract_phase.py` para fijar el guard de `inventories` espurios desde cash flow con named subsection, y deja explícito que `elsian/extract/phase.py` no cambió en esta ola.
+- `docs/project/PROJECT_STATE.md` deja de presentar `BL-085` y el riesgo residual asociado a `BL-076` como trabajo vivo; además, reconcilia el snapshot de tests locales a `1824 passed, 5 skipped, 1 warning` y deja explícito que no queda backlog BL-ready en este snapshot.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json`; `git diff --check`; respaldo técnico ya verificado del packet: `python3 -m pytest -q tests/unit/test_extract_phase.py` → `70 passed`; `python3 -m elsian eval --all` → `17/17 PASS 100%`; `python3 -m pytest -q` → `1824 passed, 5 skipped, 1 warning`; auditoría independiente → `ACCEPT FOR CLOSEOUT`.
+
 ### [4.0] Governance-only reconciliation — DEC-015/JBH y bloque histórico de SOM en PROJECT_STATE
 - `docs/project/PROJECT_STATE.md` se reconcilia con write set mínimo para fijar una única lectura operativa de `DEC-015`: hoy cuentan **16** tickers exactamente como **14 FULL + KAR + JBH**, con `JBH` formalizado de manera explícita bajo la misma excepción ASX ya documentada para tickers `ANNUAL_ONLY` sin quarterly.
 - El bloque legado `Siguiente fase — Oleada 4 (DEC-016)` pasa a leerse como **histórico archivado**, no como estado operativo vigente. La mención histórica de `BL-042 (SOM)` deja de competir con la taxonomía actual: `SOM` sigue siendo la única **frontera abierta** y no cuenta hoy para `DEC-015`.

@@ -1,7 +1,7 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
 > Última actualización: 2026-03-11
-> Actualizado por: Copilot (governance-only capacity/backlog wave)
+> Actualizado por: Copilot (governance-only BL-085 closeout)
 
 ---
 
@@ -22,7 +22,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | Tickers WIP | 0 | 0 | 2026-03-11 |
 | Total campos validados | 4,652 | — | 2026-03-11 |
 | Campos canónicos | 29 (26 previos + accounts_receivable, inventories, accounts_payable) | — | 2026-03-07 |
-| Tests pasando | 1620 passed, 5 skipped, 1 warning en `python3 -m pytest -q --disable-warnings` local | — | 2026-03-11 |
+| Tests pasando | 1824 passed, 5 skipped, 1 warning en `python3 -m pytest -q` local | — | 2026-03-11 |
 | Líneas de código (aprox.) | ~12,000 + ~6,500 tests | 2026-03-07 |
 
 *Interpretación canónica vigente de `DEC-015`: cuentan hoy **16** tickers, exactamente **14 `FULL` + `KAR` + `JBH`**. `DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies, y la lectura operativa actual formaliza de forma explícita que `KAR` y `JBH` entran bajo esa misma excepción documentada de ASX. `ADTN` cuenta como `FULL` tras el cierre targeted de `BL-081` (`8A+15Q`, 520/520), y `0327` queda validado como `FULL` con `3A+3H` bajo un path de acquire `hkex_manual` reproducible desde git. `BL-076` no alteró el hito previo de **15/15**; el cómputo factual actual de `DEC-015` asciende a **16** (`14 FULL + KAR + JBH`) y no coexiste aquí con una lectura alternativa. `SOM` no cuenta hoy para `DEC-015`: deja de describirse como "pendiente de promoción/cierre" y pasa a tratarse como la única **frontera abierta** actual, es decir, ticker validado `ANNUAL_ONLY` pero todavía no cerrado canónicamente ni como `ANNUAL_ONLY justificado` ni como promoción empaquetable.
@@ -142,14 +142,15 @@ No hay tickers WIP actualmente. Los 17 tickers están al 100%.
 
 ## Bloqueantes actuales
 
-No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Provenance Level 3. El pipeline es funcional end-to-end para los 17 tickers validados al 100%, `python3 -m pytest -q --disable-warnings` sigue documentado en verde local en `PROJECT_STATE`, `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` mantiene `SourceMap_v1 FULL` con 818/818, y BL-069 deja además `python3 -m elsian diagnose --all --output /tmp/elsian-bl069-parent3` alineado con el path canónico de `eval` (`17/17 evaluated`, overall 100.0%, `wrong=0`, `missed=0`). BL-075 cerró la deuda de derivados deterministas en `expected.json`, BL-082 cerró el bloqueador shared-core de ADTN para restatements 2023-2024 y rutas de escala, BL-081 promovió ADTN a `FULL`, BL-083 consolidó `0327` como `FULL`, BL-005 añadió `JBH` como ticker validado de diversidad, BL-076 completó la retroportación de 7 campos adicionales con **4,652** campos validados, y BL-067 deja ahora una factoría de onboarding usable para flujos offline de QA sobre un ticker SEC y uno no-SEC. El cómputo factual actual de `DEC-015` es **16**: **14 FULL + KAR + JBH** por excepción ASX documentada. La deuda actual ya no es de quality gates base, sino de priorización operativa posterior al cierre de diagnose.
+No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Provenance Level 3. El pipeline es funcional end-to-end para los 17 tickers validados al 100%, `python3 -m pytest -q` queda documentado en verde local en `PROJECT_STATE`, `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` mantiene `SourceMap_v1 FULL` con 818/818, y BL-069 deja además `python3 -m elsian diagnose --all --output /tmp/elsian-bl069-parent3` alineado con el path canónico de `eval` (`17/17 evaluated`, overall 100.0%, `wrong=0`, `missed=0`). BL-075 cerró la deuda de derivados deterministas en `expected.json`, BL-082 cerró el bloqueador shared-core de ADTN para restatements 2023-2024 y rutas de escala, BL-081 promovió ADTN a `FULL`, BL-083 consolidó `0327` como `FULL`, BL-005 añadió `JBH` como ticker validado de diversidad, BL-076 completó la retroportación de 7 campos adicionales con **4,652** campos validados y BL-085 cerró la única deuda residual de cobertura unitaria ligada a ese cierre. El cómputo factual actual de `DEC-015` es **16**: **14 FULL + KAR + JBH** por excepción ASX documentada. No queda backlog BL-ready vivo en este snapshot.
 
 **Gaps y límites pendientes (no bloqueantes):**
 1. **Residual field-dependency gaps** — `fx_effect_cash`, `other_cash_adjustments`, `market_cap` y `price` siguen fuera del set canónico. Son opcionales o de market data; no bloquean validación ni BL-058.
 2. **TALO mantiene un gap factual de coverage/manifest** — los canonicals siguen recogiendo `coverage NEEDS_ACTION` o `filings_manifest` ausente para TALO. Se trata como limitación ticker-level del runtime actual, no como limitación general del mercado SEC.
 3. **Adquisición no-SEC sigue siendo gradual por mercado** — `TEP` opera sobre `eu_manual` con `filings_sources` documentados; `SOM` resuelve un piloto LSE/AIM conservador, pero no canoniza todavía un programa de mercado amplio; `0327` es reproducible con `hkex_manual`, no con discovery general HKEX.
-4. **Riesgo residual leve BL-076** — falta cobertura unitaria específica de la rama del extractor que descarta `inventories` espurios desde cash flow con named subsection en `clean.md`. El auditor no reporta hallazgos materiales bloqueantes, pero el hueco de tests sigue documentado.
 ## Hitos recientes
+
+- ✅ **BL-085 completado (2026-03-11)** — Cerrada la única deuda residual leve que seguía abierta tras BL-076: la cobertura unitaria específica del guard que descarta `inventories` espurios desde cash flow con named subsection en `clean.md`. El packet técnico final queda intencionalmente estrecho: solo cambia `tests/unit/test_extract_phase.py`, añade dos regresiones complementarias y no toca `elsian/extract/phase.py`. Validación factual: `python3 -m pytest -q tests/unit/test_extract_phase.py` → `70 passed`; `python3 -m elsian eval --all` → `17/17 PASS 100%`; `python3 -m pytest -q` → `1824 passed, 5 skipped, 1 warning`; auditoría independiente → ACCEPT FOR CLOSEOUT sin hallazgos materiales. Efecto operativo: desaparece el último riesgo residual explícito ligado al closeout de BL-076 y el backlog BL-ready queda vacío.
 
 - ✅ **BL-069 completado (2026-03-11)** — El motor de diagnose queda cerrado end-to-end como superficie diagnóstica factual del pipeline actual. El paquete ya absorbido deja `elsian diagnose --all` con reportes JSON/MD, ranking de hotspots reutilizable, clustering adicional por `period_type`/`field_category` y `root_cause_hint`, y el audit-fix final que re-extrae on-the-fly para alinearse con `eval` y eliminar drift stale de artefactos persistidos. Validación de closeout: `python3 -m pytest tests/unit/test_diagnose.py tests/integration/test_diagnose_command.py -q` → `78 passed`; `python3 -m pytest tests/unit/ -q` → `1523 passed, 1 warning`; `python3 -m elsian eval --all` → `17/17 PASS 100%`; `python3 -m elsian diagnose --all --output /tmp/elsian-bl069-parent3` → `17/17 evaluated`, overall 100.0%, `wrong=0`, `missed=0`.
 
@@ -202,14 +203,14 @@ No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Proven
 
 ## Próximas prioridades
 
-La ola governance-only del 2026-03-11 deja **sí** un backlog vivo ejecutable, pero reducido a un único packet BL-ready, pequeño y serial: `BL-085`, orientado a cerrar la única deuda técnica explícitamente documentada y acotada que queda tras el cierre de `BL-076`.
+La ola governance-only del 2026-03-11 deja **sin** backlog vivo ejecutable. `BL-085` era el único packet BL-ready, pequeño y serial, y queda ya absorbido con closeout canónico.
 
 El resto del programa queda repartido así:
 - **Fase A** — capacidad cerrada actual: 16 tickers en capacidad operativa cerrada dentro de Module 1; esa cifra mezcla capacidad `FULL` y excepciones ticker-level ya cerradas, no equivale a 5 mercados cerrados de forma generalizada.
-- **Fase B** — backlog vivo: `BL-085` en `docs/project/BACKLOG.md`.
+- **Fase B** — backlog vivo: vacío en este snapshot.
 - **Fase C** — frontera abierta y excepciones: `SOM`, la generalización de mercado en LSE/AIM y HKEX, la ruta no-API de Euronext más allá de `TEP`, el gap factual de coverage/manifest de `TALO` y los 4 gaps opcionales de field dependency viven en `docs/project/OPPORTUNITIES.md` hasta que aparezca evidencia nueva que permita empaquetarlos como BL.
 
-El contrato `parallel-ready` sigue vigente por `BL-072` y `DEC-029`, pero no cambia el criterio de esta fase: la siguiente ola técnica recomendada sigue siendo **serial** y de blast radius mínimo.
+El contrato `parallel-ready` sigue vigente por `BL-072` y `DEC-029`, pero no cambia el criterio de esta fase: cualquier nueva ola técnica que reaparezca desde evidencia factual deberá volver a empaquetarse de forma **serial** y de blast radius mínimo.
 
 Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC010_WP1-WP6.md` (DEC-011).
 
