@@ -17,9 +17,21 @@ CASES_DIR = Path(__file__).resolve().parent.parent.parent / "cases"
 
 
 def _has_any_evaluable_case() -> bool:
-    """Check that at least one case has both expected.json and extraction_result.json."""
+    """Check that at least one case has expected.json + case.json (and filings) for on-the-fly eval.
+
+    After the BL-069 fix, diagnose re-extracts on-the-fly; extraction_result.json
+    is no longer required for a case to be evaluable by diagnose.
+    """
     for d in CASES_DIR.iterdir():
-        if d.is_dir() and (d / "expected.json").exists() and (d / "extraction_result.json").exists():
+        if not d.is_dir():
+            continue
+        filings_dir = d / "filings"
+        if (
+            (d / "expected.json").exists()
+            and (d / "case.json").exists()
+            and filings_dir.exists()
+            and any(filings_dir.iterdir())
+        ):
             return True
     return False
 
@@ -275,3 +287,99 @@ class TestDiagnoseEngine:
         valid = {"wrong", "missed"}
         for h in report["hotspots"]:
             assert h["gap_type"] in valid, f"Invalid gap_type: {h['gap_type']}"
+
+
+# ── Coherence: diagnose vs eval ───────────────────────────────────────
+
+
+def _tzoo_evaluable() -> bool:
+    """TZOO has expected.json and filings."""
+    tzoo = CASES_DIR / "TZOO"
+    filings_dir = tzoo / "filings"
+    return (
+        (tzoo / "expected.json").exists()
+        and filings_dir.exists()
+        and any(filings_dir.iterdir())
+    )
+
+
+class TestDiagnoseVsEvalCoherence:
+    """Integration tests verifying that diagnose scores match cmd_eval scores.
+
+    This is the gate that caught the BL-069 auditor blocker:
+    diagnose was reading a stale extraction_result.json while eval was
+    re-extracting on-the-fly.  After the fix, both paths must agree.
+    """
+
+    @pytest.mark.skipif(not _tzoo_evaluable(), reason="TZOO expected.json or filings missing")
+    def test_diagnose_score_matches_eval_score_for_tzoo(self) -> None:
+        """diagnose score for TZOO must equal the score produced by the eval path."""
+        from elsian.diagnose.engine import collect_case_eval
+        from elsian.evaluate.evaluator import evaluate
+        from elsian.extract.phase import ExtractPhase
+
+        case_dir = CASES_DIR / "TZOO"
+        expected_path = case_dir / "expected.json"
+
+        # Canonical eval path
+        report = evaluate(ExtractPhase().extract(str(case_dir)), str(expected_path))
+
+        # Diagnose path
+        diag = collect_case_eval(case_dir)
+        assert diag is not None
+
+        assert diag["score"] == report.score, (
+            f"diagnose score {diag['score']:.2f} != eval score {report.score:.2f}; "
+            "diagnose is reading stale data instead of re-extracting"
+        )
+        assert diag["matched"] == report.matched
+        assert diag["wrong"] == report.wrong
+        assert diag["missed"] == report.missed
+
+    @pytest.mark.skipif(not _tzoo_evaluable(), reason="TZOO expected.json or filings missing")
+    def test_diagnose_report_tickers_with_eval_never_skipped(self) -> None:
+        """build_report on real cases must report tickers_skipped == 0.
+
+        After the fix, every case with expected.json is evaluated on-the-fly;
+        none should be counted as skipped.
+        """
+        from elsian.diagnose.engine import build_report
+
+        report = build_report(CASES_DIR)
+        assert report["summary"]["tickers_skipped"] == 0, (
+            f"Expected 0 skipped tickers but got {report['summary']['tickers_skipped']}; "
+            "diagnose may still be reading stale artifacts for some cases"
+        )
+
+    @pytest.mark.skipif(not _tzoo_evaluable(), reason="TZOO expected.json or filings missing")
+    def test_diagnose_all_tickers_100pct_when_eval_all_pass(self) -> None:
+        """When eval --all is 100%, build_report overall_score_pct must also be 100%.
+
+        This is the direct reproduction of the BL-069 auditor's blocker:
+        diagnose reported 99.2% (ADTN with 37 wrong from stale artifact)
+        while eval --all reported 17/17 PASS 100%.
+        """
+        from elsian.diagnose.engine import build_report
+        from elsian.evaluate.evaluator import evaluate
+        from elsian.extract.phase import ExtractPhase
+
+        # Compute eval --all scores directly
+        all_100 = True
+        phase = ExtractPhase()
+        for d in sorted(CASES_DIR.iterdir()):
+            if not d.is_dir() or not (d / "expected.json").exists():
+                continue
+            report = evaluate(phase.extract(str(d)), str(d / "expected.json"))
+            if report.score < 100.0:
+                all_100 = False
+                break
+
+        if not all_100:
+            pytest.skip("Not all tickers are at 100%; coherence test only applies to green baseline")
+
+        # Now verify diagnose agrees
+        diag_report = build_report(CASES_DIR)
+        assert diag_report["summary"]["overall_score_pct"] == 100.0, (
+            f"eval --all is 100% but diagnose reports "
+            f"{diag_report['summary']['overall_score_pct']:.2f}%; stale artifact divergence"
+        )

@@ -14,8 +14,6 @@ from pathlib import Path
 from typing import Any
 
 from elsian.evaluate.evaluator import evaluate
-from elsian.models.field import FieldResult, Provenance
-from elsian.models.result import ExtractionResult, PeriodResult
 
 CASES_DIR_DEFAULT = Path(__file__).resolve().parent.parent.parent / "cases"
 
@@ -68,37 +66,6 @@ def field_category(field: str) -> str:
 # ── Artifact loaders (read-only) ──────────────────────────────────────
 
 
-def _load_extraction_result(case_dir: Path) -> ExtractionResult | None:
-    """Load ExtractionResult from extraction_result.json, or None if absent."""
-    path = case_dir / "extraction_result.json"
-    if not path.exists():
-        return None
-    data = json.loads(path.read_text(encoding="utf-8"))
-    result = ExtractionResult(
-        schema_version=data.get("schema_version", "2.0"),
-        ticker=data.get("ticker", ""),
-        currency=data.get("currency", "USD"),
-    )
-    result.filings_used = data.get("filings_used", 0)
-    for pk, pv in data.get("periods", {}).items():
-        pr = PeriodResult(
-            fecha_fin=pv.get("fecha_fin", ""),
-            tipo_periodo=pv.get("tipo_periodo", ""),
-        )
-        for fname, fdata in pv.get("fields", {}).items():
-            pr.fields[fname] = FieldResult(
-                value=fdata.get("value", 0),
-                provenance=Provenance(
-                    source_filing=fdata.get("source_filing", ""),
-                    source_location=fdata.get("source_location", ""),
-                ),
-                scale=fdata.get("scale", "raw"),
-                confidence=fdata.get("confidence", "high"),
-            )
-        result.periods[pk] = pr
-    return result
-
-
 def _load_case_meta(case_dir: Path) -> dict[str, Any]:
     """Load minimal case metadata from case.json."""
     path = case_dir / "case.json"
@@ -121,14 +88,17 @@ def _load_run_metrics(case_dir: Path) -> dict[str, Any] | None:
 def collect_case_eval(case_dir: Path) -> dict[str, Any] | None:
     """Evaluate one case and return a per-case summary dict.
 
+    Re-extracts on the fly using the canonical ``ExtractPhase`` path (same as
+    ``cmd_eval``). This guarantees that diagnose hotspots reflect the *current*
+    extraction state, not a potentially stale persisted ``extraction_result.json``.
+
     Returns None when the case has no expected.json (nothing to compare).
-    Returns a dict with ``skipped=True`` when extraction_result.json is absent.
 
     Args:
         case_dir: Path to the case directory.
 
     Returns:
-        Per-case summary dict, or None if evaluable data is missing.
+        Per-case summary dict, or None if no expected.json is present.
     """
     ticker = case_dir.name
     expected_path = case_dir / "expected.json"
@@ -138,22 +108,10 @@ def collect_case_eval(case_dir: Path) -> dict[str, Any] | None:
     case_meta = _load_case_meta(case_dir)
     source_hint = case_meta.get("source_hint", "")
 
-    extraction = _load_extraction_result(case_dir)
-    if extraction is None:
-        return {
-            "ticker": ticker,
-            "skipped": True,
-            "skip_reason": "no extraction_result.json",
-            "source_hint": source_hint,
-            "score": 0.0,
-            "matched": 0,
-            "wrong": 0,
-            "missed": 0,
-            "extra": 0,
-            "total_expected": 0,
-            "fatal": False,
-            "details": [],
-        }
+    # Re-extract on-the-fly using the same path as cmd_eval.
+    # Local import avoids circular dependency between diagnose and extract.
+    from elsian.extract.phase import ExtractPhase  # noqa: PLC0415
+    extraction = ExtractPhase().extract(str(case_dir))
 
     run_metrics = _load_run_metrics(case_dir)
     fatal = bool(
@@ -200,7 +158,7 @@ def collect_case_eval(case_dir: Path) -> dict[str, Any] | None:
 
     return {
         "ticker": ticker,
-        "skipped": False,
+        "skipped": False,  # always False: we always re-extract on-the-fly
         "skip_reason": None,
         "source_hint": source_hint,
         "score": report.score,

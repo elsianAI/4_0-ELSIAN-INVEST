@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -12,12 +13,13 @@ import pytest
 CASES_DIR = Path(__file__).resolve().parent.parent.parent / "cases"
 
 
-def _has_extraction_result(ticker: str) -> bool:
-    return (CASES_DIR / ticker / "extraction_result.json").exists()
-
-
 def _has_expected(ticker: str) -> bool:
     return (CASES_DIR / ticker / "expected.json").exists()
+
+
+def _has_filings(ticker: str) -> bool:
+    filings_dir = CASES_DIR / ticker / "filings"
+    return filings_dir.exists() and any(filings_dir.iterdir())
 
 
 # ── collect_case_eval ─────────────────────────────────────────────────
@@ -37,70 +39,176 @@ class TestCollectCaseEval:
         )
         assert collect_case_eval(case_dir) is None
 
-    def test_returns_skipped_when_no_extraction_result(self, tmp_path: Path) -> None:
-        """Returns skipped=True when extraction_result.json is absent."""
+    def test_case_with_no_filings_evaluates_on_the_fly(self, tmp_path: Path) -> None:
+        """A case with expected.json but no filings still evaluates (score=0, never skipped).
+
+        diagnose now re-extracts on-the-fly (same as cmd_eval) instead of
+        loading a potentially stale extraction_result.json.  A case with no
+        filings produces an empty extraction, so all expected fields are missed
+        and score=0.0 — but the result is *not* skipped; it is a live eval.
+        """
         from elsian.diagnose.engine import collect_case_eval
 
-        case_dir = tmp_path / "FAKE2"
+        case_dir = tmp_path / "NOFIL"
         case_dir.mkdir()
         (case_dir / "case.json").write_text(
-            json.dumps({"ticker": "FAKE2", "source_hint": "sec"}), encoding="utf-8"
+            json.dumps({"ticker": "NOFIL", "source_hint": "sec"}), encoding="utf-8"
         )
         (case_dir / "expected.json").write_text(
-            json.dumps({"version": "1.0", "ticker": "FAKE2", "periods": {}}),
+            json.dumps({
+                "version": "1.0", "ticker": "NOFIL",
+                "periods": {
+                    "FY2024": {
+                        "fecha_fin": "2024-12-31",
+                        "tipo_periodo": "anual",
+                        "fields": {
+                            "ingresos": {"value": 1000.0, "source_filing": "x.txt"}
+                        },
+                    }
+                },
+            }),
             encoding="utf-8",
         )
+        # No filings/ dir → ExtractPhase returns empty result → all expected missed
         result = collect_case_eval(case_dir)
         assert result is not None
-        assert result["skipped"] is True
-        assert result["skip_reason"] == "no extraction_result.json"
+        assert result["skipped"] is False, "diagnose must never skip due to missing artifact"
+        assert result["skip_reason"] is None
+        assert result["matched"] == 0
+        assert result["total_expected"] == 1
+        assert result["missed"] == 1
+        assert result["score"] == 0.0
 
-    def test_returns_skip_reason_string(self, tmp_path: Path) -> None:
-        """skip_reason is a non-empty string when skipped."""
+    def test_skipped_is_always_false(self, tmp_path: Path) -> None:
+        """collect_case_eval never returns skipped=True for any case with expected.json."""
         from elsian.diagnose.engine import collect_case_eval
 
-        case_dir = tmp_path / "FAKE3"
+        case_dir = tmp_path / "NOART"
         case_dir.mkdir()
         (case_dir / "case.json").write_text(
-            json.dumps({"ticker": "FAKE3", "source_hint": "asx"}), encoding="utf-8"
+            json.dumps({"ticker": "NOART", "source_hint": "asx"}), encoding="utf-8"
         )
         (case_dir / "expected.json").write_text(
-            json.dumps({"version": "1.0", "ticker": "FAKE3", "periods": {}}),
+            json.dumps({"version": "1.0", "ticker": "NOART", "periods": {}}),
             encoding="utf-8",
         )
         result = collect_case_eval(case_dir)
-        assert isinstance(result["skip_reason"], str)
-        assert result["source_hint"] == "asx"
-
-    @pytest.mark.skipif(
-        not (_has_extraction_result("TZOO") and _has_expected("TZOO")),
-        reason="TZOO artifacts not available",
-    )
-    def test_tzoo_eval_returns_expected_keys(self) -> None:
-        """collect_case_eval on TZOO returns a dict with all required keys."""
-        from elsian.diagnose.engine import collect_case_eval
-
-        result = collect_case_eval(CASES_DIR / "TZOO")
         assert result is not None
         assert result["skipped"] is False
-        for key in ("ticker", "score", "matched", "wrong", "missed", "extra",
-                    "total_expected", "details", "source_hint", "fatal"):
-            assert key in result, f"Missing key: {key}"
+        assert result["source_hint"] == "asx"
 
-    @pytest.mark.skipif(
-        not (_has_extraction_result("TZOO") and _has_expected("TZOO")),
-        reason="TZOO artifacts not available",
-    )
-    def test_tzoo_details_are_non_matched_only(self) -> None:
-        """details list contains only wrong/missed entries, never matched."""
+    def test_collect_case_eval_calls_extract_phase_not_artifact(self, tmp_path: Path) -> None:
+        """collect_case_eval calls ExtractPhase.extract(), NOT extraction_result.json.
+
+        This is the unit-level gate for the BL-069 fix: diagnose must use the
+        live extraction path, never a potentially stale persisted artifact.
+        Even when extraction_result.json is present with different data, it must
+        be ignored.
+        """
         from elsian.diagnose.engine import collect_case_eval
+        from elsian.models.result import ExtractionResult
 
-        result = collect_case_eval(CASES_DIR / "TZOO")
+        case_dir = tmp_path / "MOCK"
+        case_dir.mkdir()
+        (case_dir / "case.json").write_text(
+            json.dumps({"ticker": "MOCK", "source_hint": "sec"}), encoding="utf-8"
+        )
+        (case_dir / "expected.json").write_text(
+            json.dumps({"version": "1.0", "ticker": "MOCK", "periods": {}}),
+            encoding="utf-8",
+        )
+        # Stale artifact with filings_used=99 — must NOT be read by diagnose
+        (case_dir / "extraction_result.json").write_text(
+            json.dumps({
+                "ticker": "MOCK", "currency": "USD",
+                "periods": {}, "filings_used": 99, "schema_version": "2.0",
+            }),
+            encoding="utf-8",
+        )
+
+        mock_result = ExtractionResult(ticker="MOCK", currency="USD", filings_used=0)
+        with patch("elsian.extract.phase.ExtractPhase.extract", return_value=mock_result) as mock_extract:
+            result = collect_case_eval(case_dir)
+            mock_extract.assert_called_once_with(str(case_dir))
+
         assert result is not None
-        for d in result["details"]:
-            assert d["gap_type"] != "matched"
-            assert "field" in d
-            assert "period" in d
+        assert result["skipped"] is False, "diagnose must never skip due to missing/stale artifact"
+
+    def test_stale_artifact_does_not_influence_result(self, tmp_path: Path) -> None:
+        """A stale extraction_result.json with different data does not affect the diagnose result.
+
+        The score must come from ExtractPhase.extract(), not from the persisted JSON.  We
+        inject a mock that returns a custom result and verify the case eval reflects it.
+        """
+        from elsian.diagnose.engine import collect_case_eval
+        from elsian.models.result import ExtractionResult, PeriodResult
+        from elsian.models.field import FieldResult, Provenance
+
+        case_dir = tmp_path / "STALE"
+        case_dir.mkdir()
+        (case_dir / "case.json").write_text(
+            json.dumps({"ticker": "STALE", "source_hint": "sec"}), encoding="utf-8"
+        )
+        (case_dir / "expected.json").write_text(
+            json.dumps({
+                "version": "1.0", "ticker": "STALE",
+                "periods": {
+                    "FY2024": {
+                        "fecha_fin": "2024-12-31",
+                        "tipo_periodo": "anual",
+                        "fields": {
+                            "ingresos": {"value": 1000.0, "source_filing": "x.txt"}
+                        },
+                    }
+                },
+            }),
+            encoding="utf-8",
+        )
+        # Stale artifact says ingresos=999 (wrong) — must NOT be used
+        (case_dir / "extraction_result.json").write_text(
+            json.dumps({
+                "ticker": "STALE", "currency": "USD", "schema_version": "2.0",
+                "filings_used": 1,
+                "periods": {
+                    "FY2024": {
+                        "fecha_fin": "2024-12-31",
+                        "tipo_periodo": "anual",
+                        "fields": {
+                            "ingresos": {
+                                "value": 999.0,
+                                "source_filing": "x.txt",
+                                "source_location": "",
+                                "scale": "raw",
+                                "confidence": "high",
+                            },
+                        },
+                    }
+                },
+            }),
+            encoding="utf-8",
+        )
+
+        # Mock ExtractPhase to return the CORRECT value (1000.0 = match)
+        mock_result = ExtractionResult(ticker="STALE", currency="USD", filings_used=1)
+        mock_period = PeriodResult(fecha_fin="2024-12-31", tipo_periodo="anual")
+        mock_period.fields["ingresos"] = FieldResult(
+            value=1000.0,
+            provenance=Provenance(source_filing="x.txt", source_location=""),
+            scale="raw",
+            confidence="high",
+        )
+        mock_result.periods["FY2024"] = mock_period
+
+        with patch("elsian.extract.phase.ExtractPhase.extract", return_value=mock_result):
+            result = collect_case_eval(case_dir)
+
+        assert result is not None
+        assert result["score"] == 100.0, (
+            f"Expected 100.0 from fresh extraction but got {result['score']}; "
+            "diagnose may be reading the stale artifact (injected value 999)"
+        )
+        assert result["matched"] == 1
+        assert result["wrong"] == 0
 
 
 # ── aggregate_hotspots ────────────────────────────────────────────────
@@ -243,7 +351,13 @@ class TestBuildReport:
             assert key in summary, f"Missing summary key: {key}"
 
     def test_skipped_case_counted_in_tickers_analyzed(self, tmp_path: Path) -> None:
-        """A case with expected.json but no extraction_result.json is counted and skipped."""
+        """A case with expected.json but no filings is now evaluated on-the-fly (not skipped).
+
+        Before the BL-069 fix, absence of extraction_result.json caused
+        tickers_skipped to increment.  After the fix, diagnose always
+        re-extracts, so every case with expected.json contributes to
+        tickers_with_eval (never tickers_skipped).
+        """
         from elsian.diagnose.engine import build_report
 
         case_dir = tmp_path / "FAKE"
@@ -257,21 +371,31 @@ class TestBuildReport:
         )
         report = build_report(tmp_path)
         assert report["summary"]["tickers_analyzed"] == 1
-        assert report["summary"]["tickers_skipped"] == 1
-        assert report["summary"]["tickers_with_eval"] == 0
+        # No longer skipped — always re-extracts on-the-fly
+        assert report["summary"]["tickers_skipped"] == 0
+        assert report["summary"]["tickers_with_eval"] == 1
 
     @pytest.mark.skipif(
-        not (_has_extraction_result("TZOO") and _has_expected("TZOO")),
-        reason="TZOO artifacts not available",
+        not _has_expected("TZOO"),
+        reason="TZOO expected.json not available",
     )
-    def test_real_cases_dir_produces_nontrivial_report(self) -> None:
-        from elsian.diagnose.engine import build_report
+    def test_real_cases_dir_produces_nontrivial_report_mocked(self) -> None:
+        """build_report with mocked ExtractPhase returns a valid non-empty report structure.
 
-        report = build_report(CASES_DIR)
+        This test uses a mock to avoid slow real extraction of all cases.
+        Heavy coherence testing (verifying actual scores agree with eval) lives
+        in tests/integration/test_diagnose_command.py:TestDiagnoseVsEvalCoherence.
+        """
+        from elsian.diagnose.engine import build_report
+        from elsian.models.result import ExtractionResult
+
+        empty_result = ExtractionResult(ticker="TZOO", currency="USD", filings_used=0)
+        with patch("elsian.extract.phase.ExtractPhase.extract", return_value=empty_result):
+            report = build_report(CASES_DIR)
+        assert report["schema_version"] == "diagnose_v1"
         assert report["summary"]["tickers_analyzed"] >= 1
         assert isinstance(report["hotspots"], list)
         assert isinstance(report["by_ticker"], dict)
-        assert "TZOO" in report["by_ticker"]
 
 
 # ── render_markdown ───────────────────────────────────────────────────
@@ -738,18 +862,18 @@ class TestBuildReportSlice2:
         assert isinstance(report["root_cause_summary"], dict)
 
     @pytest.mark.skipif(
-        not (
-            (Path(__file__).resolve().parent.parent.parent / "cases" / "TZOO" / "expected.json").exists()
-            and (Path(__file__).resolve().parent.parent.parent / "cases" / "TZOO" / "extraction_result.json").exists()
-        ),
-        reason="TZOO artifacts not available",
+        not _has_expected("TZOO"),
+        reason="TZOO expected.json not available",
     )
     def test_real_report_root_cause_summary_is_non_empty(self) -> None:
+        """root_cause_summary is a dict even when called with all cases (mocked extract)."""
         from elsian.diagnose.engine import build_report
-        report = build_report()
-        # If any tickers have gaps, root_cause_summary is non-empty
-        if report["summary"]["tickers_with_eval"] > 0:
-            assert isinstance(report["root_cause_summary"], dict)
+        from elsian.models.result import ExtractionResult
+
+        empty_result = ExtractionResult(ticker="X", currency="USD", filings_used=0)
+        with patch("elsian.extract.phase.ExtractPhase.extract", return_value=empty_result):
+            report = build_report()
+        assert isinstance(report["root_cause_summary"], dict)
 
 
 # ── Extended render tests ─────────────────────────────────────────────

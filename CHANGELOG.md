@@ -2,6 +2,13 @@
 
 ## 2026-03-11
 
+### [4.0] BL-069 audit-fix — diagnose re-extrae on-the-fly en lugar de leer artefacto stale
+- `elsian/diagnose/engine.py`: `collect_case_eval()` reemplaza `_load_extraction_result()` (que leía el `extraction_result.json` persistido/potencialmente stale) por `ExtractPhase().extract(str(case_dir))` — el mismo path canónico que usa `cmd_eval`. `skipped` es siempre `False`; la BL "stale" desaparece. Se elimina `_load_extraction_result()` y los imports de modelos internos que ya no son necesarios.
+- Efecto: `elsian diagnose --all` ya no puede reportar drift resuelto (e.g. ADTN con 37 wrong de artifact pre-fix) como hotspot actual. Los scores de diagnose ahora son idénticos a los de `eval --all`.
+- Tests: `test_diagnose.py` actualizado — `test_returns_skipped_when_no_extraction_result` y `test_returns_skip_reason_string` (obsoletos) reemplazados por `test_case_with_no_filings_evaluates_on_the_fly` y `test_skipped_is_always_false`; `test_skipped_case_counted_in_tickers_analyzed` actualizado al nuevo contrato (`tickers_skipped==0`, `tickers_with_eval==1`); `skipif` de TZOO eliminan el requisito de `extraction_result.json`; añadido `test_diagnose_agrees_with_eval_path_on_tzoo` (coherence gate).
+- Tests de integración: `_has_any_evaluable_case()` elimina el requisito de `extraction_result.json`; añadida clase `TestDiagnoseVsEvalCoherence` con tres tests: coherencia de score TZOO, `tickers_skipped==0` en build_report real, y reproducción directa del bloqueador del auditor (diagnose 100% ↔ eval 100%).
+- **Files changed:** `elsian/diagnose/engine.py`, `tests/unit/test_diagnose.py`, `tests/integration/test_diagnose_command.py`, `CHANGELOG.md`
+
 ### [4.0] BL-069 slice 2 — Clustering adicional y root-cause hints en diagnose
 - `elsian/diagnose/engine.py` ampliado con tres nuevas capacidades: (1) `_FIELD_CATEGORY` + `field_category()` mapea cada campo canónico a categoría de estado financiero (`income_statement`, `per_share`, `balance_sheet`, `cash_flow`, `other`); (2) `_classify_root_cause_hint()` emite hints heurísticos acotados por tipo de gap (missed: `fatal_upstream`, `period_mapping_failure`, `missing_extraction`; wrong: `scale_1k`, `scale_001`, `scale_100k`, `scale_100`, `sign_mismatch`, `value_deviation`); (3) `aggregate_by_period_type()` y `aggregate_by_field_category()` añaden dos nuevos ejes de clustering sobre `tipo_periodo` y categoría de campo.
 - `aggregate_hotspots()` extiende cada hotspot con `root_cause_hint` y `field_category`. El clasificador detecta automáticamente la regresión `scale_1k` de ADTN (#1 hotspot, ratio=1000) sin inspección manual.
