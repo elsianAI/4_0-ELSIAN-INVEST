@@ -223,12 +223,16 @@ def _run_pipeline_for_ticker(
     case = CaseConfig.from_file(case_dir)
     context = PipelineContext(case=case)
 
+    # Canonical ticker from case.json (used for workspace subdir and run_metrics).
+    # Always derive from case.ticker so the value is stable regardless of how
+    # the user typed the CLI argument (e.g. "tzoo" → "TZOO").
+    canonical_ticker = case.ticker if case.ticker else ticker
+
     # BL-070: workspace path resolution — runtime artifacts land outside cases/
     # Use canonical ticker from case.json so the runtime subdir is always uppercase
     # regardless of the casing the user typed (e.g. "tzoo" → "TZOO").
     workspace = getattr(args, "workspace", None)
     if workspace:
-        canonical_ticker = case.ticker if case.ticker else ticker
         runtime_dir = Path(workspace) / canonical_ticker
         runtime_dir.mkdir(parents=True, exist_ok=True)
         context.runtime_dir = str(runtime_dir)
@@ -299,6 +303,8 @@ def _run_pipeline_for_ticker(
 
     # ── Write run_metrics.json (best-effort, always — even on fatal) ───
     # BL-070: write to runtime_dir (workspace when provided, else case_dir)
+    # Use canonical_ticker so run_metrics["ticker"] always matches case.json,
+    # not the raw CLI argument (e.g. "tzoo" vs "TZOO").
     _metrics_path: Path | None = None
     try:
         _metrics_path = write_run_metrics(
@@ -306,7 +312,7 @@ def _run_pipeline_for_ticker(
             run_id=run_id,
             started_at=started_at,
             finished_at=finished_at,
-            ticker=ticker,
+            ticker=canonical_ticker,
             source_hint=case.source_hint,
             with_acquire=with_acquire,
             skip_assemble=skip_assemble,
@@ -938,8 +944,35 @@ def cmd_onboard(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def _resolve_diagnose_output(output_arg: str | None) -> Path:
+    """Resolve the output directory for diagnose reports.
+
+    If *output_arg* is provided, use it (created if absent).
+    If not, use a system temporary directory so that the repo tree
+    is never mutated by a bare ``elsian diagnose --all`` call.
+
+    Args:
+        output_arg: Value of ``--output``, or None.
+
+    Returns:
+        Resolved output directory (always exists after this call).
+    """
+    import tempfile
+
+    if output_arg:
+        out = Path(output_arg)
+        out.mkdir(parents=True, exist_ok=True)
+        return out
+    out = Path(tempfile.mkdtemp(prefix="elsian-diagnose-"))
+    return out
+
+
 def cmd_diagnose(args: argparse.Namespace) -> None:
     """Aggregate gaps and hotspots across all cases into a reusable diagnose report."""
+    if not getattr(args, "all", False):
+        print("--all is required; per-ticker diagnose is not supported yet")
+        raise SystemExit(1)
+
     from elsian.diagnose.engine import build_report
     from elsian.diagnose.render import render_markdown
 
@@ -973,11 +1006,7 @@ def cmd_diagnose(args: argparse.Namespace) -> None:
             )
 
     # Determine output paths
-    if output_arg:
-        out_dir = Path(output_arg)
-        out_dir.mkdir(parents=True, exist_ok=True)
-    else:
-        out_dir = CASES_DIR.parent
+    out_dir = _resolve_diagnose_output(output_arg)
 
     json_path = out_dir / "diagnose_report.json"
     md_path = out_dir / "diagnose_report.md"

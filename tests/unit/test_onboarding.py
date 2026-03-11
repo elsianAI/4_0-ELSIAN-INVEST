@@ -161,6 +161,47 @@ class TestRunDiscoverStep:
         assert result["status"] == "fatal"
         assert result["gaps"]
 
+    def test_network_discover_writes_to_case_dir_not_global_cases(
+        self, tmp_path: Path
+    ) -> None:
+        """When allow_network=True and TickerDiscoverer succeeds, case.json is
+        written to the *case_dir* parameter, not to any hardcoded CASES_DIR path.
+        """
+        from unittest.mock import MagicMock, patch
+
+        mock_result = MagicMock()
+        mock_result.source_hint = "sec"
+        mock_result.exchange = "NYSE"
+        mock_result.currency = "USD"
+        mock_result.period_scope = "ANNUAL_ONLY"
+        mock_result.warnings = []
+        mock_result.to_case_dict.return_value = {
+            "ticker": "FAKE",
+            "source_hint": "sec",
+            "currency": "USD",
+        }
+
+        mock_discoverer = MagicMock()
+        mock_discoverer.discover.return_value = mock_result
+
+        custom_case_dir = tmp_path / "custom_subdir"
+        custom_case_dir.mkdir()
+
+        with patch("elsian.discover.discover.TickerDiscoverer", return_value=mock_discoverer), \
+             patch("elsian.onboarding.CASES_DIR", tmp_path / "should_not_write_here"):
+            result = _run_discover_step("FAKE", custom_case_dir, allow_network=True)
+
+        # case.json must land in custom_case_dir, not in any CASES_DIR subpath
+        assert (custom_case_dir / "case.json").exists(), (
+            "case.json must be written to the case_dir parameter"
+        )
+        # The hardcoded fallback path must NOT be written
+        wrong_path = tmp_path / "should_not_write_here" / "FAKE" / "case.json"
+        assert not wrong_path.exists(), (
+            "case.json must NOT be written to CASES_DIR / ticker"
+        )
+        assert result["status"] in ("ok", "warning")
+
 
 # ── _run_convert_step ─────────────────────────────────────────────────
 

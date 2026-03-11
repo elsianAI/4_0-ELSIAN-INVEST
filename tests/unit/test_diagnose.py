@@ -530,16 +530,29 @@ class TestFieldCategory:
         assert field_category("total_equity") == "balance_sheet"
         assert field_category("cash_and_equivalents") == "balance_sheet"
 
+    def test_balance_sheet_extended_fields(self) -> None:
+        """accounts_payable, accounts_receivable, inventories must map to balance_sheet."""
+        from elsian.diagnose.engine import field_category
+        assert field_category("accounts_payable") == "balance_sheet"
+        assert field_category("accounts_receivable") == "balance_sheet"
+        assert field_category("inventories") == "balance_sheet"
+
     def test_cash_flow_field(self) -> None:
         from elsian.diagnose.engine import field_category
         assert field_category("cfo") == "cash_flow"
         assert field_category("capex") == "cash_flow"
         assert field_category("fcf") == "cash_flow"
 
+    def test_cash_flow_extended_fields(self) -> None:
+        """cfi, cff, delta_cash must map to cash_flow."""
+        from elsian.diagnose.engine import field_category
+        assert field_category("cfi") == "cash_flow"
+        assert field_category("cff") == "cash_flow"
+        assert field_category("delta_cash") == "cash_flow"
+
     def test_unknown_field_returns_other(self) -> None:
         from elsian.diagnose.engine import field_category
-        assert field_category("inventories") == "other"
-        assert field_category("accounts_receivable") == "other"
+        assert field_category("some_unknown_field") == "other"
         assert field_category("") == "other"
 
 
@@ -722,14 +735,14 @@ class TestAggregateByFieldCategory:
                 "ticker": "A",
                 "skipped": False,
                 "details": [
-                    {"field": "inventories", "period": "FY2024", "tipo_periodo": "anual",
+                    {"field": "some_noncanonical_field", "period": "FY2024", "tipo_periodo": "anual",
                      "gap_type": "wrong", "expected": 100.0, "actual": 90.0, "period_miss_rate": 0.0},
                 ],
             }
         ]
         result = aggregate_by_field_category(cases)
         assert "other" in result
-        assert "inventories" in result["other"]["fields_with_gaps"]
+        assert "some_noncanonical_field" in result["other"]["fields_with_gaps"]
 
 
 # ── Extended aggregate_hotspots tests ─────────────────────────────────

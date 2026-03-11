@@ -1,4 +1,8 @@
-"""BL-069: Render diagnose_report dict to human-readable Markdown."""
+"""BL-069: Render diagnose_report dict to human-readable Markdown.
+
+The report is produced from on-the-fly re-extraction; it does not depend
+on any persisted ``extraction_result.json`` artefact.
+"""
 
 from __future__ import annotations
 
@@ -25,7 +29,7 @@ def render_markdown(report: dict[str, Any]) -> str:
     lines.append("## Summary\n")
     lines.append(f"- Tickers analyzed: **{summary.get('tickers_analyzed', 0)}**")
     lines.append(f"- Tickers evaluated: **{summary.get('tickers_with_eval', 0)}**")
-    lines.append(f"- Tickers skipped: **{summary.get('tickers_skipped', 0)}** (no extraction_result.json)")
+    lines.append(f"- Tickers skipped: **{summary.get('tickers_skipped', 0)}** (no expected.json)")
     lines.append(f"- Overall score: **{summary.get('overall_score_pct', 0):.1f}%**")
     lines.append(f"  - Expected: {summary.get('total_expected', 0)}")
     lines.append(f"  - Matched: {summary.get('total_matched', 0)}")

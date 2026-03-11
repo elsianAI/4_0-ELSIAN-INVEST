@@ -936,6 +936,39 @@ class TestRunMetrics:
             f"aggregates.evaluate must not contain 'score' when skipped; got {eval_agg!r}"
         )
 
+    def test_run_metrics_ticker_is_canonical_from_case_json(
+        self, tmp_path: Path
+    ) -> None:
+        """run_metrics.json['ticker'] must be the canonical ticker from case.json,
+        not the raw CLI argument (which may be lowercase or differently cased).
+        """
+        import json
+
+        # Write case.json with canonical uppercase ticker
+        (tmp_path / "case.json").write_text(
+            json.dumps({"ticker": "FAKEX", "source_hint": "sec", "currency": "USD"}),
+            encoding="utf-8",
+        )
+        (tmp_path / "expected.json").write_text(
+            json.dumps({"version": "1.0", "ticker": "FAKEX", "currency": "USD",
+                        "periods": {}}),
+            encoding="utf-8",
+        )
+
+        # Pass lowercase ticker as CLI argument — simulates 'elsian run fakex'
+        with _patch_minimal_pipeline(tmp_path):
+            from elsian.cli import _run_pipeline_for_ticker
+            _run_pipeline_for_ticker("fakex", _make_args(ticker="fakex", skip_assemble=True))
+
+        metrics_path = tmp_path / "run_metrics.json"
+        assert metrics_path.exists(), "run_metrics.json must be written"
+
+        metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+        assert metrics["ticker"] == "FAKEX", (
+            f"run_metrics.json['ticker'] must be canonical 'FAKEX' from case.json, "
+            f"got {metrics['ticker']!r}"
+        )
+
 
 # ── Tests: BL-070 audit fix — AssemblePhase in-memory extraction_result ──
 

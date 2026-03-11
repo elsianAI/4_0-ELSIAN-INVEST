@@ -2,6 +2,19 @@
 
 ## 2026-03-11
 
+### [4.0] Certification wave — codex/certification-fixes-20260311
+- **Bug fixes (6):**
+  1. `cmd_diagnose()` ahora fuerza `--all`: si la flag está ausente imprime `--all is required; per-ticker diagnose is not supported yet` y sale con `SystemExit(1)`. Nueva función helper `_resolve_diagnose_output()` en `elsian/cli.py`.
+  2. El default de salida de `elsian diagnose --all` usa `tempfile.mkdtemp(prefix="elsian-diagnose-")` en lugar de `CASES_DIR.parent`; el árbol del repo nunca se muta en una invocación sin `--output`.
+  3. `_FIELD_CATEGORY` en `elsian/diagnose/engine.py` completado con `accounts_payable`, `accounts_receivable`, `inventories` → `balance_sheet`; `cfi`, `cff`, `delta_cash` → `cash_flow`. Ahora `other` es un fallback genuino, no el destino de campos canónicos olvidados.
+  4. `elsian/diagnose/render.py` línea "Tickers skipped (no extraction_result.json)" corregida a "(no expected.json)"; módulo y docstrings actualizados para reflejar dependencia de re-extracción on-the-fly, no de artefactos persistidos.
+  5. `_run_discover_step()` en `elsian/onboarding.py` escribe `case.json` en el parámetro `case_dir` recibido, no en `CASES_DIR / base_ticker.upper()` hardcodeado.
+  6. `run_metrics.json["ticker"]` ahora refleja siempre el ticker canónico de `case.json` (ej. `"TZOO"` cuando el argumento CLI era `"tzoo"`).
+- **Correcciones factuales en CHANGELOG:**
+  - Entrada BL-069 slice-2: en el momento del closeout `_FIELD_CATEGORY` no cubría todos los campos canónicos de balance-sheet/cash-flow; corregido en esta ola.
+  - Entrada BL-005 / JBH: los valores FY2023 proceden de `SRC_002_annual_FY2023.txt`, no de `SRC_001` como indicaba la entrada anterior.
+- **Files changed:** `elsian/cli.py`, `elsian/diagnose/engine.py`, `elsian/diagnose/render.py`, `elsian/onboarding.py`, `tests/unit/test_diagnose.py`, `tests/integration/test_diagnose_command.py`, `tests/unit/test_onboarding.py`, `tests/integration/test_run_command.py`, `CHANGELOG.md`
+
 ### [4.0] Governance reconciliation — BL-073 archivada como no ejecutada en el snapshot actual
 - `BL-073` sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre veraz: el contrato `parallel-ready` ya quedó canonizado en `BL-072` y `DEC-029`, pero el piloto no se ejecutó porque en este snapshot no existen dos BL reales, concurrentes e independientes elegibles.
 - `docs/project/PROJECT_STATE.md` se reconcilia para dejar explícito que no queda backlog vivo ejecutable y que `parallel-ready` sigue vigente solo como contrato canónico; cualquier piloto futuro deberá abrirse como una BL nueva, no reanimar `BL-073`.

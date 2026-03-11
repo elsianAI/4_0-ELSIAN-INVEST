@@ -87,8 +87,9 @@ def _run_discover_step(
 
         discoverer = TickerDiscoverer()
         result = discoverer.discover(ticker)
-        base_ticker, _ = parse_ticker_suffix(ticker)
-        target_dir = CASES_DIR / base_ticker.upper()
+        # Write to the case_dir received (caller's override or canonical default),
+        # not to a hardcoded CASES_DIR path.
+        target_dir = case_dir
         target_dir.mkdir(parents=True, exist_ok=True)
         case_dict = result.to_case_dict()
         (target_dir / "case.json").write_text(

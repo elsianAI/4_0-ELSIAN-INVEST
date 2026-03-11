@@ -1,8 +1,11 @@
-"""BL-069: Diagnose engine — aggregate gap patterns from existing artifacts.
+"""BL-069: Diagnose engine — aggregate gap patterns via on-the-fly re-extraction.
 
-Read-only. Consumes extraction_result.json + expected.json + case.json
-(and optionally run_metrics.json) to produce a structured hotspot report
-without re-running the extraction pipeline.
+Read-only diagnostic layer. For each case that has an ``expected.json``,
+the engine re-extracts on the fly using the canonical ``ExtractPhase`` path
+(same as ``cmd_eval``) so that diagnose scores are always coherent with
+``eval --all``.  It does **not** depend on a persisted
+``extraction_result.json``; any such artefact is ignored.
+Optionally reads ``run_metrics.json`` for upstream-fatal signals.
 """
 
 from __future__ import annotations
@@ -42,23 +45,35 @@ _FIELD_CATEGORY: dict[str, str] = {
     "total_liabilities": "balance_sheet",
     "total_equity": "balance_sheet",
     "cash_and_equivalents": "balance_sheet",
+    "accounts_receivable": "balance_sheet",
+    "inventories": "balance_sheet",
+    "accounts_payable": "balance_sheet",
     "total_debt": "balance_sheet",
     # Cash flow
     "cfo": "cash_flow",
     "capex": "cash_flow",
     "fcf": "cash_flow",
+    "cfi": "cash_flow",
+    "cff": "cash_flow",
+    "delta_cash": "cash_flow",
 }
 
 
 def field_category(field: str) -> str:
     """Return the diagnostic category for a canonical field name.
 
+    Covers all canonical fields defined in ``config/field_aliases.json``,
+    including balance-sheet entries (``accounts_receivable``,
+    ``inventories``, ``accounts_payable``) and supplemental cash-flow
+    entries (``cfi``, ``cff``, ``delta_cash``).
+
     Args:
         field: Canonical field name (from field_aliases.json).
 
     Returns:
         One of ``'income_statement'``, ``'per_share'``, ``'balance_sheet'``,
-        ``'cash_flow'``, or ``'other'`` for unrecognised fields.
+        ``'cash_flow'``, or ``'other'`` as genuine fallback for fields that
+        do not map to any of the four recognised categories.
     """
     return _FIELD_CATEGORY.get(field, "other")
 
