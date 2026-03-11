@@ -2,6 +2,13 @@
 
 ## 2026-03-11
 
+### [4.0] Governance reconciliation — BL-069 sigue abierta tras aceptación del primer slice técnico
+- `docs/project/BACKLOG.md` deja de presentar `BL-069` como `TODO` y la pasa a `IN_PROGRESS` para reflejar el progreso real aceptado en `HEAD d05e7cb`: `elsian diagnose --all`, reportes `diagnose_report.json`/`diagnose_report.md` y ranking reutilizable de hotspots.
+- `docs/project/PROJECT_STATE.md` se reconcilia de forma mínima: `BL-069` sigue siendo la siguiente prioridad operativa, pero ya no como trabajo no arrancado sino como BL viva con un primer slice aceptado para governance.
+- Riesgo residual no bloqueante mantenido explícito: la BL completa sigue pendiente de ampliar clustering y señal de causa raíz si se quiere cumplir toda la ambición original.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** `python3 -m pytest tests/unit/test_diagnose.py tests/integration/test_diagnose_command.py -q` → `33 passed`; `python3 -m pytest tests/unit/test_pipeline.py tests/integration/test_run_command.py -q` → `35 passed`; `python3 -m elsian diagnose --all --output /tmp/elsian-bl069-audit-check` → exit `0` con salida factual; `python3 scripts/check_governance.py --format json` → repo limpio en `HEAD d05e7cb`.
+
 ### [4.0] BL-069 — Motor de diagnose: `elsian diagnose --all`
 - Nuevo módulo `elsian/diagnose/` con `engine.py` (carga artefactos existentes, evalúa casos, agrupa gaps por `(field, gap_type)`, rankea hotspots) y `render.py` (produce `.md` humano).
 - Nuevo comando `elsian diagnose --all [--output PATH]`: emite `diagnose_report.json` y `diagnose_report.md` con ranking de hotspots reutilizable para decidir próximas BL sin revisión manual ticker a ticker.

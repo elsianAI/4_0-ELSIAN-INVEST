@@ -32,14 +32,14 @@
 
 ### BL-069 — T12 — Motor de diagnose
 - **Prioridad:** BAJA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
+- **Estado:** IN_PROGRESS (slice 1 aceptado para governance)
+- **Asignado a:** engineer
 - **Módulo:** Module 1
 - **Validation tier:** shared-core
 - **Depende de:** BL-068
 - **Referencias:** T12, docs/project/PLAN_IMPLEMENTACION_FILTRADO.md
-- **Descripción:** Construir un motor de diagnose que agrupe fallos y gaps por patrón técnico para abrir trabajo de mejora con menos inspección manual.
-- **Criterio de aceptación:** El sistema genera un informe de hotspots reutilizable para decidir próximas BL sin revisar ticker por ticker a mano.
+- **Descripción:** Construir un motor de diagnose que agrupe fallos y gaps por patrón técnico para abrir trabajo de mejora con menos inspección manual. El primer slice ya quedó aceptado para governance en `HEAD d05e7cb`: `elsian diagnose --all`, reportes JSON/MD y ranking de hotspots reutilizable. La BL completa sigue abierta porque aún queda ampliar clustering y señal de causa raíz si se quiere cubrir toda la ambición original.
+- **Criterio de aceptación:** El sistema genera un informe de hotspots reutilizable para decidir próximas BL sin revisar ticker por ticker a mano, y el cierre completo añade clustering/causa raíz suficiente para reducir la inspección manual residual de forma material.
 
 ### BL-071 — T15 — Scaffolding y plantillas
 - **Prioridad:** BAJA
