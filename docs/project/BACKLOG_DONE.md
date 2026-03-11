@@ -9,6 +9,14 @@
 
 ---
 
+### BL-067 — T09 — Factoría de onboarding
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-11)
+- **Asignado a:** engineer
+- **Depende de:** BL-062, BL-066
+- **Descripción:** Se cierra BL-067 con alcance estrecho y factual como entrypoint de desarrollo/QA para onboarding, no como nuevo `PipelinePhase`, storage framework ni reescritura del runtime. `elsian onboard` compone `discover -> acquire opcional -> convert -> preflight -> draft` usando piezas existentes, produce un reporte estructurado con estado global, blockers, warnings, gaps y siguiente paso, y cuando se usa `--workspace PATH` escribe `onboarding_report.json` y `onboarding_report.md` en `PATH/<ticker_canónico>/` sin prometer aislamiento de todos los artefactos de `cases/`. La remediación final absorbida corta limpiamente ante `case.json` corrupto o `convert` fatal, evitando traceback y evitando que preflight/draft corran sobre artefactos stale.
+- **Criterio de aceptación:** ✓ `BL-067` sale de `docs/project/BACKLOG.md` y queda archivada aquí. ✓ Existe un flujo único `elsian onboard` operativo al menos para un ticker SEC y uno no-SEC, con reporte claro de estado, gaps y siguiente paso. ✓ `python3 -m pytest -q tests/unit/test_onboarding.py tests/integration/test_onboard_command.py` PASS (`54 passed, 1 warning`). ✓ `python3 -m elsian onboard TZOO --workspace /tmp/elsian-bl067-orch2` PASS funcional con `Overall: WARNING` y reporte guardado en `/tmp/elsian-bl067-orch2/TZOO/onboarding_report.json`. ✓ `python3 -m elsian onboard KAR --workspace /tmp/elsian-bl067-orch2` PASS funcional con `Overall: WARNING` y reporte guardado en `/tmp/elsian-bl067-orch2/KAR/onboarding_report.json`. ✓ `python3 -m pytest -q --disable-warnings` PASS (`1620 passed, 5 skipped, 1 warning`, `EXIT:0`). ✓ `python3 -m elsian eval --all` PASS 16/16. ✓ `git diff --check` limpio.
+
 ### BL-070 — T14 — Separación fixtures vs artefactos runtime
 - **Prioridad:** BAJA
 - **Estado:** DONE ✅ (2026-03-11)

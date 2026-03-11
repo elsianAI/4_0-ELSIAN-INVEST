@@ -30,27 +30,16 @@
 
 ## Tareas activas
 
-### BL-064 — T06 — Modelo unificado de readiness
+### BL-005 — Expandir cobertura de tickers (diversidad de mercados/formatos)
 - **Prioridad:** BAJA
 - **Estado:** TODO
 - **Asignado a:** sin asignar
 - **Módulo:** Module 1
 - **Validation tier:** shared-core
-- **Depende de:** BL-063
-- **Referencias:** T06, docs/project/PLAN_IMPLEMENTACION_FILTRADO.md
-- **Descripción:** Introducir un readiness compuesto que complemente el score histórico con cobertura real, validator, provenance y penalización de extras.
-- **Criterio de aceptación:** `elsian eval` expone readiness compuesto junto al score legado y permite ordenar tickers por preparación operativa real.
-
-### BL-067 — T09 — Factoría de onboarding
-- **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** BL-062, BL-066
-- **Referencias:** T09, docs/project/PLAN_IMPLEMENTACION_FILTRADO.md
-- **Descripción:** Industrializar el onboarding con un único entrypoint que recorra discover, acquire, convert, preflight, draft y reporte de gaps, reduciendo el trabajo manual repetitivo.
-- **Criterio de aceptación:** Existe un flujo único de onboarding que funciona al menos para un ticker SEC y uno no-SEC y deja un reporte claro de estado, gaps y siguiente paso.
+- **Depende de:** BL-067
+- **Referencias:** DEC-015, T09, docs/project/PLAN_IMPLEMENTACION_FILTRADO.md
+- **Descripción:** Añadir tickers nuevos no por volumen, sino por diversidad real de mercados, reguladores, sectores y formatos. Debe ejecutarse solo cuando las prioridades técnicas inmediatas estén suficientemente cerradas y cada ticker nuevo cubra un gap concreto que hoy no está representado. Nota de subordinación: la ejecución efectiva de BL-005 queda subordinada a BL-067 (T09 — Factoría de onboarding).
+- **Criterio de aceptación:** Cada ticker nuevo validado cubre un gap documentado de diversidad y no introduce regresiones en el conjunto existente.
 
 ### BL-069 — T12 — Motor de diagnose
 - **Prioridad:** BAJA
@@ -74,6 +63,17 @@
 - **Descripción:** Añadir scaffolding y plantillas para tareas, casos y reportes, reduciendo pasos manuales y forzando metadatos mínimos de aceptación, riesgos y validación.
 - **Criterio de aceptación:** Crear una nueva tarea o un nuevo caso requiere menos pasos manuales y las plantillas obligan a declarar validación y criterio de cierre.
 
+### BL-064 — T06 — Modelo unificado de readiness
+- **Prioridad:** BAJA
+- **Estado:** TODO
+- **Asignado a:** sin asignar
+- **Módulo:** Module 1
+- **Validation tier:** shared-core
+- **Depende de:** BL-063
+- **Referencias:** T06, docs/project/PLAN_IMPLEMENTACION_FILTRADO.md
+- **Descripción:** Introducir un readiness compuesto que complemente el score histórico con cobertura real, validator, provenance y penalización de extras.
+- **Criterio de aceptación:** `elsian eval` expone readiness compuesto junto al score legado y permite ordenar tickers por preparación operativa real.
+
 ### BL-073 — Piloto controlado de paralelización multiagente
 - **Prioridad:** MEDIA
 - **Estado:** TODO
@@ -84,18 +84,6 @@
 - **Referencias:** BL-059, BL-060, DEC-029, docs/project/ROLES.md
 - **Descripción:** Ejecutar un primer piloto real de paralelización mutante con dos BL independientes y write sets disjuntos, usando exclusivamente el proceso definido y canonizado por `BL-072`. El piloto debe demostrar aislamiento por `git worktree` y rama, integración serial en el padre, cierre independiente por BL y aborto limpio si aparece solape material.
 - **Criterio de aceptación:** Se ejecuta un piloto con dos BL válidas y una BL por worktree/rama. Ningún agente sale de su write set. Cada BL pasa `gates -> auditor -> closeout` por separado. La integración se hace en serie y genera un commit por BL. Si aparece conflicto estructural, el piloto aborta sin contaminar `main`. Queda una decisión explícita de mantener, ajustar o descartar el modelo antes de extenderlo a más trabajo.
-
-### BL-005 — Expandir cobertura de tickers (diversidad de mercados/formatos)
-- **Prioridad:** BAJA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** BL-067
-- **Referencias:** DEC-015, T09, docs/project/PLAN_IMPLEMENTACION_FILTRADO.md
-- **Descripción:** Añadir tickers nuevos no por volumen, sino por diversidad real de mercados, reguladores, sectores y formatos. Debe ejecutarse solo cuando las prioridades técnicas inmediatas estén suficientemente cerradas y cada ticker nuevo cubra un gap concreto que hoy no está representado. Nota de subordinación: la ejecución efectiva de BL-005 queda subordinada a BL-067 (T09 — Factoría de onboarding).
-- **Criterio de aceptación:** Cada ticker nuevo validado cubre un gap documentado de diversidad y no introduce regresiones en el conjunto existente.
-
 ---
 
 ## Notas

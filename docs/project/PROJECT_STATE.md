@@ -1,7 +1,7 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
 > Última actualización: 2026-03-11
-> Actualizado por: Copilot (BL-070 documentary reconciliation)
+> Actualizado por: Copilot (BL-067 governance closeout)
 
 ---
 
@@ -20,7 +20,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | Tickers WIP | 0 | 0 | 2026-03-08 |
 | Total campos validados | 4,616 | — | 2026-03-09 |
 | Campos canónicos | 29 (26 previos + accounts_receivable, inventories, accounts_payable) | — | 2026-03-07 |
-| Tests pasando | 1566 passed, 5 skipped, 1 warning en `python3 -m pytest -q --disable-warnings` local | — | 2026-03-11 |
+| Tests pasando | 1620 passed, 5 skipped, 1 warning en `python3 -m pytest -q --disable-warnings` local | — | 2026-03-11 |
 | Líneas de código (aprox.) | ~12,000 + ~6,500 tests | 2026-03-07 |
 
 *`DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies. `KAR` ya entra en esa excepción documentada (ASX). `ADTN` cuenta como `FULL` tras el cierre targeted de `BL-081` (`8A+15Q`, 520/520), y `0327` deja de ser un pendiente `ANNUAL_ONLY`: `BL-083` la promueve a `FULL` con `3A+3H`. `BL-076` no cambia ese contador operativo: tras retroportar los 7 campos adicionales y cerrar el paquete final en verde, el tracking se mantiene en **15/15** (`14 FULL + KAR`). `SOM` permanece como único pendiente `ANNUAL_ONLY` no contado.
@@ -100,7 +100,7 @@ No hay tickers WIP actualmente. Los 16 tickers están al 100%.
 
 ## Bloqueantes actuales
 
-No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Provenance Level 3. El pipeline es funcional end-to-end para los 16 tickers validados al 100%, `python3 -m pytest -q --disable-warnings` está en verde local (`1566 passed, 5 skipped, 1 warning`) y `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` sigue en `SourceMap_v1 FULL` con 818/818. BL-075 cerró la deuda de derivados deterministas en `expected.json`, BL-082 cerró el bloqueador shared-core de ADTN para restatements 2023-2024 y rutas de escala, BL-081 promovió ADTN a `FULL`, BL-083 consolidó `0327` como `FULL`, y BL-076 completa ahora la retroportación de 7 campos adicionales con `eval --all` PASS 16/16 y **4,616** campos validados. El tracking operativo de `DEC-015` se mantiene en **15/15**: **14 FULL + KAR por excepción documentada**. La deuda actual ya no es de quality gates base, sino de cómo cerrar honestamente el tratamiento de `SOM` y decidir el siguiente frente de valor tras alcanzar el umbral operativo de transición.
+No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Provenance Level 3. El pipeline es funcional end-to-end para los 16 tickers validados al 100%, `python3 -m pytest -q --disable-warnings` está en verde local (`1620 passed, 5 skipped, 1 warning`) y `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` sigue en `SourceMap_v1 FULL` con 818/818. BL-075 cerró la deuda de derivados deterministas en `expected.json`, BL-082 cerró el bloqueador shared-core de ADTN para restatements 2023-2024 y rutas de escala, BL-081 promovió ADTN a `FULL`, BL-083 consolidó `0327` como `FULL`, BL-076 completó la retroportación de 7 campos adicionales con `eval --all` PASS 16/16 y **4,616** campos validados, y BL-067 deja ahora una factoría de onboarding usable para flujos offline de QA sobre un ticker SEC y uno no-SEC. El tracking operativo de `DEC-015` se mantiene en **15/15**: **14 FULL + KAR por excepción documentada**. La deuda actual ya no es de quality gates base, sino de cómo cerrar honestamente el tratamiento de `SOM` y decidir el siguiente frente de valor tras alcanzar el umbral operativo de transición.
 
 **Gaps pendientes (no bloqueantes):**
 1. **Residual field-dependency gaps** — `fx_effect_cash`, `other_cash_adjustments`, `market_cap` y `price` siguen fuera del set canónico. Son opcionales o de market data; no bloquean validación ni BL-058.
@@ -158,7 +158,7 @@ No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Proven
 
 ## Próximas prioridades
 
-`BL-062`, `BL-063`, `BL-065`, `BL-066`, `BL-070` y `BL-072` ya están cerradas y archivadas en `docs/project/BACKLOG_DONE.md`; ninguna sigue siendo una prioridad shared-core viva. En el backlog activo, la siguiente prioridad shared-core viva sigue en `BL-067` (factoría de onboarding), `BL-064` queda como frente posterior de menor prioridad y `BL-073` deja de estar bloqueada en canonicals, pero solo puede ejecutarse si el packet concreto pasa el checklist `parallel-ready` fijado en `docs/project/ROLES.md` y `DEC-029`.
+`BL-062`, `BL-063`, `BL-065`, `BL-066`, `BL-067`, `BL-070` y `BL-072` ya están cerradas y archivadas en `docs/project/BACKLOG_DONE.md`; ninguna sigue siendo una prioridad shared-core viva. En el backlog activo, la siguiente prioridad operativa pasa a `BL-005` como explotación inmediata de la factoría de onboarding recién cerrada; `BL-069`, `BL-071` y `BL-064` quedan detrás en ese orden, y `BL-073` solo puede ejecutarse si el packet concreto pasa el checklist `parallel-ready` fijado en `docs/project/ROLES.md` y `DEC-029`.
 
 Ver BACKLOG.md para la cola completa. Plan de ejecución: `docs/project/PLAN_DEC010_WP1-WP6.md` (DEC-011).
 

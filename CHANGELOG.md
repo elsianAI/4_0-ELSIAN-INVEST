@@ -2,6 +2,31 @@
 
 ## 2026-03-11
 
+### [4.0] Governance closeout — BL-067 archivada como factoría de onboarding de alcance estrecho
+- BL-067 sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual sobre un entrypoint de onboarding de desarrollo/QA, no sobre un storage framework ni sobre aislamiento total de artefactos. `elsian onboard` compone `discover -> acquire opcional -> convert -> preflight -> draft`, deja reporte estructurado de estado/gaps/siguiente paso y, con `--workspace`, escribe `onboarding_report.json` y `onboarding_report.md` en `PATH/<ticker_canónico>/`.
+- `docs/project/PROJECT_STATE.md` se reconcilia con el nuevo snapshot de suites (`1620 passed, 5 skipped, 1 warning`) y con la prioridad operativa siguiente: BL-005 pasa a ser el frente inmediatamente posterior al cierre de la factoría de onboarding, seguido por BL-069, BL-071 y BL-064. BL-073 sigue condicionado al checklist `parallel-ready`.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** closeout respaldado por la evidencia ya verificada del paquete técnico BL-067: `python3 -m pytest -q tests/unit/test_onboarding.py tests/integration/test_onboard_command.py` → `54 passed, 1 warning`, `python3 -m elsian onboard TZOO --workspace /tmp/elsian-bl067-orch2` PASS funcional con reporte en `/tmp/elsian-bl067-orch2/TZOO/`, `python3 -m elsian onboard KAR --workspace /tmp/elsian-bl067-orch2` PASS funcional con reporte en `/tmp/elsian-bl067-orch2/KAR/`, `python3 -m pytest -q --disable-warnings` → `1620 passed, 5 skipped, 1 warning`, `EXIT:0`, `python3 -m elsian eval --all` → PASS 16/16, `git diff --check` clean.
+
+### [4.0] BL-067 audit blocker remediation — corrupt case.json fatal report, convert-fatal stop, help text fix
+- `elsian/onboarding.py`: `run_onboarding` ahora corta si `steps["discover"]["status"] == "fatal"` (además de si el archivo no existe), impidiendo que `CaseConfig.from_file` reciba un `case.json` corrupto y provoque un traceback no controlado. Se añade además corte temprano si `steps["convert"]["status"] == "fatal"`, evitando que preflight y draft corran sobre artefactos stale de una conversión totalmente fallida.
+- `elsian/cli.py`: corregido el texto del flag `--workspace`: eliminada la promesa falsa "without creating artefacts in cases/". El texto ahora refleja el comportamiento real: los artefactos de pipeline (case.json, filings, expected_draft.json) siguen escribiéndose en su directorio de caso estándar.
+- `tests/unit/test_onboarding.py`: nueva clase `TestAuditBlockerRegressions` con 3 tests de regresión: corrupt case.json → reporte fatal estructurado sin traceback; corrupt case.json → blockers menciona el error; convert fatal → preflight y draft ausentes del reporte.
+- `tests/integration/test_onboard_command.py`: nueva clase `TestAuditBlockerRegressionsIntegration` con test de cmd_onboard ante case.json corrupto → exit(1) limpio, sin propagar JSONDecodeError.
+- **Files changed:** `elsian/onboarding.py`, `elsian/cli.py`, `tests/unit/test_onboarding.py`, `tests/integration/test_onboard_command.py`, `CHANGELOG.md`
+- **No commit** (pendiente de gate del orchestrator).
+
+## 2026-03-11
+
+### [4.0] BL-067 — Factoría de onboarding `elsian onboard` (alcance estrecho)
+- Nuevo módulo `elsian/onboarding.py` con `run_onboarding()` y `render_report_md()`. Compone los pasos discover → [acquire] → convert → preflight → draft usando piezas existentes, sin nuevo `PipelinePhase` ni capa de servicio.
+- `elsian/cli.py`: nuevo subcomando `elsian onboard TICKER` con args `--with-acquire`, `--force`, `--allow-network-discover`, `--workspace PATH`. Con `--workspace`, escribe `onboarding_report.json` y `onboarding_report.md` en `PATH/<ticker_canónico>/` (ticker leído de `canonical_ticker` del reporte, no el casing raw del invoke).
+- `tests/unit/test_onboarding.py`: 39 tests unitarios (36 originales + 3 regresión de audit-fix) para `_step_result`, `_classify_overall`, `_run_discover_step`, `_run_convert_step`, `_run_preflight_step`, `render_report_md`, y smoke de `run_onboarding` con case dir sintético.
+- `tests/integration/test_onboard_command.py`: 15 tests de integración offline (14 originales + 1 regresión de audit-fix) sobre casos reales TZOO y KAR y sobre `cmd_onboard` con workspace output.
+- **Files changed:** `elsian/onboarding.py` (new), `elsian/cli.py`, `tests/unit/test_onboarding.py` (new), `tests/integration/test_onboard_command.py` (new), `CHANGELOG.md`
+
+## 2026-03-11
+
 ### [4.0] Governance closeout — BL-070 archivada con scope estrecho de runtime workspace
 - BL-070 sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual limitado al path actual de `elsian run --workspace`: los artefactos runtime `extraction_result.json`, `run_metrics.json` y `truth_pack.json` se escriben en `PATH/<ticker_canónico>/`, usando el ticker canónico del caso y no el casing raw del invoke.
 - `cases/` sigue siendo la raíz canónica de lectura para `case.json`, `expected.json` y `filings/` existentes. Este closeout no promete aislar `ConvertPhase`, `source-map` ni todos los artefactos generados del repo, y tampoco declara `cases/` como fully read-only.

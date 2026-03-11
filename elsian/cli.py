@@ -877,6 +877,51 @@ def cmd_dashboard(args: argparse.Namespace) -> None:
     print(format_dashboard(rows))
 
 
+def cmd_onboard(args: argparse.Namespace) -> None:
+    """Run onboarding sequence: discover -> [acquire] -> convert -> preflight -> draft."""
+    from elsian.onboarding import run_onboarding, render_report_md
+
+    found = _find_case_dir(args.ticker)
+    workspace = getattr(args, "workspace", None)
+
+    report = run_onboarding(
+        args.ticker,
+        case_dir=found,
+        with_acquire=getattr(args, "with_acquire", False),
+        force_convert=getattr(args, "force", False),
+        allow_network_discover=getattr(args, "allow_network_discover", False),
+    )
+
+    summary = report["summary"]
+    print(f"\n=== Onboarding: {report['canonical_ticker']} ===")
+    print(f"  Overall: {summary['overall_status'].upper()}")
+    for step_name, step_data in report["steps"].items():
+        print(f"  [{step_data['status'].upper():8s}] {step_name}")
+    if summary["blockers"]:
+        for b in summary["blockers"]:
+            print(f"  BLOCKER: {b}")
+    if summary["warnings"]:
+        for w in summary["warnings"]:
+            print(f"  WARNING: {w}")
+    print(f"  Next step: {summary['next_step']}")
+
+    if workspace:
+        canonical_ticker = report["canonical_ticker"]
+        output_dir = Path(workspace) / canonical_ticker
+        output_dir.mkdir(parents=True, exist_ok=True)
+        json_path = output_dir / "onboarding_report.json"
+        md_path = output_dir / "onboarding_report.md"
+        json_path.write_text(
+            json.dumps(report, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        md_path.write_text(render_report_md(report), encoding="utf-8")
+        print(f"\n  Report saved to {json_path}")
+
+    if summary["overall_status"] == "fatal":
+        sys.exit(1)
+
+
 def cmd_discover(args: argparse.Namespace) -> None:
     """Auto-discover ticker metadata and generate case.json."""
     from elsian.discover.discover import TickerDiscoverer, parse_ticker_suffix
@@ -1011,6 +1056,41 @@ def main() -> None:
     p_discover.add_argument("ticker", help="Ticker symbol (e.g. AAPL, TEP.PA, KAR.AX)")
     p_discover.add_argument("--force", action="store_true", help="Overwrite existing case.json")
     p_discover.set_defaults(func=cmd_discover)
+
+    p_onboard = sub.add_parser(
+        "onboard",
+        help="Onboarding sequence: discover → [acquire] → convert → preflight → draft",
+    )
+    p_onboard.add_argument("ticker", help="Ticker symbol (e.g. TZOO, KAR, KAR.AX)")
+    p_onboard.add_argument(
+        "--with-acquire",
+        dest="with_acquire",
+        action="store_true",
+        help="Run acquire step (requires network)",
+    )
+    p_onboard.add_argument(
+        "--force",
+        action="store_true",
+        help="Re-convert filings even if .clean.md already exists",
+    )
+    p_onboard.add_argument(
+        "--allow-network-discover",
+        dest="allow_network_discover",
+        action="store_true",
+        help="Allow network calls for discover step when no case.json is found",
+    )
+    p_onboard.add_argument(
+        "--workspace",
+        default=None,
+        metavar="PATH",
+        help=(
+            "Write onboarding_report.json and onboarding_report.md to "
+            "PATH/<ticker_canónico>/. Pipeline artefacts (case.json, filings, "
+            "expected_draft.json) are still written to their standard "
+            "case directory."
+        ),
+    )
+    p_onboard.set_defaults(func=cmd_onboard)
 
     args = parser.parse_args()
     if not args.command:
