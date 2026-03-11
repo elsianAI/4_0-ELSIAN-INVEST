@@ -2,6 +2,14 @@
 
 ## 2026-03-11
 
+### [4.0] BL-069 — Motor de diagnose: `elsian diagnose --all`
+- Nuevo módulo `elsian/diagnose/` con `engine.py` (carga artefactos existentes, evalúa casos, agrupa gaps por `(field, gap_type)`, rankea hotspots) y `render.py` (produce `.md` humano).
+- Nuevo comando `elsian diagnose --all [--output PATH]`: emite `diagnose_report.json` y `diagnose_report.md` con ranking de hotspots reutilizable para decidir próximas BL sin revisión manual ticker a ticker.
+- CLI: `elsian/cli.py` amplía con `cmd_diagnose` y subparser `diagnose`.
+- Tests: `tests/unit/test_diagnose.py` (22 tests) y `tests/integration/test_diagnose_command.py` (13 tests) — 33 passed total.
+- **Surfaces:** `elsian/diagnose/` (nuevo), `elsian/cli.py`, `tests/unit/test_diagnose.py` (nuevo), `tests/integration/test_diagnose_command.py` (nuevo).
+- **Validation:** `python3 -m pytest tests/unit/test_diagnose.py tests/integration/test_diagnose_command.py -q` → 33 passed; `python3 -m elsian diagnose --all --output /tmp/elsian-bl069` → 17 evaluated, 0 skipped, 99.2% overall score, 13 hotspots ranked.
+
 ### [4.0] Governance closeout — BL-005 archivada con JBH como fallback único aceptado
 - `BL-005` sale de `docs/project/BACKLOG.md` y pasa a `docs/project/BACKLOG_DONE.md` con cierre factual consistente: el candidato primario `ALL` queda abortado y limpiado, y `JBH` queda como único ticker aceptado para cubrir el gap de diversidad frente a `KAR`.
 - `docs/project/PROJECT_STATE.md` deja de presentar `BL-005` como siguiente prioridad operativa; la cola activa pasa a `BL-069`, seguida de `BL-071` y `BL-064`. No cambia la condición de `BL-073` bajo `parallel-ready`.

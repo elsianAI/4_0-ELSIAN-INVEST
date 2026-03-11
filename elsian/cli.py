@@ -922,6 +922,60 @@ def cmd_onboard(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def cmd_diagnose(args: argparse.Namespace) -> None:
+    """Aggregate gaps and hotspots across all cases into a reusable diagnose report."""
+    from elsian.diagnose.engine import build_report
+    from elsian.diagnose.render import render_markdown
+
+    output_arg = getattr(args, "output", None)
+
+    report = build_report(CASES_DIR)
+
+    summary = report["summary"]
+    print(
+        f"Diagnose: {summary['tickers_with_eval']} evaluated, "
+        f"{summary['tickers_skipped']} skipped"
+    )
+    print(
+        f"  Overall score: {summary['overall_score_pct']:.1f}% "
+        f"({summary['total_matched']}/{summary['total_expected']})"
+    )
+    print(
+        f"  Wrong: {summary['total_wrong']}, "
+        f"Missed: {summary['total_missed']}, "
+        f"Extra: {summary['total_extra']}"
+    )
+
+    hotspots = report.get("hotspots", [])
+    if hotspots:
+        print(f"\nTop hotspots ({len(hotspots)} total):")
+        for h in hotspots[:10]:
+            tickers_str = ", ".join(h["affected_tickers"])
+            print(
+                f"  #{h['rank']} {h['field']} ({h['gap_type']}): "
+                f"{h['occurrences']}x [{tickers_str}]"
+            )
+
+    # Determine output paths
+    if output_arg:
+        out_dir = Path(output_arg)
+        out_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        out_dir = CASES_DIR.parent
+
+    json_path = out_dir / "diagnose_report.json"
+    md_path = out_dir / "diagnose_report.md"
+
+    json_path.write_text(
+        json.dumps(report, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    md_path.write_text(render_markdown(report), encoding="utf-8")
+
+    print(f"\n  JSON: {json_path}")
+    print(f"  MD:   {md_path}")
+
+
 def cmd_discover(args: argparse.Namespace) -> None:
     """Auto-discover ticker metadata and generate case.json."""
     from elsian.discover.discover import TickerDiscoverer, parse_ticker_suffix
@@ -1056,6 +1110,23 @@ def main() -> None:
     p_discover.add_argument("ticker", help="Ticker symbol (e.g. AAPL, TEP.PA, KAR.AX)")
     p_discover.add_argument("--force", action="store_true", help="Overwrite existing case.json")
     p_discover.set_defaults(func=cmd_discover)
+
+    p_diagnose = sub.add_parser(
+        "diagnose",
+        help="Aggregate gaps and hotspots from existing artifacts into a reusable report",
+    )
+    p_diagnose.add_argument(
+        "--all",
+        action="store_true",
+        help="Analyze all cases (required flag for this command)",
+    )
+    p_diagnose.add_argument(
+        "--output",
+        default=None,
+        metavar="PATH",
+        help="Write diagnose_report.json and diagnose_report.md to this path",
+    )
+    p_diagnose.set_defaults(func=cmd_diagnose)
 
     p_onboard = sub.add_parser(
         "onboard",
