@@ -9,6 +9,16 @@
 
 ---
 
+### BL-064 — T06 — Modelo unificado de readiness
+- **Prioridad:** BAJA
+- **Estado:** DONE ✅ (2026-03-11)
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** shared-core
+- **Depende de:** BL-063
+- **Descripción:** Readiness v1 compuesto implementado como capa aditiva al score legado. Fórmula: `readiness_base = 0.40·score + 0.20·required_fields_coverage_pct + 0.20·validator_confidence_score + 0.20·provenance_coverage_pct`; `extra_penalty = min(15.0, extra/max(total_expected,1)·100)`; `readiness_score = max(0.0, round(readiness_base − extra_penalty, 2))`. `EvalReport` ampliado con 4 campos nuevos (`readiness_score`, `validator_confidence_score`, `provenance_coverage_pct`, `extra_penalty`). CLI `elsian eval` muestra ambos scores en línea única con desglose `[conf= prov= penalty=]`. `--sort-by ticker|score|readiness` disponible en `eval --all`.
+- **Criterio de aceptación:** ✓ `python3 -m pytest tests/unit/test_evaluator.py tests/unit/test_validation.py tests/unit/test_models.py -q` → `130 passed in 0.11s`. ✓ `python3 -m pytest tests/integration/test_run_command.py -k TestCmdEvalReadiness` → `5 passed in 0.26s`. ✓ `python3 -m pytest tests/integration/test_regression.py` → `15 passed, 2 skipped`. ✓ `python3 -m elsian eval TZOO` → `PASS -- score=100.0% (348/348) readiness=79.0% [conf=70.0 prov=100.0 penalty=15.0]`. ✓ `python3 -m elsian eval --all` → exit 0, 17/17 PASS. ✓ `git diff --check` → clean.
+
 ### BL-071 — T15 — Scaffolding y plantillas
 - **Prioridad:** BAJA
 - **Estado:** DONE ✅ (2026-03-11)

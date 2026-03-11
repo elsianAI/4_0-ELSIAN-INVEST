@@ -30,17 +30,6 @@
 
 ## Tareas activas
 
-### BL-064 — T06 — Modelo unificado de readiness
-- **Prioridad:** BAJA
-- **Estado:** TODO
-- **Asignado a:** sin asignar
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Depende de:** BL-063
-- **Referencias:** T06, docs/project/PLAN_IMPLEMENTACION_FILTRADO.md
-- **Descripción:** Introducir un readiness compuesto que complemente el score histórico con cobertura real, validator, provenance y penalización de extras.
-- **Criterio de aceptación:** `elsian eval` expone readiness compuesto junto al score legado y permite ordenar tickers por preparación operativa real.
-
 ### BL-073 — Piloto controlado de paralelización multiagente
 - **Prioridad:** MEDIA
 - **Estado:** TODO

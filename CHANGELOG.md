@@ -2,6 +2,14 @@
 
 ## 2026-03-11
 
+### [4.0] BL-064 — Readiness v1: dual score+readiness en elsian eval
+- `elsian/evaluate/evaluator.py` ampliado con tres helpers privados: `_compute_provenance_coverage()` (fracción de campos del expected con `source_filing` y `extraction_method` no vacíos), `_compute_validator_confidence()` (llama a `validate()` de `validation.py` y devuelve `confidence_score` [0-100]), y `_compute_readiness()` (fórmula fija: `readiness_base = 0.40·score + 0.20·required_fields_coverage_pct + 0.20·validator_confidence_score + 0.20·provenance_coverage_pct`; `extra_penalty = min(15.0, extra/max(total_expected,1)·100)`; `readiness_score = max(0.0, round(...))`). `evaluate()` retorna ahora `EvalReport` con los 4 campos nuevos poblados.
+- `elsian/models/result.py` — `EvalReport` ampliado con `readiness_score`, `validator_confidence_score`, `provenance_coverage_pct` y `extra_penalty`; `to_dict()` actualizado.
+- `elsian/cli.py` — `cmd_eval()` refactorizado: buffering de reports, línea de output dual `score= readiness= [conf= prov= penalty=]`; parser `p_eval` ampliado con `--sort-by ticker|score|readiness`.
+- Tests: 11 tests nuevos en `tests/unit/test_evaluator.py`, 1 en `tests/unit/test_models.py`, clase `TestCmdEvalReadiness` (5 tests mockeados) en `tests/integration/test_run_command.py`.
+- **Files changed:** `elsian/evaluate/evaluator.py`, `elsian/models/result.py`, `elsian/cli.py`, `tests/unit/test_evaluator.py`, `tests/unit/test_models.py`, `tests/integration/test_run_command.py`, `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** `python3 -m pytest tests/unit/test_evaluator.py tests/unit/test_validation.py tests/unit/test_models.py -q` → `130 passed in 0.11s`; `python3 -m pytest tests/integration/test_run_command.py -k TestCmdEvalReadiness` → `5 passed in 0.26s`; `python3 -m pytest tests/integration/test_regression.py` → `15 passed, 2 skipped`; `python3 -m elsian eval TZOO` → `PASS -- score=100.0% readiness=79.0% [conf=70.0 prov=100.0 penalty=15.0]`; `python3 -m elsian eval --all` → exit 0, 17/17 PASS; `git diff --check` → clean.
+
 ### [4.0] Governance reconciliation — BL-071 queda cerrada honestamente como slice estrecho de scaffolding
 - Se reconcilia el closeout canónico de `BL-071` sin tocar código, tests ni `tasks/BL-071.task_manifest.json`: el cierre válido queda limitado a `scaffold-task` y `scaffold-case` con enforcement temprano de `risks`, `validation_plan` y `acceptance_criteria`.
 - `docs/project/BACKLOG_DONE.md` deja explícito que `BL-071` no absorbió implícitamente el T15 amplio de `docs/project/PLAN_IMPLEMENTACION_FILTRADO.md`; quedan fuera de ese cierre las plantillas adicionales de PR/closeout/onboarding/diagnose y cualquier mejora más amplia de DX o del output de `check_governance.py`.

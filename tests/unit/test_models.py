@@ -76,6 +76,25 @@ def test_eval_report_to_dict():
     assert d["score"] == 83.33
 
 
+def test_eval_report_to_dict_includes_readiness_fields():
+    """EvalReport.to_dict() must expose BL-064 readiness fields."""
+    r = EvalReport(
+        ticker="TEST",
+        matched=10,
+        total_expected=12,
+        score=83.33,
+        readiness_score=72.5,
+        validator_confidence_score=80.0,
+        provenance_coverage_pct=90.0,
+        extra_penalty=5.0,
+    )
+    d = r.to_dict()
+    assert d["readiness_score"] == 72.5
+    assert d["validator_confidence_score"] == 80.0
+    assert d["provenance_coverage_pct"] == 90.0
+    assert d["extra_penalty"] == 5.0
+
+
 def test_case_config_defaults():
     c = CaseConfig()
     assert c.source_hint == "sec"

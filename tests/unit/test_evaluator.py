@@ -133,3 +133,145 @@ def test_evaluate_prefers_derived_actual_when_expected_marks_field_derived():
         assert report.score == 100.0
         assert report.matched == 1
         assert report.wrong == 0
+
+
+# ---------------------------------------------------------------------------
+# Readiness v1 (BL-064)
+# ---------------------------------------------------------------------------
+
+from elsian.evaluate.evaluator import (
+    _compute_provenance_coverage,
+    _compute_readiness,
+)
+from elsian.models.field import Provenance
+
+
+def test_compute_readiness_formula():
+    """Verify readiness formula with known inputs."""
+    rs, ep = _compute_readiness(
+        score=100.0,
+        required_fields_coverage_pct=100.0,
+        validator_confidence_score=100.0,
+        provenance_coverage_pct=100.0,
+        extra=0,
+        total_expected=2,
+    )
+    assert rs == 100.0
+    assert ep == 0.0
+
+
+def test_compute_readiness_extra_penalty_capped():
+    """Extra penalty is capped at 15."""
+    rs, ep = _compute_readiness(
+        score=100.0,
+        required_fields_coverage_pct=100.0,
+        validator_confidence_score=100.0,
+        provenance_coverage_pct=100.0,
+        extra=100,
+        total_expected=2,
+    )
+    assert ep == 15.0
+    assert rs == 85.0
+
+
+def test_compute_readiness_never_negative():
+    """Readiness score is clamped to 0."""
+    rs, ep = _compute_readiness(
+        score=0.0,
+        required_fields_coverage_pct=0.0,
+        validator_confidence_score=0.0,
+        provenance_coverage_pct=0.0,
+        extra=100,
+        total_expected=1,
+    )
+    assert rs == 0.0
+
+
+def test_provenance_coverage_no_fields():
+    er = ExtractionResult(ticker="T")
+    assert _compute_provenance_coverage(er, {}) == 0.0
+
+
+def test_provenance_coverage_full():
+    er = ExtractionResult(ticker="T")
+    pr = PeriodResult()
+    pr.fields["ingresos"] = FieldResult(
+        value=100.0,
+        provenance=Provenance(source_filing="f.md", extraction_method="table"),
+    )
+    er.periods["FY2024"] = pr
+
+    expected_periods = {"FY2024": {"fields": {"ingresos": {"value": 100.0}}}}
+    pct = _compute_provenance_coverage(er, expected_periods)
+    assert pct == 100.0
+
+
+def test_provenance_coverage_partial():
+    er = ExtractionResult(ticker="T")
+    pr = PeriodResult()
+    pr.fields["ingresos"] = FieldResult(
+        value=100.0,
+        provenance=Provenance(source_filing="f.md", extraction_method="table"),
+    )
+    pr.fields["net_income"] = FieldResult(
+        value=10.0,
+        provenance=Provenance(source_filing="", extraction_method=""),
+    )
+    er.periods["FY2024"] = pr
+
+    expected_periods = {
+        "FY2024": {
+            "fields": {
+                "ingresos": {"value": 100.0},
+                "net_income": {"value": 10.0},
+            }
+        }
+    }
+    pct = _compute_provenance_coverage(er, expected_periods)
+    assert pct == 50.0
+
+
+def test_readiness_fields_on_eval_report():
+    """EvalReport produced by evaluate() must carry readiness v1 fields."""
+    expected = {
+        "periods": {
+            "FY2024": {
+                "fields": {
+                    "ingresos": {"value": 1000.0},
+                    "net_income": {"value": 200.0},
+                }
+            }
+        }
+    }
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        json.dump(expected, f)
+        f.flush()
+
+        er = ExtractionResult(ticker="TEST")
+        pr = PeriodResult()
+        pr.fields["ingresos"] = FieldResult(
+            value=1000.0,
+            provenance=Provenance(source_filing="10k.md", extraction_method="table"),
+        )
+        pr.fields["net_income"] = FieldResult(
+            value=200.0,
+            provenance=Provenance(source_filing="10k.md", extraction_method="table"),
+        )
+        er.periods["FY2024"] = pr
+
+        report = evaluate(er, f.name)
+        assert report.score == 100.0
+        # Readiness fields must be present and typed
+        assert isinstance(report.readiness_score, float)
+        assert isinstance(report.validator_confidence_score, float)
+        assert isinstance(report.provenance_coverage_pct, float)
+        assert isinstance(report.extra_penalty, float)
+        # With perfect extraction and full provenance, readiness must be > 0
+        assert report.readiness_score > 0.0
+        assert report.provenance_coverage_pct == 100.0
+        # to_dict includes readiness
+        d = report.to_dict()
+        assert "readiness_score" in d
+        assert "validator_confidence_score" in d
+        assert "provenance_coverage_pct" in d
+        assert "extra_penalty" in d

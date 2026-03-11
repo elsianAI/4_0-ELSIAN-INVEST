@@ -174,6 +174,11 @@ class EvalReport:
     filings_coverage_pct: float = 0.0
     required_fields_coverage_pct: float = 0.0
     details: list[EvalMatch] = field(default_factory=list)
+    # Readiness v1 fields (BL-064) — complementary to legacy score
+    readiness_score: float = 0.0
+    validator_confidence_score: float = 0.0
+    provenance_coverage_pct: float = 0.0
+    extra_penalty: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -188,6 +193,10 @@ class EvalReport:
             "required_fields_coverage_pct": round(
                 self.required_fields_coverage_pct, 2
             ),
+            "readiness_score": round(self.readiness_score, 2),
+            "validator_confidence_score": round(self.validator_confidence_score, 2),
+            "provenance_coverage_pct": round(self.provenance_coverage_pct, 2),
+            "extra_penalty": round(self.extra_penalty, 2),
         }
 
 

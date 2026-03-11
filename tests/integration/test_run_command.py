@@ -1199,3 +1199,123 @@ class TestWorkspaceCanonicalTicker:
             f"Raw-casing 'fakex' must NOT appear as a separate entry; "
             f"workspace contains: {created}"
         )
+
+
+# ── Tests: cmd_eval readiness display (BL-064) ───────────────────────
+
+class TestCmdEvalReadiness:
+    """Verify that cmd_eval shows readiness fields alongside legacy score (BL-064)."""
+
+    def _run_cmd_eval_mocked(
+        self,
+        ticker: str = "FAKEX",
+        sort_by: str = "ticker",
+        all_: bool = False,
+        score: float = 100.0,
+    ):
+        """Run cmd_eval with mocked ExtractPhase and capture stdout.
+
+        Returns (output_str, exit_code).
+        """
+        import io
+        import sys
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        from elsian.cli import cmd_eval
+        from elsian.models.field import FieldResult, Provenance
+        from elsian.models.result import ExtractionResult, PeriodResult
+
+        # Minimal ExtractionResult that makes the score deterministic
+        fake_er = ExtractionResult(ticker=ticker)
+        pr = PeriodResult(fecha_fin="2024-12-31", tipo_periodo="anual")
+        pr.fields["ingresos"] = FieldResult(
+            value=1000.0,
+            provenance=Provenance(source_filing="x.md", extraction_method="table"),
+        )
+        if score < 100.0:
+            # Add an extra field not in expected → will produce wrong/missed
+            pr.fields["net_income"] = FieldResult(
+                value=999.0,
+                provenance=Provenance(source_filing="x.md", extraction_method="table"),
+            )
+        fake_er.periods["FY2024"] = pr
+
+        args = SimpleNamespace(ticker=ticker, all=all_, sort_by=sort_by)
+
+        captured = io.StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = captured
+        exit_code = 0
+        try:
+            with patch("elsian.cli._find_case_dir", return_value=CASES_DIR / "TZOO"):
+                with patch("elsian.extract.phase.ExtractPhase.extract", return_value=fake_er):
+                    cmd_eval(args)
+        except SystemExit as e:
+            exit_code = e.code or 0
+        finally:
+            sys.stdout = old_stdout
+        return captured.getvalue(), exit_code
+
+    def test_single_ticker_shows_readiness(self) -> None:
+        """cmd_eval for a single ticker must print readiness= in its output."""
+        out, _ = self._run_cmd_eval_mocked("TZOO")
+        assert "readiness=" in out, (
+            f"Expected 'readiness=' in cmd_eval output; got:\n{out}"
+        )
+
+    def test_single_ticker_shows_score(self) -> None:
+        """cmd_eval must still show legacy score= in output."""
+        out, _ = self._run_cmd_eval_mocked("TZOO")
+        assert "score=" in out, (
+            f"Expected 'score=' in cmd_eval output; got:\n{out}"
+        )
+
+    def test_single_ticker_shows_conf_prov_penalty(self) -> None:
+        """cmd_eval output must include conf=, prov=, penalty= component labels."""
+        out, _ = self._run_cmd_eval_mocked("TZOO")
+        assert "conf=" in out, f"Expected conf= in output; got:\n{out}"
+        assert "prov=" in out, f"Expected prov= in output; got:\n{out}"
+        assert "penalty=" in out, f"Expected penalty= in output; got:\n{out}"
+
+    def test_sort_by_ticker_is_stable(self) -> None:
+        """--sort-by ticker (default) must not crash and must produce output with score=."""
+        # With all_=False and a single ticker, sort_by is irrelevant but must not raise
+        out, exit_code = self._run_cmd_eval_mocked("TZOO", sort_by="ticker")
+        assert "score=" in out
+
+    def test_eval_report_has_readiness_fields_in_to_dict(self) -> None:
+        """EvalReport.to_dict() produced by evaluate() must include readiness fields."""
+        import json
+        import tempfile
+        from elsian.models.field import FieldResult, Provenance
+        from elsian.models.result import ExtractionResult, PeriodResult
+        from elsian.evaluate.evaluator import evaluate
+
+        expected = {
+            "periods": {
+                "FY2024": {
+                    "fields": {
+                        "ingresos": {"value": 1000.0},
+                    }
+                }
+            }
+        }
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump(expected, f)
+            f.flush()
+
+            er = ExtractionResult(ticker="TEST")
+            pr = PeriodResult()
+            pr.fields["ingresos"] = FieldResult(
+                value=1000.0,
+                provenance=Provenance(source_filing="f.md", extraction_method="table"),
+            )
+            er.periods["FY2024"] = pr
+            report = evaluate(er, f.name)
+
+        d = report.to_dict()
+        for key in ("readiness_score", "validator_confidence_score",
+                    "provenance_coverage_pct", "extra_penalty"):
+            assert key in d, f"EvalReport.to_dict() missing key: {key}"
+            assert isinstance(d[key], float), f"{key} must be float, got {type(d[key])}"

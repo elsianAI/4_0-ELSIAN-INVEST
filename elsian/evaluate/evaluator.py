@@ -5,8 +5,8 @@ Compares field by field, period by period. Tolerance: +/-1% for numerics.
 
 from __future__ import annotations
 
-import json
 import logging
+import json
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +27,63 @@ def _values_match(expected: float, actual: float) -> bool:
         return abs(actual) < 0.01
     pct_diff = abs(actual - expected) / abs(expected) * 100
     return pct_diff <= TOLERANCE_PCT
+
+
+def _compute_provenance_coverage(extraction: ExtractionResult, expected_periods: dict[str, Any]) -> float:
+    """Provenance coverage: pct of extracted expected fields with source_filing AND extraction_method set."""
+    fields_with_value = 0
+    fields_with_full_provenance = 0
+    for period_key, period_data in expected_periods.items():
+        if period_key not in extraction.periods:
+            continue
+        period = extraction.periods[period_key]
+        for field_name, field_info in period_data.get("fields", {}).items():
+            if field_info.get("value") is None:
+                continue
+            if field_name not in period.fields:
+                continue
+            fields_with_value += 1
+            fr = period.fields[field_name]
+            if fr.provenance.source_filing and fr.provenance.extraction_method:
+                fields_with_full_provenance += 1
+    if fields_with_value == 0:
+        return 0.0
+    return round(fields_with_full_provenance / fields_with_value * 100.0, 2)
+
+
+def _compute_validator_confidence(extraction: ExtractionResult) -> float:
+    """Run the autonomous truth-pack validator and return its confidence score (0-100)."""
+    try:
+        from elsian.evaluate.validation import validate
+        result = validate(extraction.to_dict())
+        return float(result.get("confidence_score", 0.0))
+    except Exception:
+        logger.debug("validator_confidence could not be computed", exc_info=True)
+        return 0.0
+
+
+def _compute_readiness(
+    score: float,
+    required_fields_coverage_pct: float,
+    validator_confidence_score: float,
+    provenance_coverage_pct: float,
+    extra: int,
+    total_expected: int,
+) -> tuple[float, float]:
+    """Compute readiness v1 using fixed formula.
+
+    Returns:
+        (readiness_score, extra_penalty)
+    """
+    readiness_base = (
+        0.40 * score
+        + 0.20 * required_fields_coverage_pct
+        + 0.20 * validator_confidence_score
+        + 0.20 * provenance_coverage_pct
+    )
+    extra_penalty = min(15.0, extra / max(total_expected, 1) * 100.0)
+    readiness_score = max(0.0, round(readiness_base - extra_penalty, 2))
+    return readiness_score, round(extra_penalty, 2)
 
 
 def evaluate(extraction: ExtractionResult, expected_path: str | Path) -> EvalReport:
@@ -120,6 +177,18 @@ def evaluate(extraction: ExtractionResult, expected_path: str | Path) -> EvalRep
     score = (matched / total_expected * 100.0) if total_expected > 0 else 0.0
     req_coverage = (fields_with_value / total_expected * 100.0) if total_expected > 0 else 0.0
 
+    # Readiness v1 (BL-064)
+    provenance_coverage_pct = _compute_provenance_coverage(extraction, expected_periods)
+    validator_confidence_score = _compute_validator_confidence(extraction)
+    readiness_score, extra_penalty = _compute_readiness(
+        score=score,
+        required_fields_coverage_pct=req_coverage,
+        validator_confidence_score=validator_confidence_score,
+        provenance_coverage_pct=provenance_coverage_pct,
+        extra=extra,
+        total_expected=total_expected,
+    )
+
     return EvalReport(
         ticker=extraction.ticker,
         total_expected=total_expected,
@@ -129,5 +198,9 @@ def evaluate(extraction: ExtractionResult, expected_path: str | Path) -> EvalRep
         extra=extra,
         score=round(score, 2),
         required_fields_coverage_pct=round(req_coverage, 2),
+        readiness_score=readiness_score,
+        validator_confidence_score=round(validator_confidence_score, 2),
+        provenance_coverage_pct=provenance_coverage_pct,
+        extra_penalty=extra_penalty,
         details=details,
     )

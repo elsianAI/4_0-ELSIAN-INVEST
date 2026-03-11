@@ -405,6 +405,8 @@ def cmd_run(args: argparse.Namespace) -> None:
 
 def cmd_eval(args: argparse.Namespace) -> None:
     """Evaluate extraction vs expected.json."""
+    sort_by: str = getattr(args, "sort_by", "ticker")
+
     if args.all:
         tickers = sorted(
             d.name for d in CASES_DIR.iterdir()
@@ -414,6 +416,8 @@ def cmd_eval(args: argparse.Namespace) -> None:
         tickers = [args.ticker]
 
     all_ok = True
+    reports: list[tuple[str, object]] = []
+
     for ticker in tickers:
         case_dir = _find_case_dir(ticker)
         if not case_dir:
@@ -427,9 +431,21 @@ def cmd_eval(args: argparse.Namespace) -> None:
         result = phase.extract(str(case_dir))
 
         report = evaluate(result, str(case_dir / "expected.json"))
+        reports.append((ticker, report))
+
+    # Sort when --all is used and sort_by is specified
+    if args.all and sort_by != "ticker":
+        if sort_by == "score":
+            reports.sort(key=lambda x: x[1].score, reverse=True)
+        elif sort_by == "readiness":
+            reports.sort(key=lambda x: x[1].readiness_score, reverse=True)
+
+    for ticker, report in reports:
         status = "PASS" if report.score == 100.0 else "FAIL"
         print(
-            f"{ticker}: {status} -- {report.score}% ({report.matched}/{report.total_expected}) "
+            f"{ticker}: {status} -- score={report.score}% ({report.matched}/{report.total_expected}) "
+            f"readiness={report.readiness_score}% "
+            f"[conf={report.validator_confidence_score:.1f} prov={report.provenance_coverage_pct:.1f} penalty={report.extra_penalty:.1f}] "
             f"wrong={report.wrong} missed={report.missed} extra={report.extra}"
         )
 
@@ -1143,6 +1159,13 @@ def main() -> None:
     p_eval = sub.add_parser("eval", help="Evaluate extraction vs expected.json")
     p_eval.add_argument("ticker", nargs="?", default="")
     p_eval.add_argument("--all", action="store_true")
+    p_eval.add_argument(
+        "--sort-by",
+        dest="sort_by",
+        choices=["ticker", "score", "readiness"],
+        default="ticker",
+        help="Sort order for --all output (default: ticker)",
+    )
     p_eval.set_defaults(func=cmd_eval)
 
     p_curate = sub.add_parser(
