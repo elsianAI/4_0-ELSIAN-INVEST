@@ -1,0 +1,167 @@
+{
+  "version": "1.0",
+  "ticker": "JBH",
+  "currency": "AUD",
+  "scale": "millions",
+  "scale_notes": "AUD m. EPS in cents per share. shares_outstanding in millions (weighted average basic). FY ends 30 June.",
+  "restatement_policy": "as_reported_unless_explicit_restatement",
+  "gap_coverage": "ASX in AUD local (vs KAR USD), non-calendar FY June-30 (vs KAR Dec-31), retail sector (vs KAR energy), no FY transition.",
+  "periods": {
+    "FY2024": {
+      "fecha_fin": "2024-06-30",
+      "tipo_periodo": "anual",
+      "fields": {
+        "ingresos": {
+          "value": 9592.4,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "cost_of_revenue": {
+          "value": 7452.0,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "gross_profit": {
+          "value": 2140.4,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "sga": {
+          "value": 1039.1,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "ebit": {
+          "value": 647.2,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "interest_expense": {
+          "value": 31.0,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "income_tax": {
+          "value": 188.6,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "net_income": {
+          "value": 438.8,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "eps_basic": {
+          "value": 401.36,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "eps_diluted": {
+          "value": 399.67,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "total_assets": {
+          "value": 3486.6,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "total_liabilities": {
+          "value": 1927.5,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "total_equity": {
+          "value": 1559.1,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "cash_and_equivalents": {
+          "value": 317.7,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "inventories": {
+          "value": 1093.6,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "shares_outstanding": {
+          "value": 109.3,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "cfi": {
+          "value": -74.4,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "cff": {
+          "value": -537.9,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        },
+        "delta_cash": {
+          "value": 140.3,
+          "source_filing": "SRC_001_annual_FY2024.txt"
+        }
+      }
+    },
+    "FY2023": {
+      "fecha_fin": "2023-06-30",
+      "tipo_periodo": "anual",
+      "fields": {
+        "ingresos": {
+          "value": 9626.4,
+          "source_filing": "SRC_002_annual_FY2023.txt"
+        },
+        "cost_of_revenue": {
+          "value": 7443.9,
+          "source_filing": "SRC_002_annual_FY2023.txt"
+        },
+        "gross_profit": {
+          "value": 2182.5,
+          "source_filing": "SRC_002_annual_FY2023.txt"
+        },
+        "sga": {
+          "value": 978.3,
+          "source_filing": "SRC_002_annual_FY2023.txt"
+        },
+        "interest_expense": {
+          "value": 26.3,
+          "source_filing": "SRC_002_annual_FY2023.txt"
+        },
+        "income_tax": {
+          "value": 222.5,
+          "source_filing": "SRC_002_annual_FY2023.txt"
+        },
+        "net_income": {
+          "value": 524.6,
+          "source_filing": "SRC_002_annual_FY2023.txt"
+        },
+        "total_assets": {
+          "value": 3234.9,
+          "source_filing": "SRC_002_annual_FY2023.txt"
+        },
+        "total_liabilities": {
+          "value": 1815.3,
+          "source_filing": "SRC_002_annual_FY2023.txt"
+        },
+        "total_equity": {
+          "value": 1419.6,
+          "source_filing": "SRC_002_annual_FY2023.txt"
+        },
+        "cash_and_equivalents": {
+          "value": 177.3,
+          "source_filing": "SRC_002_annual_FY2023.txt"
+        },
+        "inventories": {
+          "value": 1040.9,
+          "source_filing": "SRC_002_annual_FY2023.txt"
+        },
+        "shares_outstanding": {
+          "value": 109.3,
+          "source_filing": "SRC_002_annual_FY2023.txt"
+        },
+        "total_debt": {
+          "value": 49.8,
+          "source_filing": "SRC_002_annual_FY2023.txt"
+        },
+        "cfi": {
+          "value": -71.7,
+          "source_filing": "SRC_002_annual_FY2023.txt"
+        },
+        "cff": {
+          "value": -593.1,
+          "source_filing": "SRC_002_annual_FY2023.txt"
+        },
+        "delta_cash": {
+          "value": 51.6,
+          "source_filing": "SRC_002_annual_FY2023.txt"
+        }
+      }
+    }
+  }
+}

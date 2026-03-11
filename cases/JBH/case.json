@@ -1,0 +1,14 @@
+{
+  "ticker": "JBH",
+  "company_name": "JB Hi-Fi Limited",
+  "currency": "AUD",
+  "source_hint": "asx",
+  "market": "ASX (Australian Securities Exchange)",
+  "country": "Australia",
+  "sector": "Consumer Discretionary / Retail",
+  "accounting_standard": "IFRS",
+  "fiscal_year_end_month": 6,
+  "filings_expected_count": 3,
+  "period_scope": "ANNUAL_ONLY",
+  "notes": "Australian electronics and home appliance retailer. Reports in AUD millions. Fiscal year ends June 30 (non-calendar). Listed ASX:JBH. Gap coverage vs KAR: AUD local currency (not USD), non-calendar FY close (June vs December), retail sector (not energy), no FY transition period. Filings acquired autonomously via ASX announcement API."
+}
