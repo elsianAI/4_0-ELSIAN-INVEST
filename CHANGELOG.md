@@ -2,6 +2,13 @@
 
 ## 2026-03-11
 
+### [4.0] Governance reconciliation — BL-071 queda cerrada honestamente como slice estrecho de scaffolding
+- Se reconcilia el closeout canónico de `BL-071` sin tocar código, tests ni `tasks/BL-071.task_manifest.json`: el cierre válido queda limitado a `scaffold-task` y `scaffold-case` con enforcement temprano de `risks`, `validation_plan` y `acceptance_criteria`.
+- `docs/project/BACKLOG_DONE.md` deja explícito que `BL-071` no absorbió implícitamente el T15 amplio de `docs/project/PLAN_IMPLEMENTACION_FILTRADO.md`; quedan fuera de ese cierre las plantillas adicionales de PR/closeout/onboarding/diagnose y cualquier mejora más amplia de DX o del output de `check_governance.py`.
+- `docs/project/PROJECT_STATE.md` deja la misma prioridad operativa viva (`BL-064`), pero aclara que `BL-071` archivada debe interpretarse como slice estrecho ya cerrado, no como T15 completo absorbido retrospectivamente.
+- **Files changed:** `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** reconciliación documental contra `HEAD 432d472`; sin cambios en código, tests ni packet de `BL-071`.
+
 ### [4.0] BL-071 — scaffold-task / scaffold-case: entrypoints de andamiaje con risks/acceptance enforced
 - `elsian/scaffold.py` nuevo módulo estrecho (`build_task_seed`, `write_task_seed`, `build_case_seed`, `write_case_seed`). Genera seeds para tareas (`tasks/{ID}.task_manifest.json` + `{ID}.task_notes.md`) y casos (`cases/{TICKER}/case.json` + `CASE_NOTES.md`). Enforces declaration de `risks`, `validation_plan` y `acceptance_criteria` en tiempo de creación mediante `ValueError` / `sys.exit(1)`; sin esos tres campos la seed no se escribe.
 - `elsian/cli.py` ampliado con dos nuevos comandos: `scaffold-task` y `scaffold-case`. Sigue el patrón CLI existente (función `cmd_*` + parser block). `--risks`, `--validation-plan`, `--acceptance-criteria` y `--write-set` son obligatorios en `scaffold-task`. `--source-hint`, `--currency` obligatorios en `scaffold-case`.
