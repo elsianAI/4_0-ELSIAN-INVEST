@@ -44,6 +44,15 @@
 - Nuevas rutas de adquisición no-SEC cuando exista masa crítica suficiente para justificar el coste.
 - Mejor cobertura de mercados europeos, Asia y sectores no representados.
 
+## Frontera Module 1
+
+- `SOM` queda en frontera abierta: ticker validado `ANNUAL_ONLY`, pero sin evidencia canónica suficiente todavía para cerrarlo como `ANNUAL_ONLY justificado` ni para empaquetar una promoción como BL-ready.
+- Generalizar HKEX más allá de `0327` no es backlog vivo hoy. El cierre actual valida un ticker `FULL` con `hkex_manual` reproducible desde git, no un programa de mercado autónomo.
+- LSE/AIM más allá del piloto `SOM` sigue fuera del backlog operativo. `BL-057` resuelve un piloto conservador de un ticker; no hay masa crítica suficiente para declarar capacidad de mercado amplia.
+- Euronext no-API más allá de `TEP` sigue siendo carril de oportunidad. El ticker actual opera por excepción documentada; no hay packet BL-ready para convertir eso en capacidad de mercado general.
+- El gap factual de coverage/manifest de `TALO` no se empaqueta todavía como BL: los canonicals lo tratan como limitación conocida del runtime actual, no como bug ya diagnosticado con aceptación técnica cerrada.
+- Los 4 gaps residuales de field dependency (`fx_effect_cash`, `other_cash_adjustments`, `market_cap`, `price`) siguen fuera del backlog vivo mientras no pasen de oportunidad a necesidad operativa clara.
+
 ## Nota
 
 - Mantener estas ideas fuera del flujo activo evita mezclar visión de producto con ejecución del Módulo 1.

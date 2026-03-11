@@ -16,8 +16,14 @@ ELSIAN 4.0 avanza por capas, pero el orden no es negociable:
 
 Trabajo prioritario una vez el repo esté limpio y sincronizado:
 
-1. **Oleada estructural filtrada (`T01–T15` válidas)** para endurecer contratos, CI, fronteras internas, adquisición, onboarding, diagnosis y DX del Módulo 1.
-2. **BL-005** — ampliar cobertura de tickers por diversidad real, subordinada a `BL-067` (`T09 — Factoría de onboarding`)
+1. **Programa de capacidad de Module 1 y reconstrucción de backlog**
+2. **Primera ola técnica serial y mínima** sobre el único hallazgo BL-ready que sigue abierto hoy
+
+Fases del programa:
+
+1. **Fase A — Capacidad factual cerrada.** Inventario veraz de qué tickers y mercados ya están dentro de la capacidad real de Module 1, distinguiendo `FULL`, `ANNUAL_ONLY justificado`, autonomía `autonomous`, y excepciones documentadas por ticker.
+2. **Fase B — Backlog vivo BL-ready.** Solo entran packets ejecutables, acotados y con aceptación clara. En el snapshot actual esto se reduce a una primera ola técnica pequeña y serial (`BL-085`), sin fabricar trabajo nuevo ni reabrir BL cerradas.
+3. **Fase C — Frontera abierta y oportunidades.** Hipótesis, generalizaciones de mercado todavía no justificadas y excepciones no empaquetables se quedan fuera del backlog y viven en `docs/project/OPPORTUNITIES.md`.
 
 Objetivos de esta fase:
 
@@ -25,9 +31,10 @@ Objetivos de esta fase:
 - seguir reduciendo manualidad residual fuera del core de extracción;
 - ampliar cobertura funcional del pipeline sin degradar provenance;
 - hacer que añadir un ticker o un campo nuevo siga siendo un cambio local y verificable.
+- no vender como capacidad de mercado amplia lo que hoy sigue siendo excepción o path gradual por ticker.
 - mantener el paralelismo mutante real como capacidad diferida hasta que exista criterio explícito de `parallel-ready` y un proceso operativo formal, en lugar de improvisarlo sobre `main`.
 
-`BL-057` ya quedó cerrado como mejora conservadora del path de acquire: SOM ya no depende de `filings_sources` hardcodeados y el piloto LSE/AIM se resuelve con discovery automático de 3 documentos núcleo. Si aparece masa crítica LSE/AIM en el futuro, el siguiente paso ya no es arreglar Somero, sino decidir si compensa subir esto a infraestructura de mercado más amplia.
+`BL-057` ya quedó cerrado como mejora conservadora del path de acquire: SOM ya no depende de `filings_sources` hardcodeados y el piloto LSE/AIM se resuelve con discovery automático de 3 documentos núcleo. Eso no equivale todavía a una capacidad de mercado LSE/AIM amplia; si aparece masa crítica en el futuro, ese salto deberá entrar primero por `OPPORTUNITIES.md` y solo después por backlog vivo.
 
 ## Horizonte siguiente: infraestructura para servir Módulo 1
 

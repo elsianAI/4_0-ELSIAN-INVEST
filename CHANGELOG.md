@@ -2,6 +2,13 @@
 
 ## 2026-03-11
 
+### [4.0] Governance-only wave — programa de capacidad Module 1 y reconstrucción factual del backlog
+- Se acota el "Programa de Capacidad de Module 1 y Reconstrucción de Backlog" al perímetro real de Module 1 sin tocar código, tests, config ni casos. `docs/project/PROJECT_STATE.md` pasa a distinguir de forma explícita `FULL`, `ANNUAL_ONLY justificado`, `ANNUAL_ONLY promocionable` y `frontera abierta`, con clasificación factual por ticker y por mercado, y con autonomía operativa `autonomous`, `gradual` o `documented exception` según la evidencia canónica disponible.
+- `docs/project/BACKLOG.md` deja de afirmar que no existe backlog vivo y se reconstruye con un único packet BL-ready, pequeño y serial (`BL-085`), derivado del único riesgo residual técnico documentado y acotado tras el cierre de `BL-076`.
+- `docs/project/OPPORTUNITIES.md` absorbe lo que sigue siendo frontera, hipótesis o excepción no empaquetable hoy: `SOM`, la generalización HKEX/LSE/AIM/Euronext fuera de los tickers ya cerrados, el gap factual de coverage/manifest de `TALO` y los gaps opcionales de field dependency. `ROADMAP.md` se reconcilia con las fases A-C del programa y con la regla de no fabricar backlog fuera de evidencia BL-ready.
+- **Files changed:** `docs/project/PROJECT_STATE.md`, `docs/project/BACKLOG.md`, `docs/project/OPPORTUNITIES.md`, `ROADMAP.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` y `git diff --check`
+
 ### [4.0] Certification wave — codex/certification-fixes-20260311
 - **Bug fixes (6):**
   1. `cmd_diagnose()` ahora fuerza `--all`: si la flag está ausente imprime `--all is required; per-ticker diagnose is not supported yet` y sale con `SystemExit(1)`. Nueva función helper `_resolve_diagnose_output()` en `elsian/cli.py`.
