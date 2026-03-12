@@ -1,7 +1,9 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
-> Última actualización: 2026-03-11
-> Actualizado por: Copilot (governance-only BL-085 closeout)
+> Última actualización: 2026-03-12
+> Actualizado por: Codex (empty-backlog runtime contract)
+> Module 1 status: OPEN
+> Semántica vigente del marker: `OPEN` mientras exista frontera operacional real en el subtree operativo de `OPPORTUNITIES.md`. `TEP` y `0327` pueden convivir con un cierre futuro solo como excepciones ticker-level reafirmadas; `TALO` no es compatible con `CLOSED` mientras siga siendo un gap factual abierto de autonomía/coverage.
 
 ---
 
@@ -208,7 +210,7 @@ La ola governance-only del 2026-03-11 deja **sin** backlog vivo ejecutable. `BL-
 El resto del programa queda repartido así:
 - **Fase A** — capacidad cerrada actual: 16 tickers en capacidad operativa cerrada dentro de Module 1; esa cifra mezcla capacidad `FULL` y excepciones ticker-level ya cerradas, no equivale a 5 mercados cerrados de forma generalizada.
 - **Fase B** — backlog vivo: vacío en este snapshot.
-- **Fase C** — frontera abierta y excepciones: `SOM`, la generalización de mercado en LSE/AIM y HKEX, la ruta no-API de Euronext más allá de `TEP`, el gap factual de coverage/manifest de `TALO` y los 4 gaps opcionales de field dependency viven en `docs/project/OPPORTUNITIES.md` hasta que aparezca evidencia nueva que permita empaquetarlos como BL.
+- **Fase C** — frontera abierta, watchlist de excepciones y expansión de capacidad: `SOM`, la generalización de mercado en LSE/AIM/HKEX/Euronext, el gap factual de coverage/manifest de `TALO` y la watchlist de excepciones ticker-level viven ahora en el subtree operativo estructurado de `docs/project/OPPORTUNITIES.md` hasta que aparezca evidencia nueva suficiente para empaquetarlos como BL o reafirmarlos como excepción estable.
 
 El contrato `parallel-ready` sigue vigente por `BL-072` y `DEC-029`, pero no cambia el criterio de esta fase: cualquier nueva ola técnica que reaparezca desde evidencia factual deberá volver a empaquetarse de forma **serial** y de blast radius mínimo.
 

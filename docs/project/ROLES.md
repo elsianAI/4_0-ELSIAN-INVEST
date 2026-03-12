@@ -12,6 +12,11 @@ ELSIAN 4.0 usa tres roles de negocio:
 - `engineer`: implementa cambios tecnicos dentro del alcance permitido.
 - `auditor`: verifica de forma independiente y findings-first.
 
+Helpers read-only del runtime:
+
+- `kickoff`: briefing conservador del repo, reutilizable por `orchestrator` o como comando experto.
+- `capacity-scout`: helper de discovery factual para el estado `backlog vacío + Module 1 abierto`. No es un rol y no empaqueta backlog.
+
 El sistema puede usarse de dos formas:
 
 - **Orchestrator explicito**: entrypoint principal para briefing, planificacion o ejecucion end-to-end.
@@ -30,6 +35,7 @@ Reglas estructurales:
 
 - **Briefing**: usa `kickoff` internamente, devuelve contexto real del repo y termina sin mutar.
 - **Planificacion**: usa `kickoff` internamente y, si hace falta empaquetar mejor la siguiente tarea, puede invocar `director`. Sigue siendo read-only.
+- **Empty backlog resolution**: cuando el checker factual informa `empty_backlog_discovery`, usa `capacity-scout` para descubrir y clasificar el siguiente trabajo posible sin mutar.
 - **Ejecucion**: hace preflight, decide la ruta segun este documento, ejecuta la ruta mutante correcta y, si el cierre queda plenamente verde y el repo estaba limpio al inicio salvo ruido de workspace, puede rematar con `auto-commit`.
 
 **Reglas**
@@ -40,6 +46,7 @@ Reglas estructurales:
 - En `briefing` y `planificacion` no muta nada.
 - En `ejecucion` puede mutar solo a traves de los hijos correctos y de los gates del padre.
 - En `briefing` y `planificacion` debe usar `python3 scripts/check_governance.py --format json` como fuente primaria de estado vivo.
+- Cuando el checker informa `empty_backlog_discovery`, no puede cerrar en un simple “no hay nada que hacer”; debe lanzar `capacity-scout`.
 - Si detecta trabajo tecnico repo-tracked pendiente, no recomienda por defecto abrir una BL nueva; primero recomienda reconciliacion del trabajo local.
 - Nunca hace `push` automaticamente.
 - Solo puede hacer `auto-commit` despues de `closeout` verde y solo si el preflight detecto:
@@ -89,6 +96,7 @@ Reglas estructurales:
 - `Trabajo activo` debe distinguir explicitamente si existe `Trabajo local pendiente`.
 - Si no se puede leer el worktree real, debe decirlo explicitamente en `Estado actual`.
 - `Top 3 siguientes tareas` salen del backlog y del estado real; no de repriorizacion creativa.
+- Si `kickoff` detecta `next_resolution_mode = empty_backlog_discovery`, debe reportarlo como estado del runtime, pero no lanzar discovery por su cuenta.
 - `Ruta recomendada` debe ser una de estas:
   - `director -> engineer -> gates -> auditor -> closeout`
   - `engineer -> gates -> auditor -> closeout`
@@ -123,13 +131,156 @@ Este checker es la fuente comun de verdad operativa para `kickoff` y `orchestrat
 - conteo de `manual_overrides` por ticker.
 - `untracked_technical_files`
 - `untracked_test_files`
+- `backlog.active_ids`
+- `backlog.active_count`
+- `backlog.is_empty`
+- `project_state.module1_status`
+- `summary.next_resolution_mode`
+
+**Marker de modulo**
+
+- `docs/project/PROJECT_STATE.md` debe incluir una linea parseable:
+  - `> Module 1 status: OPEN | CLOSEOUT_CANDIDATE | CLOSED`
+
+**Truth table de `next_resolution_mode`**
+
+- si `technical_dirty || governance_dirty || other_dirty`
+  - `reconcile_pending_work`
+- si no y `backlog.active_count > 0`
+  - `execute_backlog`
+- si no y `backlog.is_empty && module1_status == OPEN`
+  - `empty_backlog_discovery`
+- si no y `backlog.is_empty && module1_status == CLOSEOUT_CANDIDATE`
+  - `module_closeout_review`
+- si no y `backlog.is_empty && module1_status == CLOSED`
+  - `idle_clean`
 
 **Reglas**
 
 - `workspace_only_dirty` se reporta como ruido operativo y no bloquea por si solo trabajo tecnico.
 - `technical_dirty` se considera trabajo local pendiente y bloquea por defecto la recomendacion de una BL nueva.
 - `governance_dirty` no bloquea siempre, pero debe reflejarse explicitamente en el briefing.
+- La corrupcion estructural relevante del subtree operativo de `docs/project/OPPORTUNITIES.md` se trata como `governance_dirty` real y fuerza `reconcile_pending_work`.
 - Si `CHANGELOG.md` refleja una solucion local y `BACKLOG.md` o `PROJECT_STATE.md` no, el sistema debe recomendar reconciliacion documental, no actuar como si el repo siguiera en el estado anterior.
+
+**Fail-closed estructural**
+
+El checker debe marcar `governance_dirty` y forzar `reconcile_pending_work` si detecta cualquiera de estas corrupciones:
+
+- falta o duplicidad del marker `Module 1 status`;
+- headings operativos obligatorios ausentes o duplicados en `docs/project/OPPORTUNITIES.md`;
+- item operativo sin shape parseable obligatoria;
+- disposicion operativa invalida o ausente.
+
+El subtree no operativo/futuro de `docs/project/OPPORTUNITIES.md` no gatea el runtime.
+
+### Capacity-scout helper
+
+`capacity-scout` es un helper read-only del runtime, no un rol de negocio.
+
+**Puede**
+
+- leer canónicos;
+- ejecutar terminal read-only bajo allowlist;
+- descubrir oportunidades nuevas desde el estado vivo;
+- reafirmar o cuestionar excepciones existentes con evidencia.
+
+**No puede**
+
+- mutar archivos;
+- abrir backlog;
+- priorizar;
+- cerrar módulo;
+- hacer closeout.
+
+**Allowlist v1**
+
+- `python3 scripts/check_governance.py --format json`
+- `python3 -m elsian eval --all`
+- `python3 -m elsian diagnose --all --output /tmp/elsian-capacity-scout/...`
+- `rg`, `sed`, `cat`
+
+**Prohibido en v1**
+
+- `python3 -c`
+- `python3 -m elsian acquire`
+- `python3 -m elsian run`
+- `python3 -m elsian onboard`
+- cualquier comando que escriba en `cases/`, `filings/`, `filings_manifest.json` o canónicos
+
+**Salida estructurada obligatoria**
+
+Cada hallazgo del scout debe incluir:
+
+- `topic`
+- `classification`: `BL-ready | opportunity | exception_reaffirmed | no_action`
+- `subject_type`: `ticker | market | extractor | acquire | governance`
+- `subject_id`
+- `current_canonical_state`
+- `live_evidence`
+- `why_it_matters`
+- `unknowns_remaining`
+- `recommended_next_route`
+- `blast_radius`: `targeted | shared-core | governance-only`
+- `effort`: `minimal | bounded | broad`
+- `validation_tier`: `targeted | shared-core | governance-only | n/a`
+- `last_reviewed`
+- `promotion_trigger`
+- `disposition_hint`: `keep_in_opportunities | send_to_director_for_packaging | reaffirm_exception | retire`
+
+### `OPPORTUNITIES.md` como input operativo
+
+`docs/project/OPPORTUNITIES.md` debe separar explicitamente:
+
+- `## Module 1 operational opportunities`
+- `## Non-operational / future opportunities`
+
+Solo el subtree operativo de Module 1 participa en el runtime y en el anti-drift de cierre de módulo.
+
+**Carriles operativos obligatorios**
+
+- `### Near BL-ready`
+- `### Exception watchlist`
+- `### Extractor / format frontiers`
+- `### Expansion candidates`
+- `### Retired / absorbed`
+
+**Shape parseable obligatoria por item**
+
+Los items operativos usan heading `#### OP-XXX — Titulo corto` y deben incluir todos estos campos:
+
+- `Subject type`
+- `Subject id`
+- `Canonical state`
+- `Why it matters`
+- `Live evidence`
+- `Unknowns remaining`
+- `Promotion trigger`
+- `Blast radius if promoted`
+- `Expected effort`
+- `Last reviewed`
+- `Disposition`
+
+**Lifecycle**
+
+- `Near BL-ready` pasa a backlog solo por decision del `director`.
+- `Exception watchlist` se mantiene mientras la excepcion siga sosteniendose; puede moverse a `Near BL-ready` si aparece evidencia nueva.
+- `Extractor / format frontiers` y `Expansion candidates` bloquean el cierre del modulo mientras sigan operativos.
+- `Retired / absorbed` no vuelve a competir salvo evidencia nueva material.
+- Si un scout pass cambia materialmente la interpretacion de un item, rebota a `director` para reconciliacion governance-only.
+- Si un scout pass reafirma una excepcion o confirma `no_action`, `Last reviewed` solo necesita actualizarse si el item esta stale (>30 dias). Esas actualizaciones deben batch-earse en una reconciliacion governance-only, no abrir una ola por item.
+
+**Semantica de cierre de Module 1**
+
+- `CLOSED` es compatible con:
+  - items en `Exception watchlist` con `Disposition: reaffirm_exception`
+  - items en `Retired / absorbed`
+  - oportunidades fuera del subtree operativo
+- `CLOSED` es incompatible con:
+  - cualquier item en `Near BL-ready`
+  - cualquier item en `Extractor / format frontiers`
+  - cualquier item en `Expansion candidates`
+  - cualquier item en `Exception watchlist` con una disposicion distinta de `reaffirm_exception`
 
 ## 2. Contratos por rol
 
@@ -302,6 +453,8 @@ El orquestador neutral decide que hijo lanzar segun la intencion y el posible bl
 - Flujo tecnico local: `engineer -> gates -> auditor -> closeout`
 - Flujo mutante de governance: `director -> gates -> auditor -> closeout`
 - Flujo de review: `auditor`
+- Flujo de `empty backlog` en planning: `capacity-scout` y stop en findings read-only
+- Flujo de `empty backlog` en ejecucion: `capacity-scout -> director -> ...` solo en dos fases separadas
 
 **Extension de runtime**
 
@@ -310,6 +463,9 @@ El orquestador neutral decide que hijo lanzar segun la intencion y el posible bl
 **Regla**
 
 - Toda tarea mutante debe mapearse a una unica BL o a `none`. Si un cambio afecta materialmente a varias BL, el `director` debe partir el paquete antes de ejecucion.
+- En `briefing` y `planificacion`, si `capacity-scout` detecta algo `BL-ready`, el `orchestrator` debe detenerse y devolver findings + ruta recomendada; no puede invocar a `director` dentro de la misma fase read-only.
+- En `ejecucion`, si `capacity-scout` detecta algo `BL-ready`, el `orchestrator` puede abrir una segunda fase separada con `director`, siempre despues de cerrar la fase read-only.
+- Si varias BL quedan empaquetadas y priorizadas, el `orchestrator` puede operar en modo `run-next-until-stop`: ejecutar una BL, cerrar, re-ejecutar checker, y continuar solo mientras la siguiente BL siga clara y no aparezca nueva ambigüedad.
 
 ### 3.1 Paralelizacion mutante controlada
 
@@ -569,6 +725,7 @@ Cuando el diff toca `docs/project/ROLES.md`, cambia routing, cambia el contrato 
 
 - `.github/agents/elsian-orchestrator.agent.md`
 - `.github/agents/elsian-kickoff.agent.md`
+- `.github/agents/elsian-capacity-scout.agent.md`
 - `.github/agents/project-director.agent.md`
 - `.github/agents/elsian-4.agent.md`
 
@@ -576,6 +733,7 @@ Cuando el diff toca `docs/project/ROLES.md`, cambia routing, cambia el contrato 
 
 - `/Users/ismaelsanchezgarcia/.codex/skills/elsian-orchestrator/SKILL.md`
 - `/Users/ismaelsanchezgarcia/.codex/skills/elsian-kickoff/SKILL.md`
+- `/Users/ismaelsanchezgarcia/.codex/skills/elsian-capacity-scout/SKILL.md`
 - `/Users/ismaelsanchezgarcia/.codex/skills/elsian-director/SKILL.md`
 - `/Users/ismaelsanchezgarcia/.codex/skills/elsian-engineer/SKILL.md`
 
@@ -633,9 +791,11 @@ Cuando el diff toca `docs/project/ROLES.md`, cambia routing, cambia el contrato 
   - skills locales de Codex en `$CODEX_HOME/skills/`;
   - el orquestador explicito de Codex en `$CODEX_HOME/skills/elsian-orchestrator/`;
   - el kickoff experto de Codex en `$CODEX_HOME/skills/elsian-kickoff/`;
+  - el helper de discovery de Codex en `$CODEX_HOME/skills/elsian-capacity-scout/`;
   - agent files repo-tracked en `.github/agents/`;
   - el orquestador de Copilot en `.github/agents/elsian-orchestrator.agent.md`;
-  - el kickoff experto de Copilot en `.github/agents/elsian-kickoff.agent.md`.
+  - el kickoff experto de Copilot en `.github/agents/elsian-kickoff.agent.md`;
+  - el helper de discovery de Copilot en `.github/agents/elsian-capacity-scout.agent.md`.
 - Si `ROLES.md` cambia, hay que revisar consistencia antes de dar por bueno el sistema multiagente.
 - Asimetria valida de plataforma:
   - Codex usa un padre neutral nativo del runtime; `elsian-orchestrator` es un wrapper fino de UX sobre ese runtime.

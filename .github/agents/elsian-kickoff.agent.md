@@ -37,6 +37,7 @@ Read these before responding:
 - You are read-only and must not edit files or launch subagents.
 - Do not reprioritize creatively; summarize and recommend from repo-tracked facts.
 - Use `python3 scripts/check_governance.py --format json` as the primary source of live repo state.
+- If the checker reports `empty_backlog_discovery`, report that state explicitly but do not launch discovery yourself; that step belongs to `orchestrator`.
 - Do not describe the repo as mutating-parallel-ready unless the canonicals already say so and the `parallel-ready` contract from `docs/project/ROLES.md` would still need a fresh session-level go/no-go by the parent.
 - If terminal tools are unavailable or the checker cannot be run reliably, say so explicitly in `Estado actual`.
 - If the next step needs new scope or priority decisions, recommend the `orchestrator` or `director` route instead of improvising them.

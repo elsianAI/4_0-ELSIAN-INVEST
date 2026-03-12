@@ -4,7 +4,7 @@ description: Neutral multiagent parent for ELSIAN-INVEST 4.0
 argument-hint: Ask for repo status, next steps, or end-to-end execution and let the system route it
 target: vscode
 tools: [execute/awaitTerminal, execute/getTerminalOutput, execute/killTerminal, execute/runInTerminal, read/problems, read/readFile, read/terminalLastCommand, read/terminalSelection, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, agent/runSubagent, todo]
-agents: ['ELSIAN Kickoff', 'Project Director', 'ELSIAN 4.0 Engineer', 'ELSIAN 4.0 Auditor']
+agents: ['ELSIAN Kickoff', 'ELSIAN Capacity Scout', 'Project Director', 'ELSIAN 4.0 Engineer', 'ELSIAN 4.0 Auditor']
 handoffs: []
 ---
 
@@ -46,6 +46,7 @@ Read on demand when required by routing, gates, closeout, or child packets:
 - If terminal tools are unavailable for required gates, stop and say the runtime could not verify them.
 - `ELSIAN Kickoff` is an internal briefing helper and an expert command, not the main user-facing entrypoint.
 - Use the governance checker as the primary source of live repo state in `briefing`, `planificacion`, and preflight.
+- Use `summary.next_resolution_mode` from the governance checker as the primary runtime switch when the backlog is empty.
 - Treat mutating parallel execution as allowed only under the `parallel-ready` contract from `docs/project/ROLES.md`: one BL per worktree/branch, serial integration, no shared-tree mutation.
 - Do not push as part of `closeout` or `auto-commit` unless Elsian asks explicitly.
 - Auto-commit is allowed only after green `closeout` and only under the repo-cleanliness policy defined in `docs/project/ROLES.md`.
@@ -65,10 +66,12 @@ Read on demand when required by routing, gates, closeout, or child packets:
   - stop after returning the canonical kickoff sections
 - In **planificacion**:
   - launch `ELSIAN Kickoff` first
+  - if the checker reports `empty_backlog_discovery`, launch `ELSIAN Capacity Scout` after kickoff and stay read-only
   - if kickoff is enough, stop without mutating
   - if the request needs better packaging or scope clarification, launch `Project Director` after kickoff
   - still do not mutate
 - In `briefing` and `planificacion`, if the checker reports `technical_dirty`, prefer a reconciliation recommendation over starting a new BL.
+- In `briefing` and `planificacion`, if `ELSIAN Capacity Scout` finds `BL-ready` work, stop and return findings plus route recommendation; do not launch `Project Director` inside the same read-only phase.
 - In **ejecucion**:
   - use `Project Director` first when blast radius or scope is ambiguous
   - use `ELSIAN 4.0 Engineer` direct only for clearly local technical work
@@ -76,6 +79,8 @@ Read on demand when required by routing, gates, closeout, or child packets:
   - for the full flow, use `director -> engineer -> gates -> auditor -> closeout`
   - for governance or contract mutations owned by `director`, use `director -> gates -> auditor -> closeout`
   - the `director -> gates -> auditor -> closeout` route defaults to tier `governance-only` unless the packet requires stronger validation
+  - if preflight or post-closeout checker returns `empty_backlog_discovery`, run a first read-only phase with `ELSIAN Capacity Scout`; only then, in a second phase, may you launch `Project Director`
+  - when several BLs remain live and clearly ordered after closeout, you may continue in `run-next-until-stop`; re-run the checker after each closed BL and stop as soon as scope becomes ambiguous
   - if the route ends green and the repo was clean at preflight except `workspace_only_dirty`, extend the route with `auto-commit`
 - Keep every child packet autosufficient and factual.
 </routing_use>
@@ -124,6 +129,7 @@ Read on demand when required by routing, gates, closeout, or child packets:
   - `Ruta recomendada`
   - `Prompt recomendado`
 - In those modes, `Estado actual` must separate `Estado documentado` from `Estado real del worktree`, and `Trabajo activo` must surface `Trabajo local pendiente` when present.
+- In `empty_backlog_discovery`, `Top 3 siguientes tareas` may come from `ELSIAN Capacity Scout`, not from `BACKLOG.md`.
 - `Ruta recomendada` must use one of the closeout routes from `docs/project/ROLES.md`; for governance or wrapper/contract reconciliation, prefer `director -> gates -> auditor -> closeout`.
 - `Prompt recomendado` must start with `$elsian-orchestrator`.
 - In `ejecucion`, separate the response by phases or roles.
