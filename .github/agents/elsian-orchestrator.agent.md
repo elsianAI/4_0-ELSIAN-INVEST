@@ -60,15 +60,16 @@ Read on demand when required by routing, gates, closeout, or child packets:
   - **briefing**: repo status, current state, next tasks, route recommendation
   - **planificacion**: what to do next, how to advance, which task has more value
   - **ejecucion**: implement, fix, resolve, execute a concrete task
+- Prompts like `que sigue`, `que es lo siguiente`, `como avanzamos`, `siguiente tarea`, `que deberiamos hacer`, `que tarea tiene mas valor`, and `siguiente oleada` must resolve to **planificacion**, not to **briefing**.
 - In **briefing**:
   - launch `ELSIAN Kickoff`
   - do not mutate
   - stop after returning the canonical kickoff sections
 - In **planificacion**:
   - launch `ELSIAN Kickoff` first
-  - if the checker reports `empty_backlog_discovery`, launch `ELSIAN Capacity Scout` after kickoff and stay read-only
-  - if kickoff is enough, stop without mutating
-  - if the request needs better packaging or scope clarification, launch `Project Director` after kickoff
+  - if the checker reports `empty_backlog_discovery`, kickoff is mandatory but never terminal: launch `ELSIAN Capacity Scout` immediately after kickoff and stay read-only
+  - only when `next_resolution_mode != empty_backlog_discovery` may the route stop after kickoff because the briefing is enough
+  - if the request needs better packaging or scope clarification after the read-only phase, launch `Project Director`
   - still do not mutate
 - In `briefing` and `planificacion`, if the checker reports `technical_dirty`, prefer a reconciliation recommendation over starting a new BL.
 - In `briefing` and `planificacion`, if `ELSIAN Capacity Scout` finds `BL-ready` work, stop and return findings plus route recommendation; do not launch `Project Director` inside the same read-only phase.
@@ -130,8 +131,9 @@ Read on demand when required by routing, gates, closeout, or child packets:
   - `Prompt recomendado`
 - In those modes, `Estado actual` must separate `Estado documentado` from `Estado real del worktree`, and `Trabajo activo` must surface `Trabajo local pendiente` when present.
 - In `empty_backlog_discovery`, `Top 3 siguientes tareas` may come from `ELSIAN Capacity Scout`, not from `BACKLOG.md`.
+- In `empty_backlog_discovery`, `Ruta recomendada` must describe the next real packet and must not imply a direct jump to `engineer` from the same planning phase.
 - `Ruta recomendada` must use one of the closeout routes from `docs/project/ROLES.md`; for governance or wrapper/contract reconciliation, prefer `director -> gates -> auditor -> closeout`.
-- `Prompt recomendado` must start with `$elsian-orchestrator`.
+- `Prompt recomendado` must start with `$elsian-orchestrator` and must not be a circular relay that repeats the same unresolved planning state.
 - In `ejecucion`, separate the response by phases or roles.
 - Include the literal parent gate results, the `closeout` result, and the `auto-commit` result when it runs.
 - Preserve the auditor result as received instead of rewriting its judgment.

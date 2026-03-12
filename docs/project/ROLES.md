@@ -47,6 +47,7 @@ Reglas estructurales:
 - En `ejecucion` puede mutar solo a traves de los hijos correctos y de los gates del padre.
 - En `briefing` y `planificacion` debe usar `python3 scripts/check_governance.py --format json` como fuente primaria de estado vivo.
 - Cuando el checker informa `empty_backlog_discovery`, no puede cerrar en un simple “no hay nada que hacer”; debe lanzar `capacity-scout`.
+- En `planificacion`, si el checker informa `empty_backlog_discovery`, `kickoff` es obligatorio pero no terminal: el parent debe ejecutar `kickoff` y despues `capacity-scout` antes de cerrar la fase read-only.
 - Si detecta trabajo tecnico repo-tracked pendiente, no recomienda por defecto abrir una BL nueva; primero recomienda reconciliacion del trabajo local.
 - Nunca hace `push` automaticamente.
 - Solo puede hacer `auto-commit` despues de `closeout` verde y solo si el preflight detecto:
