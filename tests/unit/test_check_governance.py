@@ -47,12 +47,12 @@ def _opportunity_item(
     )
 
 
-def _valid_opportunities_md() -> str:
+def _valid_opportunities_md(*, op1_last_reviewed: str | None = None) -> str:
     return (
         "# Opportunities\n\n"
         "## Module 1 operational opportunities\n\n"
         "### Near BL-ready\n\n"
-        f"{_opportunity_item('OP-001', 'SOM frontier', subject_id='SOM', disposition='keep')}\n"
+        f"{_opportunity_item('OP-001', 'SOM frontier', subject_id='SOM', disposition='keep', last_reviewed=op1_last_reviewed)}\n"
         "### Exception watchlist\n\n"
         f"{_opportunity_item('OP-002', 'JBH exception', subject_id='JBH', canonical_state='ANNUAL_ONLY justificado', disposition='reaffirm_exception')}\n"
         f"{_opportunity_item('OP-003', 'TEP autonomy', subject_id='TEP', subject_type='acquire', canonical_state='documented exception', disposition='reaffirm_exception')}\n"
@@ -500,11 +500,7 @@ def test_parse_operational_opportunities_allows_empty_operational_lane(tmp_path:
 def test_parse_operational_opportunities_invalid_last_reviewed_is_structural_violation(tmp_path: Path):
     opportunities = tmp_path / "OPPORTUNITIES.md"
     opportunities.write_text(
-        _valid_opportunities_md().replace(
-            "- **Last reviewed:** 2026-03-12\n",
-            "- **Last reviewed:** 2026-02-30\n",
-            1,
-        ),
+        _valid_opportunities_md(op1_last_reviewed="2026-02-30"),
         encoding="utf-8",
     )
     report = check_governance.parse_operational_opportunities(opportunities)
@@ -670,11 +666,7 @@ def test_build_report_invalid_last_reviewed_fails_closed_to_reconcile(tmp_path: 
         "# Backlog\n\nNo hay tareas activas.\n", encoding="utf-8"
     )
     (tmp_path / "docs/project/OPPORTUNITIES.md").write_text(
-        _valid_opportunities_md().replace(
-            "- **Last reviewed:** 2026-03-12\n",
-            "- **Last reviewed:** 2026-02-30\n",
-            1,
-        ),
+        _valid_opportunities_md(op1_last_reviewed="2026-02-30"),
         encoding="utf-8",
     )
     (tmp_path / "CHANGELOG.md").write_text("# Changelog\n\n## 2026-03-12\n", encoding="utf-8")
@@ -694,6 +686,66 @@ def test_build_report_invalid_last_reviewed_fails_closed_to_reconcile(tmp_path: 
     assert report["summary"]["governance_work_pending"] is True
     assert "opportunity_invalid_last_reviewed:OP-001:2026-02-30" in report["summary"]["governance_contract_violations"]
     assert report["summary"]["next_resolution_mode"] == "reconcile_pending_work"
+
+
+def test_main_returns_zero_for_valid_operational_state(tmp_path: Path, monkeypatch):
+    (tmp_path / "docs/project").mkdir(parents=True)
+    (tmp_path / "docs/project/PROJECT_STATE.md").write_text(
+        "# Estado\n\n> Última actualización: 2026-03-12\n> Module 1 status: OPEN\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "docs/project/BACKLOG.md").write_text(
+        "# Backlog\n\nNo hay tareas activas.\n", encoding="utf-8"
+    )
+    (tmp_path / "docs/project/OPPORTUNITIES.md").write_text(
+        _valid_opportunities_md(),
+        encoding="utf-8",
+    )
+    (tmp_path / "CHANGELOG.md").write_text("# Changelog\n\n## 2026-03-12\n", encoding="utf-8")
+
+    def fake_run_git(_repo_root: Path, *args: str) -> str:
+        if args == ("rev-parse", "--abbrev-ref", "HEAD"):
+            return "main"
+        if args == ("rev-parse", "--short", "HEAD"):
+            return "abc1234"
+        if args == ("status", "--short", "--untracked-files=all"):
+            return ""
+        raise AssertionError(args)
+
+    monkeypatch.setattr(check_governance, "resolve_repo_root", lambda: tmp_path)
+    monkeypatch.setattr(check_governance, "run_git", fake_run_git)
+
+    assert check_governance.main(["--format", "json"]) == 0
+
+
+def test_main_returns_one_for_governance_contract_violations(tmp_path: Path, monkeypatch):
+    (tmp_path / "docs/project").mkdir(parents=True)
+    (tmp_path / "docs/project/PROJECT_STATE.md").write_text(
+        "# Estado\n\n> Última actualización: 2026-03-12\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "docs/project/BACKLOG.md").write_text(
+        "# Backlog\n\nNo hay tareas activas.\n", encoding="utf-8"
+    )
+    (tmp_path / "docs/project/OPPORTUNITIES.md").write_text(
+        _valid_opportunities_md(),
+        encoding="utf-8",
+    )
+    (tmp_path / "CHANGELOG.md").write_text("# Changelog\n\n## 2026-03-12\n", encoding="utf-8")
+
+    def fake_run_git(_repo_root: Path, *args: str) -> str:
+        if args == ("rev-parse", "--abbrev-ref", "HEAD"):
+            return "main"
+        if args == ("rev-parse", "--short", "HEAD"):
+            return "abc1234"
+        if args == ("status", "--short", "--untracked-files=all"):
+            return ""
+        raise AssertionError(args)
+
+    monkeypatch.setattr(check_governance, "resolve_repo_root", lambda: tmp_path)
+    monkeypatch.setattr(check_governance, "run_git", fake_run_git)
+
+    assert check_governance.main(["--format", "json"]) == 1
 
 
 def test_build_report_duplicate_active_backlog_ids_fail_closed_to_reconcile(tmp_path: Path, monkeypatch):

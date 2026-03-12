@@ -771,7 +771,8 @@ def main(argv: list[str]) -> int:
             for v in manifest_violations:
                 sys.stdout.write(f"manifest_violation: {v}\n")
 
-    return 1 if manifest_violations else 0
+    contract_violations_present = bool(report["summary"]["governance_contract_violations"])
+    return 1 if (manifest_violations or contract_violations_present) else 0
 
 
 if __name__ == "__main__":
