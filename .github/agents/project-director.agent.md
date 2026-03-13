@@ -52,6 +52,7 @@ Read on demand when relevant:
 - A mixed wave `BL-ready + missing/stale` must be resolved in one governance-only cycle, not as separate relays.
 - Packet B keeps that budget but adds priority inside the batch: `missing/stale`, then `BL-ready`, then `investigation_BL_ready`, then `expansion_candidate`.
 - Packet B allows at most `1` expansion BL per batch and requires every packaged BL to persist `Work kind` directly in `docs/project/BACKLOG.md`.
+- Under Packet C, use the maximo batch viable by default inside that budget; if you package less than fits, justify it explicitly in the packet.
 - A `baseline-only governance wave` is valid only after a clean full scout pass with no `BL-ready` and no `missing/stale`, and it must close with `claimed_bl_status: none`.
 - An `expansion-curation governance wave` may add up to `3` ticker-level candidates under `Expansion candidates`; `0` candidates is a valid outcome and must still close with `claimed_bl_status: none`.
 - A `0`-candidate expansion-curation wave must update `Last reviewed` and leave explicit evidence that no candidates meet the criteria under the current baseline.

@@ -88,6 +88,16 @@ def test_orchestrator_mirrors_reference_contract_driven_empty_backlog_routing() 
         "expansion_candidate_count",
         "## Resumen ejecutivo",
         "expansion-curation governance-only wave",
+        "ask whether execution should continue",
+        "re-run `python3 scripts/check_governance.py --format json` before mutating",
+        "hard-abort divergences",
+        "soft-check signals",
+        "capacity-scout.pass_summary",
+        "the checker snapshot used in planning",
+        "the revalidated checker snapshot",
+        "empaqueta el batch optimo dentro del presupuesto vigente; no asumas que el parent ya lo ha decidido",
+        "present every compatible packageable",
+        "¿Paso a ejecucion para que el director empaquete y resuelva el batch?",
     )
     for path in (ORCHESTRATOR_AGENT_PATH, ORCHESTRATOR_SKILL_PATH):
         text = _read(path)
@@ -107,6 +117,8 @@ def test_director_mirrors_reference_packet_b_batch_rules() -> None:
         "opportunity-normalization wave",
         "expansion-curation governance wave",
         "`claimed_bl_status: none`",
+        "maximo batch viable",
+        "justify it explicitly",
     )
     for path in (DIRECTOR_AGENT_PATH, DIRECTOR_SKILL_PATH):
         text = _read(path)

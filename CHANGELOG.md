@@ -2,6 +2,13 @@
 
 ## 2026-03-13
 
+### [4.0] Packet C — transicion interactiva planning→ejecucion y batch optimo por defecto
+- `docs/project/ROLES.md` canoniza Packet C sobre `3ffc88e`: cuando `packageable_count > 0`, el `orchestrator` presenta todos los packageables, pregunta si debe pasar a ejecucion, y revalida `check_governance.py --format json` antes de mutar; si divergen las senales de hard-abort, vuelve a planning sin ejecutar.
+- `elsian-orchestrator` repo-tracked y mirror local quedan alineados con el handoff obligatorio a `project-director`: `capacity-scout.pass_summary`, `findings`, `reconciliation_summary`, snapshot de checker de planning, snapshot revalidado y la instruccion `empaqueta el batch optimo dentro del presupuesto vigente; no asumas que el parent ya lo ha decidido`.
+- `project-director` repo-tracked y mirror local refuerzan Packet C: dentro del presupuesto vigente, el default pasa a ser `maximo batch viable`; si el director empaqueta menos de lo que cabe, debe justificarlo explicitamente en el packet.
+- `Resumen ejecutivo` deja de esconder packageables compatibles detras de una sola BL y la pregunta de continuacion queda formulada de forma correcta: el parent no implica que el batch ya este decidido antes de que actue el `project-director`.
+- **Files changed:** `docs/project/ROLES.md`, `.github/agents/elsian-orchestrator.agent.md`, `.github/agents/project-director.agent.md`, `/Users/ismaelsanchezgarcia/.codex/skills/elsian-orchestrator/SKILL.md`, `/Users/ismaelsanchezgarcia/.codex/skills/elsian-director/SKILL.md`, `tests/contracts/test_runtime_mirrors.py`
+
 ### [4.0] Packet B — investigación y expansión como trabajo de primer nivel
 - `docs/project/ROLES.md` canoniza Packet B sobre `3ffc88e`: añade `investigation_BL_ready`, `expansion_candidate`, `investigation_bl_ready_count`, `expansion_candidate_count`, `packageable_count`, nuevas carve-outs governance-only (`curacion de expansion`, `normalizacion de oportunidades`) y el bloque contractual `## Resumen ejecutivo` para `orchestrator`.
 - `docs/project/BACKLOG.md` gana `Work kind: technical | investigation | expansion` como campo obligatorio de la cola ejecutable; `auditor` y `closeout` dejan de inferir el tipo de BL desde texto libre.

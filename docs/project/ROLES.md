@@ -626,6 +626,8 @@ Decidir que trabajo pertenece a Modulo 1, en que orden debe hacerse, con que lim
     - `expansion_candidate`
   - las investigaciones tienen prioridad sobre expansion
   - como maximo `1` BL de expansion por batch
+  - debe usar por defecto el maximo batch viable dentro de ese presupuesto
+  - si empaqueta menos de lo que cabe, debe justificarlo explicitamente en el packet
   - toda BL creada en esta ola debe persistir `Work kind` en `docs/project/BACKLOG.md` con uno de estos valores:
     - `technical`
     - `investigation`
@@ -772,7 +774,7 @@ El orquestador neutral decide que hijo lanzar segun la intencion y el posible bl
 **Regla**
 
 - Toda tarea mutante debe mapearse a una unica BL o a `none`. Si un cambio afecta materialmente a varias BL, el `director` debe partir el paquete antes de ejecucion.
-- En `briefing` y `planificacion`, si `capacity-scout.pass_summary.bl_ready_count > 0` o `capacity-scout.pass_summary.investigation_bl_ready_count > 0`, el `orchestrator` debe detenerse y devolver findings + ruta recomendada; no puede invocar a `director` dentro de la misma fase read-only.
+- En `briefing` y `planificacion`, si `capacity-scout.pass_summary.bl_ready_count > 0` o `capacity-scout.pass_summary.investigation_bl_ready_count > 0`, el `orchestrator` debe detenerse en la fase read-only, devolver findings + ruta recomendada, exponer todos los packageables relevantes y preguntar si debe pasar a ejecucion; no puede invocar a `director` dentro de esa misma fase read-only.
 - En `briefing` y `planificacion`, si `capacity-scout.pass_summary.bl_ready_count = 0`, `investigation_bl_ready_count = 0` y `missing_count + stale_count > 0`, la ruta correcta es reconciliacion governance-only; no se abre packaging tecnico.
 - En `briefing` y `planificacion`, si solo hay `expansion_candidate_count > 0`, la ruta correcta es `director -> gates -> auditor -> closeout` para seleccion y packaging de expansion.
 - En `briefing` y `planificacion`, si no hay packageables y `Expansion candidates` carece de tickers concretos elegibles, la ruta correcta es una ola governance-only de curacion de expansion.
@@ -781,6 +783,35 @@ El orquestador neutral decide que hijo lanzar segun la intencion y el posible bl
 - Si `capacity-scout` devuelve `full pass` limpio, sin `BL-ready`, sin `missing/stale`, y la baseline esta ausente o cambiada, la ruta correcta es `baseline-only governance wave`.
 - Si varias BL quedan empaquetadas y priorizadas, el `orchestrator` puede operar en modo `run-next-until-stop`: ejecutar una BL, cerrar, re-ejecutar checker, y continuar solo mientras la siguiente BL siga clara y no aparezca nueva ambigüedad.
 - `run-next-until-stop` debe detenerse en el primer fallo de BL y volver a planning; no se salta el fallo ni reordena por heuristica.
+- Si Elsian aprueba continuar desde planning con trabajo packageable, el `orchestrator` debe revalidar estado antes de mutar con `python3 scripts/check_governance.py --format json`.
+- La revalidacion previa a mutacion debe comparar, como minimo:
+  - `summary.next_resolution_mode`
+  - `backlog.active_ids`
+  - `backlog.active_count`
+  - `technical_dirty`
+  - `governance_dirty`
+  - `other_dirty`
+  - `workspace_only_dirty`
+  - `project_state.discovery_baseline.present`
+  - `project_state.discovery_baseline.valid`
+  - `HEAD`
+- Si cambia cualquiera de estas senales de hard-abort, el `orchestrator` no puede mutar y debe volver a planning:
+  - `HEAD`
+  - `summary.next_resolution_mode`
+  - `backlog.active_ids`
+  - `backlog.active_count`
+  - `technical_dirty`
+  - `governance_dirty`
+  - `project_state.discovery_baseline.present`
+  - `project_state.discovery_baseline.valid`
+- `workspace_only_dirty` y `other_dirty` son senales de soft-check; si el `orchestrator` no puede demostrar que el cambio es irrelevante para el scope del batch, debe abortar de forma conservadora y volver a planning.
+- Si el `orchestrator` transiciona de planning a ejecucion en el mismo thread, el handoff al `director` debe incluir siempre:
+  - `capacity-scout.pass_summary`
+  - `capacity-scout.findings`
+  - `capacity-scout.reconciliation_summary`
+  - el snapshot del checker usado en planning
+  - el snapshot revalidado justo antes de mutar
+  - la instruccion explicita: `empaqueta el batch optimo dentro del presupuesto vigente; no asumas que el parent ya lo ha decidido`
 - En `briefing` y `planificacion`, el `orchestrator` debe cerrar siempre con un bloque `## Resumen ejecutivo` de exactamente cuatro lineas:
   - `Estado del modulo`
   - `Hallazgos packageables`

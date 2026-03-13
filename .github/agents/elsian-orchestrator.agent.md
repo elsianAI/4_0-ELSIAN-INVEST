@@ -74,11 +74,15 @@ Read on demand when required by routing, gates, closeout, or child packets:
 - In `briefing` and `planificacion`, if the checker reports `technical_dirty`, prefer a reconciliation recommendation over starting a new BL.
 - In `briefing` and `planificacion`, consume `capacity-scout` strictly from `pass_summary`, `findings`, and `reconciliation_summary`; do not add heuristic routing outside that contract.
 - In `briefing` and `planificacion`, if `capacity-scout.pass_summary.partial_pass = true`, stop and recommend only planning or governance-only reconciliation; never technical packaging.
-- In `briefing` and `planificacion`, if `capacity-scout.pass_summary.bl_ready_count > 0` or `capacity-scout.pass_summary.investigation_bl_ready_count > 0`, stop and return findings plus route recommendation; do not launch `Project Director` inside the same read-only phase.
+- In `briefing` and `planificacion`, if `capacity-scout.pass_summary.bl_ready_count > 0` or `capacity-scout.pass_summary.investigation_bl_ready_count > 0`, stop the read-only phase, return findings plus route recommendation, expose every compatible packageable, and ask whether execution should continue; do not launch `Project Director` inside that same read-only phase.
 - In `briefing` and `planificacion`, if `capacity-scout.pass_summary.bl_ready_count = 0`, `investigation_bl_ready_count = 0`, and `missing_count + stale_count > 0`, recommend `director -> gates -> auditor -> closeout` with tier `governance-only`.
 - In `briefing` and `planificacion`, if only `capacity-scout.pass_summary.expansion_candidate_count > 0`, recommend `director -> gates -> auditor -> closeout` for expansion packaging.
 - In `briefing` and `planificacion`, if there are no packageables and no ticker-level expansion candidates, recommend an expansion-curation governance-only wave.
 - In `briefing` and `planificacion`, if `capacity-scout` reports a clean full pass with baseline absent/cambiada and no `BL-ready`/`missing`/`stale`, recommend a `baseline-only governance wave`.
+- In `briefing` and `planificacion`, if Elsian approves moving from findings to execution, re-run `python3 scripts/check_governance.py --format json` before mutating and compare the planning snapshot with the fresh snapshot.
+- Treat these as hard-abort divergences that always force a return to planning: `HEAD`, `summary.next_resolution_mode`, `backlog.active_ids`, `backlog.active_count`, `technical_dirty`, `governance_dirty`, `project_state.discovery_baseline.present`, `project_state.discovery_baseline.valid`.
+- Treat `workspace_only_dirty` and `other_dirty` as soft-check signals: if you cannot prove they are irrelevant to the current batch scope, abort conservatively and return to planning.
+- When resuming execution from planning in the same thread, the packet for `Project Director` must always include `capacity-scout.pass_summary`, `capacity-scout.findings`, `capacity-scout.reconciliation_summary`, the checker snapshot used in planning, the revalidated checker snapshot, and the instruction `empaqueta el batch optimo dentro del presupuesto vigente; no asumas que el parent ya lo ha decidido`.
 - In **ejecucion**:
   - use `Project Director` first when blast radius or scope is ambiguous
   - use `ELSIAN 4.0 Engineer` direct only for clearly local technical work
@@ -140,6 +144,7 @@ Read on demand when required by routing, gates, closeout, or child packets:
 - In `empty_backlog_discovery`, `Ruta recomendada` must describe the next real packet and must not imply a direct jump to `engineer` from the same planning phase.
 - `Ruta recomendada` must use one of the closeout routes from `docs/project/ROLES.md`; for governance or wrapper/contract reconciliation, prefer `director -> gates -> auditor -> closeout`.
 - `Prompt recomendado` must start with `$elsian-orchestrator` and must not be a circular relay that repeats the same unresolved planning state.
+- When planning finds packageables, present every compatible packageable in the canonical sections and ask `¿Paso a ejecucion para que el director empaquete y resuelva el batch?`; do not imply that the batch is already fixed before the director acts.
 - In `briefing` and `planificacion`, always close with:
   - `## Resumen ejecutivo`
   - `- **Estado del modulo:** ...`
