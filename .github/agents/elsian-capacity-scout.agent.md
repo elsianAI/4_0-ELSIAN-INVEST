@@ -47,6 +47,7 @@ Always respond in Spanish unless the user writes in English. The user's name is 
 - `python3 scripts/check_governance.py --format json`
 - `python3 -m elsian eval --all --output-json /tmp/elsian-capacity-scout/eval_report.json`
 - `python3 -m elsian diagnose --all --output /tmp/elsian-capacity-scout/...`
+- `python3 scripts/build_scout_context.py --eval-json ... --diagnose-json ... --cases-root ... --opportunities-md ... --output-json /tmp/elsian-capacity-scout/scout_context.json`
 - `rg`
 - `sed`
 - `cat`
@@ -99,6 +100,13 @@ Nullability:
 - when `status = ok`: `artifact_path` is absolute, `signature` is SHA-256, `notes` may be empty
 - otherwise: `artifact_path = null`, `signature = null`, `notes` is non-empty
 
+Primary repo-tracked context:
+
+- After running `eval --all --output-json ...` and `diagnose --all --output ...`, run `python3 scripts/build_scout_context.py --eval-json ... --diagnose-json ... --cases-root ... --opportunities-md ... --output-json /tmp/elsian-capacity-scout/scout_context.json`.
+- Read `scout_context.json` as the primary source for `eval_run`, `diagnose_run`, `partial_pass`, `partial_reasons`, `case_review.manifest_missing_tickers`, and baseline signatures.
+- Copy `case_review.manifest_missing_tickers` into `pass_summary.manifest_missing_cases`.
+- The helper does not classify no-manifest cases semantically; that classification still belongs to the scout.
+
 Every item in `findings` must include:
 
 - `topic`
@@ -146,7 +154,7 @@ Rules:
 - When `partial_pass = true`, do not imply technical packaging; only planning or governance-only reconciliation may follow.
 - `packageable_count` is exactly `bl_ready_count + investigation_bl_ready_count + expansion_candidate_count`.
 - `investigation_BL_ready` only applies after `Unknowns remaining` has been normalized into one executable and falsifiable experiment for a concrete ticker or market+ticker.
-- That normalization must happen first in a governance-only wave over `OP-001`, `OP-004`, `OP-005`, and `OP-006`; before that, those items stay as `opportunity`.
+- Eligibility depends on the current `Unknowns remaining` state, not on whether a historical normalization wave already happened.
 - The classification uses the blast radius of the investigation itself, not the downstream promoted result.
 - `expansion_candidate` only applies to ticker-level candidates already curated under `Expansion candidates`; abstract market items stay as context and may trigger a governance-only expansion-curation wave instead.
 </output_format>

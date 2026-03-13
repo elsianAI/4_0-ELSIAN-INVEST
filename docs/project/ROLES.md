@@ -240,6 +240,7 @@ El subtree no operativo/futuro de `docs/project/OPPORTUNITIES.md` no gatea el ru
 - `python3 scripts/check_governance.py --format json`
 - `python3 -m elsian eval --all --output-json /tmp/elsian-capacity-scout/eval_report.json`
 - `python3 -m elsian diagnose --all --output /tmp/elsian-capacity-scout/...`
+- `python3 scripts/build_scout_context.py --eval-json ... --diagnose-json ... --cases-root ... --opportunities-md ... --output-json /tmp/elsian-capacity-scout/scout_context.json`
 - `cases/*/case.json`
 - `cases/*/filings_manifest.json` cuando exista
 - inspeccion read-only de `cases/*/filings/` cuando haga falta
@@ -256,6 +257,7 @@ El subtree no operativo/futuro de `docs/project/OPPORTUNITIES.md` no gatea el ru
 - `python3 scripts/check_governance.py --format json`
 - `python3 -m elsian eval --all --output-json /tmp/elsian-capacity-scout/eval_report.json`
 - `python3 -m elsian diagnose --all --output /tmp/elsian-capacity-scout/...`
+- `python3 scripts/build_scout_context.py --eval-json ... --diagnose-json ... --cases-root ... --opportunities-md ... --output-json /tmp/elsian-capacity-scout/scout_context.json`
 - `rg`
 - `sed`
 - `cat`
@@ -314,6 +316,27 @@ Regla de nullability:
   - `artifact_path: null`
   - `signature: null`
   - `notes` es string no vacio
+
+**Helper repo-tracked de contexto**
+
+El scout debe ejecutar:
+
+- `python3 scripts/build_scout_context.py --eval-json /tmp/elsian-capacity-scout/eval_report.json --diagnose-json /tmp/elsian-capacity-scout/.../diagnose_report.json --cases-root cases --opportunities-md docs/project/OPPORTUNITIES.md --output-json /tmp/elsian-capacity-scout/scout_context.json`
+
+Y debe usar `scout_context.json` como fuente primaria para:
+
+- `eval_run`
+- `diagnose_run`
+- `partial_pass`
+- `partial_reasons`
+- `case_review.manifest_missing_tickers`
+- firmas de baseline
+
+Regla de mapeo:
+
+- `case_review.manifest_missing_tickers` del helper se copia en `pass_summary.manifest_missing_cases`;
+- el helper no clasifica semanticamente los casos sin manifest; solo reporta que tickers carecen de manifest;
+- la clasificacion semantica (`manifest_expected_absent`, `manifest_missing_gap`, `manifest_not_needed_for_current_finding`) sigue siendo responsabilidad del scout con apoyo de `OPPORTUNITIES.md`, `PROJECT_STATE.md` y `DECISIONS.md`.
 
 **`findings`**
 
@@ -390,6 +413,7 @@ Si no pueden clasificarse razonablemente, el scout debe marcar `partial_pass = t
 
 **Regla de `partial_pass`**
 
+- `eval_run`, `diagnose_run`, `partial_pass` y `partial_reasons` deben salir del helper repo-tracked, no de inferencia LLM;
 - `timeout`, `error` o `unusable_artifact` en `eval` o `diagnose` fuerzan `partial_pass = true`.
 - un caso sin manifest no clasificado razonablemente fuerza `partial_pass = true`.
 - `partial_reasons` debe explicar cada degradacion.
@@ -468,6 +492,7 @@ Regla clave:
 
 - el filtro usa el blast radius de la investigacion, no el del resultado potencial;
 - por eso un item puede salir como `investigation_BL_ready` aunque su `Blast radius if promoted` en `OPPORTUNITIES.md` sea `shared-core`, siempre que la investigacion en si sea ticker-level y `targeted`;
+- la elegibilidad depende del estado actual de `Unknowns remaining`, no de si una wave historica "ya ocurrio";
 - si la investigacion descubre necesidad reusable o `shared-core`, el resultado correcto es `technical_followup_opened`, no ampliar el packet actual.
 
 **Regla mecanica de `expansion_candidate`**
@@ -525,7 +550,7 @@ Los items operativos usan heading `#### OP-XXX — Titulo corto` y deben incluir
 - `Retired / absorbed` no vuelve a competir salvo evidencia nueva material.
 - Si un scout pass cambia materialmente la interpretacion de un item, rebota a `director` para reconciliacion governance-only.
 - Si un scout pass reafirma una excepcion o confirma `no_action`, `Last reviewed` solo necesita actualizarse si el item esta stale (>30 dias). Esas actualizaciones deben batch-earse en una reconciliacion governance-only, no abrir una ola por item.
-- Antes del primer scout pass de Packet B, el `director` debe ejecutar una ola governance-only de normalizacion para reformular `Unknowns remaining` de `OP-001`, `OP-004`, `OP-005` y `OP-006` como experimentos unicos, ejecutables y falsables; hasta entonces, esos items no pueden subir a `investigation_BL_ready`.
+- Si `Unknowns remaining` ya contiene un unico experimento ejecutable y falsable conforme al contrato, el item es elegible a `investigation_BL_ready`; si no, permanece en `opportunity`.
 
 **Semantica de cierre de Module 1**
 

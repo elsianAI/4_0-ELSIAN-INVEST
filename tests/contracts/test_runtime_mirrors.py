@@ -59,8 +59,9 @@ def test_opportunities_packet_b_normalization_is_documented() -> None:
 
 
 def test_capacity_scout_mirrors_share_packet_b_contract() -> None:
-    required = (
+    common_required = (
         "eval --all --output-json /tmp/elsian-capacity-scout/eval_report.json",
+        "scripts/build_scout_context.py --eval-json",
         "`pass_summary`",
         "`findings`",
         "`reconciliation_summary`",
@@ -69,12 +70,26 @@ def test_capacity_scout_mirrors_share_packet_b_contract() -> None:
         "`investigation_BL_ready`",
         "`expansion_candidate`",
         "`packageable_count`",
-        "OP-001",
     )
+    path_specific = {
+        ROLE_PATH: (
+            "Si `Unknowns remaining` ya contiene un unico experimento ejecutable y falsable",
+        ),
+        SCOUT_AGENT_PATH: (
+            "Eligibility depends on the current `Unknowns remaining` state",
+        ),
+        SCOUT_SKILL_PATH: (
+            "Eligibility depends on the current `Unknowns remaining` state",
+        ),
+    }
     for path in (ROLE_PATH, SCOUT_AGENT_PATH, SCOUT_SKILL_PATH):
         text = _read(path)
-        for snippet in required:
+        for snippet in common_required:
             assert snippet in text, f"{snippet!r} missing in {path}"
+        for snippet in path_specific[path]:
+            assert snippet in text, f"{snippet!r} missing in {path}"
+        assert "Before the first scout pass of Packet B" not in text
+        assert "Antes del primer scout pass de Packet B" not in text
 
 
 def test_orchestrator_mirrors_reference_contract_driven_empty_backlog_routing() -> None:
