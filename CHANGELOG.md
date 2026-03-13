@@ -2,6 +2,16 @@
 
 ## 2026-03-13
 
+### [4.0] Governance-only baseline persistence — Discovery Baseline autoritativa tras full scout pass fresco
+- Tras integrar `d05adb2` y limpiar el worktree, el runtime queda en `empty_backlog_discovery` con `BACKLOG.md` vacío, `module1_status=OPEN` y `project_state.discovery_baseline.present=false`; se ejecuta entonces un `full scout pass` fresco y completo para cerrar la primera persistencia autoritativa de baseline sin abrir una segunda cola ejecutable.
+- `python3 -m elsian eval --all --output-json /tmp/elsian-capacity-scout/fresh-d05adb2/eval_report.json` termina con artefacto usable y contractual: `17` tickers evaluados, `17/17` a `100.0%`, `schema_version=1`, `reports` ordenados por `ticker` y firma `fcca9bc42db27a73c2cf6d95167888f5392c2197c65f2ae2f6313f491c52a688`.
+- `python3 -m elsian diagnose --all --output /tmp/elsian-capacity-scout/fresh-d05adb2/diagnose` termina con artefacto usable y limpio: `17` tickers analizados, `0` skipped, `overall_score_pct=100.0`, `hotspots=0` y firma `d64b5be8193d62ad1a1415b2e15c56231b11e7e17e1c937eeebf6467c5c57a2e`.
+- El scout fresco reafirma `0327` y `TEP` como casos donde el manifest no era necesario para la finding actual, y mantiene `TALO` como `manifest_missing_gap`; no aparece evidencia nueva para clasificar ningún item como `BL-ready`, `missing` o `stale`, por lo que la ruta correcta es una `baseline-only governance wave`.
+- `docs/project/PROJECT_STATE.md` persiste por primera vez `## Discovery Baseline` con `last_scout_pass_at=2026-03-13T10:36:37Z`, `last_scout_head=d05adb230e39cd2bfb329e713920d55d948a01b5`, `last_cases_signature=9f901c2a633a4d3d4dfa8e8fbb501aab0c87673e93bb10cbda28c51724400165` y `last_operational_opportunities_signature=eee6c92ed8ef9d5bb797cad206caf04abe81fb41fb48ed66cdef5c22232ebaf8`.
+- Esta ola es estrictamente `governance-only` y cierra con `claimed_bl_status: none`.
+- **Files changed:** `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` antes del scout → `next_resolution_mode=empty_backlog_discovery`, worktree limpio y baseline ausente pero válida; `python3 scripts/check_governance.py --format json` después de persistir la baseline → `project_state.discovery_baseline.present=true`, `valid=true`, `governance_contract_violations=[]`; `git diff --check` → limpio.
+
 ### [4.0] Tranche A final Nivel 1 — lifecycle contract completo, Discovery Baseline y `eval --output-json`
 - `docs/project/ROLES.md` cierra el contrato operativo de 4 niveles: esta tranche implementa todo `Nivel 1`, documenta `Niveles 2–4` como contrato futuro no gateado en runtime, fija la shape exacta del output de `capacity-scout`, define `full scout pass`, `partial_pass`, las carve-outs de batch packaging governance-only y baseline-only governance wave, y endurece la regla de que `BACKLOG.md` sigue siendo la única cola ejecutable mientras `PROJECT_STATE.md` solo puede persistir baseline.
 - `docs/project/PROJECT_STATE.md` queda preparado para alojar un único bloque parseable `## Discovery Baseline` con cardinalidad `0 o 1` y corte en el siguiente heading `##`; en este snapshot la baseline permanece válidamente ausente porque la primera persistencia autoritativa queda diferida hasta un `full scout pass` fresco con `diagnose --all` recién ejecutado.

@@ -1,9 +1,17 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
 > Última actualización: 2026-03-13
-> Actualizado por: Codex (Tranche A Nivel 1 lifecycle contract; baseline persistence deferred until fresh full scout pass)
+> Actualizado por: Codex (Discovery Baseline persisted after fresh full scout pass)
 > Module 1 status: OPEN
 > Semántica vigente del marker: `OPEN` mientras exista frontera operacional real en el subtree operativo de `OPPORTUNITIES.md`. `TEP` y `0327` pueden convivir con un cierre futuro solo como excepciones ticker-level reafirmadas; `TALO` no es compatible con `CLOSED` mientras siga siendo un gap factual abierto de autonomía/coverage.
+
+## Discovery Baseline
+- last_scout_pass_at: 2026-03-13T10:36:37Z
+- last_scout_head: d05adb230e39cd2bfb329e713920d55d948a01b5
+- last_eval_signature: fcca9bc42db27a73c2cf6d95167888f5392c2197c65f2ae2f6313f491c52a688
+- last_diagnose_signature: d64b5be8193d62ad1a1415b2e15c56231b11e7e17e1c937eeebf6467c5c57a2e
+- last_cases_signature: 9f901c2a633a4d3d4dfa8e8fbb501aab0c87673e93bb10cbda28c51724400165
+- last_operational_opportunities_signature: eee6c92ed8ef9d5bb797cad206caf04abe81fb41fb48ed66cdef5c22232ebaf8
 
 ## Fase actual: FASE 1 — Consolidar Layer 1
 
