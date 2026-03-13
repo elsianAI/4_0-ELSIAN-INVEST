@@ -74,8 +74,10 @@ Read on demand when required by routing, gates, closeout, or child packets:
 - In `briefing` and `planificacion`, if the checker reports `technical_dirty`, prefer a reconciliation recommendation over starting a new BL.
 - In `briefing` and `planificacion`, consume `capacity-scout` strictly from `pass_summary`, `findings`, and `reconciliation_summary`; do not add heuristic routing outside that contract.
 - In `briefing` and `planificacion`, if `capacity-scout.pass_summary.partial_pass = true`, stop and recommend only planning or governance-only reconciliation; never technical packaging.
-- In `briefing` and `planificacion`, if `capacity-scout` reports any `BL-ready`, stop and return findings plus route recommendation; do not launch `Project Director` inside the same read-only phase.
-- In `briefing` and `planificacion`, if `capacity-scout` reports only `missing/stale`, recommend `director -> gates -> auditor -> closeout` with tier `governance-only`.
+- In `briefing` and `planificacion`, if `capacity-scout.pass_summary.bl_ready_count > 0` or `capacity-scout.pass_summary.investigation_bl_ready_count > 0`, stop and return findings plus route recommendation; do not launch `Project Director` inside the same read-only phase.
+- In `briefing` and `planificacion`, if `capacity-scout.pass_summary.bl_ready_count = 0`, `investigation_bl_ready_count = 0`, and `missing_count + stale_count > 0`, recommend `director -> gates -> auditor -> closeout` with tier `governance-only`.
+- In `briefing` and `planificacion`, if only `capacity-scout.pass_summary.expansion_candidate_count > 0`, recommend `director -> gates -> auditor -> closeout` for expansion packaging.
+- In `briefing` and `planificacion`, if there are no packageables and no ticker-level expansion candidates, recommend an expansion-curation governance-only wave.
 - In `briefing` and `planificacion`, if `capacity-scout` reports a clean full pass with baseline absent/cambiada and no `BL-ready`/`missing`/`stale`, recommend a `baseline-only governance wave`.
 - In **ejecucion**:
   - use `Project Director` first when blast radius or scope is ambiguous
@@ -138,6 +140,12 @@ Read on demand when required by routing, gates, closeout, or child packets:
 - In `empty_backlog_discovery`, `Ruta recomendada` must describe the next real packet and must not imply a direct jump to `engineer` from the same planning phase.
 - `Ruta recomendada` must use one of the closeout routes from `docs/project/ROLES.md`; for governance or wrapper/contract reconciliation, prefer `director -> gates -> auditor -> closeout`.
 - `Prompt recomendado` must start with `$elsian-orchestrator` and must not be a circular relay that repeats the same unresolved planning state.
+- In `briefing` and `planificacion`, always close with:
+  - `## Resumen ejecutivo`
+  - `- **Estado del modulo:** ...`
+  - `- **Hallazgos packageables:** ...`
+  - `- **Accion inmediata:** ...`
+  - `- **Siguiente tras ejecucion:** ...`
 - In `ejecucion`, separate the response by phases or roles.
 - Include the literal parent gate results, the `closeout` result, and the `auto-commit` result when it runs.
 - Preserve the auditor result as received instead of rewriting its judgment.

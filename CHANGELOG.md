@@ -2,6 +2,13 @@
 
 ## 2026-03-13
 
+### [4.0] Packet B — investigación y expansión como trabajo de primer nivel
+- `docs/project/ROLES.md` canoniza Packet B sobre `3ffc88e`: añade `investigation_BL_ready`, `expansion_candidate`, `investigation_bl_ready_count`, `expansion_candidate_count`, `packageable_count`, nuevas carve-outs governance-only (`curacion de expansion`, `normalizacion de oportunidades`) y el bloque contractual `## Resumen ejecutivo` para `orchestrator`.
+- `docs/project/BACKLOG.md` gana `Work kind: technical | investigation | expansion` como campo obligatorio de la cola ejecutable; `auditor` y `closeout` dejan de inferir el tipo de BL desde texto libre.
+- `docs/project/OPPORTUNITIES.md` normaliza `Unknowns remaining` de `OP-001`, `OP-004`, `OP-005` y `OP-006` como experimentos unicos, ejecutables y falsables; `OP-009`, `OP-010` y `OP-011` quedan explicitamente como mercados abstractos no packageables hasta una ola de curacion con tickers concretos.
+- Los wrappers y mirrors de `capacity-scout`, `project-director` y `elsian-orchestrator` quedan alineados con Packet B: nuevas categorias packageables, prioridad de batch, limitacion a `1` expansion por ola y cierre obligatorio con resumen ejecutivo en planning/briefing.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/OPPORTUNITIES.md`, `docs/project/ROLES.md`, `.github/agents/elsian-capacity-scout.agent.md`, `.github/agents/project-director.agent.md`, `.github/agents/elsian-orchestrator.agent.md`, `/Users/ismaelsanchezgarcia/.codex/skills/elsian-capacity-scout/SKILL.md`, `/Users/ismaelsanchezgarcia/.codex/skills/elsian-director/SKILL.md`, `/Users/ismaelsanchezgarcia/.codex/skills/elsian-orchestrator/SKILL.md`, `tests/contracts/test_runtime_mirrors.py`
+
 ### [4.0] Governance-only baseline persistence — Discovery Baseline autoritativa tras full scout pass fresco
 - Tras integrar `d05adb2` y limpiar el worktree, el runtime queda en `empty_backlog_discovery` con `BACKLOG.md` vacío, `module1_status=OPEN` y `project_state.discovery_baseline.present=false`; se ejecuta entonces un `full scout pass` fresco y completo para cerrar la primera persistencia autoritativa de baseline sin abrir una segunda cola ejecutable.
 - `python3 -m elsian eval --all --output-json /tmp/elsian-capacity-scout/fresh-d05adb2/eval_report.json` termina con artefacto usable y contractual: `17` tickers evaluados, `17/17` a `100.0%`, `schema_version=1`, `reports` ordenados por `ticker` y firma `fcca9bc42db27a73c2cf6d95167888f5392c2197c65f2ae2f6313f491c52a688`.

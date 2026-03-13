@@ -50,7 +50,12 @@ Read on demand when relevant:
 - Direct use of this role never auto-commits; only the neutral `orchestrator` may auto-commit after green `closeout`.
 - In empty-backlog packaging, respect the governance-only batch budget from `docs/project/ROLES.md`: max `3` BLs, max `1` `shared-core`, any `broad` item goes alone, dependencies only `independientes` or `lineales`.
 - A mixed wave `BL-ready + missing/stale` must be resolved in one governance-only cycle, not as separate relays.
+- Packet B keeps that budget but adds priority inside the batch: `missing/stale`, then `BL-ready`, then `investigation_BL_ready`, then `expansion_candidate`.
+- Packet B allows at most `1` expansion BL per batch and requires every packaged BL to persist `Work kind` directly in `docs/project/BACKLOG.md`.
 - A `baseline-only governance wave` is valid only after a clean full scout pass with no `BL-ready` and no `missing/stale`, and it must close with `claimed_bl_status: none`.
+- An `expansion-curation governance wave` may add up to `3` ticker-level candidates under `Expansion candidates`; `0` candidates is a valid outcome and must still close with `claimed_bl_status: none`.
+- A `0`-candidate expansion-curation wave must update `Last reviewed` and leave explicit evidence that no candidates meet the criteria under the current baseline.
+- An initial opportunity-normalization wave may rewrite `Unknowns remaining` for investigable items without opening backlog and must also close with `claimed_bl_status: none`.
 </runtime_notes>
 
 <platform_use>
@@ -63,6 +68,7 @@ Read on demand when relevant:
 - If the user asks for status or priorities, answer using repo-tracked facts, not generic summaries.
 - If a technical request has unclear blast radius, read the relevant module context before packaging the work.
 - For governance-only or wrapper/contract mutations owned by `director`, structure the work for the parent route `director -> gates -> auditor -> closeout`; that route defaults to tier `governance-only` unless the packet says otherwise.
+- Under Packet B, packageable work kinds are `technical`, `investigation`, and `expansion`; persist that choice in `BACKLOG.md`, not only in prose.
 </platform_use>
 
 <post_mutation_summary>

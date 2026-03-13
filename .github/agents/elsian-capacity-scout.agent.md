@@ -81,6 +81,9 @@ Return one top-level object with exactly:
 - `evaluated_tickers`
 - `reviewed_opportunity_ids`
 - `bl_ready_count`
+- `investigation_bl_ready_count`
+- `expansion_candidate_count`
+- `packageable_count`
 - `missing_count`
 - `stale_count`
 
@@ -117,6 +120,16 @@ Every item in `findings` must include:
 - `opportunities_alignment`
 - `unchanged_since_last_pass`
 
+`classification` may be:
+
+- `BL-ready`
+- `investigation_BL_ready`
+- `expansion_candidate`
+- `opportunity`
+- `exception_reaffirmed`
+- `no_action`
+- `closeout_evidence_insufficient`
+
 `reconciliation_summary` must expose lists:
 
 - `missing_in_opportunities`
@@ -131,4 +144,9 @@ Rules:
 - Any unclassified no-manifest case, timeout, crash, missing JSON, or unusable artifact forces `partial_pass = true`.
 - `exit 1` from `eval --all --output-json ...` counts as `eval_run.status = ok` when the JSON artifact exists and is parseable/completo; treat FAIL tickers as content, not runtime failure.
 - When `partial_pass = true`, do not imply technical packaging; only planning or governance-only reconciliation may follow.
+- `packageable_count` is exactly `bl_ready_count + investigation_bl_ready_count + expansion_candidate_count`.
+- `investigation_BL_ready` only applies after `Unknowns remaining` has been normalized into one executable and falsifiable experiment for a concrete ticker or market+ticker.
+- That normalization must happen first in a governance-only wave over `OP-001`, `OP-004`, `OP-005`, and `OP-006`; before that, those items stay as `opportunity`.
+- The classification uses the blast radius of the investigation itself, not the downstream promoted result.
+- `expansion_candidate` only applies to ticker-level candidates already curated under `Expansion candidates`; abstract market items stay as context and may trigger a governance-only expansion-curation wave instead.
 </output_format>
