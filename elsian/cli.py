@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from elsian.acquire.registry import get_fetcher
+from elsian.analyze.discovery_baseline import build_eval_output_payload
 from elsian.evaluate.evaluator import evaluate
 from elsian.evaluate.dashboard import format_dashboard
 from elsian.models.case import CaseConfig
@@ -412,6 +413,7 @@ def cmd_run(args: argparse.Namespace) -> None:
 def cmd_eval(args: argparse.Namespace) -> None:
     """Evaluate extraction vs expected.json."""
     sort_by: str = getattr(args, "sort_by", "ticker")
+    output_json: str | None = getattr(args, "output_json", None)
 
     if args.all:
         tickers = sorted(
@@ -445,6 +447,15 @@ def cmd_eval(args: argparse.Namespace) -> None:
             reports.sort(key=lambda x: x[1].score, reverse=True)
         elif sort_by == "readiness":
             reports.sort(key=lambda x: x[1].readiness_score, reverse=True)
+
+    if output_json:
+        artifact_path = Path(output_json).expanduser()
+        artifact_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = build_eval_output_payload([report for _, report in reports])
+        artifact_path.write_text(
+            json.dumps(payload, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
 
     for ticker, report in reports:
         status = "PASS" if report.score == 100.0 else "FAIL"
@@ -1194,6 +1205,13 @@ def main() -> None:
         choices=["ticker", "score", "readiness"],
         default="ticker",
         help="Sort order for --all output (default: ticker)",
+    )
+    p_eval.add_argument(
+        "--output-json",
+        dest="output_json",
+        default=None,
+        metavar="PATH",
+        help="Write a machine-readable eval report artifact to this path",
     )
     p_eval.set_defaults(func=cmd_eval)
 

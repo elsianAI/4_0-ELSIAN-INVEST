@@ -14,6 +14,8 @@ from typing import Any
 
 import pytest
 
+from elsian.models.result import EvalReport
+
 CASES_DIR = Path(__file__).resolve().parent.parent.parent / "cases"
 
 
@@ -1245,6 +1247,7 @@ class TestCmdEvalReadiness:
         sort_by: str = "ticker",
         all_: bool = False,
         score: float = 100.0,
+        output_json: str | None = None,
     ):
         """Run cmd_eval with mocked ExtractPhase and capture stdout.
 
@@ -1274,7 +1277,12 @@ class TestCmdEvalReadiness:
             )
         fake_er.periods["FY2024"] = pr
 
-        args = SimpleNamespace(ticker=ticker, all=all_, sort_by=sort_by)
+        args = SimpleNamespace(
+            ticker=ticker,
+            all=all_,
+            sort_by=sort_by,
+            output_json=output_json,
+        )
 
         captured = io.StringIO()
         old_stdout = sys.stdout
@@ -1284,6 +1292,63 @@ class TestCmdEvalReadiness:
             with patch("elsian.cli._find_case_dir", return_value=CASES_DIR / "TZOO"):
                 with patch("elsian.extract.phase.ExtractPhase.extract", return_value=fake_er):
                     cmd_eval(args)
+        except SystemExit as e:
+            exit_code = e.code or 0
+        finally:
+            sys.stdout = old_stdout
+        return captured.getvalue(), exit_code
+
+    def _run_cmd_eval_all_with_stub_reports(
+        self,
+        tmp_path: Path,
+        *,
+        reports_by_ticker: dict[str, object],
+        sort_by: str = "ticker",
+        output_json: str | None = None,
+    ) -> tuple[str, int]:
+        import io
+        import sys
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        import elsian.cli as cli_module
+        from elsian.models.result import ExtractionResult
+
+        cases_dir = tmp_path / "cases"
+        cases_dir.mkdir()
+        for ticker in reports_by_ticker:
+            ticker_dir = cases_dir / ticker
+            ticker_dir.mkdir()
+            (ticker_dir / "expected.json").write_text("{}", encoding="utf-8")
+            (ticker_dir / "case.json").write_text(
+                json.dumps({"ticker": ticker, "source_hint": "sec", "currency": "USD"}),
+                encoding="utf-8",
+            )
+
+        def fake_extract(self, case_dir: str):  # noqa: ANN001
+            return ExtractionResult(ticker=Path(case_dir).name)
+
+        def fake_evaluate(extraction, expected_path):  # noqa: ANN001
+            return reports_by_ticker[extraction.ticker]
+
+        args = SimpleNamespace(
+            ticker="",
+            all=True,
+            sort_by=sort_by,
+            output_json=output_json,
+        )
+
+        captured = io.StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = captured
+        exit_code = 0
+        try:
+            with (
+                patch.object(cli_module, "CASES_DIR", cases_dir),
+                patch("elsian.extract.phase.ExtractPhase.extract", fake_extract),
+                patch.object(cli_module, "evaluate", side_effect=fake_evaluate),
+            ):
+                cli_module.cmd_eval(args)
         except SystemExit as e:
             exit_code = e.code or 0
         finally:
@@ -1352,3 +1417,73 @@ class TestCmdEvalReadiness:
                     "provenance_coverage_pct", "extra_penalty"):
             assert key in d, f"EvalReport.to_dict() missing key: {key}"
             assert isinstance(d[key], float), f"{key} must be float, got {type(d[key])}"
+
+    def test_output_json_has_exact_top_level_shape(self, tmp_path: Path) -> None:
+        """--output-json writes the exact payload shape without generated_at."""
+        artifact = tmp_path / "eval_report.json"
+        out, exit_code = self._run_cmd_eval_all_with_stub_reports(
+            tmp_path,
+            reports_by_ticker={
+                "ZZZ": EvalReport(ticker="ZZZ", total_expected=1, matched=1, score=100.0),
+                "AAA": EvalReport(ticker="AAA", total_expected=1, matched=1, score=100.0),
+            },
+            output_json=str(artifact),
+        )
+
+        assert exit_code == 0
+        payload = json.loads(artifact.read_text(encoding="utf-8"))
+        assert set(payload.keys()) == {"schema_version", "reports"}
+        assert payload["schema_version"] == 1
+        assert "generated_at" not in payload
+        assert [report["ticker"] for report in payload["reports"]] == ["AAA", "ZZZ"]
+        expected_keys = {
+            "ticker",
+            "total_expected",
+            "matched",
+            "wrong",
+            "missed",
+            "extra",
+            "score",
+            "filings_coverage_pct",
+            "required_fields_coverage_pct",
+            "readiness_score",
+            "validator_confidence_score",
+            "provenance_coverage_pct",
+            "extra_penalty",
+        }
+        assert set(payload["reports"][0].keys()) == expected_keys
+
+    def test_output_json_stays_ticker_sorted_even_when_stdout_is_score_sorted(self, tmp_path: Path) -> None:
+        """Human stdout may sort by score, but the JSON artifact must stay ticker-sorted."""
+        artifact = tmp_path / "eval_report.json"
+        out, exit_code = self._run_cmd_eval_all_with_stub_reports(
+            tmp_path,
+            reports_by_ticker={
+                "ZZZ": EvalReport(ticker="ZZZ", total_expected=1, matched=1, score=100.0),
+                "AAA": EvalReport(ticker="AAA", total_expected=1, matched=1, score=90.0),
+            },
+            sort_by="score",
+            output_json=str(artifact),
+        )
+
+        assert exit_code == 1
+        output_lines = [line for line in out.splitlines() if line.strip()]
+        assert output_lines[0].startswith("ZZZ:")
+        payload = json.loads(artifact.read_text(encoding="utf-8"))
+        assert [report["ticker"] for report in payload["reports"]] == ["AAA", "ZZZ"]
+
+    def test_fail_exit_still_writes_parseable_output_json(self, tmp_path: Path) -> None:
+        """A FAIL-only exit must still leave a complete parseable JSON artifact for discovery."""
+        artifact = tmp_path / "nested" / "eval_report.json"
+        _, exit_code = self._run_cmd_eval_all_with_stub_reports(
+            tmp_path,
+            reports_by_ticker={
+                "AAA": EvalReport(ticker="AAA", total_expected=1, matched=0, wrong=1, score=0.0),
+            },
+            output_json=str(artifact),
+        )
+
+        assert exit_code == 1
+        payload = json.loads(artifact.read_text(encoding="utf-8"))
+        assert payload["schema_version"] == 1
+        assert payload["reports"][0]["ticker"] == "AAA"

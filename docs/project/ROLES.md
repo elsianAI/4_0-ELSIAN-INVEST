@@ -175,16 +175,48 @@ El checker debe marcar `governance_dirty` y forzar `reconcile_pending_work` si d
 
 El subtree no operativo/futuro de `docs/project/OPPORTUNITIES.md` no gatea el runtime.
 
+### Runtime surfaces y ciclo de vida
+
+**Superficies duras**
+
+- `docs/project/BACKLOG.md` sigue siendo la unica cola ejecutable.
+- `docs/project/PROJECT_STATE.md` puede persistir `Discovery Baseline`, pero no crea cola ejecutable ni cola paralela.
+- `docs/project/OPPORTUNITIES.md` sigue siendo la superficie persistida de frontera, excepciones y `Near BL-ready` todavia no empaquetadas.
+
+**Ciclo de vida en 4 niveles**
+
+- **Nivel 1** — implementado completo en esta tranche:
+  - `capacity-scout` `state-vivo-first`
+  - `full scout pass` con criterio de terminacion y fallback cerrados
+  - batch packaging governance-only del `director`
+  - reconciliacion governance-only cuando haya `missing/stale`
+  - `baseline-only governance wave`
+  - ejecucion serial `run-next-until-stop`
+- **Nivel 2** — contrato futuro, no gateado en runtime:
+  - usa el mismo modelo de cola unica y una futura semantica de promocion/reapertura de modulo basada en evidencia acumulada, nunca en una segunda cola.
+- **Nivel 3** — contrato futuro, no gateado en runtime:
+  - extiende el mismo ciclo a handoffs inter-modulo sin romper la regla de `BACKLOG.md` como unica cola ejecutable.
+- **Nivel 4** — contrato futuro, no gateado en runtime:
+  - eleva el mismo contrato a coordinacion de programa/release, sin permitir colas ejecutables paralelas fuera de `BACKLOG.md`.
+
+**Invariantes**
+
+- Una ola governance-only de batch packaging puede crear varias BLs en un solo ciclo.
+- Una `baseline-only governance wave` puede mutar solo canonicals de governance para persistir baseline.
+- Ambas carve-outs deben cerrar con `claimed_bl_status: none`.
+- Fuera de esas carve-outs, cada ejecucion mutante posterior sigue mapeandose a una sola BL.
+
 ### Capacity-scout helper
 
-`capacity-scout` es un helper read-only del runtime, no un rol de negocio.
+`capacity-scout` es un helper read-only del runtime, no un rol de negocio. En Nivel 1 opera `state-vivo-first`: primero contrasta el estado vivo y los artefactos reales; despues usa canonicals como contexto de reconciliacion, nunca como sustituto del estado vivo.
 
 **Puede**
 
 - leer canónicos;
 - ejecutar terminal read-only bajo allowlist;
 - descubrir oportunidades nuevas desde el estado vivo;
-- reafirmar o cuestionar excepciones existentes con evidencia.
+- reafirmar o cuestionar excepciones existentes con evidencia;
+- calcular firmas deterministas para `Discovery Baseline`.
 
 **No puede**
 
@@ -194,12 +226,30 @@ El subtree no operativo/futuro de `docs/project/OPPORTUNITIES.md` no gatea el ru
 - cerrar módulo;
 - hacer closeout.
 
+**Inputs primarios**
+
+- `python3 scripts/check_governance.py --format json`
+- `python3 -m elsian eval --all --output-json /tmp/elsian-capacity-scout/eval_report.json`
+- `python3 -m elsian diagnose --all --output /tmp/elsian-capacity-scout/...`
+- `cases/*/case.json`
+- `cases/*/filings_manifest.json` cuando exista
+- inspeccion read-only de `cases/*/filings/` cuando haga falta
+
+**Inputs secundarios**
+
+- `docs/project/PROJECT_STATE.md`
+- `docs/project/OPPORTUNITIES.md`
+- `docs/project/DECISIONS.md`
+- `VISION.md`
+
 **Allowlist v1**
 
 - `python3 scripts/check_governance.py --format json`
-- `python3 -m elsian eval --all`
+- `python3 -m elsian eval --all --output-json /tmp/elsian-capacity-scout/eval_report.json`
 - `python3 -m elsian diagnose --all --output /tmp/elsian-capacity-scout/...`
-- `rg`, `sed`, `cat`
+- `rg`
+- `sed`
+- `cat`
 
 **Prohibido en v1**
 
@@ -209,25 +259,174 @@ El subtree no operativo/futuro de `docs/project/OPPORTUNITIES.md` no gatea el ru
 - `python3 -m elsian onboard`
 - cualquier comando que escriba en `cases/`, `filings/`, `filings_manifest.json` o canónicos
 
-**Salida estructurada obligatoria**
+**Salida top-level obligatoria**
 
-Cada hallazgo del scout debe incluir:
+La salida del scout debe ser un objeto con exactamente tres bloques:
 
-- `topic`
-- `classification`: `BL-ready | opportunity | exception_reaffirmed | no_action`
-- `subject_type`: `ticker | market | extractor | acquire | governance`
-- `subject_id`
-- `current_canonical_state`
-- `live_evidence`
-- `why_it_matters`
-- `unknowns_remaining`
-- `recommended_next_route`
-- `blast_radius`: `targeted | shared-core | governance-only`
-- `effort`: `minimal | bounded | broad`
-- `validation_tier`: `targeted | shared-core | governance-only | n/a`
-- `last_reviewed`
-- `promotion_trigger`
-- `disposition_hint`: `keep_in_opportunities | send_to_director_for_packaging | reaffirm_exception | retire`
+- `pass_summary`
+- `findings`
+- `reconciliation_summary`
+
+**`pass_summary`**
+
+Campos obligatorios:
+
+- `all_cases_reviewed`
+- `all_manifests_reviewed`
+- `manifest_missing_cases`
+- `all_operational_items_reviewed`
+- `eval_run`
+- `diagnose_run`
+- `partial_pass`
+- `partial_reasons`
+- `evaluated_tickers`
+- `reviewed_opportunity_ids`
+- `bl_ready_count`
+- `missing_count`
+- `stale_count`
+
+`eval_run` y `diagnose_run` deben tener exactamente:
+
+- `status: ok | timeout | error | unusable_artifact`
+- `artifact_path`
+- `signature`
+- `notes`
+
+Regla de nullability:
+
+- si `status = ok`:
+  - `artifact_path` es ruta absoluta
+  - `signature` es SHA-256
+  - `notes` es string, puede ser vacio
+- si `status = timeout | error | unusable_artifact`:
+  - `artifact_path: null`
+  - `signature: null`
+  - `notes` es string no vacio
+
+**`findings`**
+
+Lista de objetos con exactamente:
+
+- `topic: string`
+- `classification: BL-ready | opportunity | exception_reaffirmed | no_action | closeout_evidence_insufficient`
+- `subject_type: ticker | market | extractor | acquire | governance`
+- `subject_id: string`
+- `current_canonical_state: string`
+- `live_evidence: string[]`
+- `why_it_matters: string`
+- `unknowns_remaining: string[]`
+- `recommended_next_route: string`
+- `blast_radius: targeted | shared-core | governance-only`
+- `effort: minimal | bounded | broad`
+- `validation_tier: targeted | shared-core | governance-only | n/a`
+- `last_reviewed: string | null`
+- `promotion_trigger: string | null`
+- `disposition_hint: keep_in_opportunities | send_to_director_for_packaging | reaffirm_exception | retire`
+- `evidence_basis: runtime_direct | runtime_plus_canonical`
+- `opportunities_alignment: matched | missing | stale | not_applicable`
+- `unchanged_since_last_pass: boolean`
+
+**`reconciliation_summary`**
+
+Objeto con listas:
+
+- `missing_in_opportunities`
+- `stale_in_opportunities`
+- `still_valid_in_opportunities`
+- `retire_candidates`
+
+Shapes exactas:
+
+- `missing_in_opportunities`:
+  - `subject_type`
+  - `subject_id`
+  - `topic`
+  - `suggested_lane`
+  - `why_it_matters`
+- `stale_in_opportunities`:
+  - `opportunity_id`
+  - `subject_id`
+  - `staleness_reason`
+  - `recommended_disposition`
+- `still_valid_in_opportunities`:
+  - `opportunity_id`
+  - `subject_id`
+  - `unchanged_since_last_pass`
+- `retire_candidates`:
+  - `opportunity_id`
+  - `subject_id`
+  - `retire_reason`
+
+**`full scout pass`**
+
+El pass no termina hasta que:
+
+- revisa todos los `case.json`;
+- revisa todos los `filings_manifest.json` existentes;
+- clasifica todos los casos sin manifest;
+- ejecuta `eval --all --output-json ...`;
+- ejecuta `diagnose --all --output ...`;
+- contrasta todos los items del subtree operativo de `OPPORTUNITIES.md`.
+
+Casos sin manifest como `0327`, `TALO` o `TEP` cuentan como revisados solo si se clasifican como:
+
+- `manifest_expected_absent`
+- `manifest_missing_gap`
+- `manifest_not_needed_for_current_finding`
+
+Si no pueden clasificarse razonablemente, el scout debe marcar `partial_pass = true`.
+
+**Regla de `partial_pass`**
+
+- `timeout`, `error` o `unusable_artifact` en `eval` o `diagnose` fuerzan `partial_pass = true`.
+- un caso sin manifest no clasificado razonablemente fuerza `partial_pass = true`.
+- `partial_reasons` debe explicar cada degradacion.
+- un pass parcial no puede disparar packaging tecnico; solo planning o reconciliacion governance-only.
+
+**Semantica discovery para `eval --all --output-json`**
+
+- si `eval --all --output-json ...` termina con `exit 1` solo porque hay tickers `FAIL`, pero el JSON existe y es parseable/completo:
+  - `eval_run.status = ok`
+  - `artifact_path` apunta al JSON absoluto
+  - `signature` usa el JSON, no stdout
+  - `notes` puede registrar que hubo FAILs de contenido
+- solo cuentan como `timeout | error | unusable_artifact`:
+  - timeout
+  - crash real
+  - JSON ausente
+  - JSON corrupto o no usable
+
+**Semantica de firmas**
+
+- `last_eval_signature`:
+  - se calcula desde `eval_report.json`
+  - usa `sha256` de la lista `reports` normalizada y ordenada por `ticker`
+  - no usa stdout
+- `last_diagnose_signature`:
+  - se calcula desde `diagnose_report.json`
+  - incluye solo `summary`, `root_cause_summary`, `by_period_type`, `by_field_category` y `hotspots` con allowlist exacta:
+    - `rank`
+    - `field`
+    - `field_category`
+    - `gap_type`
+    - `occurrences`
+    - `affected_tickers`
+    - `evidence`
+    - `root_cause_hint`
+  - ignora `schema_version`, `generated_at` y `cases_dir`
+- `last_cases_signature`:
+  - por ticker incluye el contenido logico de `case.json`
+  - si existe `filings_manifest.json`, incluye su contenido logico normalizado
+  - si no existe manifest, usa inventario estable de `filings/` con `relative_path`, `size` y `sha256(bytes)`
+- `last_operational_opportunities_signature`:
+  - es el `sha256` del subtree operativo de `docs/project/OPPORTUNITIES.md`
+
+**Persistencia de baseline**
+
+- el scout calcula firmas siempre;
+- el `director` persiste baseline;
+- solo un `full scout pass` no parcial puede actualizar `## Discovery Baseline`;
+- una pasada parcial nunca sobrescribe baseline.
 
 ### `OPPORTUNITIES.md` como input operativo
 
@@ -336,6 +535,21 @@ Decidir que trabajo pertenece a Modulo 1, en que orden debe hacerse, con que lim
 - Si el `director` muta governance o contrato, debe cerrar con el bloque `Post-mutation summary` definido en este documento.
 - Toda mutacion del `director` debe mapearse a una unica BL o a `none`.
 - El uso directo de `director` nunca auto-commitea; ese cierre final pertenece solo al `orchestrator`.
+
+**Carve-outs governance-only del `director`**
+
+- **Batch packaging**:
+  - puede crear hasta `3` BLs en un solo ciclo
+  - puede incluir como maximo `1` item `shared-core`
+  - si aparece una oportunidad `broad`, viaja sola
+  - solo admite dependencias `independientes` o `lineales`
+  - un caso mixto `BL-ready + missing/stale` se resuelve en una sola ola governance-only
+  - el exceso no se guarda en `PROJECT_STATE.md`; permanece en `OPPORTUNITIES.md` y, si las firmas no cambian, reaparece como `matched + unchanged_since_last_pass`
+- **Baseline-only governance wave**:
+  - solo aplica tras `full scout pass` no parcial
+  - requiere `0` `BL-ready`, `0` `missing`, `0` `stale`
+  - se usa para persistir `## Discovery Baseline` cuando la baseline esta ausente o sus firmas cambiaron
+- Ambos carve-outs deben cerrar con `claimed_bl_status: none`.
 
 ### 2.2 `engineer`
 
@@ -466,7 +680,11 @@ El orquestador neutral decide que hijo lanzar segun la intencion y el posible bl
 - Toda tarea mutante debe mapearse a una unica BL o a `none`. Si un cambio afecta materialmente a varias BL, el `director` debe partir el paquete antes de ejecucion.
 - En `briefing` y `planificacion`, si `capacity-scout` detecta algo `BL-ready`, el `orchestrator` debe detenerse y devolver findings + ruta recomendada; no puede invocar a `director` dentro de la misma fase read-only.
 - En `ejecucion`, si `capacity-scout` detecta algo `BL-ready`, el `orchestrator` puede abrir una segunda fase separada con `director`, siempre despues de cerrar la fase read-only.
+- Si `capacity-scout.pass_summary.partial_pass = true`, el `orchestrator` no puede disparar packaging tecnico; solo planning o reconciliacion governance-only.
+- Si `capacity-scout` devuelve solo `missing/stale`, la ruta correcta es reconciliacion governance-only; no se abre packaging tecnico.
+- Si `capacity-scout` devuelve `full pass` limpio, sin `BL-ready`, sin `missing/stale`, y la baseline esta ausente o cambiada, la ruta correcta es `baseline-only governance wave`.
 - Si varias BL quedan empaquetadas y priorizadas, el `orchestrator` puede operar en modo `run-next-until-stop`: ejecutar una BL, cerrar, re-ejecutar checker, y continuar solo mientras la siguiente BL siga clara y no aparezca nueva ambigüedad.
+- `run-next-until-stop` debe detenerse en el primer fallo de BL y volver a planning; no se salta el fallo ni reordena por heuristica.
 
 ### 3.1 Paralelizacion mutante controlada
 
@@ -619,6 +837,7 @@ Todo hijo mutante (`engineer` o `director`) debe terminar con este bloque Markdo
   - `in_progress`
   - `blocked`
   - `done`
+- Las olas governance-only de batch packaging y baseline-only deben declarar `claimed_bl_status: none`.
 - `expected_governance_updates` debe listar rutas concretas o `none`.
 - El handoff o packet sigue siendo la fuente de verdad del BL; el summary solo declara el estado final reclamado.
 

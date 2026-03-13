@@ -84,6 +84,27 @@ def _closed_compatible_opportunities_md() -> str:
     )
 
 
+def _baseline_block(
+    *,
+    last_scout_pass_at: str = "2026-03-13T10:20:30Z",
+    last_scout_head: str = "a" * 40,
+    last_eval_signature: str = "b" * 64,
+    last_diagnose_signature: str = "c" * 64,
+    last_cases_signature: str = "d" * 64,
+    last_operational_opportunities_signature: str = "e" * 64,
+) -> str:
+    return (
+        "## Discovery Baseline\n"
+        f"- last_scout_pass_at: {last_scout_pass_at}\n"
+        f"- last_scout_head: {last_scout_head}\n"
+        f"- last_eval_signature: {last_eval_signature}\n"
+        f"- last_diagnose_signature: {last_diagnose_signature}\n"
+        f"- last_cases_signature: {last_cases_signature}\n"
+        "- last_operational_opportunities_signature: "
+        f"{last_operational_opportunities_signature}\n"
+    )
+
+
 def test_classify_dirty_path_buckets_workspace_governance_and_technical():
     assert (
         check_governance.classify_dirty_path("4_0-ELSIAN-INVEST.code-workspace")
@@ -437,6 +458,118 @@ def test_parse_project_state_module1_status_detects_missing_and_duplicated(tmp_p
     status, violations = check_governance.parse_project_state_module1_status(project_state)
     assert status is None
     assert violations == ["project_state_module_status_duplicated"]
+
+
+def test_parse_discovery_baseline_block_absent_is_valid(tmp_path: Path):
+    project_state = tmp_path / "PROJECT_STATE.md"
+    project_state.write_text("> Module 1 status: OPEN\n", encoding="utf-8")
+
+    parsed = check_governance.parse_discovery_baseline_block(project_state.read_text(encoding="utf-8"))
+
+    assert parsed == {
+        "present": False,
+        "valid": True,
+        "values": None,
+        "violations": [],
+    }
+
+
+def test_parse_discovery_baseline_block_valid_shape(tmp_path: Path):
+    project_state = tmp_path / "PROJECT_STATE.md"
+    project_state.write_text(
+        "# Estado\n\n"
+        "> Última actualización: 2026-03-13\n"
+        "> Module 1 status: OPEN\n\n"
+        f"{_baseline_block()}\n"
+        "## Otro bloque\n",
+        encoding="utf-8",
+    )
+
+    parsed = check_governance.parse_discovery_baseline_block(project_state.read_text(encoding="utf-8"))
+
+    assert parsed["present"] is True
+    assert parsed["valid"] is True
+    assert parsed["values"]["last_scout_head"] == "a" * 40
+    assert parsed["violations"] == []
+
+
+def test_build_report_corrupt_baseline_marks_governance_dirty(tmp_path: Path, monkeypatch):
+    (tmp_path / "docs/project").mkdir(parents=True)
+    (tmp_path / "cases").mkdir()
+
+    (tmp_path / "docs/project/PROJECT_STATE.md").write_text(
+        "# Estado\n\n"
+        "> Última actualización: 2026-03-13\n"
+        "> Module 1 status: OPEN\n\n"
+        "## Discovery Baseline\n"
+        "- last_scout_head: invalid\n"
+        "- last_scout_pass_at: 2026-03-13T10:20:30Z\n"
+        "## Otro bloque\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "docs/project/BACKLOG.md").write_text("", encoding="utf-8")
+    (tmp_path / "docs/project/OPPORTUNITIES.md").write_text(
+        _valid_opportunities_md(),
+        encoding="utf-8",
+    )
+    (tmp_path / "CHANGELOG.md").write_text("# Changelog\n\n## 2026-03-13\n", encoding="utf-8")
+
+    def fake_run_git(_repo_root: Path, *args: str) -> str:
+        if args == ("rev-parse", "--abbrev-ref", "HEAD"):
+            return "main"
+        if args == ("rev-parse", "--short", "HEAD"):
+            return "abc1234"
+        if args == ("status", "--short", "--untracked-files=all"):
+            return ""
+        raise AssertionError(args)
+
+    monkeypatch.setattr(check_governance, "run_git", fake_run_git)
+
+    report = check_governance.build_report(tmp_path)
+
+    assert report["project_state"]["discovery_baseline"]["present"] is True
+    assert report["project_state"]["discovery_baseline"]["valid"] is False
+    assert report["summary"]["next_resolution_mode"] == "reconcile_pending_work"
+    assert any(
+        violation.startswith("project_state_discovery_baseline")
+        for violation in report["summary"]["governance_contract_violations"]
+    )
+
+
+def test_build_report_valid_baseline_is_clean_when_repo_is_clean(tmp_path: Path, monkeypatch):
+    (tmp_path / "docs/project").mkdir(parents=True)
+    (tmp_path / "cases").mkdir()
+
+    (tmp_path / "docs/project/PROJECT_STATE.md").write_text(
+        "# Estado\n\n"
+        "> Última actualización: 2026-03-13\n"
+        "> Module 1 status: OPEN\n\n"
+        f"{_baseline_block()}\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "docs/project/BACKLOG.md").write_text("", encoding="utf-8")
+    (tmp_path / "docs/project/OPPORTUNITIES.md").write_text(
+        _valid_opportunities_md(),
+        encoding="utf-8",
+    )
+    (tmp_path / "CHANGELOG.md").write_text("# Changelog\n\n## 2026-03-13\n", encoding="utf-8")
+
+    def fake_run_git(_repo_root: Path, *args: str) -> str:
+        if args == ("rev-parse", "--abbrev-ref", "HEAD"):
+            return "main"
+        if args == ("rev-parse", "--short", "HEAD"):
+            return "abc1234"
+        if args == ("status", "--short", "--untracked-files=all"):
+            return ""
+        raise AssertionError(args)
+
+    monkeypatch.setattr(check_governance, "run_git", fake_run_git)
+
+    report = check_governance.build_report(tmp_path)
+
+    assert report["project_state"]["discovery_baseline"]["valid"] is True
+    assert report["summary"]["governance_contract_violations"] == []
+    assert report["summary"]["next_resolution_mode"] == "empty_backlog_discovery"
 
 
 def test_parse_active_backlog_ids_returns_only_live_ids(tmp_path: Path):

@@ -72,7 +72,11 @@ Read on demand when required by routing, gates, closeout, or child packets:
   - if the request needs better packaging or scope clarification after the read-only phase, launch `Project Director`
   - still do not mutate
 - In `briefing` and `planificacion`, if the checker reports `technical_dirty`, prefer a reconciliation recommendation over starting a new BL.
-- In `briefing` and `planificacion`, if `ELSIAN Capacity Scout` finds `BL-ready` work, stop and return findings plus route recommendation; do not launch `Project Director` inside the same read-only phase.
+- In `briefing` and `planificacion`, consume `capacity-scout` strictly from `pass_summary`, `findings`, and `reconciliation_summary`; do not add heuristic routing outside that contract.
+- In `briefing` and `planificacion`, if `capacity-scout.pass_summary.partial_pass = true`, stop and recommend only planning or governance-only reconciliation; never technical packaging.
+- In `briefing` and `planificacion`, if `capacity-scout` reports any `BL-ready`, stop and return findings plus route recommendation; do not launch `Project Director` inside the same read-only phase.
+- In `briefing` and `planificacion`, if `capacity-scout` reports only `missing/stale`, recommend `director -> gates -> auditor -> closeout` with tier `governance-only`.
+- In `briefing` and `planificacion`, if `capacity-scout` reports a clean full pass with baseline absent/cambiada and no `BL-ready`/`missing`/`stale`, recommend a `baseline-only governance wave`.
 - In **ejecucion**:
   - use `Project Director` first when blast radius or scope is ambiguous
   - use `ELSIAN 4.0 Engineer` direct only for clearly local technical work
@@ -81,7 +85,7 @@ Read on demand when required by routing, gates, closeout, or child packets:
   - for governance or contract mutations owned by `director`, use `director -> gates -> auditor -> closeout`
   - the `director -> gates -> auditor -> closeout` route defaults to tier `governance-only` unless the packet requires stronger validation
   - if preflight or post-closeout checker returns `empty_backlog_discovery`, run a first read-only phase with `ELSIAN Capacity Scout`; only then, in a second phase, may you launch `Project Director`
-  - when several BLs remain live and clearly ordered after closeout, you may continue in `run-next-until-stop`; re-run the checker after each closed BL and stop as soon as scope becomes ambiguous
+  - when several BLs remain live and clearly ordered after closeout, you may continue in `run-next-until-stop`; re-run the checker after each closed BL and stop as soon as scope becomes ambiguous or the first BL fails
   - if the route ends green and the repo was clean at preflight except `workspace_only_dirty`, extend the route with `auto-commit`
 - Keep every child packet autosufficient and factual.
 </routing_use>

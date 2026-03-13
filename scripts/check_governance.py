@@ -14,6 +14,11 @@ from typing import Any
 
 
 SCRIPT_ROOT = Path(__file__).resolve().parents[1]
+if str(SCRIPT_ROOT) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_ROOT))
+
+from elsian.analyze.discovery_baseline import parse_discovery_baseline_block
+
 OVERRIDE_LEAF_KEYS = {"value", "note", "source_filing", "extraction_method", "confidence"}
 WORKSPACE_ONLY_PREFIXES = (".vscode/", ".idea/")
 WORKSPACE_ONLY_SUFFIXES = (".code-workspace",)
@@ -468,6 +473,16 @@ def build_report(repo_root: Path, status_output: str | None = None) -> dict[str,
     opportunities_path = repo_root / "docs/project/OPPORTUNITIES.md"
     project_state_last_updated = parse_project_state_last_updated(project_state_path)
     module1_status, module1_status_violations = parse_project_state_module1_status(project_state_path)
+    discovery_baseline = (
+        parse_discovery_baseline_block(project_state_path.read_text(encoding="utf-8"))
+        if project_state_path.exists()
+        else {
+            "present": False,
+            "valid": True,
+            "values": None,
+            "violations": [],
+        }
+    )
     changelog_latest_date = parse_changelog_latest_date(changelog_path)
     project_state_lags = False
     if project_state_last_updated and changelog_latest_date:
@@ -481,6 +496,7 @@ def build_report(repo_root: Path, status_output: str | None = None) -> dict[str,
     opportunities_report = parse_operational_opportunities(opportunities_path)
 
     governance_contract_violations = list(module1_status_violations)
+    governance_contract_violations.extend(discovery_baseline["violations"])
     governance_contract_violations.extend(opportunities_report["violations"])
     duplicate_backlog_ids = parse_duplicate_backlog_ids(backlog_path)
     if duplicate_backlog_ids:
@@ -548,6 +564,7 @@ def build_report(repo_root: Path, status_output: str | None = None) -> dict[str,
             "last_updated": project_state_last_updated,
             "module1_status": module1_status,
             "content_sha256": file_hash(project_state_path),
+            "discovery_baseline": discovery_baseline,
         },
         "opportunities": {
             "path": str(opportunities_path),
@@ -603,6 +620,12 @@ def format_text(report: dict[str, Any]) -> str:
         f"backlog.duplicate_ids: {report['backlog']['duplicate_ids'] or '-'}",
         f"project_state.last_updated: {report['project_state']['last_updated'] or '-'}",
         f"project_state.module1_status: {report['project_state']['module1_status'] or '-'}",
+        (
+            "project_state.discovery_baseline: "
+            f"present={report['project_state']['discovery_baseline']['present']} "
+            f"valid={report['project_state']['discovery_baseline']['valid']} "
+            f"violations={report['project_state']['discovery_baseline']['violations'] or '-'}"
+        ),
         f"changelog.latest_date: {report['changelog']['latest_date'] or '-'}",
         f"project_state_lags_changelog: {report['document_sync']['project_state_lags_changelog']}",
         f"opportunities.operational_shape_valid: {report['opportunities']['operational_shape_valid']}",

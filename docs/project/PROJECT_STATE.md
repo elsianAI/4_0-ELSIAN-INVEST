@@ -1,11 +1,9 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
-> Última actualización: 2026-03-12
-> Actualizado por: Codex (empty-backlog runtime contract)
+> Última actualización: 2026-03-13
+> Actualizado por: Codex (Tranche A Nivel 1 lifecycle contract; baseline persistence deferred until fresh full scout pass)
 > Module 1 status: OPEN
 > Semántica vigente del marker: `OPEN` mientras exista frontera operacional real en el subtree operativo de `OPPORTUNITIES.md`. `TEP` y `0327` pueden convivir con un cierre futuro solo como excepciones ticker-level reafirmadas; `TALO` no es compatible con `CLOSED` mientras siga siendo un gap factual abierto de autonomía/coverage.
-
----
 
 ## Fase actual: FASE 1 — Consolidar Layer 1
 
