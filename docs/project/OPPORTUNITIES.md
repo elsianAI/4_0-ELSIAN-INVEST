@@ -21,20 +21,20 @@
 
 ### Near BL-ready
 
-#### OP-001 — SOM: promoción a FULL o cierre como excepción documentada
+### Exception watchlist
+
+#### OP-001 — SOM: excepción ticker-level reafirmada; LSE/AIM general sigue aparte
 - **Subject type:** ticker
 - **Subject id:** SOM
-- **Canonical state:** frontera abierta
-- **Why it matters:** SOM es el único ticker actual validado `ANNUAL_ONLY` que sigue abierto de forma explícita y mantiene viva una investigación ticker-level ya packageable; la generalización de mercado LSE/AIM sigue aparte como frente abstracto no packageable.
-- **Live evidence:** `PROJECT_STATE.md` lo mantiene fuera de `DEC-015`, lo ubica en Fase B por investigación activa y deja la generalización de LSE/AIM separada en `OP-009`.
-- **Unknowns remaining:** Ejecutar acquire sobre SOM buscando filings intermedios públicos utilizables. Si aparece al menos uno, correr extract+eval sobre ese filing: `promoted` si SOM queda listo para `FULL`, `technical_followup_opened` si aparece un bloqueo reusable, `exception_reaffirmed` si la evidencia sostiene la excepción actual, o `discarded_with_evidence` si no existe filing utilizable.
-- **Promotion trigger:** Evidencia factual nueva que acote una única ola serial: promoción a `FULL` o excepción cerrada con soporte documental suficiente.
+- **Canonical state:** ANNUAL_ONLY exception_reaffirmed
+- **Why it matters:** BL-087 cierra la única frontera ticker-level abierta de SOM sin convertirla en expansión de mercado. El ticker queda cerrado por excepción documentada, mientras la generalización de LSE/AIM sigue separada como frente abstracto no packageable en `OP-009`.
+- **Live evidence:** El outcome aceptado de BL-087 fija `exception_reaffirmed`: el filing intermedio `SRC_003_INTERIM_H1_2025.txt` aporta solo 2 periodos H1, cobertura parcial y una inconsistencia de balance sheet (`assets 90.6` frente a `liabilities + equity 91.8`), insuficiente para promoción a `FULL` y sin follow-up reusable nuevo.
+- **Unknowns remaining:** Ninguno packageable hoy a nivel ticker. Solo revalidación periódica si aparece un filing intermedio público adicional y suficientemente fiable para reconsiderar la promoción.
+- **Promotion trigger:** Evidencia nueva de un filing intermedio formal con cobertura suficiente y fiabilidad bastante para sostener promoción a `FULL` o abrir un follow-up reusable distinto del ya descartado.
 - **Blast radius if promoted:** targeted
 - **Expected effort:** bounded
 - **Last reviewed:** 2026-03-14
-- **Disposition:** keep
-
-### Exception watchlist
+- **Disposition:** reaffirm_exception
 
 #### OP-002 — KAR: revalidación periódica de la excepción ASX annual-only
 - **Subject type:** ticker
@@ -136,12 +136,12 @@
 - **Subject id:** LSE/AIM
 - **Canonical state:** mercado no generalizado
 - **Why it matters:** SOM no basta para declarar capacidad amplia del mercado; falta masa crítica o patrón reusable.
-- **Live evidence:** `PROJECT_STATE.md` mantiene `SOM` como investigación ticker-level activa en Fase B, mientras esta entrada conserva la generalización de mercado que sigue siendo abstracta y no packageable por sí sola.
+- **Live evidence:** `PROJECT_STATE.md` y `OP-001` dejan a SOM cerrado como excepción ticker-level reafirmada, mientras esta entrada conserva la generalización de mercado que sigue siendo abstracta y no packageable por sí sola.
 - **Unknowns remaining:** Curar un ticker concreto adicional de LSE/AIM antes de proponer onboarding. Mientras no exista candidato ticker-level con filings discoverables y blast radius `targeted`, este item no es packageable.
 - **Promotion trigger:** candidato concreto con valor de frontera real y packet mínimo serializable.
 - **Blast radius if promoted:** shared-core
 - **Expected effort:** broad
-- **Last reviewed:** 2026-03-13
+- **Last reviewed:** 2026-03-14
 - **Disposition:** keep
 
 #### OP-010 — Euronext más allá de TEP

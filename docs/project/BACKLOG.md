@@ -34,18 +34,6 @@
 
 Este backlog representa solo el subconjunto **ejecutable seleccionado** de la **Fase B** del programa de capacidad de Module 1. La **Fase A** vive en `docs/project/PROJECT_STATE.md` como capacidad factual ya cerrada. `docs/project/OPPORTUNITIES.md` sigue alojando la **Fase C** no packageable, pero también puede alojar investigación ya packageable que haya quedado fuera del batch actual solo por presupuesto; esos items no pasan a Fase C por ese motivo.
 
-### BL-087 — Ejecutar el experimento único de SOM para promoción o excepción cerrada
-- **Prioridad:** ALTA
-- **Estado:** TODO
-- **Asignado a:** engineer
-- **Módulo:** Module 1
-- **Validation tier:** targeted
-- **Work kind:** investigation
-- **Depende de:** —
-- **Referencias:** OP-001, DEC-015
-- **Descripción:** Ejecutar un único experimento de acquire sobre SOM para buscar un filing intermedio público utilizable y resolver la única frontera ticker-level abierta de LSE/AIM. La investigación debe cerrarse en una sola salida canónica: `promoted`, `technical_followup_opened`, `exception_reaffirmed` o `discarded_with_evidence`.
-- **Criterio de aceptación:** Se ejecuta exactamente un experimento sobre SOM con evidencia factual suficiente; el resultado queda cerrado en una única salida canónica; si aparece follow-up técnico, queda acotado y reusable; si no aparece filing utilizable, la excepción o descarte quedan documentados con evidencia explícita.
-
 ### BL-088 — Probar acquire Euronext fuera del carril ya validado con TEP como ancla
 - **Prioridad:** MEDIA
 - **Estado:** TODO

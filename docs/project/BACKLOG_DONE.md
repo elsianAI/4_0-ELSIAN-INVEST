@@ -9,6 +9,17 @@
 
 ---
 
+### BL-087 — Ejecutar el experimento único de SOM para promoción o excepción cerrada
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-14)
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** targeted
+- **Work kind:** investigation
+- **Depende de:** —
+- **Descripción:** Se cierra BL-087 con outcome terminal `exception_reaffirmed`. El experimento único sobre SOM usó el filing intermedio `SRC_003_INTERIM_H1_2025.txt` ya adquirido en el carril `eu_manual` y confirmó que el mejor H1 hoy disponible no sirve para promover el ticker a `FULL`: solo aporta dos periodos H1, cobertura parcial de campos canónicos, formato investor presentation en US$ millones con una sola decimal y una inconsistencia de balance sheet (`assets 90.6` frente a `liabilities + equity 91.8`) que impide tratar la slide como base fiable para canonizar balance sheet intermedio. La evidencia cierra la frontera ticker-level de SOM sin abrir follow-up reusable nuevo; la generalización LSE/AIM sigue separada como frente abstracto en `OP-009`.
+- **Criterio de aceptación:** ✓ Se ejecutó exactamente un experimento acotado sobre SOM. ✓ El outcome canónico quedó fijado en `exception_reaffirmed`. ✓ `python3 -m elsian eval SOM` se mantiene en PASS 100.0% (203/203). ✓ `python3 scripts/check_governance.py --format json` queda sin `governance_contract_violations`. ✓ `BL-087` sale de `docs/project/BACKLOG.md`, `OP-001` deja de figurar como frontera ticker-level abierta y `PROJECT_STATE.md` deja de presentar a SOM como backlog vivo o frontera abierta packageable. ✓ No se abre ninguna BL nueva porque no emerge follow-up reusable nuevo con evidencia suficiente.
+
 ### BL-089 — SEC acquire: preservar `coverage` y `cik` en cache-hit sin reabrir scope TALO
 - **Prioridad:** ALTA
 - **Estado:** DONE ✅ (2026-03-14)

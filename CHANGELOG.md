@@ -2,6 +2,27 @@
 
 ## 2026-03-14
 
+### [BL-087] SOM — experimento acquire H1 intermedio: outcome `exception_reaffirmed`
+- Experimento ejecutado sobre el filing intermedio de SOM disponible en `cases/SOM/filings/` (ya adquirido vía `eu_manual`): `SRC_003_INTERIM_H1_2025.txt` es la única fuente H1 pública identificada en el carril actual.
+- **Evidencia H1 encontrada en SRC_003**: P&L estructurado para H1 2025 vs H1 2024 (Revenue $39.8M vs $51.8M; Gross profit $21.0M vs $28.3M; Operating income $4.7M vs $10.8M; Net income $2.6M vs $8.1M; Provision for income taxes $2.2M vs $2.5M; Engineering & product development $1.0M vs $1.3M; Selling, marketing & customer support $6.7M vs $8.2M; G&A $8.6M vs $8.0M). Balance sheet al 30-Jun-2025: Total assets $90.6M, Total liabilities $11.7M, Equity $78.9M (Total L+E $91.8M). Cash flow: CFO $4.1M vs $2.9M; CFI $(0.5)M vs $(1.6)M; CFF $(8.5)M vs $(14.1)M. Interim DPS: $0.04 vs $0.08.
+- **Limitaciones determinantes**:
+  - Formato slide investor presentation (US$ millones, 1 decimal) — no estados financieros formales auditados.
+  - Inconsistencia de balance sheet: Total assets $90.6M ≠ Total liabilities+equity $91.8M ($1.2M de discrepancia por redondeo acumulado en la presentación). La slide no puede tratarse como base fiable para canonizar el balance sheet intermedio.
+  - Cobertura de campos canónicos por periodo H1: ~14/22 (64%) — ausentes EPS estándar, shares outstanding, EBITDA GAAP, interest_expense separado, D&A separado, total_debt explícito.
+  - Solo 2 periodos H1 disponibles en el carril actual (H1 2025 + H1 2024 como comparación). No existen H1 previos adquiridos (H1 2024 standalone, H1 2023… no están en `filings/`).
+  - Ruta alternativa (RNS AIM formal con tablas completas) requiere infraestructura LSE fuera del alcance de este experimento.
+- **SOM actual**: 100% (203/203 campos) en ANNUAL_ONLY con 16 periodos anuales. Promover a FULL con datos H1 de la presentación introduciría regresión de cobertura y calidad por debajo del baseline anual.
+- **Outcome factual: `exception_reaffirmed`**. La excepción `period_scope: ANNUAL_ONLY` queda sostenida con evidencia: el mejor filing intermedio disponible es una presentación de inversores con cobertura insuficiente, inconsistencia de balance sheet, y solo 2 periodos H1. El frente LSE/AIM general no se abre (fuera de alcance por contrato).
+- **Ficheros mutados:** `CHANGELOG.md`.
+- **Validation:** `python3 -m elsian eval SOM` → `PASS score=100.0% (203/203)` inalterado; `python3 scripts/check_governance.py --format json` → `governance_contract_violations=[]`, `active_ids=[BL-087, BL-088]`.
+
+### [4.0] Governance closeout — BL-087 archivada tras outcome de investigación aceptado
+- `docs/project/BACKLOG.md` saca `BL-087` de la cola ejecutable tras el outcome aceptado `exception_reaffirmed`, dejando `BL-088` como única BL viva.
+- `docs/project/BACKLOG_DONE.md` archiva `BL-087` con cierre factual estrecho: el experimento único sobre SOM no produce promoción a `FULL`, no abre follow-up reusable nuevo y cierra la frontera ticker-level del ticker con excepción documentada.
+- `docs/project/OPPORTUNITIES.md` mueve `OP-001` desde `Near BL-ready` a `Exception watchlist`, donde SOM ya no figura como investigación packageable abierta; la expansión abstracta LSE/AIM permanece separada en `OP-009`.
+- `docs/project/PROJECT_STATE.md` deja de contar a SOM como frontera abierta y lo reclasifica como `ANNUAL_ONLY exception_reaffirmed` sin cambiar el cómputo factual de `DEC-015`, que sigue en `16` (`14 FULL + KAR + JBH`).
+- **Validation:** `python3 scripts/check_governance.py --format json` después de mutar → `backlog.active_ids=[BL-088]`, `governance_contract_violations=[]`; `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md docs/project/OPPORTUNITIES.md docs/project/PROJECT_STATE.md CHANGELOG.md` → limpio.
+
 ### [4.0] Governance closeout — BL-089 archivada tras outcome técnico aceptado
 - `docs/project/BACKLOG.md` saca `BL-089` de la cola ejecutable tras el outcome técnico shared-core ya aceptado por parent y auditoría, dejando el backlog vivo en `BL-087` y `BL-088`.
 - `docs/project/BACKLOG_DONE.md` archiva `BL-089` con cierre factual estrecho: cache-hit de `SecEdgarFetcher.acquire()` ya recupera `cik` desde manifest cuando `case.cik` es `null`, cuenta earnings `8-K` y `8-K/A`, y mantiene como único riesgo residual no bloqueante que `filings_coverage_pct` siga fijo a `100.0` en cache-hit.

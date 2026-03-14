@@ -1,9 +1,9 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
 > Última actualización: 2026-03-14
-> Actualizado por: Copilot (Governance closeout BL-089 after accepted technical outcome)
+> Actualizado por: Copilot (Governance closeout BL-087 after accepted investigation outcome)
 > Module 1 status: OPEN
-> Semántica vigente del marker: `OPEN` mientras exista frontera operacional real en el subtree operativo de `OPPORTUNITIES.md`. `TEP` y `0327` pueden convivir con un cierre futuro solo como excepciones ticker-level reafirmadas; el frente de TALO ya no depende de un follow-up técnico vivo y queda reducido a watchlist factual por el cluster de enmiendas fuera de backlog activo.
+> Semántica vigente del marker: `OPEN` mientras exista frontera operacional real en el subtree operativo de `OPPORTUNITIES.md`. `SOM`, `TEP` y `0327` pueden convivir con un cierre futuro como excepciones ticker-level ya reafirmadas o documentadas; el frente de TALO ya no depende de un follow-up técnico vivo y queda reducido a watchlist factual por el cluster de enmiendas fuera de backlog activo.
 
 ## Discovery Baseline
 - last_scout_pass_at: 2026-03-13T10:36:37Z
@@ -26,14 +26,14 @@ Ver ROADMAP.md para descripción completa de fases.
 | Tickers FULL 100% | **14** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, CROX, TEP, ADTN, 0327) | — | 2026-03-09 |
 | Tickers ANNUAL_ONLY justificado | **2** (KAR, JBH) | — | 2026-03-11 |
 | Tickers ANNUAL_ONLY promocionable | **0** | — | 2026-03-11 |
-| Tickers en frontera abierta | **1** (SOM) | — | 2026-03-11 |
+| Tickers en frontera abierta | **0** | — | 2026-03-14 |
 | Tickers WIP | 0 | 0 | 2026-03-11 |
 | Total campos validados | 4,652 | — | 2026-03-11 |
 | Campos canónicos | 29 (26 previos + accounts_receivable, inventories, accounts_payable) | — | 2026-03-07 |
 | Tests pasando | 1824 passed, 5 skipped, 1 warning en `python3 -m pytest -q` local | — | 2026-03-11 |
 | Líneas de código (aprox.) | ~12,000 + ~6,500 tests | 2026-03-07 |
 
-*Interpretación canónica vigente de `DEC-015`: cuentan hoy **16** tickers, exactamente **14 `FULL` + `KAR` + `JBH`**. `DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies, y la lectura operativa actual formaliza de forma explícita que `KAR` y `JBH` entran bajo esa misma excepción documentada de ASX. `ADTN` cuenta como `FULL` tras el cierre targeted de `BL-081` (`8A+15Q`, 520/520), y `0327` queda validado como `FULL` con `3A+3H` bajo un path de acquire `hkex_manual` reproducible desde git. `BL-076` no alteró el hito previo de **15/15**; el cómputo factual actual de `DEC-015` asciende a **16** (`14 FULL + KAR + JBH`) y no coexiste aquí con una lectura alternativa. `SOM` no cuenta hoy para `DEC-015`: deja de describirse como "pendiente de promoción/cierre" y pasa a tratarse como la única **frontera abierta** actual, es decir, ticker validado `ANNUAL_ONLY` pero todavía no cerrado canónicamente ni como `ANNUAL_ONLY justificado` ni como promoción empaquetable.
+*Interpretación canónica vigente de `DEC-015`: cuentan hoy **16** tickers, exactamente **14 `FULL` + `KAR` + `JBH`**. `DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies, y la lectura operativa actual formaliza de forma explícita que `KAR` y `JBH` entran bajo esa misma excepción documentada de ASX. `ADTN` cuenta como `FULL` tras el cierre targeted de `BL-081` (`8A+15Q`, 520/520), y `0327` queda validado como `FULL` con `3A+3H` bajo un path de acquire `hkex_manual` reproducible desde git. `BL-076` no alteró el hito previo de **15/15**; el cómputo factual actual de `DEC-015` asciende a **16** (`14 FULL + KAR + JBH`) y no coexiste aquí con una lectura alternativa. `SOM` no cuenta hoy para `DEC-015`: BL-087 cierra la investigación ticker-level con outcome `exception_reaffirmed`, pero la evidencia H1 disponible sigue siendo insuficiente para promoción a `FULL` y no equivale a la excepción estructural ASX que sí permite contar `KAR` y `JBH`.
 
 ## Tickers validados
 
@@ -53,7 +53,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | ACLS | 486 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+15Q) |
 | INMD | 234 | SEC (US) | 20-F/6-K HTML (IFRS) | ✅ VALIDATED (FULL: 6A+6Q — BL-040 promoted) |
 | CROX | 326 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL — BL-041 DONE) |
-| SOM | 203 | LSE/AIM (GB) | PDF (US-GAAP, USD) | ✅ VALIDATED (ANNUAL_ONLY: 16A, 203/203 — DEC-022 completado) |
+| SOM | 203 | LSE/AIM (GB) | PDF (US-GAAP, USD) | ✅ VALIDATED (ANNUAL_ONLY: 16A, 203/203 — BL-087 `exception_reaffirmed`) |
 | 0327 | 146 | HKEX (HK) | PDF/TXT manual HKEX (HKFRS, HKD) | ✅ VALIDATED (FULL: 3A+3H — BL-083 DONE, reproducible desde git) |
 | ADTN | 520 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 8A+15Q — BL-081 DONE) |
 
@@ -77,7 +77,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | ACLS | SEC (US) | FULL | autonomous | A |
 | INMD | SEC (US) | FULL | autonomous | A |
 | CROX | SEC (US) | FULL | autonomous | A |
-| SOM | LSE/AIM (GB) | frontera abierta | gradual | B |
+| SOM | LSE/AIM (GB) | ANNUAL_ONLY exception_reaffirmed | documented exception | A |
 | 0327 | HKEX (HK) | FULL | documented exception | B |
 | ADTN | SEC (US) | FULL | autonomous | A |
 
@@ -88,7 +88,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | SEC (US) | TZOO, GCT, IOSP, NEXN, SONO, TALO, NVDA, PR, ACLS, INMD, CROX, ADTN | Capacidad FULL operativa | autonomous | A |
 | ASX (AU) | KAR, JBH | ANNUAL_ONLY justificado | autonomous | A |
 | Euronext (FR) | TEP | Capacidad FULL en un ticker, con investigación de mercado ya packageable | gradual | B |
-| LSE/AIM (GB) | SOM | frontera ticker-level con investigación activa | gradual | B |
+| LSE/AIM (GB) | SOM | ticker anchor cerrado; mercado no generalizado | gradual | C |
 | HKEX (HK) | 0327 | FULL en ticker validado, con siguiente experimento de mercado ya packageable y diferido por presupuesto | documented exception | B |
 
 **Lectura del programa:**
@@ -151,7 +151,7 @@ No hay tickers WIP actualmente. Los 17 tickers están al 100%.
 
 ## Bloqueantes actuales
 
-No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Provenance Level 3. El pipeline sigue funcional end-to-end para los 17 tickers validados al 100%, `python3 -m pytest -q` queda documentado en verde local en `PROJECT_STATE`, `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` mantiene `SourceMap_v1 FULL` con 818/818, y BL-069 deja además `python3 -m elsian diagnose --all --output /tmp/elsian-bl069-parent3` alineado con el path canónico de `eval` (`17/17 evaluated`, overall 100.0%, `wrong=0`, `missed=0`). La diferencia respecto al snapshot del 2026-03-13 sigue siendo operativa, no regresiva: la ola del 2026-03-14 abrió `BL-086`, `BL-087` y `BL-088`; el outcome aceptado de `BL-086` abrió `BL-089` como follow-up shared-core mínimo; y el closeout técnico ahora aceptado de `BL-089` deja solo `BL-087` y `BL-088` como backlog vivo, manteniendo `0327` como investigación packageable todavía válida pero fuera del batch por presupuesto. El cómputo factual actual de `DEC-015` sigue en **16**: **14 FULL + KAR + JBH** por excepción ASX documentada. Esta secuencia no sustituye la `Discovery Baseline` persistida del 2026-03-13; solo reconcilia backlog y oportunidades con evidencia nueva ya auditada.
+No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Provenance Level 3. El pipeline sigue funcional end-to-end para los 17 tickers validados al 100%, `python3 -m pytest -q` queda documentado en verde local en `PROJECT_STATE`, `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` mantiene `SourceMap_v1 FULL` con 818/818, y BL-069 deja además `python3 -m elsian diagnose --all --output /tmp/elsian-bl069-parent3` alineado con el path canónico de `eval` (`17/17 evaluated`, overall 100.0%, `wrong=0`, `missed=0`). La diferencia respecto al snapshot del 2026-03-13 sigue siendo operativa, no regresiva: la ola del 2026-03-14 abrió `BL-086`, `BL-087` y `BL-088`; el outcome aceptado de `BL-086` abrió `BL-089` como follow-up shared-core mínimo; el closeout técnico aceptado de `BL-089` lo absorbió sin dejar backlog SEC vivo; y el closeout canónico de BL-087 deja solo `BL-088` como backlog vivo, manteniendo `0327` como investigación packageable todavía válida pero fuera del batch por presupuesto. El cómputo factual actual de `DEC-015` sigue en **16**: **14 FULL + KAR + JBH** por excepción ASX documentada. Esta secuencia no sustituye la `Discovery Baseline` persistida del 2026-03-13; solo reconcilia backlog y oportunidades con evidencia nueva ya auditada.
 
 **Gaps y límites pendientes (no bloqueantes):**
 1. **Residual field-dependency gaps** — `fx_effect_cash`, `other_cash_adjustments`, `market_cap` y `price` siguen fuera del set canónico. Son opcionales o de market data; no bloquean validación ni BL-058.
@@ -213,9 +213,8 @@ No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Proven
 
 ## Próximas prioridades
 
-La secuencia governance-only del 2026-03-14 mantiene **Fase B** abierta con dos paquetes activos dentro del presupuesto vigente. El follow-up técnico mínimo reabierto tras BL-086 ya quedó absorbido por el closeout aceptado de BL-089 y no sigue compitiendo en backlog.
+La secuencia governance-only del 2026-03-14 mantiene **Fase B** abierta con un único paquete activo dentro del presupuesto vigente. El follow-up técnico mínimo reabierto tras BL-086 ya quedó absorbido por el closeout aceptado de BL-089 y BL-087 ya cerró la frontera ticker-level de SOM con outcome `exception_reaffirmed`.
 
-- **BL-087** — SOM: experimento único para decidir promoción, follow-up técnico o excepción cerrada sobre la única frontera ticker-level abierta de LSE/AIM.
 - **BL-088** — TEP: experimento único de acquire Euronext fuera del carril ya validado usando TEP como ancla.
 
 Queda fuera del batch por presupuesto, no por invalidación factual:
@@ -223,8 +222,8 @@ Queda fuera del batch por presupuesto, no por invalidación factual:
 - **0327** permanece en `OPPORTUNITIES.md` como `investigation_BL_ready` matched y unchanged; será el siguiente candidato natural si el batch actual no reabre una BL técnica shared-core que cambie la prioridad.
 
 El resto del programa queda repartido así:
-- **Fase A** — capacidad cerrada actual: 16 tickers en capacidad operativa cerrada dentro de Module 1; esa cifra mezcla capacidad `FULL` y excepciones ticker-level ya cerradas, no equivale a 5 mercados cerrados de forma generalizada.
-- **Fase B** — trabajo packageable vigente: `2` BL activas (`BL-087` y `BL-088`, ambas investigaciones targeted), más `0327` como investigación ya packageable en `OPPORTUNITIES.md` y no seleccionada en este batch solo por presupuesto.
+- **Fase A** — capacidad cerrada actual: 17 tickers en capacidad operativa cerrada dentro de Module 1; esa cifra mezcla capacidad `FULL` y excepciones ticker-level ya cerradas, no equivale a 5 mercados cerrados de forma generalizada.
+- **Fase B** — trabajo packageable vigente: `1` BL activa (`BL-088`, investigación targeted), más `0327` como investigación ya packageable en `OPPORTUNITIES.md` y no seleccionada en este batch solo por presupuesto.
 - **Fase C** — frontera abierta no packageable todavía: la generalización de mercado en LSE/AIM/HKEX/Euronext más allá de los tickers ancla actuales, los gaps opcionales de field dependency y la watchlist residual de TALO sobre el cluster de enmiendas siguen viviendo en el subtree operativo estructurado de `docs/project/OPPORTUNITIES.md`.
 
 El contrato `parallel-ready` sigue vigente por `BL-072` y `DEC-029`, pero no cambia el criterio de esta fase: cualquier nueva ola técnica que reaparezca desde evidencia factual deberá volver a empaquetarse de forma **serial** y de blast radius mínimo.
@@ -253,7 +252,7 @@ Ese bloque conserva el cierre factual de aquella oleada, pero queda supersedido 
 
 **Lectura canónica vigente de DEC-015:**
 - Cuentan hoy: **16** (14 FULL + KAR + JBH por excepción ASX documentada)
-- No cuenta hoy: **SOM**, mientras siga clasificado como **frontera abierta** en LSE/AIM.
+- No cuenta hoy: **SOM**, aunque BL-087 haya reafirmado su excepción ticker-level; la evidencia H1 disponible sigue sin sostener promoción a `FULL` ni la excepción estructural usada para `KAR` y `JBH`.
 - `ADTN` y `0327` ya no quedan fuera del cómputo: `BL-081` promueve ADTN a `FULL` con 15 trimestrales filing-backed y `BL-083` promueve `0327` a `FULL` con 3 semestrales HKEX extractor-backed.
 - `JBH` sí cuenta hoy dentro del cómputo operativo de `DEC-015` bajo la misma excepción ASX ya aplicada a `KAR`; esta es la única lectura vigente en los canonicals actuales.
 - **DEC-015 target operativo alcanzado y superado factualmente** sin convertir `SOM` en excepción implícita ni cerrar su tratamiento documental antes de tiempo.
