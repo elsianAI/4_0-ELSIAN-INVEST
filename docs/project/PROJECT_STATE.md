@@ -1,17 +1,17 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
 > Última actualización: 2026-03-14
-> Actualizado por: Codex (BL-091 closeout after accepted HKEX live-acquire packet)
+> Actualizado por: Codex (baseline-only governance after full empty-backlog scout)
 > Module 1 status: OPEN
 > Semántica vigente del marker: `OPEN` mientras exista frontera operacional real en el subtree operativo de `OPPORTUNITIES.md`. `SOM` y `TEP` pueden convivir con un cierre futuro como excepciones ticker-level ya reafirmadas; `0327` ya no bloquea por follow-up técnico propio y la frontera HKEX queda reducida a la generalización de mercado más allá del ticker ancla; el frente de TALO sigue reducido a watchlist factual por el cluster de enmiendas fuera de backlog activo.
 
 ## Discovery Baseline
-- last_scout_pass_at: 2026-03-13T10:36:37Z
-- last_scout_head: d05adb230e39cd2bfb329e713920d55d948a01b5
+- last_scout_pass_at: 2026-03-14T11:38:24Z
+- last_scout_head: 1bdf638d7dd9b3c23bda73d5cd64568d2441302a
 - last_eval_signature: fcca9bc42db27a73c2cf6d95167888f5392c2197c65f2ae2f6313f491c52a688
 - last_diagnose_signature: d64b5be8193d62ad1a1415b2e15c56231b11e7e17e1c937eeebf6467c5c57a2e
-- last_cases_signature: 9f901c2a633a4d3d4dfa8e8fbb501aab0c87673e93bb10cbda28c51724400165
-- last_operational_opportunities_signature: eee6c92ed8ef9d5bb797cad206caf04abe81fb41fb48ed66cdef5c22232ebaf8
+- last_cases_signature: 92e38dfc5cdf1c784207608287e3d0e0080d13dc2e6283dab1bb570e8c6fc68d
+- last_operational_opportunities_signature: 1dde1b1a29827918162048c56900f663b0708e60414f84df89c724e326a94382
 
 ## Fase actual: FASE 1 — Consolidar Layer 1
 
@@ -215,7 +215,7 @@ No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Proven
 
 ## Próximas prioridades
 
-La ejecución del 2026-03-14 vuelve a dejar el backlog ejecutable vacío tras absorber `BL-091` con packet shared-core green. `BL-089` ya quedó absorbida como follow-up técnico mínimo, `SOM` y `TEP` dejan de figurar como investigaciones ticker-level activas, y `0327` ya no mantiene follow-up técnico vivo propio: el ticker queda cerrado con acquire oficial HKEX absorbido y fallback manual preservado.
+La ejecución del 2026-03-14 vuelve a dejar el backlog ejecutable vacío tras absorber `BL-091` con packet shared-core green. `BL-089` ya quedó absorbida como follow-up técnico mínimo, `SOM` y `TEP` dejan de figurar como investigaciones ticker-level activas, y `0327` ya no mantiene follow-up técnico vivo propio: el ticker queda cerrado con acquire oficial HKEX absorbido y fallback manual preservado. El full scout pass posterior deja `0` `BL-ready`, `0` `investigation_BL_ready`, `0` `expansion_candidate`, `0` `missing` y `0` `stale`.
 
 Queda fuera del backlog, pero no invalidado factualmente:
 

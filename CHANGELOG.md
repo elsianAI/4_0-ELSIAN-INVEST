@@ -2,6 +2,11 @@
 
 ## 2026-03-14
 
+### [4.0] Baseline-only governance wave — persistida Discovery Baseline tras scout full con backlog vacío
+- `docs/project/PROJECT_STATE.md` actualiza `## Discovery Baseline` al head limpio `1bdf638d7dd9b3c23bda73d5cd64568d2441302a` y persiste las firmas vivas post-closeout (`last_cases_signature=92e38dfc5cdf1c784207608287e3d0e0080d13dc2e6283dab1bb570e8c6fc68d`, `last_operational_opportunities_signature=1dde1b1a29827918162048c56900f663b0708e60414f84df89c724e326a94382`), sin reabrir backlog ni reescribir oportunidades.
+- El scout factual completo deja el runtime sin packageables nuevos: `0` `BL-ready`, `0` `investigation_BL_ready`, `0` `expansion_candidate`, `0` `missing` y `0` `stale`; `TEP` sigue como único caso sin manifest, pero no bloquea el pass y queda absorbido como excepción ya documentada.
+- **Validation:** `python3 scripts/check_governance.py --format json` antes de la ola → repo limpio, `backlog.active_ids=[]`, `next_resolution_mode=empty_backlog_discovery`. `python3 -m elsian eval --all --output-json /tmp/elsian-capacity-scout/eval_report.json` → artefacto contractual válido (`17` reports, signature `fcca9bc42db27a73c2cf6d95167888f5392c2197c65f2ae2f6313f491c52a688`). `python3 -m elsian diagnose --all --output /tmp/elsian-capacity-scout/diagnose` → artefacto contractual válido (`diagnose_v1`, `17/17`, overall `100.0%`, signature `d64b5be8193d62ad1a1415b2e15c56231b11e7e17e1c937eeebf6467c5c57a2e`). `python3 scripts/build_scout_context.py --eval-json /tmp/elsian-capacity-scout/eval_report.json --diagnose-json /tmp/elsian-capacity-scout/diagnose/diagnose_report.json --cases-root cases --opportunities-md docs/project/OPPORTUNITIES.md --output-json /tmp/elsian-capacity-scout/scout_context.json` → `partial_pass=false`. `git diff --check -- docs/project/PROJECT_STATE.md CHANGELOG.md` → limpio.
+
 ### [4.0] Governance closeout — BL-091 archivada tras packet técnico green
 - `docs/project/BACKLOG.md` vuelve a quedar vacío tras absorber `BL-091`; no queda ninguna BL activa en este snapshot.
 - `docs/project/BACKLOG_DONE.md` archiva `BL-091` como follow-up shared-core completado: la ruta oficial HKEX ya quedó absorbida en el fetcher y no persiste otro follow-up técnico vivo sobre `0327`.
