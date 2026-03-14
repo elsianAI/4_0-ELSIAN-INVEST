@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-03-14
+
+### [4.0] Packet E — path canónico de `diagnose_report.json` y blindaje de `capacity-scout`
+- El smoke end-to-end sobre `main@05d5aa2` encontró una ambigüedad contractual en el scout: `python3 -m elsian diagnose --all --output /tmp/elsian-capacity-scout/diagnose` sí escribe `diagnose_report.json`, pero `docs/project/ROLES.md`, `.github/agents/elsian-capacity-scout.agent.md` y el mirror local del skill seguían documentando `--diagnose-json ...` sin fijar el nombre exacto del fichero, permitiendo que el scout probara primero un nombre incorrecto y contaminara `partial_pass`.
+- El contrato del scout queda fijado con un único comando canónico completo para el helper repo-tracked: `python3 scripts/build_scout_context.py --eval-json /tmp/elsian-capacity-scout/eval_report.json --diagnose-json /tmp/elsian-capacity-scout/diagnose/diagnose_report.json --cases-root cases --opportunities-md docs/project/OPPORTUNITIES.md --output-json /tmp/elsian-capacity-scout/scout_context.json`.
+- `scripts/build_scout_context.py` añade defensa en profundidad: si `--diagnose-json` recibe el directorio de output de `diagnose`, resuelve automáticamente `diagnose_report.json`; si ese fichero no existe, devuelve `diagnose_run.status=unusable_artifact` con `notes` explícita sobre el path resuelto.
+- `tests/unit/test_build_scout_context.py` cubre ya los tres casos relevantes: path de fichero, path de directorio canónico y directorio sin `diagnose_report.json`; `tests/contracts/test_runtime_mirrors.py` exige el comando completo exacto en `ROLES.md`, wrapper y skill.
+- La reclasificación real de `investigation_BL_ready` sigue siendo un comportamiento del runtime LLM y se valida solo vía re-smoke posterior; Packet E cierra únicamente la degradación a `partial_pass=true` causada por naming ambiguo del artefacto de `diagnose`.
+- **Validation:** `python3 -m pytest tests/unit/test_build_scout_context.py tests/contracts/test_runtime_mirrors.py tests/contracts/test_validate_contracts.py -q` → `43 passed`; `git diff --check` → limpio; smoke en worktree limpio temporal vía `codex exec '$elsian-orchestrator qué es lo siguiente'` sobre un checkpoint local de Packet E: el scout generó `/tmp/elsian-capacity-scout/scout_context.json` con `diagnose_run.status=ok`, `artifact_path=/private/tmp/elsian-capacity-scout/diagnose/diagnose_report.json` y `partial_pass=false`, confirmando que el path canónico dejó de romper el flujo aunque la clasificación LLM posterior siga siendo una validación separada.
+
 ## 2026-03-13
 
 ### [4.0] Packet D — `capacity-scout` endurecido con contexto estructurado repo-tracked

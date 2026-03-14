@@ -47,7 +47,7 @@ Always respond in Spanish unless the user writes in English. The user's name is 
 - `python3 scripts/check_governance.py --format json`
 - `python3 -m elsian eval --all --output-json /tmp/elsian-capacity-scout/eval_report.json`
 - `python3 -m elsian diagnose --all --output /tmp/elsian-capacity-scout/...`
-- `python3 scripts/build_scout_context.py --eval-json ... --diagnose-json ... --cases-root ... --opportunities-md ... --output-json /tmp/elsian-capacity-scout/scout_context.json`
+- `python3 scripts/build_scout_context.py --eval-json /tmp/elsian-capacity-scout/eval_report.json --diagnose-json /tmp/elsian-capacity-scout/diagnose/diagnose_report.json --cases-root cases --opportunities-md docs/project/OPPORTUNITIES.md --output-json /tmp/elsian-capacity-scout/scout_context.json`
 - `rg`
 - `sed`
 - `cat`
@@ -102,7 +102,7 @@ Nullability:
 
 Primary repo-tracked context:
 
-- After running `eval --all --output-json ...` and `diagnose --all --output ...`, run `python3 scripts/build_scout_context.py --eval-json ... --diagnose-json ... --cases-root ... --opportunities-md ... --output-json /tmp/elsian-capacity-scout/scout_context.json`.
+- After running `eval --all --output-json ...` and `diagnose --all --output ...`, run `python3 scripts/build_scout_context.py --eval-json /tmp/elsian-capacity-scout/eval_report.json --diagnose-json /tmp/elsian-capacity-scout/diagnose/diagnose_report.json --cases-root cases --opportunities-md docs/project/OPPORTUNITIES.md --output-json /tmp/elsian-capacity-scout/scout_context.json`.
 - Read `scout_context.json` as the primary source for `eval_run`, `diagnose_run`, `partial_pass`, `partial_reasons`, `case_review.manifest_missing_tickers`, and baseline signatures.
 - Copy `case_review.manifest_missing_tickers` into `pass_summary.manifest_missing_cases`.
 - The helper does not classify no-manifest cases semantically; that classification still belongs to the scout.

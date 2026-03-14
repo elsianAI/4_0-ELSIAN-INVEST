@@ -240,7 +240,7 @@ El subtree no operativo/futuro de `docs/project/OPPORTUNITIES.md` no gatea el ru
 - `python3 scripts/check_governance.py --format json`
 - `python3 -m elsian eval --all --output-json /tmp/elsian-capacity-scout/eval_report.json`
 - `python3 -m elsian diagnose --all --output /tmp/elsian-capacity-scout/...`
-- `python3 scripts/build_scout_context.py --eval-json ... --diagnose-json ... --cases-root ... --opportunities-md ... --output-json /tmp/elsian-capacity-scout/scout_context.json`
+- `python3 scripts/build_scout_context.py --eval-json /tmp/elsian-capacity-scout/eval_report.json --diagnose-json /tmp/elsian-capacity-scout/diagnose/diagnose_report.json --cases-root cases --opportunities-md docs/project/OPPORTUNITIES.md --output-json /tmp/elsian-capacity-scout/scout_context.json`
 - `cases/*/case.json`
 - `cases/*/filings_manifest.json` cuando exista
 - inspeccion read-only de `cases/*/filings/` cuando haga falta
@@ -257,7 +257,7 @@ El subtree no operativo/futuro de `docs/project/OPPORTUNITIES.md` no gatea el ru
 - `python3 scripts/check_governance.py --format json`
 - `python3 -m elsian eval --all --output-json /tmp/elsian-capacity-scout/eval_report.json`
 - `python3 -m elsian diagnose --all --output /tmp/elsian-capacity-scout/...`
-- `python3 scripts/build_scout_context.py --eval-json ... --diagnose-json ... --cases-root ... --opportunities-md ... --output-json /tmp/elsian-capacity-scout/scout_context.json`
+- `python3 scripts/build_scout_context.py --eval-json /tmp/elsian-capacity-scout/eval_report.json --diagnose-json /tmp/elsian-capacity-scout/diagnose/diagnose_report.json --cases-root cases --opportunities-md docs/project/OPPORTUNITIES.md --output-json /tmp/elsian-capacity-scout/scout_context.json`
 - `rg`
 - `sed`
 - `cat`
@@ -321,7 +321,7 @@ Regla de nullability:
 
 El scout debe ejecutar:
 
-- `python3 scripts/build_scout_context.py --eval-json /tmp/elsian-capacity-scout/eval_report.json --diagnose-json /tmp/elsian-capacity-scout/.../diagnose_report.json --cases-root cases --opportunities-md docs/project/OPPORTUNITIES.md --output-json /tmp/elsian-capacity-scout/scout_context.json`
+- `python3 scripts/build_scout_context.py --eval-json /tmp/elsian-capacity-scout/eval_report.json --diagnose-json /tmp/elsian-capacity-scout/diagnose/diagnose_report.json --cases-root cases --opportunities-md docs/project/OPPORTUNITIES.md --output-json /tmp/elsian-capacity-scout/scout_context.json`
 
 Y debe usar `scout_context.json` como fuente primaria para:
 

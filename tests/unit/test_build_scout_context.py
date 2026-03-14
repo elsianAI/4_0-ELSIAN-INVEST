@@ -219,6 +219,57 @@ def test_diagnose_valid_and_signable_means_ok(tmp_path: Path) -> None:
     assert context["partial_pass"] is False
 
 
+def test_diagnose_directory_resolves_to_diagnose_report_json(tmp_path: Path) -> None:
+    eval_json = tmp_path / "eval_report.json"
+    diagnose_dir = tmp_path / "diagnose"
+    diagnose_json = diagnose_dir / "diagnose_report.json"
+    cases_root = tmp_path / "cases"
+    opportunities_md = tmp_path / "OPPORTUNITIES.md"
+
+    _write_json(eval_json, _valid_eval_payload())
+    _write_json(diagnose_json, _valid_diagnose_payload())
+    _write_case(cases_root, "AAA", with_manifest=True)
+    _write_opportunities(opportunities_md)
+
+    context = build_scout_context.build_scout_context(
+        eval_json_path=eval_json,
+        diagnose_json_path=diagnose_dir,
+        cases_root=cases_root,
+        opportunities_md_path=opportunities_md,
+    )
+
+    assert context["diagnose_run"]["status"] == "ok"
+    assert context["diagnose_run"]["artifact_path"] == str(diagnose_json.resolve())
+    assert context["diagnose_run"]["notes"] == ""
+    assert context["partial_pass"] is False
+
+
+def test_diagnose_directory_without_diagnose_report_is_unusable_artifact(tmp_path: Path) -> None:
+    eval_json = tmp_path / "eval_report.json"
+    diagnose_dir = tmp_path / "diagnose"
+    cases_root = tmp_path / "cases"
+    opportunities_md = tmp_path / "OPPORTUNITIES.md"
+
+    _write_json(eval_json, _valid_eval_payload())
+    diagnose_dir.mkdir(parents=True, exist_ok=True)
+    _write_case(cases_root, "AAA", with_manifest=True)
+    _write_opportunities(opportunities_md)
+
+    context = build_scout_context.build_scout_context(
+        eval_json_path=eval_json,
+        diagnose_json_path=diagnose_dir,
+        cases_root=cases_root,
+        opportunities_md_path=opportunities_md,
+    )
+
+    assert context["diagnose_run"]["status"] == "unusable_artifact"
+    assert context["diagnose_run"]["artifact_path"] is None
+    assert context["diagnose_run"]["signature"] is None
+    assert "resolved from directory" in context["diagnose_run"]["notes"]
+    assert str((diagnose_dir / "diagnose_report.json")) in context["diagnose_run"]["notes"]
+    assert context["partial_pass"] is True
+
+
 def test_diagnose_existing_but_not_signable_is_unusable_artifact(tmp_path: Path) -> None:
     eval_json = tmp_path / "eval_report.json"
     diagnose_json = tmp_path / "diagnose_report.json"

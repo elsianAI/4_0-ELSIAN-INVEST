@@ -28,6 +28,7 @@ DIAGNOSE_REQUIRED_KEYS = {
     "by_field_category",
     "hotspots",
 }
+DIAGNOSE_REPORT_FILENAME = "diagnose_report.json"
 
 
 def _load_json(path: Path) -> Any:
@@ -52,6 +53,12 @@ def _bad_run(status: str, notes: str) -> dict[str, Any]:
     }
 
 
+def _resolve_diagnose_artifact_path(diagnose_json_path: Path) -> tuple[Path, Path | None]:
+    if diagnose_json_path.is_dir():
+        return diagnose_json_path / DIAGNOSE_REPORT_FILENAME, diagnose_json_path
+    return diagnose_json_path, None
+
+
 def summarize_eval_run(eval_json_path: Path) -> dict[str, Any]:
     if not eval_json_path.exists():
         return _bad_run("unusable_artifact", f"Missing eval artifact: {eval_json_path}")
@@ -72,11 +79,17 @@ def summarize_eval_run(eval_json_path: Path) -> dict[str, Any]:
 
 
 def summarize_diagnose_run(diagnose_json_path: Path) -> dict[str, Any]:
-    if not diagnose_json_path.exists():
-        return _bad_run("unusable_artifact", f"Missing diagnose artifact: {diagnose_json_path}")
+    resolved_path, source_dir = _resolve_diagnose_artifact_path(diagnose_json_path)
+    if not resolved_path.exists():
+        if source_dir is not None:
+            return _bad_run(
+                "unusable_artifact",
+                f"Missing diagnose artifact: {resolved_path} (resolved from directory {source_dir})",
+            )
+        return _bad_run("unusable_artifact", f"Missing diagnose artifact: {resolved_path}")
 
     try:
-        payload = _load_json(diagnose_json_path)
+        payload = _load_json(resolved_path)
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         return _bad_run("unusable_artifact", f"Unreadable diagnose artifact: {exc}")
 
@@ -95,7 +108,7 @@ def summarize_diagnose_run(diagnose_json_path: Path) -> dict[str, Any]:
     except (AttributeError, TypeError, ValueError) as exc:
         return _bad_run("unusable_artifact", f"Diagnose artifact is not signable: {exc}")
 
-    return _ok_run(diagnose_json_path, signature)
+    return _ok_run(resolved_path, signature)
 
 
 def build_case_review(cases_root: Path) -> tuple[dict[str, Any], list[str]]:

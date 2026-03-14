@@ -59,9 +59,16 @@ def test_opportunities_packet_b_normalization_is_documented() -> None:
 
 
 def test_capacity_scout_mirrors_share_packet_b_contract() -> None:
+    exact_helper_command = (
+        "python3 scripts/build_scout_context.py --eval-json "
+        "/tmp/elsian-capacity-scout/eval_report.json --diagnose-json "
+        "/tmp/elsian-capacity-scout/diagnose/diagnose_report.json --cases-root cases "
+        "--opportunities-md docs/project/OPPORTUNITIES.md --output-json "
+        "/tmp/elsian-capacity-scout/scout_context.json"
+    )
     common_required = (
         "eval --all --output-json /tmp/elsian-capacity-scout/eval_report.json",
-        "scripts/build_scout_context.py --eval-json",
+        exact_helper_command,
         "`pass_summary`",
         "`findings`",
         "`reconciliation_summary`",
