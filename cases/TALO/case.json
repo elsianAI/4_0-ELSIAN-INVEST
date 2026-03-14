@@ -3,9 +3,9 @@
   "exchange": "NYSE",
   "country": "US",
   "currency": "USD",
-  "cik": null,
+  "cik": "0001724965",
   "source_hint": "sec",
   "period_scope": "FULL",
   "filings_expected_count": null,
-  "notes": "Talos Energy — oil & gas E&P. Tests DD&A mapping, ceiling test impairments, ARO terminology. Has had restructurings."
+  "notes": "Talos Energy — oil & gas E&P. Tests DD&A mapping, ceiling test impairments, ARO terminology. Has had restructurings. CIK discovered 2026-03-14 via SEC EDGAR company search (SIC 1311, formerly Sailfish Energy Holdings Corp). SEC EDGAR has 8 10-Ks + 23-25 10-Qs + amendment cluster 2024-11-12 (10-K/A + 2x10-Q/A) for FY2023 restatement window. All expected.json source_filings are present locally."
 }

@@ -9,6 +9,73 @@
 
 ---
 
+### BL-091 — HKEX acquire: implementar búsqueda oficial y descarga PDF reusable para 0327
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-14)
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** shared-core
+- **Work kind:** technical
+- **Depende de:** —
+- **Referencias:** DEC-016
+- **Descripción:** Se cierra BL-091 con packet shared-core green que convierte la evidencia de BL-090 en un carril oficial reusable dentro de `elsian/acquire/hkex.py` sin reabrir extract/merge/eval. El fetcher deja de ser solo lector del corpus `hkex_manual`: ahora resuelve el emisor por `prefix.do` / `partial.do`, ejecuta búsquedas exact-title en el Title Search oficial de HKEX, descarga PDFs directos de annual/interim reports y materializa sus `.txt`, manteniendo a la vez el fallback cache/manual cuando `filings/` ya está poblado. El resultado deja `0327` con acquire oficial live validado sobre el ticker ancla y desplaza el frente residual a la generalización de mercado en `OP-011`, no a otro follow-up técnico pendiente sobre el mismo ticker.
+- **Criterio de aceptación:** ✓ Existe un path live de acquire HKEX capaz de localizar y descargar filings oficiales de `0327` sin depender del corpus trackeado. ✓ `hkex_manual` sigue funcionando como fallback/cache-hit sin romper el caso versionado. ✓ Hay cobertura unitaria para JSONP lookup, parseo exact-title, fallback `prefix.do`→`partial.do` y descarga live. ✓ La validación scratch sobre un case dir vacío de `0327` devuelve `source=hkex`, `filings_downloaded=6`, `filings_coverage_pct=100.0` y los IDs estables `SRC_001_AR_FY2024`…`SRC_006_IR_H12023`. ✓ `python3 -m pytest -q tests/unit/test_hkex_fetcher.py tests/unit/test_cli_fetcher_routing.py tests/unit/test_acquire_registry.py tests/unit/test_bl062_entrypoints.py` → `41 passed`. ✓ `python3 -m elsian eval --all` → PASS `17/17`. ✓ `python3 -m pytest -q` → `1883 passed, 5 skipped, 1 warning`. ✓ `BL-091` sale de `docs/project/BACKLOG.md`, `OP-005` deja de apuntar a un follow-up activo y el backlog vuelve a quedar vacío.
+
+### BL-090 — Probar acquire HKEX oficial con 0327 como ancla
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-14)
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** targeted
+- **Work kind:** investigation
+- **Depende de:** —
+- **Descripción:** Se cierra BL-090 con outcome terminal `technical_followup_opened`. El experimento único sobre HKEX demostró que `0327` ya no depende solo de `hkex_manual` para localizar filings oficiales: el lookup HTTP oficial `prefix.do` y `partial.do` resuelve `stockId=56792` para `00327 PAX GLOBAL`, el buscador oficial Title Search devuelve resultados históricos con annual/interim reports del ticker, y las URLs directas descubiertas para `ANNUAL REPORT 2024`, `ANNUAL REPORT 2023`, `INTERIM REPORT 2025` e `INTERIM REPORT 2024` descargan `200 application/pdf`. La evidencia abre un follow-up shared-core sobre acquire HKEX reusable, pero este packet no implementa todavía el fetcher ni retira `hkex_manual`.
+- **Criterio de aceptación:** ✓ Se ejecutó exactamente un experimento acotado sobre HKEX con `0327` como ancla. ✓ El outcome canónico quedó fijado en `technical_followup_opened`. ✓ La ruta oficial quedó probada con lookup HTTP, resultados de búsqueda y PDFs directos descargables. ✓ `python3 -m elsian eval 0327` se mantiene en PASS 100.0% (146/146). ✓ Se abre `BL-091` como follow-up shared-core y `OP-005` queda reconciliada como precursor factual del follow-up, no como la misma investigación ticker-level pendiente.
+
+### BL-088 — Probar acquire Euronext fuera del carril ya validado con TEP como ancla
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-14)
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** targeted
+- **Work kind:** investigation
+- **Depende de:** —
+- **Descripción:** Se cierra BL-088 con outcome terminal `exception_reaffirmed`. El experimento único sobre TEP probó nueve rutas regulatorias EU adicionales fuera del carril ya validado de `tp.com` (`AMF BDIF` REST, emitter page y búsqueda HTML; `ESMA OAM`; dos variantes de `filings.xbrl.org`; tres endpoints Euronext). Ninguna de las nueve pruebas identificó ni descargó un filing TEP reutilizable desde fuente regulatoria EU durante esta ola: AMF y ESMA OAM devolvieron `HTTP 500`, las variantes Euronext devolvieron `404` o respuesta vacía, y `filings.xbrl.org` no probó una ruta reusable por ISIN para TEP. La evidencia no abre follow-up técnico narrow nuevo; TEP queda cerrado a nivel ticker con excepción de acquire reafirmada y la frontera abstracta de mercado permanece separada en `OP-010`.
+- **Criterio de aceptación:** ✓ Se ejecutó exactamente un experimento acotado sobre TEP/Euronext fuera del carril ya validado. ✓ El outcome canónico quedó fijado en `exception_reaffirmed`. ✓ `python3 -m elsian eval TEP` se mantiene en PASS 100.0% (109/109). ✓ `python3 scripts/check_governance.py --format json` queda sin `governance_contract_violations`. ✓ `BL-088` sale de `docs/project/BACKLOG.md`, `OP-004` deja de figurar como investigación ticker-level activa y `PROJECT_STATE.md` deja de presentar a TEP como backlog vivo. ✓ No se abre ninguna BL nueva porque la hipótesis de follow-up reusable no quedó probada.
+
+### BL-087 — Ejecutar el experimento único de SOM para promoción o excepción cerrada
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-14)
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** targeted
+- **Work kind:** investigation
+- **Depende de:** —
+- **Descripción:** Se cierra BL-087 con outcome terminal `exception_reaffirmed`. El experimento único sobre SOM usó el filing intermedio `SRC_003_INTERIM_H1_2025.txt` ya adquirido en el carril `eu_manual` y confirmó que el mejor H1 hoy disponible no sirve para promover el ticker a `FULL`: solo aporta dos periodos H1, cobertura parcial de campos canónicos, formato investor presentation en US$ millones con una sola decimal y una inconsistencia de balance sheet (`assets 90.6` frente a `liabilities + equity 91.8`) que impide tratar la slide como base fiable para canonizar balance sheet intermedio. La evidencia cierra la frontera ticker-level de SOM sin abrir follow-up reusable nuevo; la generalización LSE/AIM sigue separada como frente abstracto en `OP-009`.
+- **Criterio de aceptación:** ✓ Se ejecutó exactamente un experimento acotado sobre SOM. ✓ El outcome canónico quedó fijado en `exception_reaffirmed`. ✓ `python3 -m elsian eval SOM` se mantiene en PASS 100.0% (203/203). ✓ `python3 scripts/check_governance.py --format json` queda sin `governance_contract_violations`. ✓ `BL-087` sale de `docs/project/BACKLOG.md`, `OP-001` deja de figurar como frontera ticker-level abierta y `PROJECT_STATE.md` deja de presentar a SOM como backlog vivo o frontera abierta packageable. ✓ No se abre ninguna BL nueva porque no emerge follow-up reusable nuevo con evidencia suficiente.
+
+### BL-089 — SEC acquire: preservar `coverage` y `cik` en cache-hit sin reabrir scope TALO
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-14)
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** shared-core
+- **Work kind:** technical
+- **Depende de:** —
+- **Descripción:** Se cierra BL-089 como follow-up técnico mínimo aceptado sobre SEC acquire/manifest. El packet absorbido mantiene el scope estrecho acordado: `SecEdgarFetcher.acquire()` ya recupera `cik` desde `filings_manifest.json` cuando `case.cik` es `null` en cache-hit, y la recomputación de earnings en cache-hit cuenta tanto `8-K` como `8-K/A` sin reabrir TALO como problema ticker-level ni mezclar el cluster de enmiendas del 2024-11-12. El cierre deja explícito un riesgo residual no bloqueante: `filings_coverage_pct` sigue fijo a `100.0` en cache-hit aunque los buckets de coverage ya se recomputan.
+- **Criterio de aceptación:** ✓ `git diff --check` limpio en el packet técnico aceptado. ✓ `python3 -m pytest tests/unit/test_sec_edgar.py -q` → `49 passed`. ✓ `python3 -m elsian acquire TALO` confirma `Coverage 100.0%`, manifest con `cik=0001724965` y `coverage` no vacía. ✓ `python3 scripts/check_governance.py --format json` queda sin `governance_contract_violations`. ✓ La auditoría independiente no reporta hallazgos materiales. ✓ `BL-089` sale de `docs/project/BACKLOG.md`, deja de competir por atención operativa y `OP-006` no conserva trabajo packageable vivo idéntico asociado.
+
+### BL-086 — Cerrar el gap factual de coverage/manifest en TALO
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-14)
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** targeted
+- **Work kind:** investigation
+- **Depende de:** —
+- **Descripción:** Se cierra BL-086 como investigación ticker-level aceptada con outcome terminal `technical_followup_opened`. El experimento sobre TALO confirmó que el problema ya no debe seguir representándose como gap local del ticker: `python3 -m elsian acquire TALO` entra por cache-hit, deja `coverage={}` y `cik=null` en manifest, pero TALO mantiene `eval` 100.0% (235/235), todos los `source_filing` de `expected.json` están presentes localmente y el CIK correcto (`0001724965`) quedó identificado y registrado en `cases/TALO/case.json`. La evidencia reduce el hallazgo a un follow-up shared-core mínimo en SEC acquire/manifest y deja explícitamente fuera de alcance el cluster de enmiendas del 2024-11-12 (`10-K/A` + `10-Q/A` x2), que no fue investigado en esta BL ni queda absorbido por su cierre.
+- **Criterio de aceptación:** ✓ Se ejecutó exactamente un experimento acotado sobre TALO. ✓ El outcome canónico quedó fijado en `technical_followup_opened`. ✓ El gap dejó de tratarse como TALO-específico y se reempaquetó como follow-up técnico narrow en `BL-089`. ✓ `python3 -m elsian eval TALO` se mantiene en PASS 100.0% (235/235). ✓ `python3 scripts/check_governance.py --format json` queda sin `governance_contract_violations`. ✓ `OP-006`, `BACKLOG.md` y `PROJECT_STATE.md` quedan reconciliados para que el scout siguiente no reabra BL-086 con la misma shape.
+
 ### BL-085 — Cubrir con regresión unitaria el descarte de `inventories` espurios desde cash flow con named subsection
 - **Prioridad:** ALTA
 - **Estado:** DONE ✅ (2026-03-11)

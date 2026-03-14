@@ -2,6 +2,178 @@
 
 ## 2026-03-14
 
+### [4.0] Governance-only wave — ENQ curado como candidato LSE/AIM no validado
+- `docs/project/OPPORTUNITIES.md` persiste `ENQ` como candidato ticker-level concreto separado de la abstracción de mercado `OP-009`, sin abrir BL ni tocar `BACKLOG.md` o `PROJECT_STATE.md`.
+- La ola deja explícito que el `hypothesis_basis` para onboarding técnico inmediato de ENQ es `inconclusive`, no `true`: hoy ENQ está ausente del repo operativo, no existe `cases/ENQ`, no hay artifacts ni referencias canónicas previas, y SOM sigue siendo el único ancla LSE/AIM documentada.
+- `Unknowns remaining` queda normalizado a un único pre-gate falsable: demostrar discoverability automática o semi-determinista suficiente, corpus annual + intermedio utilizable, y viabilidad de generar `case.json`, `filings_manifest.json` y `expected_draft.json` sin intervención manual.
+- Esta ola es estrictamente `governance-only`, no abre backlog y cierra con `claimed_bl_status: none`.
+- **Files changed:** `docs/project/OPPORTUNITIES.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` después de mutar → `governance_contract_violations=[]`, `backlog.active_ids=[]`, `operational_shape_valid=true`, `project_state_lags_changelog=false`; `git diff --check -- docs/project/OPPORTUNITIES.md CHANGELOG.md` → limpio.
+
+### [4.0] ACVA annual truth cash flow hardening
+- Curado mínimo de cases/ACVA/expected.json: añadidos cfi, cff y delta_cash filing-backed para FY2022-FY2025 desde 10-K iXBRL, manteniendo ANNUAL_ONLY y sin tocar shared-core.
+
+### [4.0] ACVA onboarding SEC annual-only
+- Alta de cases/ACVA como nuevo caso SEC en ANNUAL_ONLY con case.json, filings SEC, expected_draft iXBRL, extraction_result y expected.json anual filing-backed para evaluación dirigida del caso.
+
+### [4.0] Governance-only wave — DEC-030 / Packet C hypothesis basis hardening
+- `docs/project/DECISIONS.md` canoniza `DEC-030` para endurecer la adecuación de hipótesis en `investigation` y `expansion`: el pre-gate pasa al `director`, se bifurca por `Work kind`, el camino negativo obliga a reconciliar `OPPORTUNITIES.md` sin abrir BL y la persistencia mínima del `hypothesis_basis` queda acotada a surfaces canónicas compatibles con `DEC-027`.
+- `docs/project/ROLES.md` refuerza `§2.1` con el contrato operativo del `hypothesis_basis`, fija los cinco campos parseables que deben persistirse en `docs/project/BACKLOG.md` cuando sí exista BL, añade el challenge explícito del `auditor` en `§2.3` y aclara en `§3` que el `orchestrator` no ejecuta ni sustituye el hypothesis check.
+- Esta ola es estrictamente `governance-only`, no toca código ni scripts y cierra con `claimed_bl_status: none`.
+- **Files changed:** `docs/project/DECISIONS.md`, `docs/project/ROLES.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` después de mutar → `governance_contract_violations=[]`, `governance_dirty=[CHANGELOG.md, docs/project/DECISIONS.md, docs/project/ROLES.md]`, `next_resolution_mode=reconcile_pending_work`; `python3 -m pytest -q tests/contracts/test_runtime_mirrors.py tests/contracts/test_validate_contracts.py` → `35 passed`; `git diff --check -- docs/project/DECISIONS.md docs/project/ROLES.md CHANGELOG.md` → limpio.
+
+### [4.0] Baseline-only governance wave — persistida Discovery Baseline tras scout full con backlog vacío
+- `docs/project/PROJECT_STATE.md` actualiza `## Discovery Baseline` al head limpio `1bdf638d7dd9b3c23bda73d5cd64568d2441302a` y persiste las firmas vivas post-closeout (`last_cases_signature=92e38dfc5cdf1c784207608287e3d0e0080d13dc2e6283dab1bb570e8c6fc68d`, `last_operational_opportunities_signature=1dde1b1a29827918162048c56900f663b0708e60414f84df89c724e326a94382`), sin reabrir backlog ni reescribir oportunidades.
+- El scout factual completo deja el runtime sin packageables nuevos: `0` `BL-ready`, `0` `investigation_BL_ready`, `0` `expansion_candidate`, `0` `missing` y `0` `stale`; `TEP` sigue como único caso sin manifest, pero no bloquea el pass y queda absorbido como excepción ya documentada.
+- **Validation:** `python3 scripts/check_governance.py --format json` antes de la ola → repo limpio, `backlog.active_ids=[]`, `next_resolution_mode=empty_backlog_discovery`. `python3 -m elsian eval --all --output-json /tmp/elsian-capacity-scout/eval_report.json` → artefacto contractual válido (`17` reports, signature `fcca9bc42db27a73c2cf6d95167888f5392c2197c65f2ae2f6313f491c52a688`). `python3 -m elsian diagnose --all --output /tmp/elsian-capacity-scout/diagnose` → artefacto contractual válido (`diagnose_v1`, `17/17`, overall `100.0%`, signature `d64b5be8193d62ad1a1415b2e15c56231b11e7e17e1c937eeebf6467c5c57a2e`). `python3 scripts/build_scout_context.py --eval-json /tmp/elsian-capacity-scout/eval_report.json --diagnose-json /tmp/elsian-capacity-scout/diagnose/diagnose_report.json --cases-root cases --opportunities-md docs/project/OPPORTUNITIES.md --output-json /tmp/elsian-capacity-scout/scout_context.json` → `partial_pass=false`. `git diff --check -- docs/project/PROJECT_STATE.md CHANGELOG.md` → limpio.
+
+### [4.0] Governance closeout — BL-091 archivada tras packet técnico green
+- `docs/project/BACKLOG.md` vuelve a quedar vacío tras absorber `BL-091`; no queda ninguna BL activa en este snapshot.
+- `docs/project/BACKLOG_DONE.md` archiva `BL-091` como follow-up shared-core completado: la ruta oficial HKEX ya quedó absorbida en el fetcher y no persiste otro follow-up técnico vivo sobre `0327`.
+- `docs/project/OPPORTUNITIES.md` reconcilia `OP-005` para que deje de apuntar a un follow-up activo y mantenga al ticker cerrado con acquire oficial absorbido, mientras `OP-011` conserva solo la generalización abstracta de mercado.
+- `docs/project/PROJECT_STATE.md` deja de presentar `0327` como frente B por follow-up vivo, devuelve el backlog a vacío y fija HKEX como frontera de mercado no generalizada más allá del ticker ancla.
+- **Validation:** `python3 scripts/check_governance.py --format json` después de mutar → `backlog.active_ids=[]`, `active_count=0`, `governance_contract_violations=[]`; `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md docs/project/OPPORTUNITIES.md docs/project/PROJECT_STATE.md CHANGELOG.md` → limpio.
+
+### [BL-091] 0327 — HKEX acquire oficial live path absorbido en el fetcher
+- `elsian/acquire/hkex.py` deja de ser solo lector del corpus `hkex_manual`: ahora resuelve el emisor por JSONP oficial (`prefix.do` / `partial.do`), usa Title Search con títulos exactos y descarga PDFs `ANNUAL REPORT` / `INTERIM REPORT` para materializar un corpus live con IDs deterministas `SRC_001`-`SRC_006`, preservando a la vez el fallback cache/manual cuando `filings/` ya está poblado.
+- `tests/unit/test_hkex_fetcher.py` se amplía para fijar el contrato shared-core nuevo: parseo JSONP, filtrado de títulos financieros soportados, fallback `prefix.do`→`partial.do`, cache-hit manual y adquisición live con naming estable.
+- **Validation:** `python3 -m pytest -q tests/unit/test_hkex_fetcher.py tests/unit/test_cli_fetcher_routing.py tests/unit/test_acquire_registry.py tests/unit/test_bl062_entrypoints.py` → `41 passed`. Scratch validation sobre un case dir vacío de `0327` → `source=hkex`, `filings_downloaded=6`, `filings_coverage_pct=100.0`, IDs `SRC_001_AR_FY2024`…`SRC_006_IR_H12023`. `python3 -m elsian acquire 0327` sobre el case versionado preserva el fallback/corpus existente. `python3 -m elsian eval --all` → PASS `17/17` (`0327 146/146`, `ACLS 486/486`, `ADTN 520/520`, `CROX 326/326`, `GCT 330/330`, `INMD 234/234`, `IOSP 430/430`, `JBH 36/36`, `KAR 61/61`, `NEXN 177/177`, `NVDA 422/422`, `PR 185/185`, `SOM 203/203`, `SONO 404/404`, `TALO 235/235`, `TEP 109/109`, `TZOO 348/348`). `python3 -m pytest -q` → `1883 passed, 5 skipped, 1 warning`.
+
+### [4.0] Governance closeout — BL-090 archivada y reempaquetada como follow-up técnico `BL-091`
+- `docs/project/BACKLOG.md` deja de estar vacío y abre `BL-091` como BL `technical` de scope shared-core sobre acquire oficial HKEX: convertir la ruta validada por `BL-090` en fetcher reusable sin tocar extract/merge/eval ni retirar `hkex_manual` prematuramente.
+- `docs/project/BACKLOG_DONE.md` archiva `BL-090` como investigación ticker-level completada con evidencia suficiente: `0327` mantiene 100.0% y el hallazgo deja de tratarse como packageable diferido abstracto para pasar a follow-up técnico concreto.
+- `docs/project/OPPORTUNITIES.md` reconcilia `OP-005` con la anti-regresión contractual: el item sigue vivo, pero ya referenciado explícitamente a `BL-091`, con `Unknowns remaining` actualizado y `Disposition: keep`.
+- `docs/project/PROJECT_STATE.md` deja de describir el runtime como backlog vacío y fija `BL-091` como la única prioridad viva en Fase B tras el closeout de `BL-090`.
+- **Validation:** `python3 scripts/check_governance.py --format json` después de mutar → `backlog.active_ids=[BL-091]`, `active_count=1`, `governance_contract_violations=[]`; `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md docs/project/OPPORTUNITIES.md docs/project/PROJECT_STATE.md CHANGELOG.md` → limpio.
+
+### [BL-090] 0327 — experimento acquire HKEX oficial: outcome `technical_followup_opened`
+- **Ticker ancla:** `0327` (PAX Global Technology Ltd, HKEX). Baseline confirmado antes del experimento: `PASS score=100.0% (146/146)` — sin mutación de expected.json ni del pipeline.
+- **Carril ya validado:** `hkex_manual` reproducible desde git a través del corpus trackeado `SRC_001`-`SRC_006`; `0327` es FULL (`3A+3H`) y el fetcher actual no hace llamadas de red.
+- **Experimento ejecutado sobre HKEX oficial:**
+  - `prefix.do?lang=EN&type=A&name=0327&market=SEHK` → `200` con `stockId=56792`, `code=00327`, `name=PAX GLOBAL`.
+  - `partial.do?lang=EN&type=A&name=0327&market=SEHK` → `200` con la misma resolución para el ticker y resto de sugerencias.
+  - El Title Search oficial de HKEX para `00327 PAX GLOBAL` devuelve `638` resultados históricos; en el DOM visible aparecen, entre otros, `INTERIM REPORT 2025`, `ANNUAL REPORT 2024`, `INTERIM REPORT 2024`, `ANNUAL REPORT 2023` y los correspondientes `RESULTS ANNOUNCEMENT`.
+  - Las URLs directas descubiertas en esa búsqueda descargan `200 application/pdf`: `2025082800017.pdf` (`INTERIM REPORT 2025`), `2025041600007.pdf` (`ANNUAL REPORT 2024`), `2024082900003.pdf` (`INTERIM REPORT 2024`) y `2024041800065.pdf` (`ANNUAL REPORT 2023`).
+- **Conclusiones del experimento:**
+  1. HKEX sí ofrece una ruta oficial y reproducible de lookup de emisor por HTTP (`prefix.do` / `partial.do`) que resuelve el ancla `0327` sin depender de artefactos locales.
+  2. El buscador oficial de HKEX sí expone annual/interim filings descargables para `0327` fuera del carril `hkex_manual`.
+  3. Las URLs PDF resultantes son directamente descargables y suficientes para abrir un follow-up shared-core de acquire reutilizable.
+  4. El packet actual no implementa todavía esa ruta en `elsian/acquire/`; por contrato, el resultado correcto es `technical_followup_opened`, no ampliar la investigación en caliente.
+- **Outcome factual: `technical_followup_opened`**. La evidencia ya no sostiene que `0327` sea solo una excepción ticker-level cerrada a nivel de acquire; el siguiente paso correcto es un follow-up técnico reusable sobre HKEX.
+- **Estado 0327 post-experimentación:** inalterado. `PASS score=100.0% (146/146)`. No se mutó `case.json`, `expected.json` ni código del pipeline.
+- **Ficheros mutados:** `CHANGELOG.md`.
+- **Validations:** `python3 -m elsian eval 0327` → `PASS score=100.0% (146/146) wrong=0 missed=0`. Verificaciones HTTP del experimento: lookup oficial `prefix.do`/`partial.do` con `200` y PDFs directos HKEX con `200 application/pdf`. Tests unitarios no ejecutados (no hay cambio de código).
+
+### [4.0] Governance closeout — BL-088 archivada tras outcome de investigación aceptado
+- `docs/project/BACKLOG.md` saca `BL-088` de la cola ejecutable tras el outcome aceptado `exception_reaffirmed`, dejando el backlog vivo vacío en este snapshot.
+- `docs/project/BACKLOG_DONE.md` archiva `BL-088` con cierre factual estrecho: el experimento único sobre TEP/Euronext no identificó ni descargó un filing TEP desde fuente regulatoria EU en esta ola y no abrió follow-up técnico reusable nuevo.
+- `docs/project/OPPORTUNITIES.md` reconcilia `OP-004` para que TEP deje de figurar como investigación ticker-level activa; la frontera abstracta de mercado Euronext permanece separada en `OP-010`.
+- `docs/project/PROJECT_STATE.md` deja de presentar a TEP como investigación activa en Fase B, mueve el ticker a capacidad cerrada factual y deja explícito que el backlog ejecutable queda vacío mientras `0327` sigue como packageable diferido en `OPPORTUNITIES.md`.
+- **Validation:** `python3 scripts/check_governance.py --format json` después de mutar → `backlog.active_ids=[]`, `active_count=0`, `governance_contract_violations=[]`; `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md docs/project/OPPORTUNITIES.md docs/project/PROJECT_STATE.md CHANGELOG.md` → limpio.
+
+### [BL-088] TEP — experimento acquire Euronext fuera del carril validado: outcome `exception_reaffirmed`
+- **Ticker ancla:** TEP (Teleperformance SE, ISIN FR0000051807, Euronext Paris). Baseline confirmado antes del experimento: `PASS score=100.0% (109/109)` — sin mutación de expected.json ni del pipeline.
+- **Carril ya validado:** filings_sources explícitos en case.json (tp.com URLs: annual reports 2019, 2021, 2022) + IR crawler fallback. TEP es FULL (6A+2H, 109 campos).
+- **Filing adicional fuera del carril:** intentar adquirir un annual report TEP (2021–2024) desde el repositorio regulatorio ESMA ESEF (`filings.xbrl.org`) vía query por ISIN — mecanismo que, si funciona, sería reusable para cualquier emisor en mercado regulado EU (Euronext FR/BE/NL/PT, XETRA, Borsa Italiana…).
+- **Experimento ejecutado (9 tests sobre 4 endpoints distintos):**
+  - AMF BDIF REST `/v4/pub/recherche?isin=FR0000051807` → HTTP 500 (Azure Application Gateway; infraestructura AMF actualmente inaccesible).
+  - AMF BDIF emitter page `Emetteur-61002` → HTTP 500; "Teleperformance" NOT found (misma causa raíz).
+  - AMF BDIF HTML search → HTTP 500 (consistente — servidor AMF fuera de servicio).
+  - ESMA OAM `registers.esma.europa.eu` → HTTP 500 (ESMA OAM API no disponible).
+  - ESMA ESEF `filings.xbrl.org/api/filings?isin=FR0000051807` → **HTTP 200** pero retornó empresa ucraniana (EDRPOU-32033791): el param `isin` no actúa como filtro en esta ruta. El repositorio EXISTE y está accesible.
+  - ESMA ESEF `filings.xbrl.org/api/reports?entity.identifier.value=FR0000051807` → HTTP 404 (endpoint incorrecto para este repositorio).
+  - Euronext gateway → HTTP 404 (endpoint desconocido).
+  - Euronext connect docs → HTTP 404 (requiere auth o endpoint distinto).
+  - Euronext live history → HTTP 200 con `aaData:[]` (endpoint correcto, sin datos de documento útil).
+- **Conclusiones del experimento:**
+  1. Todos los endpoints AMF BDIF probados (REST ISIN, emitter page, HTML search) devolvieron HTTP 500: la infraestructura AMF no respondió durante el experimento. La evidencia disponible no permite distinguir caída temporal de cambio permanente de endpoint; afirmar que es "solo disponibilidad temporal" sería especulación no verificada.
+  2. ESMA OAM (`registers.esma.europa.eu`) devolvió HTTP 500: API no accesible en el momento del experimento.
+  3. `filings.xbrl.org` devolvió HTTP 200 con la query `isin=FR0000051807`, pero los datos retornados corresponden a una empresa ucraniana (EDRPOU-32033791), no a TEP. El parámetro `isin` no actúa como filtro de entidad en esta ruta. El formato correcto de entity identifier (LEI u otro scheme OAM-específico) no fue ejecutado ni verificado en este experimento.
+  4. Todos los endpoints Euronext probados (gateway, connect docs, live history) devolvieron HTTP 404 o respuesta vacía. No se encontró ningún endpoint Euronext que devuelva documentos de filing TEP.
+  5. Ninguna de las 9 pruebas produjo la descarga —ni siquiera la identificación— de un filing TEP desde fuente regulatoria EU. El experimento falsificó la hipótesis ISIN-as-query-param, pero el paso siguiente (LEI o scheme OAM) no fue ejecutado: su funcionamiento no está verificado y no constituye un mecanismo reusable probado hoy.
+- **Outcome: `exception_reaffirmed`**. El experimento no encontró ninguna ruta de acquire regulatoria EU operativa para TEP. El carril validado (tp.com URLs + IR crawler fallback) sigue siendo la única vía de adquisición confirmada. La excepción de acquire manual para emisores EU cotizados en mercados regulados queda reafirmada: la evidencia obtenida no justifica abrir un follow-up técnico narrow reproducible con la especificación actual.
+- **Estado TEP post-experimentación:** inalterado. `PASS score=100.0% (109/109)`. No se mutó case.json, expected.json, ni ningún código del pipeline.
+- **Ficheros mutados:** `CHANGELOG.md`.
+- **Validations:** `python3 -m elsian eval TEP` → `PASS score=100.0% (109/109) wrong=0 missed=0` (baseline confirmado). Tests unitarios no ejecutados (no hay cambio de código).
+
+### [BL-087] SOM — experimento acquire H1 intermedio: outcome `exception_reaffirmed`
+- Experimento ejecutado sobre el filing intermedio de SOM disponible en `cases/SOM/filings/` (ya adquirido vía `eu_manual`): `SRC_003_INTERIM_H1_2025.txt` es la única fuente H1 pública identificada en el carril actual.
+- **Evidencia H1 encontrada en SRC_003**: P&L estructurado para H1 2025 vs H1 2024 (Revenue $39.8M vs $51.8M; Gross profit $21.0M vs $28.3M; Operating income $4.7M vs $10.8M; Net income $2.6M vs $8.1M; Provision for income taxes $2.2M vs $2.5M; Engineering & product development $1.0M vs $1.3M; Selling, marketing & customer support $6.7M vs $8.2M; G&A $8.6M vs $8.0M). Balance sheet al 30-Jun-2025: Total assets $90.6M, Total liabilities $11.7M, Equity $78.9M (Total L+E $91.8M). Cash flow: CFO $4.1M vs $2.9M; CFI $(0.5)M vs $(1.6)M; CFF $(8.5)M vs $(14.1)M. Interim DPS: $0.04 vs $0.08.
+- **Limitaciones determinantes**:
+  - Formato slide investor presentation (US$ millones, 1 decimal) — no estados financieros formales auditados.
+  - Inconsistencia de balance sheet: Total assets $90.6M ≠ Total liabilities+equity $91.8M ($1.2M de discrepancia por redondeo acumulado en la presentación). La slide no puede tratarse como base fiable para canonizar el balance sheet intermedio.
+  - Cobertura de campos canónicos por periodo H1: ~14/22 (64%) — ausentes EPS estándar, shares outstanding, EBITDA GAAP, interest_expense separado, D&A separado, total_debt explícito.
+  - Solo 2 periodos H1 disponibles en el carril actual (H1 2025 + H1 2024 como comparación). No existen H1 previos adquiridos (H1 2024 standalone, H1 2023… no están en `filings/`).
+  - Ruta alternativa (RNS AIM formal con tablas completas) requiere infraestructura LSE fuera del alcance de este experimento.
+- **SOM actual**: 100% (203/203 campos) en ANNUAL_ONLY con 16 periodos anuales. Promover a FULL con datos H1 de la presentación introduciría regresión de cobertura y calidad por debajo del baseline anual.
+- **Outcome factual: `exception_reaffirmed`**. La excepción `period_scope: ANNUAL_ONLY` queda sostenida con evidencia: el mejor filing intermedio disponible es una presentación de inversores con cobertura insuficiente, inconsistencia de balance sheet, y solo 2 periodos H1. El frente LSE/AIM general no se abre (fuera de alcance por contrato).
+- **Ficheros mutados:** `CHANGELOG.md`.
+- **Validation:** `python3 -m elsian eval SOM` → `PASS score=100.0% (203/203)` inalterado; `python3 scripts/check_governance.py --format json` → `governance_contract_violations=[]`, `active_ids=[BL-087, BL-088]`.
+
+### [4.0] Governance closeout — BL-087 archivada tras outcome de investigación aceptado
+- `docs/project/BACKLOG.md` saca `BL-087` de la cola ejecutable tras el outcome aceptado `exception_reaffirmed`, dejando `BL-088` como única BL viva.
+- `docs/project/BACKLOG_DONE.md` archiva `BL-087` con cierre factual estrecho: el experimento único sobre SOM no produce promoción a `FULL`, no abre follow-up reusable nuevo y cierra la frontera ticker-level del ticker con excepción documentada.
+- `docs/project/OPPORTUNITIES.md` mueve `OP-001` desde `Near BL-ready` a `Exception watchlist`, donde SOM ya no figura como investigación packageable abierta; la expansión abstracta LSE/AIM permanece separada en `OP-009`.
+- `docs/project/PROJECT_STATE.md` deja de contar a SOM como frontera abierta y lo reclasifica como `ANNUAL_ONLY exception_reaffirmed` sin cambiar el cómputo factual de `DEC-015`, que sigue en `16` (`14 FULL + KAR + JBH`).
+- **Validation:** `python3 scripts/check_governance.py --format json` después de mutar → `backlog.active_ids=[BL-088]`, `governance_contract_violations=[]`; `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md docs/project/OPPORTUNITIES.md docs/project/PROJECT_STATE.md CHANGELOG.md` → limpio.
+
+### [4.0] Governance closeout — BL-089 archivada tras outcome técnico aceptado
+- `docs/project/BACKLOG.md` saca `BL-089` de la cola ejecutable tras el outcome técnico shared-core ya aceptado por parent y auditoría, dejando el backlog vivo en `BL-087` y `BL-088`.
+- `docs/project/BACKLOG_DONE.md` archiva `BL-089` con cierre factual estrecho: cache-hit de `SecEdgarFetcher.acquire()` ya recupera `cik` desde manifest cuando `case.cik` es `null`, cuenta earnings `8-K` y `8-K/A`, y mantiene como único riesgo residual no bloqueante que `filings_coverage_pct` siga fijo a `100.0` en cache-hit.
+- `docs/project/OPPORTUNITIES.md` reconcilia `OP-006` para que no conserve trabajo packageable vivo idéntico asociado: el frente TALO queda reducido a watchlist factual del cluster de enmiendas del 2024-11-12, fuera de backlog activo hasta nueva evidencia.
+- `docs/project/PROJECT_STATE.md` deja de presentar `BL-089` como follow-up vivo, fija `Fase B` con solo `BL-087` y `BL-088`, y mueve el frente TALO a frontera residual no packageable.
+- **Validation:** `python3 scripts/check_governance.py --format json` antes de mutar → `backlog.active_ids=[BL-089, BL-087, BL-088]`, `governance_contract_violations=[]`; base factual aceptada para closeout técnico: `git diff --check` limpio, `python3 -m pytest tests/unit/test_sec_edgar.py -q` → `49 passed`, `python3 -m elsian acquire TALO` → `Coverage 100.0%`, manifest con `cik=0001724965` y `coverage` no vacía.
+
+### [BL-089] Auditoría: corrección hallazgos cik-manifest-recovery y 8-K-A coverage
+- `elsian/acquire/sec_edgar.py`: añadido `import json`. Hallazgo 1 — en cache-hit, cuando `case.cik=None`, ahora se intenta recuperar `cik` desde `filings_manifest.json` existente (lectura determinista, fall-through a `None` si no existe o no parsea). Hallazgo 2 — el contador de earnings en cache-hit cubre también `_8-K-A_` además de `_8-K_`, coherente con el path normal que acepta ambos form variants (`8-K` y `8-K/A`).
+- `tests/unit/test_sec_edgar.py`: renombrado `test_cache_hit_cik_none_when_not_configured` → `test_cache_hit_cik_none_when_not_configured_and_no_manifest` (contrato exacto: cik=None solo cuando tampoco hay manifest). Añadido `test_cache_hit_cik_recovered_from_manifest` (fija la recuperación desde manifest). Añadido `test_cache_hit_8k_amendment_counted` (fija que `8-K-A` cuenta en earnings).
+- **Validation:** `python3 -m pytest tests/unit/test_sec_edgar.py` → `49 passed`.
+
+### [BL-089] SEC acquire: preservar `coverage` y `cik` en cache-hit
+- `elsian/acquire/sec_edgar.py`: corregido el path cache-hit de `SecEdgarFetcher.acquire()`. Antes devolvía `cik=None` y `coverage={}` cuando `filings/` ya estaba poblado. Ahora preserva `cik` desde `case.cik` y reconstruye `coverage` contando formas por nombre de archivo (`_10-K_`, `_20-F_`, `_40-F_`, `_10-Q_`, `_6-K_`, `_8-K_`). Fix mínimo acotado al bloque cache-hit; no toca extract/merge/eval ni otros fetchers.
+- `tests/unit/test_sec_edgar.py`: añadida la clase `TestSecEdgarFetcherCacheHit` (4 tests) que fija el contrato: `result.cik` == `case.cik` en cache-hit; `result.coverage` no vacío con contadores correctos por forma; `cik` sigue siendo `None` cuando `case.cik` no está configurado; detección correcta de `20-F` y `6-K`.
+- **Validation:** `python3 -m pytest tests/unit/test_sec_edgar.py` → `47 passed`; `python3 scripts/check_governance.py --format json` → `governance_contract_violations=[]`.
+
+### [4.0] Governance closeout — BL-086 archivada y reempaquetada como follow-up técnico mínimo `BL-089`
+- `docs/project/BACKLOG.md` cierra `BL-086` tras outcome factual aceptado `technical_followup_opened` y abre `BL-089` como BL `technical` de scope mínimo sobre SEC acquire/manifest: preservar o recomputar `coverage` y `cik` en cache-hit sin tocar extract/merge/eval ni mezclar el cluster de enmiendas TALO del 2024-11-12.
+- `docs/project/BACKLOG_DONE.md` archiva `BL-086` como investigación ticker-level completada con evidencia suficiente: TALO mantiene 100.0% (235/235), el CIK correcto es `0001724965`, el problema deja de tratarse como gap local y el cierre canónico exige que el siguiente scout no reabra la misma BL con la misma shape.
+- `docs/project/OPPORTUNITIES.md` reconcilia `OP-006` con la anti-regresión contractual: el item sigue vivo, pero ya referenciado explícitamente a `BL-089`, con `Blast radius if promoted: shared-core` y con el cluster de enmiendas fuera de alcance hasta nueva evidencia.
+- `docs/project/PROJECT_STATE.md` deja de describir el frente TALO como gap ticker-level nuevo y pasa a fijarlo como follow-up shared-core abierto en `BL-089`; las prioridades vivas quedan en `BL-089`, `BL-087` y `BL-088`, manteniendo a `0327` como packageable diferido por presupuesto.
+- **Validation:** `python3 scripts/check_governance.py --format json` → `backlog.active_ids=[BL-087, BL-088, BL-089]`, `governance_contract_violations=[]`; `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md docs/project/OPPORTUNITIES.md docs/project/PROJECT_STATE.md CHANGELOG.md` → limpio.
+
+### [BL-086] TALO — experimento coverage/manifest: outcome factual `technical_followup_opened`
+- Experimento de acquire ejecutado sobre TALO: `python3 -m elsian acquire TALO` confirma cache-hit con `coverage: {}` y `cik: null` en manifest.
+- CIK descubierto vía SEC EDGAR submissions API: `0001724965` (TALOS ENERGY INC., SIC 1311, TX). Registrado en `cases/TALO/case.json`.
+- SEC EDGAR tiene 8 10-Ks (FY2018–FY2025) + 23-25 10-Qs. Locales: 12 archivos únicos. Todos los `source_filing` de `expected.json` están presentes; TALO sigue al 100% (235/235).
+- Gap estructural confirmado: el cache bypass de `SecEdgarFetcher.acquire()` suprime la coverage query cuando `filings/` no está vacío → `coverage: {}` es consecuencia del diseño cache-first, no de un bug TALO-específico.
+- Cluster de enmiendas 2024-11-12 (`10-K/A` + `10-Q/A` × 2) pendiente de verificación de restatement trigger sobre períodos en expected.json.
+- Outcome factual: `technical_followup_opened`. Las actualizaciones de gobernanza (`BACKLOG.md`, `OPPORTUNITIES.md`) requieren ola governance-only por el director.
+- **Ficheros mutados:** `cases/TALO/case.json`, `CHANGELOG.md`.
+- **Validation:** `python3 -m elsian eval TALO` → 100% (235/235, inalterado); `python3 scripts/check_governance.py --format json` → verde.
+
+### [4.0] Governance-only audit-fix adicional — `OPPORTUNITIES.md` deja de mezclar diferido packageable con Fase C
+- `docs/project/OPPORTUNITIES.md` deja explícito en su encabezado y reglas de uso que el subtree operativo puede contener tanto oportunidades todavía no packageables como trabajo ya packageable no seleccionado en el batch actual solo por presupuesto.
+- `OP-001` deja de presentar `SOM` como si su frente ticker-level siguiera siendo Fase C no packageable: el item queda descrito como investigación ya packageable, mientras la generalización abstracta de LSE/AIM sigue separada en `OP-009`.
+- `OP-005` deja de sugerir que `0327` sea hoy Fase C no packageable: el ticker sigue cerrado y el siguiente experimento HKEX queda descrito como packageable diferido por presupuesto; `OP-011` conserva solo la generalización abstracta de mercado.
+- `OP-009`, `OP-010` y `OP-011` se reescriben para separar con claridad el anchor ticker-level ya packageable o ya cerrado de la generalización de mercado que sigue siendo abstracta y no packageable por sí sola.
+- **Validation:** `python3 scripts/check_governance.py --format json` → `governance_contract_violations=[]`; `git diff --check -- CHANGELOG.md docs/project/OPPORTUNITIES.md` → limpio.
+
+### [4.0] Governance-only audit-fix — taxonomía Fase B/Fase C alineada con Packet B
+- `docs/project/PROJECT_STATE.md` deja explícito que **Fase B** no equivale solo a BL ya abiertas en `BACKLOG.md`: también incluye investigación ya packageable normalizada en `OPPORTUNITIES.md` cuando queda fuera del batch actual solo por presupuesto.
+- La columna `Fase programa` pasa a leerse como ubicación del siguiente trabajo packageable del sujeto, no como sinónimo de cierre factual. Por esa razón `TALO`, `TEP`, `SOM` y `0327`, y los carriles de mercado asociados en Euronext/LSE-AIM/HKEX, quedan en Fase B mientras mantengan investigación activa o budget-deferred.
+- `0327` deja de poder leerse como frontera no packageable de Fase C: sigue siendo `investigation_BL_ready` válida y no seleccionada únicamente por límite de presupuesto.
+- `docs/project/BACKLOG.md` aclara que la cola viva es el subconjunto ejecutable seleccionado de Fase B y que `OPPORTUNITIES.md` puede alojar packageables no seleccionados sin convertirlos por ello en Fase C.
+- **Validation:** `python3 scripts/check_governance.py --format json` → `governance_contract_violations=[]`, `project_state_lags_changelog=false`; `git diff --check -- CHANGELOG.md docs/project/BACKLOG.md docs/project/PROJECT_STATE.md` → limpio.
+
+### [4.0] Governance-only batch packaging — backlog reabierto tras scout mixto de capacidad
+- Sobre `main@3ea65d8`, con worktree limpio, `BACKLOG.md` vacío, `Module 1 status: OPEN` y `project_state_lags_changelog=true`, la ola governance-only resuelve en un solo ciclo el caso mixto exigido por contrato: absorbe la reconciliación `missing` de `discovery-baseline` y empaqueta el batch máximo viable de `investigation_BL_ready` dentro del presupuesto vigente.
+- `docs/project/BACKLOG.md` abre `BL-086` (`TALO`, `Work kind: investigation`), `BL-087` (`SOM`, `Work kind: investigation`) y `BL-088` (`TEP`, `Work kind: investigation`) como tres investigaciones targeted, independientes y serializables. Las tres preservan el contrato de experimento único y outcome canónico acotado.
+- `docs/project/OPPORTUNITIES.md` se reconcilia con el estado vivo: `OP-001`, `OP-004`, `OP-005` y `OP-006` quedan revalidados con `Last reviewed: 2026-03-14`, y `OP-013` absorbe explícitamente la reconciliación de `discovery-baseline` para que deje de reaparecer como `missing` en el siguiente scout.
+- `docs/project/PROJECT_STATE.md` deja de describir el runtime como backlog vacío, mantiene `DEC-015` en **16** (`14 FULL + KAR + JBH`) y fija que esta ola reabre Fase B sin sustituir todavía la `Discovery Baseline` persistida del 2026-03-13.
+- `0327` queda fuera del batch por presupuesto, no por invalidación factual: sigue siendo `investigation_BL_ready` matched y unchanged en `OPPORTUNITIES.md` y pasa a ser el siguiente candidato natural si el batch actual no altera la prioridad.
+- **Validation:** `python3 scripts/check_governance.py --format json` antes de mutar → `main@3ea65d8`, repo limpio, `backlog.active_count=0`, `next_resolution_mode=empty_backlog_discovery`; `python3 scripts/check_governance.py --format json` después de mutar → `backlog.active_ids=[BL-086, BL-087, BL-088]`, `active_count=3`, `project_state_lags_changelog=false`, `governance_contract_violations=[]`; `git diff --check` → limpio.
+
 ### [4.0] CI portability hardening — mirrors locales opcionales en CI y tests offline blindados ante filings gitignored
 - `tests/contracts/test_runtime_mirrors.py` deja de asumir que los mirrors locales de Codex existen en cualquier runtime: resuelve `CODEX_HOME`/`~/.codex` dinámicamente y valida skills locales solo cuando esos mirrors están presentes, manteniendo siempre obligatorios los mirrors repo-tracked.
 - `tests/unit/test_extract_phase.py`, `tests/integration/test_curate.py` y `tests/unit/test_narrative.py` ahora hacen `skip` explícito cuando un checkout limpio no trae `cases/*/filings/*` gitignored. La suite no vuelve a vender como portable una regresión que en realidad dependía de artefactos locales fuera de git.

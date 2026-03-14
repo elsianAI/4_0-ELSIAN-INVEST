@@ -32,9 +32,9 @@
 
 ## Tareas activas
 
-Este backlog representa solo la **Fase B** del programa de capacidad de Module 1. La **Fase A** vive en `docs/project/PROJECT_STATE.md` como capacidad factual ya cerrada, y la **Fase C** vive en `docs/project/OPPORTUNITIES.md` como frontera abierta o excepción no empaquetable todavía.
+Este backlog representa solo el subconjunto **ejecutable seleccionado** de la **Fase B** del programa de capacidad de Module 1. La **Fase A** vive en `docs/project/PROJECT_STATE.md` como capacidad factual ya cerrada. `docs/project/OPPORTUNITIES.md` sigue alojando la **Fase C** no packageable, pero también puede alojar investigación ya packageable que haya quedado fuera del batch actual solo por presupuesto; esos items no pasan a Fase C por ese motivo.
 
-No hay tareas activas BL-ready en este snapshot. La cola viva de trabajo queda vacía tras el closeout canónico de `BL-085`.
+No hay BL activas en este snapshot. El siguiente trabajo posible, si vuelve a aparecer evidencia packageable, debe reaparecer desde `docs/project/OPPORTUNITIES.md` mediante una nueva ola governance-only o un nuevo scout factual.
 ---
 
 ## Notas

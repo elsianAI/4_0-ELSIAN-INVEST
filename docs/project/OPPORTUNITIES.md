@@ -1,7 +1,7 @@
 # ELSIAN-INVEST 4.0 — Opportunities
 
-> Carril estructurado para trabajo no ejecutable todavía.
-> El subtree `Module 1 operational opportunities` alimenta el runtime de planning cuando el backlog queda vacío.
+> Carril estructurado para frontera operativa y exceso packageable no seleccionado todavía.
+> El subtree `Module 1 operational opportunities` alimenta el runtime de planning cuando el backlog queda vacío y también retiene trabajo ya packageable que haya quedado fuera del batch actual solo por presupuesto.
 > Las ideas fuera de ese subtree no compiten con el backlog operativo ni bloquean por sí solas el cierre de Module 1.
 
 ---
@@ -10,29 +10,31 @@
 
 - `BACKLOG.md` sigue siendo la única cola ejecutable.
 - `OPPORTUNITIES.md` no crea BLs por sí solo; solo estructura inputs para `capacity-scout` y `director`.
+- El subtree operativo puede contener tanto oportunidades todavía no packageables como trabajo ya packageable no seleccionado en el batch actual por presupuesto.
 - El subtree operativo de Module 1 debe mantener shape parseable y campos obligatorios por item.
 - Cuando un scout pass cambia materialmente la interpretación de un item, o reafirma un item stale, el `director` debe reconciliar este fichero en una ola governance-only.
 - Los items investigables solo pueden subir a `investigation_BL_ready` cuando `Unknowns remaining` describe un único experimento ejecutable y falsable.
 - Los items de `Expansion candidates` solo pueden subir a `expansion_candidate` cuando representan un ticker concreto; los mercados abstractos siguen como contexto hasta una ola governance-only de curación.
+- El exceso packageable que no entra en el batch vigente permanece aquí y reaparece como `matched` + `unchanged_since_last_pass` mientras no cambien las firmas o la prioridad factual.
 
 ## Module 1 operational opportunities
 
 ### Near BL-ready
 
-#### OP-001 — SOM: promoción a FULL o cierre como excepción documentada
+### Exception watchlist
+
+#### OP-001 — SOM: excepción ticker-level reafirmada; LSE/AIM general sigue aparte
 - **Subject type:** ticker
 - **Subject id:** SOM
-- **Canonical state:** frontera abierta
-- **Why it matters:** SOM es el único ticker actual validado `ANNUAL_ONLY` que sigue abierto de forma explícita y mantiene LSE/AIM en Fase C.
-- **Live evidence:** `PROJECT_STATE.md` lo mantiene fuera de `DEC-015` y `OPPORTUNITIES.md` lo trata como la única frontera ticker-level abierta.
-- **Unknowns remaining:** Ejecutar acquire sobre SOM buscando filings intermedios públicos utilizables. Si aparece al menos uno, correr extract+eval sobre ese filing: `promoted` si SOM queda listo para `FULL`, `technical_followup_opened` si aparece un bloqueo reusable, `exception_reaffirmed` si la evidencia sostiene la excepción actual, o `discarded_with_evidence` si no existe filing utilizable.
-- **Promotion trigger:** Evidencia factual nueva que acote una única ola serial: promoción a `FULL` o excepción cerrada con soporte documental suficiente.
+- **Canonical state:** ANNUAL_ONLY exception_reaffirmed
+- **Why it matters:** BL-087 cierra la única frontera ticker-level abierta de SOM sin convertirla en expansión de mercado. El ticker queda cerrado por excepción documentada, mientras la generalización de LSE/AIM sigue separada como frente abstracto no packageable en `OP-009`.
+- **Live evidence:** El outcome aceptado de BL-087 fija `exception_reaffirmed`: el filing intermedio `SRC_003_INTERIM_H1_2025.txt` aporta solo 2 periodos H1, cobertura parcial y una inconsistencia de balance sheet (`assets 90.6` frente a `liabilities + equity 91.8`), insuficiente para promoción a `FULL` y sin follow-up reusable nuevo. La formulación normalizada del experimento ya absorbido fue: Ejecutar acquire sobre SOM buscando filings intermedios públicos utilizables.
+- **Unknowns remaining:** Ninguno packageable hoy a nivel ticker. Solo revalidación periódica si aparece un filing intermedio público adicional y suficientemente fiable para reconsiderar la promoción.
+- **Promotion trigger:** Evidencia nueva de un filing intermedio formal con cobertura suficiente y fiabilidad bastante para sostener promoción a `FULL` o abrir un follow-up reusable distinto del ya descartado.
 - **Blast radius if promoted:** targeted
 - **Expected effort:** bounded
-- **Last reviewed:** 2026-03-13
-- **Disposition:** keep
-
-### Exception watchlist
+- **Last reviewed:** 2026-03-14
+- **Disposition:** reaffirm_exception
 
 #### OP-002 — KAR: revalidación periódica de la excepción ASX annual-only
 - **Subject type:** ticker
@@ -60,45 +62,45 @@
 - **Last reviewed:** 2026-03-12
 - **Disposition:** reaffirm_exception
 
-#### OP-004 — TEP: capacidad Euronext sigue siendo ticker-level, no de mercado
+#### OP-004 — TEP: excepción de acquire Euronext reafirmada; el mercado sigue aparte
 - **Subject type:** acquire
 - **Subject id:** TEP
-- **Canonical state:** FULL con documented exception
-- **Why it matters:** TEP está cerrado a nivel ticker, pero la autonomía operativa de acquire en Euronext sigue siendo parcial y no prueba un carril de mercado general.
-- **Live evidence:** `PROJECT_STATE.md` lo clasifica como `FULL` con `documented exception` y mercado `gradual`.
-- **Unknowns remaining:** Ejecutar un experimento de acquire sobre Euronext usando TEP como ticker ancla y un filing adicional fuera del carril ya validado. Si aparece un patrón reusable de mercado, `technical_followup_opened`; si TEP sigue siendo solo capacidad ticker-level, `exception_reaffirmed`; si no hay filing utilizable o la hipótesis falla, `discarded_with_evidence`.
-- **Promotion trigger:** Evidencia nueva de patrón reusable en Euronext o de limitación clara y acotada susceptible de una BL técnica mínima.
+- **Canonical state:** FULL con exception_reaffirmed
+- **Why it matters:** TEP ya no mantiene investigación ticker-level viva. El cierre aceptado de BL-088 reafirma que el ticker está resuelto como excepción documentada y que cualquier trabajo posterior sobre Euronext debe plantearse ya como frontera de mercado separada, no como reapertura implícita de TEP.
+- **Live evidence:** El outcome aceptado de BL-088 deja nueve pruebas regulatorias EU sin identificación ni descarga de filing TEP reutilizable en esta ola: `AMF BDIF` y `ESMA OAM` devolvieron `HTTP 500`, las variantes Euronext dieron `404` o respuesta vacía, y `filings.xbrl.org` no validó una ruta reusable para TEP. El carril confirmado sigue siendo `tp.com` + fallback ya documentado, con `python3 -m elsian eval TEP` estable en PASS 100.0% (109/109). La formulación normalizada del experimento ya absorbido fue: Ejecutar un experimento de acquire sobre Euronext usando TEP como ticker ancla.
+- **Unknowns remaining:** Ninguno packageable hoy a nivel ticker. Cualquier trabajo nuevo debe entrar como candidato concreto fuera de TEP o como evidencia fresca de un carril regulatorio reusable que ya no dependa de esta misma hipótesis fallida.
+- **Promotion trigger:** Evidencia nueva y concreta de acquire reusable en Euronext que vaya más allá del ticker TEP o invalide la excepción hoy reafirmada.
 - **Blast radius if promoted:** shared-core
 - **Expected effort:** broad
-- **Last reviewed:** 2026-03-13
+- **Last reviewed:** 2026-03-14
 - **Disposition:** reaffirm_exception
 
-#### OP-005 — 0327: capacidad HKEX sigue siendo ticker-level, no de mercado
+#### OP-005 — 0327: acquire oficial HKEX absorbido; el frente ticker-level queda cerrado
 - **Subject type:** acquire
 - **Subject id:** 0327
-- **Canonical state:** FULL con documented exception
-- **Why it matters:** `0327` valida un ticker HKEX, pero no canoniza discovery/adquisición general del mercado.
-- **Live evidence:** `PROJECT_STATE.md` lo deja como `FULL` con `hkex_manual` reproducible y HKEX en Fase C de mercado.
-- **Unknowns remaining:** Ejecutar un experimento de acquire sobre HKEX usando `0327` como ticker ancla y un filing adicional fuera del carril ya validado. Si emerge una limitación reusable de mercado, `technical_followup_opened`; si `0327` sigue siendo solo capacidad ticker-level, `exception_reaffirmed`; si no hay filing utilizable o la hipótesis falla, `discarded_with_evidence`.
-- **Promotion trigger:** Evidencia nueva de acquire reusable en HKEX o de limitación shared-core claramente empaquetable.
+- **Canonical state:** FULL con autonomía gradual
+- **Why it matters:** El closeout aceptado de BL-091 debe impedir que el runtime reabra el mismo follow-up técnico sobre `0327`. El ticker ya no depende solo de `hkex_manual`: el carril oficial HKEX quedó absorbido en el fetcher y cualquier trabajo nuevo debe justificarse fuera de este mismo packet.
+- **Live evidence:** El packet aceptado de BL-091 deja `elsian/acquire/hkex.py` con lookup oficial `prefix.do` / `partial.do`, búsquedas exact-title en Title Search y descarga directa de `ANNUAL REPORT 2024/2023/2022` + `INTERIM REPORT 2025/2024/2023`, manteniendo fallback cache/manual cuando `filings/` ya está poblado. La validación scratch sobre un case dir vacío devuelve `source=hkex`, `6` filings y los IDs estables `SRC_001_AR_FY2024`…`SRC_006_IR_H12023`; la suite shared-core sigue verde. La formulación normalizada del experimento ya absorbido fue: Ejecutar un experimento de acquire sobre HKEX usando `0327` como ticker ancla.
+- **Unknowns remaining:** Ninguno packageable hoy a nivel ticker. Cualquier trabajo nuevo debe entrar como un segundo ticker HKEX concreto o como evidencia fresca de un gap shared-core distinto del ya absorbido.
+- **Promotion trigger:** Evidencia nueva de regresión del carril oficial sobre `0327` o de un segundo ticker HKEX concreto que fuerce un packet distinto de generalización/adquisición.
 - **Blast radius if promoted:** shared-core
-- **Expected effort:** broad
-- **Last reviewed:** 2026-03-13
-- **Disposition:** reaffirm_exception
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-14
+- **Disposition:** keep
 
 ### Extractor / format frontiers
 
-#### OP-006 — TALO: gap factual de coverage/manifest y autonomía operativa parcial
+#### OP-006 — TALO: anchor SEC cerrado; cluster de enmiendas 2024-11-12 en watchlist
 - **Subject type:** acquire
 - **Subject id:** TALO
 - **Canonical state:** FULL con autonomía gradual
-- **Why it matters:** TALO sigue validado al 100%, pero mantiene un gap factual abierto de coverage/manifest que hoy no está empaquetado como BL-ready y que bloquea el cierre fuerte de Module 1.
-- **Live evidence:** `PROJECT_STATE.md` mantiene el gap factual de `coverage/manifest` como limitación ticker-level del runtime actual.
-- **Unknowns remaining:** Ejecutar acquire y verificación de coverage/manifest sobre TALO para acotar el gap a una sola decisión. Si el gap se reduce a una pieza reusable, `technical_followup_opened`; si la evidencia sostiene la excepción actual, `exception_reaffirmed`; si no hay vía factual adicional, `discarded_with_evidence`.
-- **Promotion trigger:** Evidencia nueva que reduzca el problema a una sola aceptación técnica clara o que justifique una excepción documentada estable.
-- **Blast radius if promoted:** targeted
+- **Why it matters:** El closeout aceptado de BL-089 debe impedir que el runtime reabra el mismo gap cache-hit como trabajo packageable nuevo. TALO sigue al 100% y el follow-up reusable de SEC acquire/manifest ya quedó absorbido; lo único residual es la frontera factual del cluster de enmiendas del 2024-11-12, que permanece fuera de backlog activo mientras no haya evidencia nueva.
+- **Live evidence:** El packet técnico aceptado de BL-089 deja `python3 -m pytest tests/unit/test_sec_edgar.py -q` en `49 passed`, `python3 -m elsian acquire TALO` vuelve a manifest con `cik=0001724965` y `coverage` no vacía, y la auditoría independiente no encuentra hallazgos materiales. El riesgo residual documentado se acota a que `filings_coverage_pct` siga fijo a `100.0` en cache-hit, sin bloquear el closeout. La formulación normalizada del experimento ya absorbido fue: Ejecutar acquire y verificación de coverage/manifest sobre TALO.
+- **Unknowns remaining:** Ninguno packageable hoy. El cluster de enmiendas TALO del 2024-11-12 (`10-K/A` + `10-Q/A` x2) sigue fuera de backlog activo y no debe mezclarse con este item mientras no exista evidencia nueva de restatement trigger o de impacto real sobre períodos canonizados.
+- **Promotion trigger:** Evidencia nueva de que las enmiendas del 2024-11-12 disparan un restatement trigger o revelan un gap reusable distinto del ya cerrado en BL-089.
+- **Blast radius if promoted:** shared-core
 - **Expected effort:** bounded
-- **Last reviewed:** 2026-03-13
+- **Last reviewed:** 2026-03-14
 - **Disposition:** keep
 
 #### OP-007 — Fallos de extractor al promover ANNUAL_ONLY o ampliar mercados
@@ -129,17 +131,30 @@
 
 ### Expansion candidates
 
+#### OP-014 — ENQ: candidato ticker-level LSE/AIM pendiente de pre-gate de discoverability
+- **Subject type:** ticker
+- **Subject id:** ENQ
+- **Canonical state:** candidato concreto no onboarded; hypothesis_basis inconclusive
+- **Why it matters:** ENQ permite separar un candidato ticker-level concreto de la abstracción de mercado de `OP-009` sin vender onboarding validado ni abrir backlog. Hoy SOM sigue siendo el único ancla LSE/AIM del repo y ENQ no existe todavía como caso operativo.
+- **Live evidence:** ENQ está ausente del repo operativo actual: no existe `cases/ENQ`, no hay artifacts canonizados ni referencias previas verificadas en surfaces operativas, y SOM sigue siendo el único ancla LSE/AIM documentada. El pre-check de suitability para onboarding técnico inmediato queda clasificado como `inconclusive`, no `true`: todavía no hay evidencia reproducible de discoverability suficiente ni de corpus utilizable que permita promover este candidato a una BL `targeted`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable que ENQ dispone de discoverability automática o semi-determinista suficiente, corpus annual + intermedio utilizable, y viabilidad de generar `case.json`, `filings_manifest.json` y `expected_draft.json` sin intervención manual.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end, sin convertir todavía la abstracción de mercado LSE/AIM en onboarding validado.
+- **Blast radius if promoted:** targeted
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-14
+- **Disposition:** keep
+
 #### OP-009 — LSE/AIM más allá de SOM
 - **Subject type:** market
 - **Subject id:** LSE/AIM
 - **Canonical state:** mercado no generalizado
 - **Why it matters:** SOM no basta para declarar capacidad amplia del mercado; falta masa crítica o patrón reusable.
-- **Live evidence:** `PROJECT_STATE.md` mantiene LSE/AIM en Fase C y `SOM` como único frente ticker-level abierto.
-- **Unknowns remaining:** Curar un ticker concreto adicional de LSE/AIM antes de proponer onboarding. Mientras no exista candidato ticker-level con filings discoverables y blast radius `targeted`, este item no es packageable.
+- **Live evidence:** `PROJECT_STATE.md` y `OP-001` dejan a SOM cerrado como excepción ticker-level reafirmada, mientras esta entrada conserva la generalización de mercado que sigue siendo abstracta y no packageable por sí sola. ENQ queda ahora persistido aparte como candidato ticker-level concreto, pero su `hypothesis_basis` para onboarding técnico inmediato sigue siendo `inconclusive` y no convierte este item de mercado en packageable.
+- **Unknowns remaining:** Confirmar al menos un segundo ticker LSE/AIM concreto con pre-gate de discoverability satisfecho y evidencia suficiente para onboarding. Mientras la única abstracción de mercado siga descansando en SOM y en candidatos todavía inconclusos como ENQ, este item no es packageable.
 - **Promotion trigger:** candidato concreto con valor de frontera real y packet mínimo serializable.
 - **Blast radius if promoted:** shared-core
 - **Expected effort:** broad
-- **Last reviewed:** 2026-03-13
+- **Last reviewed:** 2026-03-14
 - **Disposition:** keep
 
 #### OP-010 — Euronext más allá de TEP
@@ -147,12 +162,12 @@
 - **Subject id:** Euronext
 - **Canonical state:** mercado no generalizado
 - **Why it matters:** TEP demuestra un ticker útil, no una capacidad de mercado autónoma.
-- **Live evidence:** `PROJECT_STATE.md` lo deja en Fase A solo a nivel ticker y en Fase C a nivel de mercado.
+- **Live evidence:** `PROJECT_STATE.md` deja a TEP como excepción ticker-level reafirmada tras BL-088, mientras esta entrada conserva solo la generalización abstracta del mercado Euronext, que sigue sin candidato ticker-level adicional listo ni carril reusable probado fuera del ancla ya cerrada.
 - **Unknowns remaining:** Curar un ticker concreto adicional de Euronext antes de proponer onboarding. Mientras no exista candidato ticker-level con filings discoverables y blast radius `targeted`, este item no es packageable.
 - **Promotion trigger:** candidato concreto con capacidad nueva y scope acotado.
 - **Blast radius if promoted:** shared-core
 - **Expected effort:** broad
-- **Last reviewed:** 2026-03-13
+- **Last reviewed:** 2026-03-14
 - **Disposition:** keep
 
 #### OP-011 — HKEX más allá de 0327
@@ -160,15 +175,28 @@
 - **Subject id:** HKEX
 - **Canonical state:** mercado no generalizado
 - **Why it matters:** `0327` valida un ticker, no discovery/adquisición general HKEX.
-- **Live evidence:** `PROJECT_STATE.md` y el cierre de BL-083 dejan explícito que HKEX sigue en frontera de mercado.
+- **Live evidence:** `BL-091` ya absorbió la ruta oficial HKEX sobre el ancla `0327` y dejó el ticker cerrado a nivel acquire. Esta entrada conserva la generalización abstracta de mercado más allá del ticker ancla: sigue sin existir hoy un segundo ticker HKEX concreto ya curado y elegible para onboarding.
 - **Unknowns remaining:** Curar un ticker concreto adicional de HKEX antes de proponer onboarding. Mientras no exista candidato ticker-level con filings discoverables y blast radius `targeted`, este item no es packageable.
 - **Promotion trigger:** candidato concreto con diversidad real de formato o acquire y packet serializable.
 - **Blast radius if promoted:** shared-core
 - **Expected effort:** broad
-- **Last reviewed:** 2026-03-13
+- **Last reviewed:** 2026-03-14
 - **Disposition:** keep
 
 ### Retired / absorbed
+
+#### OP-013 — discovery-baseline: reconciliación de baseline y semántica de casos sin manifest absorbida
+- **Subject type:** governance
+- **Subject id:** discovery-baseline
+- **Canonical state:** absorbido por governance-only wave 2026-03-14
+- **Why it matters:** El scout factual del 2026-03-14 detectó que la baseline persistida y la semántica vigente de casos sin `filings_manifest.json` ya no estaban reflejadas como item explícito en el subtree operativo.
+- **Live evidence:** `PROJECT_STATE.md` seguía anclado a la baseline persistida del 2026-03-13 mientras `CHANGELOG.md` ya estaba por delante y el scout del 2026-03-14 abrió una ola mixta con `1` reconciliación `missing` y `4` `investigation_BL_ready`.
+- **Unknowns remaining:** Ninguno en esta ola mientras la reconciliación viva quede absorbida por los canonicals y el siguiente scout ya no lo clasifique como `missing`.
+- **Promotion trigger:** Evidencia nueva de drift entre baseline persistida, semántica de manifest y estado vivo del runtime.
+- **Blast radius if promoted:** governance-only
+- **Expected effort:** minimal
+- **Last reviewed:** 2026-03-14
+- **Disposition:** retire
 
 #### OP-012 — Tareas de producto futuras ya absorbidas fuera del runtime operativo
 - **Subject type:** governance

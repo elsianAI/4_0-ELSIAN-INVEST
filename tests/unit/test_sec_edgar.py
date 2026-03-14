@@ -128,6 +128,115 @@ class TestCaseConfigCik:
         assert cfg.cik is None
 
 
+# ── Cache-hit: cik and coverage preserved (BL-089) ──────────────────
+
+class TestSecEdgarFetcherCacheHit:
+    """cache-hit path must return cik from case config and non-empty coverage."""
+
+    def _seed_filings(self, filings_dir, names):
+        filings_dir.mkdir(parents=True, exist_ok=True)
+        for name in names:
+            (filings_dir / name).write_text("x", encoding="utf-8")
+
+    def test_cache_hit_preserves_cik(self, tmp_path):
+        self._seed_filings(tmp_path / "filings", [
+            "SRC_001_10-K_FY2024.htm",
+            "SRC_001_10-K_FY2024.txt",
+        ])
+        case = CaseConfig(
+            ticker="TALO", cik="0001724965", source_hint="sec",
+            case_dir=str(tmp_path),
+        )
+        result = SecEdgarFetcher().acquire(case)
+        assert result.cache_hit is True
+        assert result.cik == "0001724965"
+
+    def test_cache_hit_coverage_not_empty(self, tmp_path):
+        self._seed_filings(tmp_path / "filings", [
+            "SRC_001_10-K_FY2024.htm",
+            "SRC_001_10-K_FY2024.txt",
+            "SRC_002_10-Q_Q3-2024.htm",
+            "SRC_002_10-Q_Q3-2024.txt",
+            "SRC_003_8-K_2024-11-01.htm",
+            "SRC_003_8-K_2024-11-01.txt",
+        ])
+        case = CaseConfig(
+            ticker="TALO", cik="0001724965", source_hint="sec",
+            case_dir=str(tmp_path),
+        )
+        result = SecEdgarFetcher().acquire(case)
+        assert result.coverage != {}
+        assert result.coverage["annual"]["downloaded"] == 1
+        assert result.coverage["quarterly"]["downloaded"] == 1
+        assert result.coverage["earnings"]["downloaded"] == 1
+        assert result.coverage["annual"]["from_cache"] is True
+
+    def test_cache_hit_cik_none_when_not_configured_and_no_manifest(self, tmp_path):
+        """cik=None when case.cik is null AND no filings_manifest.json exists."""
+        self._seed_filings(tmp_path / "filings", [
+            "SRC_001_10-K_FY2024.htm",
+            "SRC_001_10-K_FY2024.txt",
+        ])
+        case = CaseConfig(
+            ticker="TZOO", cik=None, source_hint="sec",
+            case_dir=str(tmp_path),
+        )
+        result = SecEdgarFetcher().acquire(case)
+        assert result.cache_hit is True
+        assert result.cik is None  # no manifest → no recovery
+
+    def test_cache_hit_cik_recovered_from_manifest(self, tmp_path):
+        """When case.cik=None but filings_manifest.json has a cik, that cik is returned."""
+        self._seed_filings(tmp_path / "filings", [
+            "SRC_001_10-K_FY2024.htm",
+            "SRC_001_10-K_FY2024.txt",
+        ])
+        manifest = tmp_path / "filings_manifest.json"
+        manifest.write_text(
+            json.dumps({"ticker": "TZOO", "cik": "0000885074", "source": "sec_edgar"}),
+            encoding="utf-8",
+        )
+        case = CaseConfig(
+            ticker="TZOO", cik=None, source_hint="sec",
+            case_dir=str(tmp_path),
+        )
+        result = SecEdgarFetcher().acquire(case)
+        assert result.cache_hit is True
+        assert result.cik == "0000885074"
+
+    def test_cache_hit_8k_amendment_counted(self, tmp_path):
+        """8-K/A earnings (saved as 8-K-A in filename) are counted in coverage."""
+        self._seed_filings(tmp_path / "filings", [
+            "SRC_001_8-K_2024-03-01.htm",
+            "SRC_001_8-K_2024-03-01.txt",
+            "SRC_002_8-K-A_2024-03-07.htm",
+            "SRC_002_8-K-A_2024-03-07.txt",
+        ])
+        case = CaseConfig(
+            ticker="TALO", cik="0001724965", source_hint="sec",
+            case_dir=str(tmp_path),
+        )
+        result = SecEdgarFetcher().acquire(case)
+        # Both 8-K and 8-K/A (8-K-A) must count toward earnings coverage
+        assert result.coverage["earnings"]["downloaded"] == 2
+
+    def test_cache_hit_20f_and_6k_forms_detected(self, tmp_path):
+        self._seed_filings(tmp_path / "filings", [
+            "SRC_001_20-F_FY2023.htm",
+            "SRC_001_20-F_FY2023.txt",
+            "SRC_002_6-K_Q2-2023.htm",
+            "SRC_002_6-K_Q2-2023.txt",
+        ])
+        case = CaseConfig(
+            ticker="GCT", cik="0001889539", source_hint="sec",
+            case_dir=str(tmp_path),
+        )
+        result = SecEdgarFetcher().acquire(case)
+        assert result.coverage["annual"]["downloaded"] == 1
+        assert result.coverage["quarterly"]["downloaded"] == 1
+        assert result.coverage["earnings"]["downloaded"] == 0
+
+
 # ── Cache logical filing count ───────────────────────────────────────
 
 from elsian.models.result import AcquisitionResult
