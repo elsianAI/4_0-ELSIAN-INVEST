@@ -75,18 +75,18 @@
 - **Last reviewed:** 2026-03-14
 - **Disposition:** reaffirm_exception
 
-#### OP-005 — 0327: capacidad HKEX sigue siendo ticker-level, no de mercado
+#### OP-005 — 0327: ruta oficial HKEX probada; follow-up shared-core abierto
 - **Subject type:** acquire
 - **Subject id:** 0327
 - **Canonical state:** FULL con documented exception
-- **Why it matters:** `0327` valida un ticker HKEX, pero no canoniza discovery/adquisición general del mercado; el siguiente experimento de mercado ya es packageable, aunque hoy siga diferido por presupuesto.
-- **Live evidence:** `PROJECT_STATE.md` lo deja como `FULL` con `hkex_manual` reproducible y sitúa HKEX en Fase B por experimento de mercado packageable aún no seleccionado en el batch vigente.
-- **Unknowns remaining:** Ejecutar un experimento de acquire sobre HKEX usando `0327` como ticker ancla y un filing adicional fuera del carril ya validado. Si emerge una limitación reusable de mercado, `technical_followup_opened`; si `0327` sigue siendo solo capacidad ticker-level, `exception_reaffirmed`; si no hay filing utilizable o la hipótesis falla, `discarded_with_evidence`.
-- **Promotion trigger:** Evidencia nueva de acquire reusable en HKEX o de limitación shared-core claramente empaquetable.
+- **Why it matters:** `BL-090` falsó la lectura de que `0327` solo valida capacidad ticker-level cerrada con `hkex_manual`: la ruta oficial de HKEX ya quedó probada a nivel de evidencia, por lo que el siguiente paso correcto ya no es otra investigación sino un follow-up técnico shared-core (`BL-091`) que convierta esa ruta en acquire reusable.
+- **Live evidence:** El experimento aceptado de `BL-090` probó tres piezas oficiales y reproducibles: `prefix.do` / `partial.do` resuelven `stockId=56792` para `00327 PAX GLOBAL`; el Title Search oficial devuelve 638 resultados para el ticker con annual/interim reports visibles; y los PDFs directos `2025082800017.pdf`, `2025041600007.pdf`, `2024082900003.pdf` y `2024041800065.pdf` descargan `200 application/pdf`.
+- **Unknowns remaining:** `BL-091` debe implementar en `elsian/acquire/` un path reusable que use lookup oficial + Title Search + descarga directa de PDFs HKEX para `0327`, preservando `hkex_manual` como fallback y sin mezclar extract/merge/eval. Si ese follow-up no consigue convertir la evidencia en fetcher reproducible, la excepción ticker-level deberá reafirmarse de nuevo con evidencia actualizada.
+- **Promotion trigger:** Cierre green de `BL-091` o evidencia nueva de que la ruta oficial no puede convertirse en acquire reproducible dentro del fetcher.
 - **Blast radius if promoted:** shared-core
 - **Expected effort:** broad
 - **Last reviewed:** 2026-03-14
-- **Disposition:** reaffirm_exception
+- **Disposition:** keep
 
 ### Extractor / format frontiers
 
@@ -162,7 +162,7 @@
 - **Subject id:** HKEX
 - **Canonical state:** mercado no generalizado
 - **Why it matters:** `0327` valida un ticker, no discovery/adquisición general HKEX.
-- **Live evidence:** `PROJECT_STATE.md` deja a `0327` como ticker cerrado y al siguiente experimento HKEX en Fase B por presupuesto; esta entrada conserva únicamente la generalización abstracta de mercado, que sigue sin candidato nuevo concreto.
+- **Live evidence:** `BL-091` abre un follow-up shared-core sobre el ancla `0327` para convertir la ruta oficial HKEX en acquire reusable. Esta entrada conserva la generalización abstracta de mercado más allá del ticker ancla: sigue sin existir hoy un segundo ticker HKEX concreto ya curado y elegible para onboarding.
 - **Unknowns remaining:** Curar un ticker concreto adicional de HKEX antes de proponer onboarding. Mientras no exista candidato ticker-level con filings discoverables y blast radius `targeted`, este item no es packageable.
 - **Promotion trigger:** candidato concreto con diversidad real de formato o acquire y packet serializable.
 - **Blast radius if promoted:** shared-core

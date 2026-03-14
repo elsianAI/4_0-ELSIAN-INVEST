@@ -2,6 +2,31 @@
 
 ## 2026-03-14
 
+### [4.0] Governance closeout — BL-090 archivada y reempaquetada como follow-up técnico `BL-091`
+- `docs/project/BACKLOG.md` deja de estar vacío y abre `BL-091` como BL `technical` de scope shared-core sobre acquire oficial HKEX: convertir la ruta validada por `BL-090` en fetcher reusable sin tocar extract/merge/eval ni retirar `hkex_manual` prematuramente.
+- `docs/project/BACKLOG_DONE.md` archiva `BL-090` como investigación ticker-level completada con evidencia suficiente: `0327` mantiene 100.0% y el hallazgo deja de tratarse como packageable diferido abstracto para pasar a follow-up técnico concreto.
+- `docs/project/OPPORTUNITIES.md` reconcilia `OP-005` con la anti-regresión contractual: el item sigue vivo, pero ya referenciado explícitamente a `BL-091`, con `Unknowns remaining` actualizado y `Disposition: keep`.
+- `docs/project/PROJECT_STATE.md` deja de describir el runtime como backlog vacío y fija `BL-091` como la única prioridad viva en Fase B tras el closeout de `BL-090`.
+- **Validation:** `python3 scripts/check_governance.py --format json` después de mutar → `backlog.active_ids=[BL-091]`, `active_count=1`, `governance_contract_violations=[]`; `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md docs/project/OPPORTUNITIES.md docs/project/PROJECT_STATE.md CHANGELOG.md` → limpio.
+
+### [BL-090] 0327 — experimento acquire HKEX oficial: outcome `technical_followup_opened`
+- **Ticker ancla:** `0327` (PAX Global Technology Ltd, HKEX). Baseline confirmado antes del experimento: `PASS score=100.0% (146/146)` — sin mutación de expected.json ni del pipeline.
+- **Carril ya validado:** `hkex_manual` reproducible desde git a través del corpus trackeado `SRC_001`-`SRC_006`; `0327` es FULL (`3A+3H`) y el fetcher actual no hace llamadas de red.
+- **Experimento ejecutado sobre HKEX oficial:**
+  - `prefix.do?lang=EN&type=A&name=0327&market=SEHK` → `200` con `stockId=56792`, `code=00327`, `name=PAX GLOBAL`.
+  - `partial.do?lang=EN&type=A&name=0327&market=SEHK` → `200` con la misma resolución para el ticker y resto de sugerencias.
+  - El Title Search oficial de HKEX para `00327 PAX GLOBAL` devuelve `638` resultados históricos; en el DOM visible aparecen, entre otros, `INTERIM REPORT 2025`, `ANNUAL REPORT 2024`, `INTERIM REPORT 2024`, `ANNUAL REPORT 2023` y los correspondientes `RESULTS ANNOUNCEMENT`.
+  - Las URLs directas descubiertas en esa búsqueda descargan `200 application/pdf`: `2025082800017.pdf` (`INTERIM REPORT 2025`), `2025041600007.pdf` (`ANNUAL REPORT 2024`), `2024082900003.pdf` (`INTERIM REPORT 2024`) y `2024041800065.pdf` (`ANNUAL REPORT 2023`).
+- **Conclusiones del experimento:**
+  1. HKEX sí ofrece una ruta oficial y reproducible de lookup de emisor por HTTP (`prefix.do` / `partial.do`) que resuelve el ancla `0327` sin depender de artefactos locales.
+  2. El buscador oficial de HKEX sí expone annual/interim filings descargables para `0327` fuera del carril `hkex_manual`.
+  3. Las URLs PDF resultantes son directamente descargables y suficientes para abrir un follow-up shared-core de acquire reutilizable.
+  4. El packet actual no implementa todavía esa ruta en `elsian/acquire/`; por contrato, el resultado correcto es `technical_followup_opened`, no ampliar la investigación en caliente.
+- **Outcome factual: `technical_followup_opened`**. La evidencia ya no sostiene que `0327` sea solo una excepción ticker-level cerrada a nivel de acquire; el siguiente paso correcto es un follow-up técnico reusable sobre HKEX.
+- **Estado 0327 post-experimentación:** inalterado. `PASS score=100.0% (146/146)`. No se mutó `case.json`, `expected.json` ni código del pipeline.
+- **Ficheros mutados:** `CHANGELOG.md`.
+- **Validations:** `python3 -m elsian eval 0327` → `PASS score=100.0% (146/146) wrong=0 missed=0`. Verificaciones HTTP del experimento: lookup oficial `prefix.do`/`partial.do` con `200` y PDFs directos HKEX con `200 application/pdf`. Tests unitarios no ejecutados (no hay cambio de código).
+
 ### [4.0] Governance closeout — BL-088 archivada tras outcome de investigación aceptado
 - `docs/project/BACKLOG.md` saca `BL-088` de la cola ejecutable tras el outcome aceptado `exception_reaffirmed`, dejando el backlog vivo vacío en este snapshot.
 - `docs/project/BACKLOG_DONE.md` archiva `BL-088` con cierre factual estrecho: el experimento único sobre TEP/Euronext no identificó ni descargó un filing TEP desde fuente regulatoria EU en esta ola y no abrió follow-up técnico reusable nuevo.

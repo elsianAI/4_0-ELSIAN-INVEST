@@ -9,6 +9,17 @@
 
 ---
 
+### BL-090 — Probar acquire HKEX oficial con 0327 como ancla
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-14)
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** targeted
+- **Work kind:** investigation
+- **Depende de:** —
+- **Descripción:** Se cierra BL-090 con outcome terminal `technical_followup_opened`. El experimento único sobre HKEX demostró que `0327` ya no depende solo de `hkex_manual` para localizar filings oficiales: el lookup HTTP oficial `prefix.do` y `partial.do` resuelve `stockId=56792` para `00327 PAX GLOBAL`, el buscador oficial Title Search devuelve resultados históricos con annual/interim reports del ticker, y las URLs directas descubiertas para `ANNUAL REPORT 2024`, `ANNUAL REPORT 2023`, `INTERIM REPORT 2025` e `INTERIM REPORT 2024` descargan `200 application/pdf`. La evidencia abre un follow-up shared-core sobre acquire HKEX reusable, pero este packet no implementa todavía el fetcher ni retira `hkex_manual`.
+- **Criterio de aceptación:** ✓ Se ejecutó exactamente un experimento acotado sobre HKEX con `0327` como ancla. ✓ El outcome canónico quedó fijado en `technical_followup_opened`. ✓ La ruta oficial quedó probada con lookup HTTP, resultados de búsqueda y PDFs directos descargables. ✓ `python3 -m elsian eval 0327` se mantiene en PASS 100.0% (146/146). ✓ Se abre `BL-091` como follow-up shared-core y `OP-005` queda reconciliada como precursor factual del follow-up, no como la misma investigación ticker-level pendiente.
+
 ### BL-088 — Probar acquire Euronext fuera del carril ya validado con TEP como ancla
 - **Prioridad:** MEDIA
 - **Estado:** DONE ✅ (2026-03-14)
