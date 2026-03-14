@@ -8,6 +8,7 @@ Downloads annual (10-K/20-F/40-F), quarterly (10-Q/6-K), and earnings
 from __future__ import annotations
 
 import datetime as dt
+import json
 import logging
 import re
 import time
@@ -374,16 +375,46 @@ class SecEdgarFetcher(Fetcher):
         # Cache: if filings already exist, skip
         existing = [f for f in out_path.glob("SRC_*") if f.is_file()]
         if existing:
-            logical_filing_count = len(
-                {f.stem for f in existing if f.suffix in (".htm", ".txt")}
-            )
+            stems = {f.stem for f in existing if f.suffix in (".htm", ".txt")}
+            logical_filing_count = len(stems)
             if logical_filing_count == 0:
-                logical_filing_count = len({f.stem for f in existing})
+                stems = {f.stem for f in existing}
+                logical_filing_count = len(stems)
+            # BL-089: preserve cik from case config; if null, recover from existing manifest
+            cached_cik: str | None = case.cik
+            if cached_cik is None:
+                _manifest_path = Path(case.case_dir) / "filings_manifest.json"
+                if _manifest_path.exists():
+                    try:
+                        _prev = json.loads(_manifest_path.read_text(encoding="utf-8"))
+                        cached_cik = _prev.get("cik") or None
+                    except Exception:
+                        pass
+            _annual_labels = {frm.replace("/", "-") for frm in ANNUAL_FORMS}
+            _quarterly_labels = {frm.replace("/", "-") for frm in PERIODIC_FORMS}
+            cached_coverage = {
+                "annual": {
+                    "downloaded": len({s for s in stems if any(f"_{lbl}_" in s for lbl in _annual_labels)}),
+                    "from_cache": True,
+                },
+                "quarterly": {
+                    "downloaded": len({s for s in stems if any(f"_{lbl}_" in s for lbl in _quarterly_labels)}),
+                    "from_cache": True,
+                },
+                "earnings": {
+                    # Count both plain 8-K and 8-K/A (saved as 8-K-A) for coherence
+                    # with the normal path, which selects both form variants.
+                    "downloaded": len({s for s in stems if "_8-K_" in s or "_8-K-A_" in s}),
+                    "from_cache": True,
+                },
+            }
             return AcquisitionResult(
                 ticker=ticker,
                 source="sec_edgar",
+                cik=cached_cik,
                 filings_downloaded=logical_filing_count,
                 filings_coverage_pct=100.0,
+                coverage=cached_coverage,
                 notes="Using cached filings (directory not empty).",
                 source_kind="filing",
                 cache_hit=True,

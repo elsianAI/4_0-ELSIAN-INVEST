@@ -9,6 +9,17 @@
 
 ---
 
+### BL-089 — SEC acquire: preservar `coverage` y `cik` en cache-hit sin reabrir scope TALO
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-14)
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** shared-core
+- **Work kind:** technical
+- **Depende de:** —
+- **Descripción:** Se cierra BL-089 como follow-up técnico mínimo aceptado sobre SEC acquire/manifest. El packet absorbido mantiene el scope estrecho acordado: `SecEdgarFetcher.acquire()` ya recupera `cik` desde `filings_manifest.json` cuando `case.cik` es `null` en cache-hit, y la recomputación de earnings en cache-hit cuenta tanto `8-K` como `8-K/A` sin reabrir TALO como problema ticker-level ni mezclar el cluster de enmiendas del 2024-11-12. El cierre deja explícito un riesgo residual no bloqueante: `filings_coverage_pct` sigue fijo a `100.0` en cache-hit aunque los buckets de coverage ya se recomputan.
+- **Criterio de aceptación:** ✓ `git diff --check` limpio en el packet técnico aceptado. ✓ `python3 -m pytest tests/unit/test_sec_edgar.py -q` → `49 passed`. ✓ `python3 -m elsian acquire TALO` confirma `Coverage 100.0%`, manifest con `cik=0001724965` y `coverage` no vacía. ✓ `python3 scripts/check_governance.py --format json` queda sin `governance_contract_violations`. ✓ La auditoría independiente no reporta hallazgos materiales. ✓ `BL-089` sale de `docs/project/BACKLOG.md`, deja de competir por atención operativa y `OP-006` no conserva trabajo packageable vivo idéntico asociado.
+
 ### BL-086 — Cerrar el gap factual de coverage/manifest en TALO
 - **Prioridad:** ALTA
 - **Estado:** DONE ✅ (2026-03-14)

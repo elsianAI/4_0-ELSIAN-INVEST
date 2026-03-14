@@ -2,6 +2,23 @@
 
 ## 2026-03-14
 
+### [4.0] Governance closeout — BL-089 archivada tras outcome técnico aceptado
+- `docs/project/BACKLOG.md` saca `BL-089` de la cola ejecutable tras el outcome técnico shared-core ya aceptado por parent y auditoría, dejando el backlog vivo en `BL-087` y `BL-088`.
+- `docs/project/BACKLOG_DONE.md` archiva `BL-089` con cierre factual estrecho: cache-hit de `SecEdgarFetcher.acquire()` ya recupera `cik` desde manifest cuando `case.cik` es `null`, cuenta earnings `8-K` y `8-K/A`, y mantiene como único riesgo residual no bloqueante que `filings_coverage_pct` siga fijo a `100.0` en cache-hit.
+- `docs/project/OPPORTUNITIES.md` reconcilia `OP-006` para que no conserve trabajo packageable vivo idéntico asociado: el frente TALO queda reducido a watchlist factual del cluster de enmiendas del 2024-11-12, fuera de backlog activo hasta nueva evidencia.
+- `docs/project/PROJECT_STATE.md` deja de presentar `BL-089` como follow-up vivo, fija `Fase B` con solo `BL-087` y `BL-088`, y mueve el frente TALO a frontera residual no packageable.
+- **Validation:** `python3 scripts/check_governance.py --format json` antes de mutar → `backlog.active_ids=[BL-089, BL-087, BL-088]`, `governance_contract_violations=[]`; base factual aceptada para closeout técnico: `git diff --check` limpio, `python3 -m pytest tests/unit/test_sec_edgar.py -q` → `49 passed`, `python3 -m elsian acquire TALO` → `Coverage 100.0%`, manifest con `cik=0001724965` y `coverage` no vacía.
+
+### [BL-089] Auditoría: corrección hallazgos cik-manifest-recovery y 8-K-A coverage
+- `elsian/acquire/sec_edgar.py`: añadido `import json`. Hallazgo 1 — en cache-hit, cuando `case.cik=None`, ahora se intenta recuperar `cik` desde `filings_manifest.json` existente (lectura determinista, fall-through a `None` si no existe o no parsea). Hallazgo 2 — el contador de earnings en cache-hit cubre también `_8-K-A_` además de `_8-K_`, coherente con el path normal que acepta ambos form variants (`8-K` y `8-K/A`).
+- `tests/unit/test_sec_edgar.py`: renombrado `test_cache_hit_cik_none_when_not_configured` → `test_cache_hit_cik_none_when_not_configured_and_no_manifest` (contrato exacto: cik=None solo cuando tampoco hay manifest). Añadido `test_cache_hit_cik_recovered_from_manifest` (fija la recuperación desde manifest). Añadido `test_cache_hit_8k_amendment_counted` (fija que `8-K-A` cuenta en earnings).
+- **Validation:** `python3 -m pytest tests/unit/test_sec_edgar.py` → `49 passed`.
+
+### [BL-089] SEC acquire: preservar `coverage` y `cik` en cache-hit
+- `elsian/acquire/sec_edgar.py`: corregido el path cache-hit de `SecEdgarFetcher.acquire()`. Antes devolvía `cik=None` y `coverage={}` cuando `filings/` ya estaba poblado. Ahora preserva `cik` desde `case.cik` y reconstruye `coverage` contando formas por nombre de archivo (`_10-K_`, `_20-F_`, `_40-F_`, `_10-Q_`, `_6-K_`, `_8-K_`). Fix mínimo acotado al bloque cache-hit; no toca extract/merge/eval ni otros fetchers.
+- `tests/unit/test_sec_edgar.py`: añadida la clase `TestSecEdgarFetcherCacheHit` (4 tests) que fija el contrato: `result.cik` == `case.cik` en cache-hit; `result.coverage` no vacío con contadores correctos por forma; `cik` sigue siendo `None` cuando `case.cik` no está configurado; detección correcta de `20-F` y `6-K`.
+- **Validation:** `python3 -m pytest tests/unit/test_sec_edgar.py` → `47 passed`; `python3 scripts/check_governance.py --format json` → `governance_contract_violations=[]`.
+
 ### [4.0] Governance closeout — BL-086 archivada y reempaquetada como follow-up técnico mínimo `BL-089`
 - `docs/project/BACKLOG.md` cierra `BL-086` tras outcome factual aceptado `technical_followup_opened` y abre `BL-089` como BL `technical` de scope mínimo sobre SEC acquire/manifest: preservar o recomputar `coverage` y `cik` en cache-hit sin tocar extract/merge/eval ni mezclar el cluster de enmiendas TALO del 2024-11-12.
 - `docs/project/BACKLOG_DONE.md` archiva `BL-086` como investigación ticker-level completada con evidencia suficiente: TALO mantiene 100.0% (235/235), el CIK correcto es `0001724965`, el problema deja de tratarse como gap local y el cierre canónico exige que el siguiente scout no reabra la misma BL con la misma shape.

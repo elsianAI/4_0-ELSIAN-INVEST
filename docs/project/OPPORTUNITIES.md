@@ -90,14 +90,14 @@
 
 ### Extractor / format frontiers
 
-#### OP-006 — TALO: gap factual de coverage/manifest y autonomía operativa parcial
+#### OP-006 — TALO: anchor SEC cerrado; cluster de enmiendas 2024-11-12 en watchlist
 - **Subject type:** acquire
 - **Subject id:** TALO
 - **Canonical state:** FULL con autonomía gradual
-- **Why it matters:** BL-086 confirmó que el gap ya no debe reaparecer como anomalía ticker-level nueva: TALO sigue al 100%, pero el path cache-first de SEC acquire degrada `coverage` y `cik` en manifest cuando `filings/` ya está poblado, así que el anchor factual queda vivo hasta cerrar el follow-up reusable.
-- **Live evidence:** BL-086 dejó outcome factual `technical_followup_opened`: `python3 -m elsian acquire TALO` reproduce cache-hit con `coverage={}` y `cik=null`, el CIK correcto es `0001724965`, y el cluster de enmiendas del 2024-11-12 queda explícitamente fuera de este item mientras no exista evidencia de restatement trigger que justifique otra BL.
-- **Unknowns remaining:** Ejecutar `BL-089` sobre el carril SEC acquire/manifest para preservar o recomputar `coverage` y `cik` en cache-hit sin reabrir scope TALO. Tras ese follow-up, revalidar TALO como anchor factual; no mezclar aquí el cluster de enmiendas ni abrir un experimento distinto mientras no haya evidencia nueva.
-- **Promotion trigger:** `BL-089` resuelta con evidencia de que el path cache-hit ya preserva metadatos canónicos de manifest, o evidencia nueva que justifique una BL separada y distinta para el cluster de enmiendas.
+- **Why it matters:** El closeout aceptado de BL-089 debe impedir que el runtime reabra el mismo gap cache-hit como trabajo packageable nuevo. TALO sigue al 100% y el follow-up reusable de SEC acquire/manifest ya quedó absorbido; lo único residual es la frontera factual del cluster de enmiendas del 2024-11-12, que permanece fuera de backlog activo mientras no haya evidencia nueva.
+- **Live evidence:** El packet técnico aceptado de BL-089 deja `python3 -m pytest tests/unit/test_sec_edgar.py -q` en `49 passed`, `python3 -m elsian acquire TALO` vuelve a manifest con `cik=0001724965` y `coverage` no vacía, y la auditoría independiente no encuentra hallazgos materiales. El riesgo residual documentado se acota a que `filings_coverage_pct` siga fijo a `100.0` en cache-hit, sin bloquear el closeout.
+- **Unknowns remaining:** Ninguno packageable hoy. El cluster de enmiendas TALO del 2024-11-12 (`10-K/A` + `10-Q/A` x2) sigue fuera de backlog activo y no debe mezclarse con este item mientras no exista evidencia nueva de restatement trigger o de impacto real sobre períodos canonizados.
+- **Promotion trigger:** Evidencia nueva de que las enmiendas del 2024-11-12 disparan un restatement trigger o revelan un gap reusable distinto del ya cerrado en BL-089.
 - **Blast radius if promoted:** shared-core
 - **Expected effort:** bounded
 - **Last reviewed:** 2026-03-14
