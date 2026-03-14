@@ -110,6 +110,7 @@ def test_classify_dirty_path_buckets_workspace_governance_and_technical():
         check_governance.classify_dirty_path("4_0-ELSIAN-INVEST.code-workspace")
         == "workspace_only_dirty"
     )
+    assert check_governance.classify_dirty_path(".runtime/handoff.json") == "workspace_only_dirty"
     assert check_governance.classify_dirty_path("CHANGELOG.md") == "governance_dirty"
     assert check_governance.classify_dirty_path("docs/project/ROLES.md") == "governance_dirty"
     assert check_governance.classify_dirty_path("cases/TEP/case.json") == "technical_dirty"

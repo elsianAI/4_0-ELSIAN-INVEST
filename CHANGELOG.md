@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-03-14
+
+### [4.0] Runtime handoff v1 — continuidad local entre sesiones
+- `.gitignore` ignora `.runtime/` y `scripts/check_governance.py` clasifica `.runtime/` como `workspace_only_dirty`, evitando que el handoff local cuente como `technical_dirty` u `other_dirty`.
+- Nuevo `scripts/write_handoff.py`: escribe `.runtime/handoff.json` con `schema_version=1.0`, paths absolutos del worktree, `HEAD`, branch, `next_resolution_mode`, campos de foco/scope y un bloque `stale_if` fail-closed basado en `HEAD` y en un fingerprint del estado vivo material.
+- Nuevo `scripts/read_handoff.py`: lee y valida el handoff, soporta `--format json`, devuelve `0` si es válido, `1` si está stale/inválido y `2` si no existe, sin promover trabajo ni tocar canonicals.
+- Cobertura mínima añadida para la clasificación de `.runtime/` y para la construcción/invalidación del handoff.
+- **Files changed:** `.gitignore`, `scripts/check_governance.py`, `scripts/write_handoff.py`, `scripts/read_handoff.py`, `tests/unit/test_check_governance.py`, `tests/unit/test_handoff_scripts.py`, `CHANGELOG.md`
+- **Validation:** `python3 -m pytest tests/unit/test_check_governance.py tests/unit/test_handoff_scripts.py tests/contracts/test_runtime_mirrors.py -q` → `52 passed`; `python3 scripts/write_handoff.py --current-focus "test" --scope "testing handoff"` → escribe `.runtime/handoff.json`; `python3 scripts/read_handoff.py --format json` → válido pre-commit.
+
 ## 2026-03-13
 
 ### [4.0] Governance-only baseline persistence — Discovery Baseline autoritativa tras full scout pass fresco

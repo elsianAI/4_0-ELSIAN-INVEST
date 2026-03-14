@@ -20,7 +20,7 @@ if str(SCRIPT_ROOT) not in sys.path:
 from elsian.analyze.discovery_baseline import parse_discovery_baseline_block
 
 OVERRIDE_LEAF_KEYS = {"value", "note", "source_filing", "extraction_method", "confidence"}
-WORKSPACE_ONLY_PREFIXES = (".vscode/", ".idea/")
+WORKSPACE_ONLY_PREFIXES = (".vscode/", ".idea/", ".runtime/")
 WORKSPACE_ONLY_SUFFIXES = (".code-workspace",)
 GOVERNANCE_FILES = {"CHANGELOG.md", "VISION.md", "ROADMAP.md", "README.md"}
 GOVERNANCE_PREFIXES = ("docs/project/", ".github/agents/")
