@@ -9,6 +9,17 @@
 
 ---
 
+### BL-088 — Probar acquire Euronext fuera del carril ya validado con TEP como ancla
+- **Prioridad:** MEDIA
+- **Estado:** DONE ✅ (2026-03-14)
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** targeted
+- **Work kind:** investigation
+- **Depende de:** —
+- **Descripción:** Se cierra BL-088 con outcome terminal `exception_reaffirmed`. El experimento único sobre TEP probó nueve rutas regulatorias EU adicionales fuera del carril ya validado de `tp.com` (`AMF BDIF` REST, emitter page y búsqueda HTML; `ESMA OAM`; dos variantes de `filings.xbrl.org`; tres endpoints Euronext). Ninguna de las nueve pruebas identificó ni descargó un filing TEP reutilizable desde fuente regulatoria EU durante esta ola: AMF y ESMA OAM devolvieron `HTTP 500`, las variantes Euronext devolvieron `404` o respuesta vacía, y `filings.xbrl.org` no probó una ruta reusable por ISIN para TEP. La evidencia no abre follow-up técnico narrow nuevo; TEP queda cerrado a nivel ticker con excepción de acquire reafirmada y la frontera abstracta de mercado permanece separada en `OP-010`.
+- **Criterio de aceptación:** ✓ Se ejecutó exactamente un experimento acotado sobre TEP/Euronext fuera del carril ya validado. ✓ El outcome canónico quedó fijado en `exception_reaffirmed`. ✓ `python3 -m elsian eval TEP` se mantiene en PASS 100.0% (109/109). ✓ `python3 scripts/check_governance.py --format json` queda sin `governance_contract_violations`. ✓ `BL-088` sale de `docs/project/BACKLOG.md`, `OP-004` deja de figurar como investigación ticker-level activa y `PROJECT_STATE.md` deja de presentar a TEP como backlog vivo. ✓ No se abre ninguna BL nueva porque la hipótesis de follow-up reusable no quedó probada.
+
 ### BL-087 — Ejecutar el experimento único de SOM para promoción o excepción cerrada
 - **Prioridad:** ALTA
 - **Estado:** DONE ✅ (2026-03-14)

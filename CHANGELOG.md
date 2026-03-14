@@ -2,6 +2,38 @@
 
 ## 2026-03-14
 
+### [4.0] Governance closeout — BL-088 archivada tras outcome de investigación aceptado
+- `docs/project/BACKLOG.md` saca `BL-088` de la cola ejecutable tras el outcome aceptado `exception_reaffirmed`, dejando el backlog vivo vacío en este snapshot.
+- `docs/project/BACKLOG_DONE.md` archiva `BL-088` con cierre factual estrecho: el experimento único sobre TEP/Euronext no identificó ni descargó un filing TEP desde fuente regulatoria EU en esta ola y no abrió follow-up técnico reusable nuevo.
+- `docs/project/OPPORTUNITIES.md` reconcilia `OP-004` para que TEP deje de figurar como investigación ticker-level activa; la frontera abstracta de mercado Euronext permanece separada en `OP-010`.
+- `docs/project/PROJECT_STATE.md` deja de presentar a TEP como investigación activa en Fase B, mueve el ticker a capacidad cerrada factual y deja explícito que el backlog ejecutable queda vacío mientras `0327` sigue como packageable diferido en `OPPORTUNITIES.md`.
+- **Validation:** `python3 scripts/check_governance.py --format json` después de mutar → `backlog.active_ids=[]`, `active_count=0`, `governance_contract_violations=[]`; `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md docs/project/OPPORTUNITIES.md docs/project/PROJECT_STATE.md CHANGELOG.md` → limpio.
+
+### [BL-088] TEP — experimento acquire Euronext fuera del carril validado: outcome `exception_reaffirmed`
+- **Ticker ancla:** TEP (Teleperformance SE, ISIN FR0000051807, Euronext Paris). Baseline confirmado antes del experimento: `PASS score=100.0% (109/109)` — sin mutación de expected.json ni del pipeline.
+- **Carril ya validado:** filings_sources explícitos en case.json (tp.com URLs: annual reports 2019, 2021, 2022) + IR crawler fallback. TEP es FULL (6A+2H, 109 campos).
+- **Filing adicional fuera del carril:** intentar adquirir un annual report TEP (2021–2024) desde el repositorio regulatorio ESMA ESEF (`filings.xbrl.org`) vía query por ISIN — mecanismo que, si funciona, sería reusable para cualquier emisor en mercado regulado EU (Euronext FR/BE/NL/PT, XETRA, Borsa Italiana…).
+- **Experimento ejecutado (9 tests sobre 4 endpoints distintos):**
+  - AMF BDIF REST `/v4/pub/recherche?isin=FR0000051807` → HTTP 500 (Azure Application Gateway; infraestructura AMF actualmente inaccesible).
+  - AMF BDIF emitter page `Emetteur-61002` → HTTP 500; "Teleperformance" NOT found (misma causa raíz).
+  - AMF BDIF HTML search → HTTP 500 (consistente — servidor AMF fuera de servicio).
+  - ESMA OAM `registers.esma.europa.eu` → HTTP 500 (ESMA OAM API no disponible).
+  - ESMA ESEF `filings.xbrl.org/api/filings?isin=FR0000051807` → **HTTP 200** pero retornó empresa ucraniana (EDRPOU-32033791): el param `isin` no actúa como filtro en esta ruta. El repositorio EXISTE y está accesible.
+  - ESMA ESEF `filings.xbrl.org/api/reports?entity.identifier.value=FR0000051807` → HTTP 404 (endpoint incorrecto para este repositorio).
+  - Euronext gateway → HTTP 404 (endpoint desconocido).
+  - Euronext connect docs → HTTP 404 (requiere auth o endpoint distinto).
+  - Euronext live history → HTTP 200 con `aaData:[]` (endpoint correcto, sin datos de documento útil).
+- **Conclusiones del experimento:**
+  1. Todos los endpoints AMF BDIF probados (REST ISIN, emitter page, HTML search) devolvieron HTTP 500: la infraestructura AMF no respondió durante el experimento. La evidencia disponible no permite distinguir caída temporal de cambio permanente de endpoint; afirmar que es "solo disponibilidad temporal" sería especulación no verificada.
+  2. ESMA OAM (`registers.esma.europa.eu`) devolvió HTTP 500: API no accesible en el momento del experimento.
+  3. `filings.xbrl.org` devolvió HTTP 200 con la query `isin=FR0000051807`, pero los datos retornados corresponden a una empresa ucraniana (EDRPOU-32033791), no a TEP. El parámetro `isin` no actúa como filtro de entidad en esta ruta. El formato correcto de entity identifier (LEI u otro scheme OAM-específico) no fue ejecutado ni verificado en este experimento.
+  4. Todos los endpoints Euronext probados (gateway, connect docs, live history) devolvieron HTTP 404 o respuesta vacía. No se encontró ningún endpoint Euronext que devuelva documentos de filing TEP.
+  5. Ninguna de las 9 pruebas produjo la descarga —ni siquiera la identificación— de un filing TEP desde fuente regulatoria EU. El experimento falsificó la hipótesis ISIN-as-query-param, pero el paso siguiente (LEI o scheme OAM) no fue ejecutado: su funcionamiento no está verificado y no constituye un mecanismo reusable probado hoy.
+- **Outcome: `exception_reaffirmed`**. El experimento no encontró ninguna ruta de acquire regulatoria EU operativa para TEP. El carril validado (tp.com URLs + IR crawler fallback) sigue siendo la única vía de adquisición confirmada. La excepción de acquire manual para emisores EU cotizados en mercados regulados queda reafirmada: la evidencia obtenida no justifica abrir un follow-up técnico narrow reproducible con la especificación actual.
+- **Estado TEP post-experimentación:** inalterado. `PASS score=100.0% (109/109)`. No se mutó case.json, expected.json, ni ningún código del pipeline.
+- **Ficheros mutados:** `CHANGELOG.md`.
+- **Validations:** `python3 -m elsian eval TEP` → `PASS score=100.0% (109/109) wrong=0 missed=0` (baseline confirmado). Tests unitarios no ejecutados (no hay cambio de código).
+
 ### [BL-087] SOM — experimento acquire H1 intermedio: outcome `exception_reaffirmed`
 - Experimento ejecutado sobre el filing intermedio de SOM disponible en `cases/SOM/filings/` (ya adquirido vía `eu_manual`): `SRC_003_INTERIM_H1_2025.txt` es la única fuente H1 pública identificada en el carril actual.
 - **Evidencia H1 encontrada en SRC_003**: P&L estructurado para H1 2025 vs H1 2024 (Revenue $39.8M vs $51.8M; Gross profit $21.0M vs $28.3M; Operating income $4.7M vs $10.8M; Net income $2.6M vs $8.1M; Provision for income taxes $2.2M vs $2.5M; Engineering & product development $1.0M vs $1.3M; Selling, marketing & customer support $6.7M vs $8.2M; G&A $8.6M vs $8.0M). Balance sheet al 30-Jun-2025: Total assets $90.6M, Total liabilities $11.7M, Equity $78.9M (Total L+E $91.8M). Cash flow: CFO $4.1M vs $2.9M; CFI $(0.5)M vs $(1.6)M; CFF $(8.5)M vs $(14.1)M. Interim DPS: $0.04 vs $0.08.

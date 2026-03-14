@@ -62,14 +62,14 @@
 - **Last reviewed:** 2026-03-12
 - **Disposition:** reaffirm_exception
 
-#### OP-004 — TEP: capacidad Euronext sigue siendo ticker-level, no de mercado
+#### OP-004 — TEP: excepción de acquire Euronext reafirmada; el mercado sigue aparte
 - **Subject type:** acquire
 - **Subject id:** TEP
-- **Canonical state:** FULL con documented exception
-- **Why it matters:** TEP está cerrado a nivel ticker, pero la autonomía operativa de acquire en Euronext sigue siendo parcial y no prueba un carril de mercado general.
-- **Live evidence:** `PROJECT_STATE.md` lo clasifica como `FULL` con `documented exception` y deja Euronext en Fase B por investigación activa ticker-level, no como mercado ya generalizado.
-- **Unknowns remaining:** Ejecutar un experimento de acquire sobre Euronext usando TEP como ticker ancla y un filing adicional fuera del carril ya validado. Si aparece un patrón reusable de mercado, `technical_followup_opened`; si TEP sigue siendo solo capacidad ticker-level, `exception_reaffirmed`; si no hay filing utilizable o la hipótesis falla, `discarded_with_evidence`.
-- **Promotion trigger:** Evidencia nueva de patrón reusable en Euronext o de limitación clara y acotada susceptible de una BL técnica mínima.
+- **Canonical state:** FULL con exception_reaffirmed
+- **Why it matters:** TEP ya no mantiene investigación ticker-level viva. El cierre aceptado de BL-088 reafirma que el ticker está resuelto como excepción documentada y que cualquier trabajo posterior sobre Euronext debe plantearse ya como frontera de mercado separada, no como reapertura implícita de TEP.
+- **Live evidence:** El outcome aceptado de BL-088 deja nueve pruebas regulatorias EU sin identificación ni descarga de filing TEP reutilizable en esta ola: `AMF BDIF` y `ESMA OAM` devolvieron `HTTP 500`, las variantes Euronext dieron `404` o respuesta vacía, y `filings.xbrl.org` no validó una ruta reusable para TEP. El carril confirmado sigue siendo `tp.com` + fallback ya documentado, con `python3 -m elsian eval TEP` estable en PASS 100.0% (109/109).
+- **Unknowns remaining:** Ninguno packageable hoy a nivel ticker. Cualquier trabajo nuevo debe entrar como candidato concreto fuera de TEP o como evidencia fresca de un carril regulatorio reusable que ya no dependa de esta misma hipótesis fallida.
+- **Promotion trigger:** Evidencia nueva y concreta de acquire reusable en Euronext que vaya más allá del ticker TEP o invalide la excepción hoy reafirmada.
 - **Blast radius if promoted:** shared-core
 - **Expected effort:** broad
 - **Last reviewed:** 2026-03-14
@@ -149,12 +149,12 @@
 - **Subject id:** Euronext
 - **Canonical state:** mercado no generalizado
 - **Why it matters:** TEP demuestra un ticker útil, no una capacidad de mercado autónoma.
-- **Live evidence:** `PROJECT_STATE.md` deja a TEP como ancla ticker-level cerrada con investigación activa en Fase B, mientras esta entrada conserva solo la generalización abstracta del mercado Euronext, que sigue sin candidato ticker-level adicional listo.
+- **Live evidence:** `PROJECT_STATE.md` deja a TEP como excepción ticker-level reafirmada tras BL-088, mientras esta entrada conserva solo la generalización abstracta del mercado Euronext, que sigue sin candidato ticker-level adicional listo ni carril reusable probado fuera del ancla ya cerrada.
 - **Unknowns remaining:** Curar un ticker concreto adicional de Euronext antes de proponer onboarding. Mientras no exista candidato ticker-level con filings discoverables y blast radius `targeted`, este item no es packageable.
 - **Promotion trigger:** candidato concreto con capacidad nueva y scope acotado.
 - **Blast radius if promoted:** shared-core
 - **Expected effort:** broad
-- **Last reviewed:** 2026-03-13
+- **Last reviewed:** 2026-03-14
 - **Disposition:** keep
 
 #### OP-011 — HKEX más allá de 0327

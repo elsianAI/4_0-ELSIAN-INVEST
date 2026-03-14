@@ -34,17 +34,7 @@
 
 Este backlog representa solo el subconjunto **ejecutable seleccionado** de la **Fase B** del programa de capacidad de Module 1. La **Fase A** vive en `docs/project/PROJECT_STATE.md` como capacidad factual ya cerrada. `docs/project/OPPORTUNITIES.md` sigue alojando la **Fase C** no packageable, pero también puede alojar investigación ya packageable que haya quedado fuera del batch actual solo por presupuesto; esos items no pasan a Fase C por ese motivo.
 
-### BL-088 — Probar acquire Euronext fuera del carril ya validado con TEP como ancla
-- **Prioridad:** MEDIA
-- **Estado:** TODO
-- **Asignado a:** engineer
-- **Módulo:** Module 1
-- **Validation tier:** targeted
-- **Work kind:** investigation
-- **Depende de:** —
-- **Referencias:** OP-004
-- **Descripción:** Ejecutar un único experimento de acquire en Euronext usando TEP como ticker ancla y un filing adicional fuera del carril ya validado para decidir si existe una limitación reusable de mercado o si TEP sigue siendo solo capacidad ticker-level. La investigación debe terminar en `technical_followup_opened`, `exception_reaffirmed` o `discarded_with_evidence`.
-- **Criterio de aceptación:** Se ejecuta exactamente un experimento acotado en Euronext con TEP como ancla; el outcome queda clasificado en una única salida canónica; cualquier follow-up técnico resultante queda narrow y reproducible; no se amplía la ola a expansión de mercado general ni a otros tickers fuera del experimento definido.
+No hay BL activas en este snapshot. El siguiente trabajo packageable sigue viviendo en `docs/project/OPPORTUNITIES.md` hasta que una nueva ola governance-only lo seleccione explícitamente.
 ---
 
 ## Notas
