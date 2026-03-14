@@ -174,6 +174,12 @@
 - `0327` queda fuera del batch por presupuesto, no por invalidación factual: sigue siendo `investigation_BL_ready` matched y unchanged en `OPPORTUNITIES.md` y pasa a ser el siguiente candidato natural si el batch actual no altera la prioridad.
 - **Validation:** `python3 scripts/check_governance.py --format json` antes de mutar → `main@3ea65d8`, repo limpio, `backlog.active_count=0`, `next_resolution_mode=empty_backlog_discovery`; `python3 scripts/check_governance.py --format json` después de mutar → `backlog.active_ids=[BL-086, BL-087, BL-088]`, `active_count=3`, `project_state_lags_changelog=false`, `governance_contract_violations=[]`; `git diff --check` → limpio.
 
+### [4.0] Authority / Autonomy Policy v1 — primera capa de autonomía operativa
+- `docs/project/ROLES.md` gana `## 3.2 Authority / Autonomy Policy v1` entre `§3.1` (`Paralelización mutante controlada`) y `§4` (`Packets y handoff`): defaults operativos (`D1` handoff stale recompute, `D2` auto-commit), gate común de autonomía mutante, familias `A1` (missing/stale reconciliation), `A2` (baseline-only governance wave), `B` (batch packaging narrow sin shared-core ni expansion) y `C` (paso a ejecución solo en sesión preautorizada), con exclusión mutua `A1/A2`, pre-gate de `hypothesis_basis` bajo `B`, regla mecánica de `session_mode` y criterio mecánico de `recommended_disposition` en `A1`.
+- Fuera de v1 explícito: `run-next-until-stop`, `expansion-curation`, `shared-core`, `broad`, reinterpretación de tesis/módulo/prioridades.
+- **Files changed:** `docs/project/ROLES.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` → checker limpio salvo `governance_dirty` esperado por el propio cambio.
+
 ### [4.0] CI portability hardening — mirrors locales opcionales en CI y tests offline blindados ante filings gitignored
 - `tests/contracts/test_runtime_mirrors.py` deja de asumir que los mirrors locales de Codex existen en cualquier runtime: resuelve `CODEX_HOME`/`~/.codex` dinámicamente y valida skills locales solo cuando esos mirrors están presentes, manteniendo siempre obligatorios los mirrors repo-tracked.
 - `tests/unit/test_extract_phase.py`, `tests/integration/test_curate.py` y `tests/unit/test_narrative.py` ahora hacen `skip` explícito cuando un checkout limpio no trae `cases/*/filings/*` gitignored. La suite no vuelve a vender como portable una regresión que en realidad dependía de artefactos locales fuera de git.
