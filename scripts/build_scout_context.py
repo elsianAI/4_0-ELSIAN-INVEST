@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 import sys
 from pathlib import Path
@@ -12,13 +13,14 @@ SCRIPT_ROOT = Path(__file__).resolve().parents[1]
 if str(SCRIPT_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPT_ROOT))
 
-from elsian.analyze.discovery_baseline import (
-    compute_cases_signature,
-    compute_diagnose_signature,
-    compute_eval_signature,
-    compute_operational_opportunities_signature,
-    validate_eval_output_payload,
+discovery_baseline = importlib.import_module("elsian.analyze.discovery_baseline")
+compute_cases_signature = discovery_baseline.compute_cases_signature
+compute_diagnose_signature = discovery_baseline.compute_diagnose_signature
+compute_eval_signature = discovery_baseline.compute_eval_signature
+compute_operational_opportunities_signature = (
+    discovery_baseline.compute_operational_opportunities_signature
 )
+validate_eval_output_payload = discovery_baseline.validate_eval_output_payload
 
 
 DIAGNOSE_REQUIRED_KEYS = {
