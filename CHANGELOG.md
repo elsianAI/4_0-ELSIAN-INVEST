@@ -2,6 +2,18 @@
 
 ## 2026-03-14
 
+### [4.0] Governance closeout — BL-091 archivada tras packet técnico green
+- `docs/project/BACKLOG.md` vuelve a quedar vacío tras absorber `BL-091`; no queda ninguna BL activa en este snapshot.
+- `docs/project/BACKLOG_DONE.md` archiva `BL-091` como follow-up shared-core completado: la ruta oficial HKEX ya quedó absorbida en el fetcher y no persiste otro follow-up técnico vivo sobre `0327`.
+- `docs/project/OPPORTUNITIES.md` reconcilia `OP-005` para que deje de apuntar a un follow-up activo y mantenga al ticker cerrado con acquire oficial absorbido, mientras `OP-011` conserva solo la generalización abstracta de mercado.
+- `docs/project/PROJECT_STATE.md` deja de presentar `0327` como frente B por follow-up vivo, devuelve el backlog a vacío y fija HKEX como frontera de mercado no generalizada más allá del ticker ancla.
+- **Validation:** `python3 scripts/check_governance.py --format json` después de mutar → `backlog.active_ids=[]`, `active_count=0`, `governance_contract_violations=[]`; `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md docs/project/OPPORTUNITIES.md docs/project/PROJECT_STATE.md CHANGELOG.md` → limpio.
+
+### [BL-091] 0327 — HKEX acquire oficial live path absorbido en el fetcher
+- `elsian/acquire/hkex.py` deja de ser solo lector del corpus `hkex_manual`: ahora resuelve el emisor por JSONP oficial (`prefix.do` / `partial.do`), usa Title Search con títulos exactos y descarga PDFs `ANNUAL REPORT` / `INTERIM REPORT` para materializar un corpus live con IDs deterministas `SRC_001`-`SRC_006`, preservando a la vez el fallback cache/manual cuando `filings/` ya está poblado.
+- `tests/unit/test_hkex_fetcher.py` se amplía para fijar el contrato shared-core nuevo: parseo JSONP, filtrado de títulos financieros soportados, fallback `prefix.do`→`partial.do`, cache-hit manual y adquisición live con naming estable.
+- **Validation:** `python3 -m pytest -q tests/unit/test_hkex_fetcher.py tests/unit/test_cli_fetcher_routing.py tests/unit/test_acquire_registry.py tests/unit/test_bl062_entrypoints.py` → `41 passed`. Scratch validation sobre un case dir vacío de `0327` → `source=hkex`, `filings_downloaded=6`, `filings_coverage_pct=100.0`, IDs `SRC_001_AR_FY2024`…`SRC_006_IR_H12023`. `python3 -m elsian acquire 0327` sobre el case versionado preserva el fallback/corpus existente. `python3 -m elsian eval --all` → PASS `17/17` (`0327 146/146`, `ACLS 486/486`, `ADTN 520/520`, `CROX 326/326`, `GCT 330/330`, `INMD 234/234`, `IOSP 430/430`, `JBH 36/36`, `KAR 61/61`, `NEXN 177/177`, `NVDA 422/422`, `PR 185/185`, `SOM 203/203`, `SONO 404/404`, `TALO 235/235`, `TEP 109/109`, `TZOO 348/348`). `python3 -m pytest -q` → `1883 passed, 5 skipped, 1 warning`.
+
 ### [4.0] Governance closeout — BL-090 archivada y reempaquetada como follow-up técnico `BL-091`
 - `docs/project/BACKLOG.md` deja de estar vacío y abre `BL-091` como BL `technical` de scope shared-core sobre acquire oficial HKEX: convertir la ruta validada por `BL-090` en fetcher reusable sin tocar extract/merge/eval ni retirar `hkex_manual` prematuramente.
 - `docs/project/BACKLOG_DONE.md` archiva `BL-090` como investigación ticker-level completada con evidencia suficiente: `0327` mantiene 100.0% y el hallazgo deja de tratarse como packageable diferido abstracto para pasar a follow-up técnico concreto.

@@ -9,6 +9,18 @@
 
 ---
 
+### BL-091 — HKEX acquire: implementar búsqueda oficial y descarga PDF reusable para 0327
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-14)
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** shared-core
+- **Work kind:** technical
+- **Depende de:** —
+- **Referencias:** DEC-016
+- **Descripción:** Se cierra BL-091 con packet shared-core green que convierte la evidencia de BL-090 en un carril oficial reusable dentro de `elsian/acquire/hkex.py` sin reabrir extract/merge/eval. El fetcher deja de ser solo lector del corpus `hkex_manual`: ahora resuelve el emisor por `prefix.do` / `partial.do`, ejecuta búsquedas exact-title en el Title Search oficial de HKEX, descarga PDFs directos de annual/interim reports y materializa sus `.txt`, manteniendo a la vez el fallback cache/manual cuando `filings/` ya está poblado. El resultado deja `0327` con acquire oficial live validado sobre el ticker ancla y desplaza el frente residual a la generalización de mercado en `OP-011`, no a otro follow-up técnico pendiente sobre el mismo ticker.
+- **Criterio de aceptación:** ✓ Existe un path live de acquire HKEX capaz de localizar y descargar filings oficiales de `0327` sin depender del corpus trackeado. ✓ `hkex_manual` sigue funcionando como fallback/cache-hit sin romper el caso versionado. ✓ Hay cobertura unitaria para JSONP lookup, parseo exact-title, fallback `prefix.do`→`partial.do` y descarga live. ✓ La validación scratch sobre un case dir vacío de `0327` devuelve `source=hkex`, `filings_downloaded=6`, `filings_coverage_pct=100.0` y los IDs estables `SRC_001_AR_FY2024`…`SRC_006_IR_H12023`. ✓ `python3 -m pytest -q tests/unit/test_hkex_fetcher.py tests/unit/test_cli_fetcher_routing.py tests/unit/test_acquire_registry.py tests/unit/test_bl062_entrypoints.py` → `41 passed`. ✓ `python3 -m elsian eval --all` → PASS `17/17`. ✓ `python3 -m pytest -q` → `1883 passed, 5 skipped, 1 warning`. ✓ `BL-091` sale de `docs/project/BACKLOG.md`, `OP-005` deja de apuntar a un follow-up activo y el backlog vuelve a quedar vacío.
+
 ### BL-090 — Probar acquire HKEX oficial con 0327 como ancla
 - **Prioridad:** ALTA
 - **Estado:** DONE ✅ (2026-03-14)

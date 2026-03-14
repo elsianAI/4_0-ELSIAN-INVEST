@@ -34,17 +34,7 @@
 
 Este backlog representa solo el subconjunto **ejecutable seleccionado** de la **Fase B** del programa de capacidad de Module 1. La **Fase A** vive en `docs/project/PROJECT_STATE.md` como capacidad factual ya cerrada. `docs/project/OPPORTUNITIES.md` sigue alojando la **Fase C** no packageable, pero también puede alojar investigación ya packageable que haya quedado fuera del batch actual solo por presupuesto; esos items no pasan a Fase C por ese motivo.
 
-### BL-091 — HKEX acquire: implementar búsqueda oficial y descarga PDF reusable para 0327
-- **Prioridad:** ALTA
-- **Estado:** TODO
-- **Asignado a:** engineer
-- **Módulo:** Module 1
-- **Validation tier:** shared-core
-- **Work kind:** technical
-- **Depende de:** —
-- **Referencias:** DEC-016
-- **Descripción:** `BL-090` cerró el experimento de `OP-005` con outcome `technical_followup_opened`: HKEX ya ofrece una ruta oficial reusable fuera del carril `hkex_manual` para `0327` (`prefix.do` / `partial.do` -> `stockId=56792`, Title Search oficial con resultados históricos y PDFs directos descargables para annual/interim reports). Este follow-up debe convertir esa evidencia en un path de acquire reusable y estrecho dentro de `elsian/acquire/`, preservando `hkex_manual` como fallback y sin tocar extract/merge/eval.
-- **Criterio de aceptación:** Existe un path live de acquire HKEX capaz de localizar y descargar filings oficiales de `0327` desde la ruta validada por `BL-090` sin depender del corpus trackeado; `hkex_manual` sigue funcionando como fallback; hay cobertura unitaria para lookup, resolución de resultados y descarga; `python3 -m pytest -q` y `python3 -m elsian eval --all` permanecen verdes al cierre.
+No hay BL activas en este snapshot. El siguiente trabajo posible, si vuelve a aparecer evidencia packageable, debe reaparecer desde `docs/project/OPPORTUNITIES.md` mediante una nueva ola governance-only o un nuevo scout factual.
 ---
 
 ## Notas

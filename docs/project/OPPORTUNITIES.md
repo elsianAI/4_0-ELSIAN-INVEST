@@ -28,7 +28,7 @@
 - **Subject id:** SOM
 - **Canonical state:** ANNUAL_ONLY exception_reaffirmed
 - **Why it matters:** BL-087 cierra la única frontera ticker-level abierta de SOM sin convertirla en expansión de mercado. El ticker queda cerrado por excepción documentada, mientras la generalización de LSE/AIM sigue separada como frente abstracto no packageable en `OP-009`.
-- **Live evidence:** El outcome aceptado de BL-087 fija `exception_reaffirmed`: el filing intermedio `SRC_003_INTERIM_H1_2025.txt` aporta solo 2 periodos H1, cobertura parcial y una inconsistencia de balance sheet (`assets 90.6` frente a `liabilities + equity 91.8`), insuficiente para promoción a `FULL` y sin follow-up reusable nuevo.
+- **Live evidence:** El outcome aceptado de BL-087 fija `exception_reaffirmed`: el filing intermedio `SRC_003_INTERIM_H1_2025.txt` aporta solo 2 periodos H1, cobertura parcial y una inconsistencia de balance sheet (`assets 90.6` frente a `liabilities + equity 91.8`), insuficiente para promoción a `FULL` y sin follow-up reusable nuevo. La formulación normalizada del experimento ya absorbido fue: Ejecutar acquire sobre SOM buscando filings intermedios públicos utilizables.
 - **Unknowns remaining:** Ninguno packageable hoy a nivel ticker. Solo revalidación periódica si aparece un filing intermedio público adicional y suficientemente fiable para reconsiderar la promoción.
 - **Promotion trigger:** Evidencia nueva de un filing intermedio formal con cobertura suficiente y fiabilidad bastante para sostener promoción a `FULL` o abrir un follow-up reusable distinto del ya descartado.
 - **Blast radius if promoted:** targeted
@@ -67,7 +67,7 @@
 - **Subject id:** TEP
 - **Canonical state:** FULL con exception_reaffirmed
 - **Why it matters:** TEP ya no mantiene investigación ticker-level viva. El cierre aceptado de BL-088 reafirma que el ticker está resuelto como excepción documentada y que cualquier trabajo posterior sobre Euronext debe plantearse ya como frontera de mercado separada, no como reapertura implícita de TEP.
-- **Live evidence:** El outcome aceptado de BL-088 deja nueve pruebas regulatorias EU sin identificación ni descarga de filing TEP reutilizable en esta ola: `AMF BDIF` y `ESMA OAM` devolvieron `HTTP 500`, las variantes Euronext dieron `404` o respuesta vacía, y `filings.xbrl.org` no validó una ruta reusable para TEP. El carril confirmado sigue siendo `tp.com` + fallback ya documentado, con `python3 -m elsian eval TEP` estable en PASS 100.0% (109/109).
+- **Live evidence:** El outcome aceptado de BL-088 deja nueve pruebas regulatorias EU sin identificación ni descarga de filing TEP reutilizable en esta ola: `AMF BDIF` y `ESMA OAM` devolvieron `HTTP 500`, las variantes Euronext dieron `404` o respuesta vacía, y `filings.xbrl.org` no validó una ruta reusable para TEP. El carril confirmado sigue siendo `tp.com` + fallback ya documentado, con `python3 -m elsian eval TEP` estable en PASS 100.0% (109/109). La formulación normalizada del experimento ya absorbido fue: Ejecutar un experimento de acquire sobre Euronext usando TEP como ticker ancla.
 - **Unknowns remaining:** Ninguno packageable hoy a nivel ticker. Cualquier trabajo nuevo debe entrar como candidato concreto fuera de TEP o como evidencia fresca de un carril regulatorio reusable que ya no dependa de esta misma hipótesis fallida.
 - **Promotion trigger:** Evidencia nueva y concreta de acquire reusable en Euronext que vaya más allá del ticker TEP o invalide la excepción hoy reafirmada.
 - **Blast radius if promoted:** shared-core
@@ -75,16 +75,16 @@
 - **Last reviewed:** 2026-03-14
 - **Disposition:** reaffirm_exception
 
-#### OP-005 — 0327: ruta oficial HKEX probada; follow-up shared-core abierto
+#### OP-005 — 0327: acquire oficial HKEX absorbido; el frente ticker-level queda cerrado
 - **Subject type:** acquire
 - **Subject id:** 0327
-- **Canonical state:** FULL con documented exception
-- **Why it matters:** `BL-090` falsó la lectura de que `0327` solo valida capacidad ticker-level cerrada con `hkex_manual`: la ruta oficial de HKEX ya quedó probada a nivel de evidencia, por lo que el siguiente paso correcto ya no es otra investigación sino un follow-up técnico shared-core (`BL-091`) que convierta esa ruta en acquire reusable.
-- **Live evidence:** El experimento aceptado de `BL-090` probó tres piezas oficiales y reproducibles: `prefix.do` / `partial.do` resuelven `stockId=56792` para `00327 PAX GLOBAL`; el Title Search oficial devuelve 638 resultados para el ticker con annual/interim reports visibles; y los PDFs directos `2025082800017.pdf`, `2025041600007.pdf`, `2024082900003.pdf` y `2024041800065.pdf` descargan `200 application/pdf`.
-- **Unknowns remaining:** `BL-091` debe implementar en `elsian/acquire/` un path reusable que use lookup oficial + Title Search + descarga directa de PDFs HKEX para `0327`, preservando `hkex_manual` como fallback y sin mezclar extract/merge/eval. Si ese follow-up no consigue convertir la evidencia en fetcher reproducible, la excepción ticker-level deberá reafirmarse de nuevo con evidencia actualizada.
-- **Promotion trigger:** Cierre green de `BL-091` o evidencia nueva de que la ruta oficial no puede convertirse en acquire reproducible dentro del fetcher.
+- **Canonical state:** FULL con autonomía gradual
+- **Why it matters:** El closeout aceptado de BL-091 debe impedir que el runtime reabra el mismo follow-up técnico sobre `0327`. El ticker ya no depende solo de `hkex_manual`: el carril oficial HKEX quedó absorbido en el fetcher y cualquier trabajo nuevo debe justificarse fuera de este mismo packet.
+- **Live evidence:** El packet aceptado de BL-091 deja `elsian/acquire/hkex.py` con lookup oficial `prefix.do` / `partial.do`, búsquedas exact-title en Title Search y descarga directa de `ANNUAL REPORT 2024/2023/2022` + `INTERIM REPORT 2025/2024/2023`, manteniendo fallback cache/manual cuando `filings/` ya está poblado. La validación scratch sobre un case dir vacío devuelve `source=hkex`, `6` filings y los IDs estables `SRC_001_AR_FY2024`…`SRC_006_IR_H12023`; la suite shared-core sigue verde. La formulación normalizada del experimento ya absorbido fue: Ejecutar un experimento de acquire sobre HKEX usando `0327` como ticker ancla.
+- **Unknowns remaining:** Ninguno packageable hoy a nivel ticker. Cualquier trabajo nuevo debe entrar como un segundo ticker HKEX concreto o como evidencia fresca de un gap shared-core distinto del ya absorbido.
+- **Promotion trigger:** Evidencia nueva de regresión del carril oficial sobre `0327` o de un segundo ticker HKEX concreto que fuerce un packet distinto de generalización/adquisición.
 - **Blast radius if promoted:** shared-core
-- **Expected effort:** broad
+- **Expected effort:** bounded
 - **Last reviewed:** 2026-03-14
 - **Disposition:** keep
 
@@ -95,7 +95,7 @@
 - **Subject id:** TALO
 - **Canonical state:** FULL con autonomía gradual
 - **Why it matters:** El closeout aceptado de BL-089 debe impedir que el runtime reabra el mismo gap cache-hit como trabajo packageable nuevo. TALO sigue al 100% y el follow-up reusable de SEC acquire/manifest ya quedó absorbido; lo único residual es la frontera factual del cluster de enmiendas del 2024-11-12, que permanece fuera de backlog activo mientras no haya evidencia nueva.
-- **Live evidence:** El packet técnico aceptado de BL-089 deja `python3 -m pytest tests/unit/test_sec_edgar.py -q` en `49 passed`, `python3 -m elsian acquire TALO` vuelve a manifest con `cik=0001724965` y `coverage` no vacía, y la auditoría independiente no encuentra hallazgos materiales. El riesgo residual documentado se acota a que `filings_coverage_pct` siga fijo a `100.0` en cache-hit, sin bloquear el closeout.
+- **Live evidence:** El packet técnico aceptado de BL-089 deja `python3 -m pytest tests/unit/test_sec_edgar.py -q` en `49 passed`, `python3 -m elsian acquire TALO` vuelve a manifest con `cik=0001724965` y `coverage` no vacía, y la auditoría independiente no encuentra hallazgos materiales. El riesgo residual documentado se acota a que `filings_coverage_pct` siga fijo a `100.0` en cache-hit, sin bloquear el closeout. La formulación normalizada del experimento ya absorbido fue: Ejecutar acquire y verificación de coverage/manifest sobre TALO.
 - **Unknowns remaining:** Ninguno packageable hoy. El cluster de enmiendas TALO del 2024-11-12 (`10-K/A` + `10-Q/A` x2) sigue fuera de backlog activo y no debe mezclarse con este item mientras no exista evidencia nueva de restatement trigger o de impacto real sobre períodos canonizados.
 - **Promotion trigger:** Evidencia nueva de que las enmiendas del 2024-11-12 disparan un restatement trigger o revelan un gap reusable distinto del ya cerrado en BL-089.
 - **Blast radius if promoted:** shared-core
@@ -162,12 +162,12 @@
 - **Subject id:** HKEX
 - **Canonical state:** mercado no generalizado
 - **Why it matters:** `0327` valida un ticker, no discovery/adquisición general HKEX.
-- **Live evidence:** `BL-091` abre un follow-up shared-core sobre el ancla `0327` para convertir la ruta oficial HKEX en acquire reusable. Esta entrada conserva la generalización abstracta de mercado más allá del ticker ancla: sigue sin existir hoy un segundo ticker HKEX concreto ya curado y elegible para onboarding.
+- **Live evidence:** `BL-091` ya absorbió la ruta oficial HKEX sobre el ancla `0327` y dejó el ticker cerrado a nivel acquire. Esta entrada conserva la generalización abstracta de mercado más allá del ticker ancla: sigue sin existir hoy un segundo ticker HKEX concreto ya curado y elegible para onboarding.
 - **Unknowns remaining:** Curar un ticker concreto adicional de HKEX antes de proponer onboarding. Mientras no exista candidato ticker-level con filings discoverables y blast radius `targeted`, este item no es packageable.
 - **Promotion trigger:** candidato concreto con diversidad real de formato o acquire y packet serializable.
 - **Blast radius if promoted:** shared-core
 - **Expected effort:** broad
-- **Last reviewed:** 2026-03-13
+- **Last reviewed:** 2026-03-14
 - **Disposition:** keep
 
 ### Retired / absorbed
