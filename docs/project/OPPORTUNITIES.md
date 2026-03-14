@@ -131,13 +131,26 @@
 
 ### Expansion candidates
 
+#### OP-014 — ENQ: candidato ticker-level LSE/AIM pendiente de pre-gate de discoverability
+- **Subject type:** ticker
+- **Subject id:** ENQ
+- **Canonical state:** candidato concreto no onboarded; hypothesis_basis inconclusive
+- **Why it matters:** ENQ permite separar un candidato ticker-level concreto de la abstracción de mercado de `OP-009` sin vender onboarding validado ni abrir backlog. Hoy SOM sigue siendo el único ancla LSE/AIM del repo y ENQ no existe todavía como caso operativo.
+- **Live evidence:** ENQ está ausente del repo operativo actual: no existe `cases/ENQ`, no hay artifacts canonizados ni referencias previas verificadas en surfaces operativas, y SOM sigue siendo el único ancla LSE/AIM documentada. El pre-check de suitability para onboarding técnico inmediato queda clasificado como `inconclusive`, no `true`: todavía no hay evidencia reproducible de discoverability suficiente ni de corpus utilizable que permita promover este candidato a una BL `targeted`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable que ENQ dispone de discoverability automática o semi-determinista suficiente, corpus annual + intermedio utilizable, y viabilidad de generar `case.json`, `filings_manifest.json` y `expected_draft.json` sin intervención manual.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end, sin convertir todavía la abstracción de mercado LSE/AIM en onboarding validado.
+- **Blast radius if promoted:** targeted
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-14
+- **Disposition:** keep
+
 #### OP-009 — LSE/AIM más allá de SOM
 - **Subject type:** market
 - **Subject id:** LSE/AIM
 - **Canonical state:** mercado no generalizado
 - **Why it matters:** SOM no basta para declarar capacidad amplia del mercado; falta masa crítica o patrón reusable.
-- **Live evidence:** `PROJECT_STATE.md` y `OP-001` dejan a SOM cerrado como excepción ticker-level reafirmada, mientras esta entrada conserva la generalización de mercado que sigue siendo abstracta y no packageable por sí sola.
-- **Unknowns remaining:** Curar un ticker concreto adicional de LSE/AIM antes de proponer onboarding. Mientras no exista candidato ticker-level con filings discoverables y blast radius `targeted`, este item no es packageable.
+- **Live evidence:** `PROJECT_STATE.md` y `OP-001` dejan a SOM cerrado como excepción ticker-level reafirmada, mientras esta entrada conserva la generalización de mercado que sigue siendo abstracta y no packageable por sí sola. ENQ queda ahora persistido aparte como candidato ticker-level concreto, pero su `hypothesis_basis` para onboarding técnico inmediato sigue siendo `inconclusive` y no convierte este item de mercado en packageable.
+- **Unknowns remaining:** Confirmar al menos un segundo ticker LSE/AIM concreto con pre-gate de discoverability satisfecho y evidencia suficiente para onboarding. Mientras la única abstracción de mercado siga descansando en SOM y en candidatos todavía inconclusos como ENQ, este item no es packageable.
 - **Promotion trigger:** candidato concreto con valor de frontera real y packet mínimo serializable.
 - **Blast radius if promoted:** shared-core
 - **Expected effort:** broad

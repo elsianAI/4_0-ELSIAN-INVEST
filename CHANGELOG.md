@@ -2,6 +2,14 @@
 
 ## 2026-03-14
 
+### [4.0] Governance-only wave — ENQ curado como candidato LSE/AIM no validado
+- `docs/project/OPPORTUNITIES.md` persiste `ENQ` como candidato ticker-level concreto separado de la abstracción de mercado `OP-009`, sin abrir BL ni tocar `BACKLOG.md` o `PROJECT_STATE.md`.
+- La ola deja explícito que el `hypothesis_basis` para onboarding técnico inmediato de ENQ es `inconclusive`, no `true`: hoy ENQ está ausente del repo operativo, no existe `cases/ENQ`, no hay artifacts ni referencias canónicas previas, y SOM sigue siendo el único ancla LSE/AIM documentada.
+- `Unknowns remaining` queda normalizado a un único pre-gate falsable: demostrar discoverability automática o semi-determinista suficiente, corpus annual + intermedio utilizable, y viabilidad de generar `case.json`, `filings_manifest.json` y `expected_draft.json` sin intervención manual.
+- Esta ola es estrictamente `governance-only`, no abre backlog y cierra con `claimed_bl_status: none`.
+- **Files changed:** `docs/project/OPPORTUNITIES.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` después de mutar → `governance_contract_violations=[]`, `backlog.active_ids=[]`, `operational_shape_valid=true`, `project_state_lags_changelog=false`; `git diff --check -- docs/project/OPPORTUNITIES.md CHANGELOG.md` → limpio.
+
 ### [4.0] ACVA annual truth cash flow hardening
 - Curado mínimo de cases/ACVA/expected.json: añadidos cfi, cff y delta_cash filing-backed para FY2022-FY2025 desde 10-K iXBRL, manteniendo ANNUAL_ONLY y sin tocar shared-core.
 
