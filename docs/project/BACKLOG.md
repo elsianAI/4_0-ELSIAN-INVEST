@@ -32,9 +32,43 @@
 
 ## Tareas activas
 
-Este backlog representa solo la **Fase B** del programa de capacidad de Module 1. La **Fase A** vive en `docs/project/PROJECT_STATE.md` como capacidad factual ya cerrada, y la **Fase C** vive en `docs/project/OPPORTUNITIES.md` como frontera abierta o excepción no empaquetable todavía.
+Este backlog representa solo el subconjunto **ejecutable seleccionado** de la **Fase B** del programa de capacidad de Module 1. La **Fase A** vive en `docs/project/PROJECT_STATE.md` como capacidad factual ya cerrada. `docs/project/OPPORTUNITIES.md` sigue alojando la **Fase C** no packageable, pero también puede alojar investigación ya packageable que haya quedado fuera del batch actual solo por presupuesto; esos items no pasan a Fase C por ese motivo.
 
-No hay tareas activas BL-ready en este snapshot. La cola viva de trabajo queda vacía tras el closeout canónico de `BL-085`.
+### BL-086 — Cerrar el gap factual de coverage/manifest en TALO
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** targeted
+- **Work kind:** investigation
+- **Depende de:** —
+- **Referencias:** OP-006
+- **Descripción:** Ejecutar un único experimento de acquire y verificación de coverage/manifest sobre TALO para cerrar el gap factual ticker-level que sigue abierto en el runtime actual. El trabajo debe permanecer acotado a TALO, sin generalizar SEC ni abrir scope adicional, y terminar en una sola salida canónica: `technical_followup_opened`, `exception_reaffirmed` o `discarded_with_evidence`.
+- **Criterio de aceptación:** Se ejecuta exactamente un experimento acotado sobre TALO; el outcome queda clasificado en una única salida canónica; si emerge follow-up técnico, el hallazgo queda reproducible y con blast radius mínimo; no se amplía el alcance a otros tickers ni mercados.
+
+### BL-087 — Ejecutar el experimento único de SOM para promoción o excepción cerrada
+- **Prioridad:** ALTA
+- **Estado:** TODO
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** targeted
+- **Work kind:** investigation
+- **Depende de:** —
+- **Referencias:** OP-001, DEC-015
+- **Descripción:** Ejecutar un único experimento de acquire sobre SOM para buscar un filing intermedio público utilizable y resolver la única frontera ticker-level abierta de LSE/AIM. La investigación debe cerrarse en una sola salida canónica: `promoted`, `technical_followup_opened`, `exception_reaffirmed` o `discarded_with_evidence`.
+- **Criterio de aceptación:** Se ejecuta exactamente un experimento sobre SOM con evidencia factual suficiente; el resultado queda cerrado en una única salida canónica; si aparece follow-up técnico, queda acotado y reusable; si no aparece filing utilizable, la excepción o descarte quedan documentados con evidencia explícita.
+
+### BL-088 — Probar acquire Euronext fuera del carril ya validado con TEP como ancla
+- **Prioridad:** MEDIA
+- **Estado:** TODO
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** targeted
+- **Work kind:** investigation
+- **Depende de:** —
+- **Referencias:** OP-004
+- **Descripción:** Ejecutar un único experimento de acquire en Euronext usando TEP como ticker ancla y un filing adicional fuera del carril ya validado para decidir si existe una limitación reusable de mercado o si TEP sigue siendo solo capacidad ticker-level. La investigación debe terminar en `technical_followup_opened`, `exception_reaffirmed` o `discarded_with_evidence`.
+- **Criterio de aceptación:** Se ejecuta exactamente un experimento acotado en Euronext con TEP como ancla; el outcome queda clasificado en una única salida canónica; cualquier follow-up técnico resultante queda narrow y reproducible; no se amplía la ola a expansión de mercado general ni a otros tickers fuera del experimento definido.
 ---
 
 ## Notas

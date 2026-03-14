@@ -2,6 +2,28 @@
 
 ## 2026-03-14
 
+### [4.0] Governance-only audit-fix adicional — `OPPORTUNITIES.md` deja de mezclar diferido packageable con Fase C
+- `docs/project/OPPORTUNITIES.md` deja explícito en su encabezado y reglas de uso que el subtree operativo puede contener tanto oportunidades todavía no packageables como trabajo ya packageable no seleccionado en el batch actual solo por presupuesto.
+- `OP-001` deja de presentar `SOM` como si su frente ticker-level siguiera siendo Fase C no packageable: el item queda descrito como investigación ya packageable, mientras la generalización abstracta de LSE/AIM sigue separada en `OP-009`.
+- `OP-005` deja de sugerir que `0327` sea hoy Fase C no packageable: el ticker sigue cerrado y el siguiente experimento HKEX queda descrito como packageable diferido por presupuesto; `OP-011` conserva solo la generalización abstracta de mercado.
+- `OP-009`, `OP-010` y `OP-011` se reescriben para separar con claridad el anchor ticker-level ya packageable o ya cerrado de la generalización de mercado que sigue siendo abstracta y no packageable por sí sola.
+- **Validation:** `python3 scripts/check_governance.py --format json` → `governance_contract_violations=[]`; `git diff --check -- CHANGELOG.md docs/project/OPPORTUNITIES.md` → limpio.
+
+### [4.0] Governance-only audit-fix — taxonomía Fase B/Fase C alineada con Packet B
+- `docs/project/PROJECT_STATE.md` deja explícito que **Fase B** no equivale solo a BL ya abiertas en `BACKLOG.md`: también incluye investigación ya packageable normalizada en `OPPORTUNITIES.md` cuando queda fuera del batch actual solo por presupuesto.
+- La columna `Fase programa` pasa a leerse como ubicación del siguiente trabajo packageable del sujeto, no como sinónimo de cierre factual. Por esa razón `TALO`, `TEP`, `SOM` y `0327`, y los carriles de mercado asociados en Euronext/LSE-AIM/HKEX, quedan en Fase B mientras mantengan investigación activa o budget-deferred.
+- `0327` deja de poder leerse como frontera no packageable de Fase C: sigue siendo `investigation_BL_ready` válida y no seleccionada únicamente por límite de presupuesto.
+- `docs/project/BACKLOG.md` aclara que la cola viva es el subconjunto ejecutable seleccionado de Fase B y que `OPPORTUNITIES.md` puede alojar packageables no seleccionados sin convertirlos por ello en Fase C.
+- **Validation:** `python3 scripts/check_governance.py --format json` → `governance_contract_violations=[]`, `project_state_lags_changelog=false`; `git diff --check -- CHANGELOG.md docs/project/BACKLOG.md docs/project/PROJECT_STATE.md` → limpio.
+
+### [4.0] Governance-only batch packaging — backlog reabierto tras scout mixto de capacidad
+- Sobre `main@3ea65d8`, con worktree limpio, `BACKLOG.md` vacío, `Module 1 status: OPEN` y `project_state_lags_changelog=true`, la ola governance-only resuelve en un solo ciclo el caso mixto exigido por contrato: absorbe la reconciliación `missing` de `discovery-baseline` y empaqueta el batch máximo viable de `investigation_BL_ready` dentro del presupuesto vigente.
+- `docs/project/BACKLOG.md` abre `BL-086` (`TALO`, `Work kind: investigation`), `BL-087` (`SOM`, `Work kind: investigation`) y `BL-088` (`TEP`, `Work kind: investigation`) como tres investigaciones targeted, independientes y serializables. Las tres preservan el contrato de experimento único y outcome canónico acotado.
+- `docs/project/OPPORTUNITIES.md` se reconcilia con el estado vivo: `OP-001`, `OP-004`, `OP-005` y `OP-006` quedan revalidados con `Last reviewed: 2026-03-14`, y `OP-013` absorbe explícitamente la reconciliación de `discovery-baseline` para que deje de reaparecer como `missing` en el siguiente scout.
+- `docs/project/PROJECT_STATE.md` deja de describir el runtime como backlog vacío, mantiene `DEC-015` en **16** (`14 FULL + KAR + JBH`) y fija que esta ola reabre Fase B sin sustituir todavía la `Discovery Baseline` persistida del 2026-03-13.
+- `0327` queda fuera del batch por presupuesto, no por invalidación factual: sigue siendo `investigation_BL_ready` matched y unchanged en `OPPORTUNITIES.md` y pasa a ser el siguiente candidato natural si el batch actual no altera la prioridad.
+- **Validation:** `python3 scripts/check_governance.py --format json` antes de mutar → `main@3ea65d8`, repo limpio, `backlog.active_count=0`, `next_resolution_mode=empty_backlog_discovery`; `python3 scripts/check_governance.py --format json` después de mutar → `backlog.active_ids=[BL-086, BL-087, BL-088]`, `active_count=3`, `project_state_lags_changelog=false`, `governance_contract_violations=[]`; `git diff --check` → limpio.
+
 ### [4.0] Packet E — path canónico de `diagnose_report.json` y blindaje de `capacity-scout`
 - El smoke end-to-end sobre `main@05d5aa2` encontró una ambigüedad contractual en el scout: `python3 -m elsian diagnose --all --output /tmp/elsian-capacity-scout/diagnose` sí escribe `diagnose_report.json`, pero `docs/project/ROLES.md`, `.github/agents/elsian-capacity-scout.agent.md` y el mirror local del skill seguían documentando `--diagnose-json ...` sin fijar el nombre exacto del fichero, permitiendo que el scout probara primero un nombre incorrecto y contaminara `partial_pass`.
 - El contrato del scout queda fijado con un único comando canónico completo para el helper repo-tracked: `python3 scripts/build_scout_context.py --eval-json /tmp/elsian-capacity-scout/eval_report.json --diagnose-json /tmp/elsian-capacity-scout/diagnose/diagnose_report.json --cases-root cases --opportunities-md docs/project/OPPORTUNITIES.md --output-json /tmp/elsian-capacity-scout/scout_context.json`.

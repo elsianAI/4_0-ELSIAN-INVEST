@@ -1,7 +1,7 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
-> Última actualización: 2026-03-13
-> Actualizado por: Codex (Discovery Baseline persisted after fresh full scout pass)
+> Última actualización: 2026-03-14
+> Actualizado por: Copilot (Governance-only batch packaging after fresh scout reconciliation)
 > Module 1 status: OPEN
 > Semántica vigente del marker: `OPEN` mientras exista frontera operacional real en el subtree operativo de `OPPORTUNITIES.md`. `TEP` y `0327` pueden convivir con un cierre futuro solo como excepciones ticker-level reafirmadas; `TALO` no es compatible con `CLOSED` mientras siga siendo un gap factual abierto de autonomía/coverage.
 
@@ -68,8 +68,8 @@ Ver ROADMAP.md para descripción completa de fases.
 | IOSP | SEC (US) | FULL | autonomous | A |
 | NEXN | SEC (US) | FULL | autonomous | A |
 | SONO | SEC (US) | FULL | autonomous | A |
-| TEP | Euronext (FR) | FULL | documented exception | A |
-| TALO | SEC (US) | FULL | gradual | A |
+| TEP | Euronext (FR) | FULL | documented exception | B |
+| TALO | SEC (US) | FULL | gradual | B |
 | NVDA | SEC (US) | FULL | autonomous | A |
 | KAR | ASX (AU) | ANNUAL_ONLY justificado | autonomous | A |
 | JBH | ASX (AU) | ANNUAL_ONLY justificado | autonomous | A |
@@ -77,8 +77,8 @@ Ver ROADMAP.md para descripción completa de fases.
 | ACLS | SEC (US) | FULL | autonomous | A |
 | INMD | SEC (US) | FULL | autonomous | A |
 | CROX | SEC (US) | FULL | autonomous | A |
-| SOM | LSE/AIM (GB) | frontera abierta | gradual | C |
-| 0327 | HKEX (HK) | FULL | documented exception | A |
+| SOM | LSE/AIM (GB) | frontera abierta | gradual | B |
+| 0327 | HKEX (HK) | FULL | documented exception | B |
 | ADTN | SEC (US) | FULL | autonomous | A |
 
 ### Clasificación factual por mercado
@@ -87,14 +87,15 @@ Ver ROADMAP.md para descripción completa de fases.
 |---|---|---|---|---|
 | SEC (US) | TZOO, GCT, IOSP, NEXN, SONO, TALO, NVDA, PR, ACLS, INMD, CROX, ADTN | Capacidad FULL operativa | autonomous | A |
 | ASX (AU) | KAR, JBH | ANNUAL_ONLY justificado | autonomous | A |
-| Euronext (FR) | TEP | Capacidad FULL en un ticker, sin autonomía de mercado amplia | gradual | A |
-| LSE/AIM (GB) | SOM | frontera abierta | gradual | C |
-| HKEX (HK) | 0327 | FULL en ticker validado, no generalizado como mercado | documented exception | C |
+| Euronext (FR) | TEP | Capacidad FULL en un ticker, con investigación de mercado ya packageable | gradual | B |
+| LSE/AIM (GB) | SOM | frontera ticker-level con investigación activa | gradual | B |
+| HKEX (HK) | 0327 | FULL en ticker validado, con siguiente experimento de mercado ya packageable y diferido por presupuesto | documented exception | B |
 
 **Lectura del programa:**
-- **Fase A** = capacidad cerrada hoy dentro del perímetro real de Module 1.
-- **Fase B** = backlog vivo estrictamente BL-ready y serializable.
-- **Fase C** = frontera abierta, hipótesis o excepciones aún no empaquetables como BL.
+- La columna **Fase programa** no reescribe la clasificación factual del ticker o mercado; indica dónde cae el siguiente trabajo packageable del sujeto bajo Packet B. Un sujeto puede seguir siendo `FULL` y aparecer en Fase B si mantiene una investigación activa o una investigación ya packageable pero no seleccionada en el batch actual por presupuesto.
+- **Fase A** = capacidad cerrada hoy dentro del perímetro real de Module 1, sin trabajo packageable vivo asociado.
+- **Fase B** = trabajo packageable del ciclo actual: backlog vivo ya abierto y packageables ya normalizados en `OPPORTUNITIES.md` que hayan quedado fuera del batch solo por presupuesto.
+- **Fase C** = frontera abierta no packageable todavía, expansión no curada o watchlist de excepciones sin experimento único listo.
 
 ## Nuevos componentes (Oleada 2 cierre Módulo 1)
 
@@ -150,7 +151,7 @@ No hay tickers WIP actualmente. Los 17 tickers están al 100%.
 
 ## Bloqueantes actuales
 
-No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Provenance Level 3. El pipeline es funcional end-to-end para los 17 tickers validados al 100%, `python3 -m pytest -q` queda documentado en verde local en `PROJECT_STATE`, `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` mantiene `SourceMap_v1 FULL` con 818/818, y BL-069 deja además `python3 -m elsian diagnose --all --output /tmp/elsian-bl069-parent3` alineado con el path canónico de `eval` (`17/17 evaluated`, overall 100.0%, `wrong=0`, `missed=0`). BL-075 cerró la deuda de derivados deterministas en `expected.json`, BL-082 cerró el bloqueador shared-core de ADTN para restatements 2023-2024 y rutas de escala, BL-081 promovió ADTN a `FULL`, BL-083 consolidó `0327` como `FULL`, BL-005 añadió `JBH` como ticker validado de diversidad, BL-076 completó la retroportación de 7 campos adicionales con **4,652** campos validados y BL-085 cerró la única deuda residual de cobertura unitaria ligada a ese cierre. El cómputo factual actual de `DEC-015` es **16**: **14 FULL + KAR + JBH** por excepción ASX documentada. No queda backlog BL-ready vivo en este snapshot.
+No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Provenance Level 3. El pipeline sigue funcional end-to-end para los 17 tickers validados al 100%, `python3 -m pytest -q` queda documentado en verde local en `PROJECT_STATE`, `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` mantiene `SourceMap_v1 FULL` con 818/818, y BL-069 deja además `python3 -m elsian diagnose --all --output /tmp/elsian-bl069-parent3` alineado con el path canónico de `eval` (`17/17 evaluated`, overall 100.0%, `wrong=0`, `missed=0`). La diferencia respecto al snapshot del 2026-03-13 es operativa, no regresiva: el scout factual del 2026-03-14 sobre `main@3ea65d8` reabre Fase B con tres BL de investigación targeted en backlog (`BL-086` TALO, `BL-087` SOM, `BL-088` TEP) y deja `0327` como investigación packageable todavía válida, pero fuera del batch por presupuesto. El cómputo factual actual de `DEC-015` sigue en **16**: **14 FULL + KAR + JBH** por excepción ASX documentada. Esta ola no es `baseline-only governance wave`, así que `## Discovery Baseline` conserva la última persistencia completa del 2026-03-13 mientras la reconciliación del 2026-03-14 se absorbe en backlog y oportunidades, no como sustitución de baseline.
 
 **Gaps y límites pendientes (no bloqueantes):**
 1. **Residual field-dependency gaps** — `fx_effect_cash`, `other_cash_adjustments`, `market_cap` y `price` siguen fuera del set canónico. Son opcionales o de market data; no bloquean validación ni BL-058.
@@ -211,12 +212,20 @@ No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Proven
 
 ## Próximas prioridades
 
-La ola governance-only del 2026-03-11 deja **sin** backlog vivo ejecutable. `BL-085` era el único packet BL-ready, pequeño y serial, y queda ya absorbido con closeout canónico.
+La ola governance-only del 2026-03-14 reabre **Fase B** con el batch óptimo permitido por el presupuesto vigente. La reconciliación `missing` de `discovery-baseline` queda absorbida en canonicals dentro de la misma ola y el backlog vivo vuelve a tener tres investigaciones targeted, independientes y serializables:
+
+- **BL-086** — TALO: acquire + verificación de `coverage/manifest` para cerrar el único gap factual explícito de autonomía ticker-level.
+- **BL-087** — SOM: experimento único para decidir promoción, follow-up técnico o excepción cerrada sobre la única frontera ticker-level abierta de LSE/AIM.
+- **BL-088** — TEP: experimento único de acquire Euronext fuera del carril ya validado usando TEP como ancla.
+
+Queda fuera del batch por presupuesto, no por invalidación factual:
+
+- **0327** permanece en `OPPORTUNITIES.md` como `investigation_BL_ready` matched y unchanged; será el siguiente candidato natural si el batch actual no reabre una BL técnica shared-core que cambie la prioridad.
 
 El resto del programa queda repartido así:
 - **Fase A** — capacidad cerrada actual: 16 tickers en capacidad operativa cerrada dentro de Module 1; esa cifra mezcla capacidad `FULL` y excepciones ticker-level ya cerradas, no equivale a 5 mercados cerrados de forma generalizada.
-- **Fase B** — backlog vivo: vacío en este snapshot.
-- **Fase C** — frontera abierta, watchlist de excepciones y expansión de capacidad: `SOM`, la generalización de mercado en LSE/AIM/HKEX/Euronext, el gap factual de coverage/manifest de `TALO` y la watchlist de excepciones ticker-level viven ahora en el subtree operativo estructurado de `docs/project/OPPORTUNITIES.md` hasta que aparezca evidencia nueva suficiente para empaquetarlos como BL o reafirmarlos como excepción estable.
+- **Fase B** — trabajo packageable vigente: `3` BL de investigación (`BL-086`, `BL-087`, `BL-088`) abiertas por la ola governance-only del 2026-03-14, más `0327` como investigación ya packageable en `OPPORTUNITIES.md` y no seleccionada en este batch solo por presupuesto.
+- **Fase C** — frontera abierta no packageable todavía: la generalización de mercado en LSE/AIM/HKEX/Euronext más allá de los tickers ancla actuales, los gaps opcionales de field dependency y la watchlist de excepciones ticker-level siguen viviendo en el subtree operativo estructurado de `docs/project/OPPORTUNITIES.md`.
 
 El contrato `parallel-ready` sigue vigente por `BL-072` y `DEC-029`, pero no cambia el criterio de esta fase: cualquier nueva ola técnica que reaparezca desde evidencia factual deberá volver a empaquetarse de forma **serial** y de blast radius mínimo.
 
