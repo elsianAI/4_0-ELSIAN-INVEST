@@ -2,6 +2,12 @@
 
 ## 2026-03-14
 
+### [4.0] ACVA annual truth cash flow hardening
+- Curado mínimo de cases/ACVA/expected.json: añadidos cfi, cff y delta_cash filing-backed para FY2022-FY2025 desde 10-K iXBRL, manteniendo ANNUAL_ONLY y sin tocar shared-core.
+
+### [4.0] ACVA onboarding SEC annual-only
+- Alta de cases/ACVA como nuevo caso SEC en ANNUAL_ONLY con case.json, filings SEC, expected_draft iXBRL, extraction_result y expected.json anual filing-backed para evaluación dirigida del caso.
+
 ### [4.0] Governance-only wave — DEC-030 / Packet C hypothesis basis hardening
 - `docs/project/DECISIONS.md` canoniza `DEC-030` para endurecer la adecuación de hipótesis en `investigation` y `expansion`: el pre-gate pasa al `director`, se bifurca por `Work kind`, el camino negativo obliga a reconciliar `OPPORTUNITIES.md` sin abrir BL y la persistencia mínima del `hypothesis_basis` queda acotada a surfaces canónicas compatibles con `DEC-027`.
 - `docs/project/ROLES.md` refuerza `§2.1` con el contrato operativo del `hypothesis_basis`, fija los cinco campos parseables que deben persistirse en `docs/project/BACKLOG.md` cuando sí exista BL, añade el challenge explícito del `auditor` en `§2.3` y aclara en `§3` que el `orchestrator` no ejecuta ni sustituye el hypothesis check.

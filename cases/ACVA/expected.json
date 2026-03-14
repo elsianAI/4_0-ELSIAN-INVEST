@@ -1,0 +1,386 @@
+{
+  "version": "1.0",
+  "ticker": "ACVA",
+  "currency": "USD",
+  "period_scope": "ANNUAL_ONLY",
+  "scale": "as_reported",
+  "scale_notes": "Annual truth curated from SEC iXBRL-backed 10-K filings for FY2022-FY2025. Values are stored as reported in the filing presentation, including share counts reported in thousands when the source filing does so.",
+  "periods": {
+    "FY2022": {
+      "fecha_fin": "2022-12-31",
+      "tipo_periodo": "anual",
+      "fields": {
+        "accounts_payable": {
+          "value": 323661.0,
+          "source_filing": "SRC_003_10-K_FY2023.htm"
+        },
+        "accounts_receivable": {
+          "value": 168732.0,
+          "source_filing": "SRC_003_10-K_FY2023.htm"
+        },
+        "capex": {
+          "value": -3211.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "cash_and_equivalents": {
+          "value": 280752.0,
+          "source_filing": "SRC_003_10-K_FY2023.htm"
+        },
+        "cff": {
+          "value": 72933.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "cfi": {
+          "value": -282979.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "cfo": {
+          "value": -75175.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "delta_cash": {
+          "value": -285242.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "depreciation_amortization": {
+          "value": 11378.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "ebit": {
+          "value": -106209.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "eps_basic": {
+          "value": -0.65,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "eps_diluted": {
+          "value": -0.65,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "income_tax": {
+          "value": 87.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "ingresos": {
+          "value": 421529.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "interest_expense": {
+          "value": 979.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "net_income": {
+          "value": -102193.0,
+          "source_filing": "SRC_003_10-K_FY2023.htm"
+        },
+        "sga": {
+          "value": 143637.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "shares_outstanding": {
+          "value": 156994254.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "total_assets": {
+          "value": 914922.0,
+          "source_filing": "SRC_003_10-K_FY2023.htm"
+        },
+        "total_debt": {
+          "value": 75500.0,
+          "source_filing": "SRC_004_10-K_FY2022.htm"
+        },
+        "total_equity": {
+          "value": 485724.0,
+          "source_filing": "SRC_003_10-K_FY2023.htm"
+        },
+        "total_liabilities": {
+          "value": 429198.0,
+          "source_filing": "SRC_003_10-K_FY2023.htm"
+        }
+      }
+    },
+    "FY2023": {
+      "fecha_fin": "2023-12-31",
+      "tipo_periodo": "anual",
+      "fields": {
+        "accounts_payable": {
+          "value": 305845.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "accounts_receivable": {
+          "value": 164009.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "capex": {
+          "value": -2330.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cash_and_equivalents": {
+          "value": 182571.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "cff": {
+          "value": 30633.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cfi": {
+          "value": -110972.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cfo": {
+          "value": -17885.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "delta_cash": {
+          "value": -98181.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "depreciation_amortization": {
+          "value": 19285.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "ebit": {
+          "value": -89677.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "eps_basic": {
+          "value": -0.47,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "eps_diluted": {
+          "value": -0.47,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "income_tax": {
+          "value": 526.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "ingresos": {
+          "value": 481234.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "interest_expense": {
+          "value": 1565.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "net_income": {
+          "value": -75261.0,
+          "source_filing": "SRC_003_10-K_FY2023.htm"
+        },
+        "sga": {
+          "value": 166510.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "shares_outstanding": {
+          "value": 159952813.0,
+          "source_filing": "SRC_003_10-K_FY2023.htm"
+        },
+        "total_assets": {
+          "value": 922924.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "total_debt": {
+          "value": 115000.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "total_equity": {
+          "value": 456528.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "total_liabilities": {
+          "value": 466396.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        }
+      }
+    },
+    "FY2024": {
+      "fecha_fin": "2024-12-31",
+      "tipo_periodo": "anual",
+      "fields": {
+        "accounts_payable": {
+          "value": 345605.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "accounts_receivable": {
+          "value": 168770.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "capex": {
+          "value": -4539.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cash_and_equivalents": {
+          "value": 224065.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cff": {
+          "value": -7874.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cfi": {
+          "value": -15863.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cfo": {
+          "value": 65397.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "delta_cash": {
+          "value": 41494.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "depreciation_amortization": {
+          "value": 36808.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "ebit": {
+          "value": -84105.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "eps_basic": {
+          "value": -0.48,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "eps_diluted": {
+          "value": -0.48,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "income_tax": {
+          "value": 688.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "ingresos": {
+          "value": 637156.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "interest_expense": {
+          "value": 4244.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "net_income": {
+          "value": -79700.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "sga": {
+          "value": 217435.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "shares_outstanding": {
+          "value": 164850699.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        },
+        "total_assets": {
+          "value": 984149.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "total_debt": {
+          "value": 123000.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "total_equity": {
+          "value": 440004.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "total_liabilities": {
+          "value": 544145.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        }
+      }
+    },
+    "FY2025": {
+      "fecha_fin": "2025-12-31",
+      "tipo_periodo": "anual",
+      "fields": {
+        "accounts_payable": {
+          "value": 390830.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "accounts_receivable": {
+          "value": 197225.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "capex": {
+          "value": -9098.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cash_and_equivalents": {
+          "value": 271497.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cff": {
+          "value": 42974.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cfi": {
+          "value": -74051.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cfo": {
+          "value": 78232.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "delta_cash": {
+          "value": 47432.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "depreciation_amortization": {
+          "value": 43743.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "ebit": {
+          "value": -63191.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "eps_basic": {
+          "value": -0.39,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "eps_diluted": {
+          "value": -0.39,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "income_tax": {
+          "value": 1338.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "ingresos": {
+          "value": 759606.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "interest_expense": {
+          "value": 9620.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "net_income": {
+          "value": -66141.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "sga": {
+          "value": 234991.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "shares_outstanding": {
+          "value": 170584.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "total_assets": {
+          "value": 1085611.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "total_debt": {
+          "value": 190000.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "total_equity": {
+          "value": 429683.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "total_liabilities": {
+          "value": 655928.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        }
+      }
+    }
+  }
+}
