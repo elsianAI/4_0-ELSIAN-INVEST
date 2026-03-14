@@ -10,6 +10,7 @@
 **Quién escribe:** el agente director (prioriza, añade, reordena y cierra).
 **Quién lee:** `orchestrator`, `kickoff` y agentes técnicos para conocer la cola viva.
 **Estados válidos aquí:** `TODO`, `IN_PROGRESS`, `BLOCKED`.
+**Work kinds válidos aquí:** `technical`, `investigation`, `expansion`.
 
 **Formato por tarea:**
 
@@ -20,6 +21,7 @@
 - **Asignado a:** rol o agente
 - **Módulo:** Module 1 | Governance
 - **Validation tier:** targeted | shared-core | governance-only
+- **Work kind:** technical | investigation | expansion
 - **Depende de:** BL-XXX (si aplica)
 - **Referencias:** DEC-XXX (si aplica)
 - **Descripción:** Qué hay que hacer y por qué
@@ -38,5 +40,6 @@ No hay tareas activas BL-ready en este snapshot. La cola viva de trabajo queda v
 ## Notas
 
 - Las prioridades activas las establece el director según `VISION.md`, `PROJECT_STATE.md`, `DECISIONS.md` y el estado real del repo.
+- `Work kind` vive en la cola ejecutable y lo leen directamente `auditor` y `closeout`; no debe quedar solo implícito en descripciones o packets transitorios.
 - Una tarea pasa a `BACKLOG_DONE.md` cuando deja de competir por atención operativa.
 - Las ideas de medio/largo plazo y el trabajo fuera del perímetro ejecutable van a `docs/project/OPPORTUNITIES.md`, no a este fichero.

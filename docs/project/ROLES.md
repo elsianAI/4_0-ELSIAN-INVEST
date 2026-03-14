@@ -179,9 +179,15 @@ El subtree no operativo/futuro de `docs/project/OPPORTUNITIES.md` no gatea el ru
 
 **Superficies duras**
 
-- `docs/project/BACKLOG.md` sigue siendo la unica cola ejecutable.
+- `docs/project/BACKLOG.md` sigue siendo la unica cola ejecutable y ahora debe persistir `Work kind` por BL.
 - `docs/project/PROJECT_STATE.md` puede persistir `Discovery Baseline`, pero no crea cola ejecutable ni cola paralela.
 - `docs/project/OPPORTUNITIES.md` sigue siendo la superficie persistida de frontera, excepciones y `Near BL-ready` todavia no empaquetadas.
+
+**Packet status**
+
+- `3ffc88e` deja cerrada y estabilizada la Tranche A del Nivel 1.
+- Lo que sigue es **Packet B — Investigacion y expansion como trabajo de primer nivel**.
+- Packet B mantiene las garantias de Tranche A, pero reescribe de forma coordinada el contrato de `capacity-scout`, `director`, `orchestrator`, `BACKLOG.md` y `OPPORTUNITIES.md`.
 
 **Ciclo de vida en 4 niveles**
 
@@ -192,6 +198,7 @@ El subtree no operativo/futuro de `docs/project/OPPORTUNITIES.md` no gatea el ru
   - reconciliacion governance-only cuando haya `missing/stale`
   - `baseline-only governance wave`
   - ejecucion serial `run-next-until-stop`
+  - Packet B amplifica este nivel con investigacion packageable, expansion curada y `work_kind` persistido en backlog
 - **Nivel 2** — contrato futuro, no gateado en runtime:
   - usa el mismo modelo de cola unica y una futura semantica de promocion/reapertura de modulo basada en evidencia acumulada, nunca en una segunda cola.
 - **Nivel 3** — contrato futuro, no gateado en runtime:
@@ -203,7 +210,9 @@ El subtree no operativo/futuro de `docs/project/OPPORTUNITIES.md` no gatea el ru
 
 - Una ola governance-only de batch packaging puede crear varias BLs en un solo ciclo.
 - Una `baseline-only governance wave` puede mutar solo canonicals de governance para persistir baseline.
-- Ambas carve-outs deben cerrar con `claimed_bl_status: none`.
+- Una ola governance-only de curacion de expansion puede mutar solo canonicals para proponer o descartar candidatos ticker-level.
+- Una ola governance-only de normalizacion de oportunidades puede mutar solo `docs/project/OPPORTUNITIES.md` para volver investigables items ya abiertos.
+- Todas esas carve-outs deben cerrar con `claimed_bl_status: none`.
 - Fuera de esas carve-outs, cada ejecucion mutante posterior sigue mapeandose a una sola BL.
 
 ### Capacity-scout helper
@@ -231,6 +240,7 @@ El subtree no operativo/futuro de `docs/project/OPPORTUNITIES.md` no gatea el ru
 - `python3 scripts/check_governance.py --format json`
 - `python3 -m elsian eval --all --output-json /tmp/elsian-capacity-scout/eval_report.json`
 - `python3 -m elsian diagnose --all --output /tmp/elsian-capacity-scout/...`
+- `python3 scripts/build_scout_context.py --eval-json /tmp/elsian-capacity-scout/eval_report.json --diagnose-json /tmp/elsian-capacity-scout/diagnose/diagnose_report.json --cases-root cases --opportunities-md docs/project/OPPORTUNITIES.md --output-json /tmp/elsian-capacity-scout/scout_context.json`
 - `cases/*/case.json`
 - `cases/*/filings_manifest.json` cuando exista
 - inspeccion read-only de `cases/*/filings/` cuando haga falta
@@ -247,6 +257,7 @@ El subtree no operativo/futuro de `docs/project/OPPORTUNITIES.md` no gatea el ru
 - `python3 scripts/check_governance.py --format json`
 - `python3 -m elsian eval --all --output-json /tmp/elsian-capacity-scout/eval_report.json`
 - `python3 -m elsian diagnose --all --output /tmp/elsian-capacity-scout/...`
+- `python3 scripts/build_scout_context.py --eval-json /tmp/elsian-capacity-scout/eval_report.json --diagnose-json /tmp/elsian-capacity-scout/diagnose/diagnose_report.json --cases-root cases --opportunities-md docs/project/OPPORTUNITIES.md --output-json /tmp/elsian-capacity-scout/scout_context.json`
 - `rg`
 - `sed`
 - `cat`
@@ -282,6 +293,9 @@ Campos obligatorios:
 - `evaluated_tickers`
 - `reviewed_opportunity_ids`
 - `bl_ready_count`
+- `investigation_bl_ready_count`
+- `expansion_candidate_count`
+- `packageable_count`
 - `missing_count`
 - `stale_count`
 
@@ -303,12 +317,33 @@ Regla de nullability:
   - `signature: null`
   - `notes` es string no vacio
 
+**Helper repo-tracked de contexto**
+
+El scout debe ejecutar:
+
+- `python3 scripts/build_scout_context.py --eval-json /tmp/elsian-capacity-scout/eval_report.json --diagnose-json /tmp/elsian-capacity-scout/diagnose/diagnose_report.json --cases-root cases --opportunities-md docs/project/OPPORTUNITIES.md --output-json /tmp/elsian-capacity-scout/scout_context.json`
+
+Y debe usar `scout_context.json` como fuente primaria para:
+
+- `eval_run`
+- `diagnose_run`
+- `partial_pass`
+- `partial_reasons`
+- `case_review.manifest_missing_tickers`
+- firmas de baseline
+
+Regla de mapeo:
+
+- `case_review.manifest_missing_tickers` del helper se copia en `pass_summary.manifest_missing_cases`;
+- el helper no clasifica semanticamente los casos sin manifest; solo reporta que tickers carecen de manifest;
+- la clasificacion semantica (`manifest_expected_absent`, `manifest_missing_gap`, `manifest_not_needed_for_current_finding`) sigue siendo responsabilidad del scout con apoyo de `OPPORTUNITIES.md`, `PROJECT_STATE.md` y `DECISIONS.md`.
+
 **`findings`**
 
 Lista de objetos con exactamente:
 
 - `topic: string`
-- `classification: BL-ready | opportunity | exception_reaffirmed | no_action | closeout_evidence_insufficient`
+- `classification: BL-ready | investigation_BL_ready | expansion_candidate | opportunity | exception_reaffirmed | no_action | closeout_evidence_insufficient`
 - `subject_type: ticker | market | extractor | acquire | governance`
 - `subject_id: string`
 - `current_canonical_state: string`
@@ -378,10 +413,19 @@ Si no pueden clasificarse razonablemente, el scout debe marcar `partial_pass = t
 
 **Regla de `partial_pass`**
 
+- `eval_run`, `diagnose_run`, `partial_pass` y `partial_reasons` deben salir del helper repo-tracked, no de inferencia LLM;
 - `timeout`, `error` o `unusable_artifact` en `eval` o `diagnose` fuerzan `partial_pass = true`.
 - un caso sin manifest no clasificado razonablemente fuerza `partial_pass = true`.
 - `partial_reasons` debe explicar cada degradacion.
 - un pass parcial no puede disparar packaging tecnico; solo planning o reconciliacion governance-only.
+
+**Packet B — investigacion y expansion packageable**
+
+- `packageable_count` se define exactamente como:
+  - `bl_ready_count + investigation_bl_ready_count + expansion_candidate_count`
+- `investigation_BL_ready` y `expansion_candidate` son trabajo packageable de primer nivel, no anotaciones cosmeticas.
+- La expansion proactiva nunca desplaza investigaciones abiertas del modulo; solo usa slots sobrantes del presupuesto de batch.
+- La shape de `findings` y `reconciliation_summary` no cambia; Packet B solo amplia la enum de clasificacion y los contadores de `pass_summary`.
 
 **Semantica discovery para `eval --all --output-json`**
 
@@ -428,6 +472,41 @@ Si no pueden clasificarse razonablemente, el scout debe marcar `partial_pass = t
 - solo un `full scout pass` no parcial puede actualizar `## Discovery Baseline`;
 - una pasada parcial nunca sobrescribe baseline.
 
+**Regla mecanica de `investigation_BL_ready`**
+
+Un item solo puede clasificarse como `investigation_BL_ready` si, y solo si:
+
+- esta en el subtree operativo de `docs/project/OPPORTUNITIES.md`;
+- esta en `Near BL-ready`, `Exception watchlist` o `Extractor / format frontiers`;
+- su `Disposition` actual es `keep` o `reaffirm_exception`;
+- `Unknowns remaining` ya esta normalizado como un unico experimento ejecutable y falsable;
+- el experimento recae sobre un ticker concreto, o mercado + ticker concreto;
+- la BL de investigacion cabe en un unico packet `targeted`;
+- el resultado terminal de esa BL solo puede ser:
+  - `promoted`
+  - `exception_reaffirmed`
+  - `technical_followup_opened`
+  - `discarded_with_evidence`
+
+Regla clave:
+
+- el filtro usa el blast radius de la investigacion, no el del resultado potencial;
+- por eso un item puede salir como `investigation_BL_ready` aunque su `Blast radius if promoted` en `OPPORTUNITIES.md` sea `shared-core`, siempre que la investigacion en si sea ticker-level y `targeted`;
+- la elegibilidad depende del estado actual de `Unknowns remaining`, no de si una wave historica "ya ocurrio";
+- si la investigacion descubre necesidad reusable o `shared-core`, el resultado correcto es `technical_followup_opened`, no ampliar el packet actual.
+
+**Regla mecanica de `expansion_candidate`**
+
+Un item solo puede clasificarse como `expansion_candidate` si, y solo si:
+
+- esta en `Expansion candidates`;
+- representa un ticker concreto, no un mercado abstracto;
+- no existe ya en `cases/`;
+- no existe ya como BL activa en `docs/project/BACKLOG.md`;
+- el mercado ya esta dentro del alcance operativo actual o de sus fronteras vigentes;
+- el trabajo cabe en una sola BL `targeted`;
+- sigue la doctrina de onboarding de `docs/project/MODULE_1_ENGINEER_CONTEXT.md`.
+
 ### `OPPORTUNITIES.md` como input operativo
 
 `docs/project/OPPORTUNITIES.md` debe separar explicitamente:
@@ -464,11 +543,14 @@ Los items operativos usan heading `#### OP-XXX — Titulo corto` y deben incluir
 **Lifecycle**
 
 - `Near BL-ready` pasa a backlog solo por decision del `director`.
+- `Near BL-ready`, `Exception watchlist` y `Extractor / format frontiers` pueden producir `investigation_BL_ready` solo si `Unknowns remaining` ya esta normalizado como experimento unico, ejecutable y falsable.
 - `Exception watchlist` se mantiene mientras la excepcion siga sosteniendose; puede moverse a `Near BL-ready` si aparece evidencia nueva.
+- `Expansion candidates` solo puede producir `expansion_candidate` cuando existe ticker concreto; los mercados abstractos no son packageables por si mismos.
 - `Extractor / format frontiers` y `Expansion candidates` bloquean el cierre del modulo mientras sigan operativos.
 - `Retired / absorbed` no vuelve a competir salvo evidencia nueva material.
 - Si un scout pass cambia materialmente la interpretacion de un item, rebota a `director` para reconciliacion governance-only.
 - Si un scout pass reafirma una excepcion o confirma `no_action`, `Last reviewed` solo necesita actualizarse si el item esta stale (>30 dias). Esas actualizaciones deben batch-earse en una reconciliacion governance-only, no abrir una ola por item.
+- Si `Unknowns remaining` ya contiene un unico experimento ejecutable y falsable conforme al contrato, el item es elegible a `investigation_BL_ready`; si no, permanece en `opportunity`.
 
 **Semantica de cierre de Module 1**
 
@@ -481,6 +563,24 @@ Los items operativos usan heading `#### OP-XXX — Titulo corto` y deben incluir
   - cualquier item en `Extractor / format frontiers`
   - cualquier item en `Expansion candidates`
   - cualquier item en `Exception watchlist` con una disposicion distinta de `reaffirm_exception`
+
+**Anti-regresion de oportunidades**
+
+Tras cerrar una BL `Work kind: investigation` o `Work kind: expansion`, el `director` debe reconciliar `docs/project/OPPORTUNITIES.md` de forma que el item no reaparezca igual en el siguiente scout pass:
+
+- `promoted`:
+  - sale del carril operativo o pasa a `Retired / absorbed`
+- `exception_reaffirmed`:
+  - permanece en `Exception watchlist`
+  - actualiza `Last reviewed`
+  - reduce o limpia `Unknowns remaining`
+- `technical_followup_opened`:
+  - el item sigue vivo, pero queda referenciado al nuevo follow-up y con `Unknowns remaining` actualizado
+- `discarded_with_evidence` o `discarded_candidate`:
+  - pasa a `Retired / absorbed`
+- una curacion de expansion con `0` candidatos:
+  - actualiza `Last reviewed`
+  - debe reaparecer como `unchanged_since_last_pass=true`, no como recomendacion nueva
 
 ## 2. Contratos por rol
 
@@ -544,12 +644,32 @@ Decidir que trabajo pertenece a Modulo 1, en que orden debe hacerse, con que lim
   - si aparece una oportunidad `broad`, viaja sola
   - solo admite dependencias `independientes` o `lineales`
   - un caso mixto `BL-ready + missing/stale` se resuelve en una sola ola governance-only
+  - el orden de prioridad del batch es:
+    - reconciliacion `missing/stale`
+    - `BL-ready`
+    - `investigation_BL_ready`
+    - `expansion_candidate`
+  - las investigaciones tienen prioridad sobre expansion
+  - como maximo `1` BL de expansion por batch
+  - debe usar por defecto el maximo batch viable dentro de ese presupuesto
+  - si empaqueta menos de lo que cabe, debe justificarlo explicitamente en el packet
+  - toda BL creada en esta ola debe persistir `Work kind` en `docs/project/BACKLOG.md` con uno de estos valores:
+    - `technical`
+    - `investigation`
+    - `expansion`
   - el exceso no se guarda en `PROJECT_STATE.md`; permanece en `OPPORTUNITIES.md` y, si las firmas no cambian, reaparece como `matched + unchanged_since_last_pass`
 - **Baseline-only governance wave**:
   - solo aplica tras `full scout pass` no parcial
   - requiere `0` `BL-ready`, `0` `missing`, `0` `stale`
   - se usa para persistir `## Discovery Baseline` cuando la baseline esta ausente o sus firmas cambiaron
-- Ambos carve-outs deben cerrar con `claimed_bl_status: none`.
+- **Curacion de expansion**:
+  - solo aplica cuando no hay `BL-ready` ni `investigation_BL_ready` packageables y `Expansion candidates` no contiene tickers concretos packageables
+  - puede anadir hasta `3` candidatos ticker-level si cumplen los criterios de mercado vigente, no duplicidad, diversidad real, discoverability razonable y blast radius `targeted`
+  - `0` candidatos es un resultado valido y debe dejar constancia explicita de que no hay candidatos validos bajo la baseline actual
+- **Normalizacion de oportunidades**:
+  - se usa para reescribir `Unknowns remaining` de items investigables como experimentos unicos, ejecutables y falsables
+  - no crea backlog por si sola
+- Los cuatro carve-outs deben cerrar con `claimed_bl_status: none`.
 
 ### 2.2 `engineer`
 
@@ -637,6 +757,7 @@ Verificar de forma independiente que el cambio cumple vision, decisiones, gates 
 
 - Comprobar en cada auditoria que el trabajo sigue siendo Modulo 1.
 - Reportar cualquier deriva estrategica como finding de severidad alta.
+- Para `Work kind: investigation` o `Work kind: expansion`, validar que la BL produjo evidencia suficiente y uno de los resultados terminales permitidos, aunque no haya codigo nuevo.
 
 ## 3. Routing conservador
 
@@ -678,13 +799,59 @@ El orquestador neutral decide que hijo lanzar segun la intencion y el posible bl
 **Regla**
 
 - Toda tarea mutante debe mapearse a una unica BL o a `none`. Si un cambio afecta materialmente a varias BL, el `director` debe partir el paquete antes de ejecucion.
-- En `briefing` y `planificacion`, si `capacity-scout` detecta algo `BL-ready`, el `orchestrator` debe detenerse y devolver findings + ruta recomendada; no puede invocar a `director` dentro de la misma fase read-only.
-- En `ejecucion`, si `capacity-scout` detecta algo `BL-ready`, el `orchestrator` puede abrir una segunda fase separada con `director`, siempre despues de cerrar la fase read-only.
+- En `briefing` y `planificacion`, si `capacity-scout.pass_summary.bl_ready_count > 0` o `capacity-scout.pass_summary.investigation_bl_ready_count > 0`, el `orchestrator` debe detenerse en la fase read-only, devolver findings + ruta recomendada, exponer todos los packageables relevantes y preguntar si debe pasar a ejecucion; no puede invocar a `director` dentro de esa misma fase read-only.
+- En `briefing` y `planificacion`, si `capacity-scout.pass_summary.bl_ready_count = 0`, `investigation_bl_ready_count = 0` y `missing_count + stale_count > 0`, la ruta correcta es reconciliacion governance-only; no se abre packaging tecnico.
+- En `briefing` y `planificacion`, si solo hay `expansion_candidate_count > 0`, la ruta correcta es `director -> gates -> auditor -> closeout` para seleccion y packaging de expansion.
+- En `briefing` y `planificacion`, si no hay packageables y `Expansion candidates` carece de tickers concretos elegibles, la ruta correcta es una ola governance-only de curacion de expansion.
+- En `ejecucion`, si `capacity-scout` detecta `BL-ready`, `investigation_BL_ready` o `expansion_candidate`, el `orchestrator` puede abrir una segunda fase separada con `director`, siempre despues de cerrar la fase read-only.
 - Si `capacity-scout.pass_summary.partial_pass = true`, el `orchestrator` no puede disparar packaging tecnico; solo planning o reconciliacion governance-only.
-- Si `capacity-scout` devuelve solo `missing/stale`, la ruta correcta es reconciliacion governance-only; no se abre packaging tecnico.
 - Si `capacity-scout` devuelve `full pass` limpio, sin `BL-ready`, sin `missing/stale`, y la baseline esta ausente o cambiada, la ruta correcta es `baseline-only governance wave`.
 - Si varias BL quedan empaquetadas y priorizadas, el `orchestrator` puede operar en modo `run-next-until-stop`: ejecutar una BL, cerrar, re-ejecutar checker, y continuar solo mientras la siguiente BL siga clara y no aparezca nueva ambigüedad.
 - `run-next-until-stop` debe detenerse en el primer fallo de BL y volver a planning; no se salta el fallo ni reordena por heuristica.
+- Si Elsian aprueba continuar desde planning con trabajo packageable, el `orchestrator` debe revalidar estado antes de mutar con `python3 scripts/check_governance.py --format json`.
+- La revalidacion previa a mutacion debe comparar, como minimo:
+  - `summary.next_resolution_mode`
+  - `backlog.active_ids`
+  - `backlog.active_count`
+  - `technical_dirty`
+  - `governance_dirty`
+  - `other_dirty`
+  - `workspace_only_dirty`
+  - `project_state.discovery_baseline.present`
+  - `project_state.discovery_baseline.valid`
+  - `HEAD`
+- Si cambia cualquiera de estas senales de hard-abort, el `orchestrator` no puede mutar y debe volver a planning:
+  - `HEAD`
+  - `summary.next_resolution_mode`
+  - `backlog.active_ids`
+  - `backlog.active_count`
+  - `technical_dirty`
+  - `governance_dirty`
+  - `project_state.discovery_baseline.present`
+  - `project_state.discovery_baseline.valid`
+- `workspace_only_dirty` y `other_dirty` son senales de soft-check; si el `orchestrator` no puede demostrar que el cambio es irrelevante para el scope del batch, debe abortar de forma conservadora y volver a planning.
+- Si el `orchestrator` transiciona de planning a ejecucion en el mismo thread, el handoff al `director` debe incluir siempre:
+  - `capacity-scout.pass_summary`
+  - `capacity-scout.findings`
+  - `capacity-scout.reconciliation_summary`
+  - el snapshot del checker usado en planning
+  - el snapshot revalidado justo antes de mutar
+  - la instruccion explicita: `empaqueta el batch optimo dentro del presupuesto vigente; no asumas que el parent ya lo ha decidido`
+- En `briefing` y `planificacion`, el `orchestrator` debe cerrar siempre con un bloque `## Resumen ejecutivo` de exactamente cuatro lineas:
+  - `Estado del modulo`
+  - `Hallazgos packageables`
+  - `Accion inmediata`
+  - `Siguiente tras ejecucion`
+
+**Resultados terminales por `Work kind`**
+
+- `technical`:
+  - mantiene los criterios tecnicos normales del packet correspondiente.
+- `investigation`:
+  - solo puede cerrar como `promoted`, `exception_reaffirmed`, `technical_followup_opened` o `discarded_with_evidence`.
+- `expansion`:
+  - solo puede cerrar como `onboarded_to_annual_only`, `technical_followup_opened` o `discarded_candidate`.
+- `auditor` y `closeout` aceptan BLs `investigation` o `expansion` sin codigo nuevo si la evidencia se genero, la decision terminal quedo tomada y `OPPORTUNITIES.md` / canonicals quedaron reconciliados de forma consistente.
 
 ### 3.1 Paralelizacion mutante controlada
 
