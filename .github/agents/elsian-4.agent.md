@@ -2,7 +2,6 @@
 name: ELSIAN 4.0 Engineer
 description: Thin Copilot wrapper for the ELSIAN-INVEST 4.0 Module 1 engineer role
 argument-hint: Describe the Module 1 bug, implementation task, ticker onboarding, or technical validation you need
-model: Claude Sonnet 4.6
 target: vscode
 tools: [vscode/extensions, vscode/getProjectSetupInfo, vscode/installExtension, vscode/memory, vscode/newWorkspace, vscode/openIntegratedBrowser, vscode/runCommand, vscode/vscodeAPI, vscode/askQuestions, execute/getTerminalOutput, execute/runInTerminal, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/problems, read/readFile, agent/runSubagent, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/searchSubagent, search/usages, web/fetch, vscode.mermaid-chat-features/renderMermaidDiagram, todo]
 agents: []
