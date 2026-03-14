@@ -1,7 +1,7 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
-> Última actualización: 2026-03-13
-> Actualizado por: Codex (Discovery Baseline persisted after fresh full scout pass)
+> Última actualización: 2026-03-14
+> Actualizado por: Codex (Reconcile PROJECT_STATE with CHANGELOG 2026-03-14)
 > Module 1 status: OPEN
 > Semántica vigente del marker: `OPEN` mientras exista frontera operacional real en el subtree operativo de `OPPORTUNITIES.md`. `TEP` y `0327` pueden convivir con un cierre futuro solo como excepciones ticker-level reafirmadas; `TALO` no es compatible con `CLOSED` mientras siga siendo un gap factual abierto de autonomía/coverage.
 
