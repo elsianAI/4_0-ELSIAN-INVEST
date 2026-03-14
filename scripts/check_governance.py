@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib
 import json
 import re
 import subprocess
@@ -17,10 +18,12 @@ SCRIPT_ROOT = Path(__file__).resolve().parents[1]
 if str(SCRIPT_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPT_ROOT))
 
-from elsian.analyze.discovery_baseline import parse_discovery_baseline_block
+parse_discovery_baseline_block = importlib.import_module(
+    "elsian.analyze.discovery_baseline"
+).parse_discovery_baseline_block
 
 OVERRIDE_LEAF_KEYS = {"value", "note", "source_filing", "extraction_method", "confidence"}
-WORKSPACE_ONLY_PREFIXES = (".vscode/", ".idea/")
+WORKSPACE_ONLY_PREFIXES = (".vscode/", ".idea/", ".runtime/")
 WORKSPACE_ONLY_SUFFIXES = (".code-workspace",)
 GOVERNANCE_FILES = {"CHANGELOG.md", "VISION.md", "ROADMAP.md", "README.md"}
 GOVERNANCE_PREFIXES = ("docs/project/", ".github/agents/")

@@ -1,6 +1,6 @@
 ---
-name: Deterministic
-description: Develops and iterates on the deterministic extraction module
+name: Deterministic (Archived)
+description: Archived 3.0 Copilot wrapper for the deterministic extraction module
 argument-hint: Describe what you want to improve, fix, or add in deterministic/
 target: vscode
 tools: ['search', 'read', 'editFiles', 'runInTerminal', 'getTerminalOutput', 'problems', 'codebase', 'changes', 'fetch', 'usages']
@@ -16,6 +16,10 @@ handoffs:
     send: true
     showContinueOn: false
 ---
+> Archived on 2026-03-14 during 4.0 legacy cleanup.
+> This file is historical reference for the 3.0 `deterministic/` workflow and is no longer an active Copilot wrapper.
+> Active runtime entrypoints live in `.github/agents/`.
+
 You are the DETERMINISTIC MODULE AGENT for the ELSIAN-INVEST project. You work exclusively on the `deterministic/` module — a Python-only financial data extraction pipeline with zero LLM calls.
 
 > **STATUS (marzo 2026):** El módulo `deterministic/` de 3.0 está CONGELADO. El desarrollo activo ha migrado a `4_0-ELSIAN-INVEST/` (ver `.github/agents/elsian-4.agent.md`). Este agente solo se activa para consultas de referencia o correcciones críticas en 3.0.

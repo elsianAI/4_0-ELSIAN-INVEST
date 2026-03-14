@@ -23,9 +23,16 @@ from elsian.cli import CASES_DIR, cmd_curate
 from elsian.extract.ixbrl import run_sanity_checks
 
 
+def _require_case_filings(ticker: str) -> None:
+    filings_dir = CASES_DIR / ticker / "filings"
+    if not filings_dir.exists() or not any(filings_dir.iterdir()):
+        pytest.skip(f"{ticker} filings are not present in this checkout")
+
+
 @pytest.fixture(scope="module")
 def tzoo_draft() -> Generator[dict, None, None]:
     """Execute cmd_curate for TZOO; yield the parsed draft; clean up on exit."""
+    _require_case_filings("TZOO")
     draft_path = CASES_DIR / "TZOO" / "expected_draft.json"
     if draft_path.exists():
         draft_path.unlink()
@@ -45,6 +52,7 @@ def tzoo_draft() -> Generator[dict, None, None]:
 @pytest.fixture(scope="module")
 def tep_draft() -> Generator[dict, None, None]:
     """Execute cmd_curate for TEP (no .htm files); yield deterministic draft; clean up."""
+    _require_case_filings("TEP")
     draft_path = CASES_DIR / "TEP" / "expected_draft.json"
     if draft_path.exists():
         draft_path.unlink()
@@ -64,6 +72,7 @@ def tep_draft() -> Generator[dict, None, None]:
 @pytest.fixture(scope="module")
 def kar_draft() -> Generator[dict, None, None]:
     """Execute cmd_curate for KAR (PDF-only); yield deterministic draft; clean up."""
+    _require_case_filings("KAR")
     draft_path = CASES_DIR / "KAR" / "expected_draft.json"
     if draft_path.exists():
         draft_path.unlink()
