@@ -922,6 +922,280 @@ El orquestador neutral decide que hijo lanzar segun la intencion y el posible bl
 - Si la integracion serial de una BL encuentra conflicto estructural, el padre neutral aborta esa integracion, conserva intacto el `main` limpio previo y devuelve la BL a reempaquetado o rebase aislado.
 - El exito de una BL no autoriza a forzar la integracion de las demas.
 
+## 3.2 Authority / Autonomy Policy v1
+
+Esta seccion define que decisiones operativas pueden ejecutarse sin aprobacion explicita de Elsian y bajo que limites. Si contradice cualquier otra seccion de este documento, prevalece la otra seccion. `BACKLOG.md` sigue siendo la unica cola ejecutable. `briefing` y `planificacion` siguen siendo read-only. `workspace_only_dirty` no bloquea por si solo; cualquier otro dirty repo-tracked bloquea autonomia mutante.
+
+### D1. Handoff stale -> recompute
+
+**Autonomo si:**
+
+- `.runtime/handoff.json` no existe, o
+- el schema es invalido, o
+- `head_mismatch = true`, o
+- `live_state_fingerprint_mismatch = true`
+- y `read_handoff.py` / `write_handoff.py` pueden recomputar con exito
+
+**Escalar solo si:**
+
+- el recompute falla, o
+- `check_governance.py` no esta disponible, o
+- el handoff recomputado contradice el checker vivo de forma material
+
+**Evidencia minima al escalar:**
+
+- `stale_reason`
+- `handoff.head`
+- `handoff.live_state_fingerprint`
+- `checker.head`
+- `checker.live_state_fingerprint`
+- stderr o excepcion del recompute
+
+**Fallback si no cumple:**
+
+- ignorar handoff
+- operar desde checker vivo + kickoff/scout frescos
+- no mutar canonicals por causa del handoff
+
+### D2. Auto-commit -> reglas vigentes de `ROLES.md`
+
+**Autonomo si:**
+
+- solo bajo la politica ya vigente en `ROLES.md`
+
+**Escalar solo si:**
+
+- cualquier condicion de `auto-commit` de `ROLES.md` no se cumple
+
+**Evidencia minima al escalar:**
+
+- clasificacion inicial del dirty state
+- resultado de gates
+- resultado de auditoria
+- resultado de closeout
+- lista exacta de ficheros que entrarian en commit
+- motivo exacto por el que `auto-commit` queda bloqueado
+
+**Fallback si no cumple:**
+
+- cerrar sin `auto-commit`
+- dejar el cambio listo para commit manual
+
+### Regla de `session_mode`
+
+El `orchestrator` clasifica el prompt de entrada al inicio del flujo y declara `session_mode` como `briefing`, `planificacion` o `execution`. Si el prompt es ambiguo o no menciona ejecucion explicita, `session_mode` default = `briefing` (read-only). Solo `session_mode = execution` habilita las familias A, B y C.
+
+### Gate comun de autonomia mutante (A/B)
+
+Las familias A/B requieren:
+
+- `session_mode = execution`
+- parent = `orchestrator`
+- preflight con:
+  - `technical_dirty = false`
+  - `governance_dirty = false`
+  - `other_dirty = false`
+  - `workspace_only_dirty` permitido
+- checker actual con `next_resolution_mode = empty_backlog_discovery`
+- handoff fresco o recomputado correctamente
+- ausencia de conflicto material entre:
+  - checker vivo
+  - handoff vigente
+  - salida de `capacity-scout`
+- ninguna pregunta abierta de tesis / alcance / prioridad estrategica
+
+### A1. Missing/Stale reconciliation wave
+
+**Autonomo si:**
+
+- se cumple el gate comun
+- `capacity-scout.partial_pass = false`
+- `missing_count + stale_count > 0`
+- `bl_ready_count = 0`
+- `investigation_bl_ready_count = 0`
+- `expansion_candidate_count = 0`
+- todas las entradas a reconciliar caen en `reconciliation_summary.{missing_in_opportunities, stale_in_opportunities}`
+- cada item `missing/stale` en `reconciliation_summary` tiene un `recommended_disposition` que mapea directamente a una accion mecanica en `docs/project/OPPORTUNITIES.md` (`anadir` a carril, actualizar `Last reviewed`, mover a `Retired / absorbed`) sin requerir juicio de clasificacion nuevo
+- la superficie de mutacion queda limitada a `docs/project/OPPORTUNITIES.md`
+- el cierre previsto es `claimed_bl_status: none`
+
+**Escalar si:**
+
+- `partial_pass = true`, o
+- existe cualquier packageable (`BL-ready`, `investigation_BL_ready`, `expansion_candidate`), o
+- cualquier item requiere decidir entre dos disposiciones plausibles, o
+- la mutacion propuesta excede `docs/project/OPPORTUNITIES.md`
+
+**Evidencia minima al escalar:**
+
+- `pass_summary` completo
+- `partial_reasons` si existen
+- `reconciliation_summary` completo
+- diff surface prevista
+- motivo exacto del bloqueo de autonomia
+
+**Fallback si no cumple:**
+
+- no mutar
+- devolver packet read-only de reconciliacion
+- cerrar la sesion con recomendacion explicita
+
+### A2. Baseline-only governance wave
+
+**Autonomo si:**
+
+- se cumple el gate comun
+- `capacity-scout.partial_pass = false`
+- `bl_ready_count = 0`
+- `investigation_bl_ready_count = 0`
+- `expansion_candidate_count = 0`
+- `missing_count = 0`
+- `stale_count = 0`
+- `Discovery Baseline` esta ausente o sus firmas cambiaron
+- la superficie de mutacion queda limitada a `docs/project/PROJECT_STATE.md` en `## Discovery Baseline`
+- el cierre previsto es `claimed_bl_status: none`
+
+**Escalar si:**
+
+- `partial_pass = true`, o
+- existe cualquier packageable, o
+- hay `missing/stale`, o
+- la baseline no puede recomputarse de forma determinista, o
+- la mutacion propuesta excede `docs/project/PROJECT_STATE.md :: Discovery Baseline`
+
+**Evidencia minima al escalar:**
+
+- `pass_summary` completo
+- firmas baseline antiguas vs nuevas
+- estado actual de `Discovery Baseline`
+- diff surface prevista
+- motivo exacto del bloqueo de autonomia
+
+**Fallback si no cumple:**
+
+- no persistir baseline
+- devolver packet read-only con firmas y diagnostico
+- cerrar la sesion con recomendacion explicita
+
+**Exclusion mutua A1/A2**
+
+A1 y A2 son mutuamente excluyentes por sus condiciones. En v1, sin `run-next-until-stop`, solo una familia puede dispararse por sesion. Tras completar A1, una sesion posterior puede disparar A2 si las condiciones se cumplen.
+
+### B. Batch packaging narrow
+
+**Autonomo si:**
+
+- se cumple el gate comun
+- `capacity-scout.partial_pass = false`
+- `missing_count = 0`
+- `stale_count = 0`
+- existe al menos `1` candidato con `classification in {BL-ready, investigation_BL_ready}`
+- todos los items seleccionados cumplen:
+  - `blast_radius = targeted`
+  - `effort in {minimal, bounded}`
+  - `validation_tier = targeted`
+  - `disposition_hint = send_to_director_for_packaging`
+- para items `investigation_BL_ready`, el `director` autonomo debe completar el pre-gate de `hypothesis_basis` conforme a `§2.1` de este documento:
+  - si `gap_confirmed = true`, puede abrir BL
+  - si `gap_confirmed != true`, no abre BL: reconcilia `docs/project/OPPORTUNITIES.md` y escala
+- ningun item seleccionado es:
+  - `shared-core`
+  - `broad`
+  - `expansion_candidate`
+- las dependencias del batch son solo `independientes` o `lineales`
+- `1 <= batch_size <= 3`
+- existe un unico batch maximo legal bajo este subconjunto v1
+- el batch autonomo no empaqueta menos de lo que cabe dentro de ese maximo legal
+- toda BL creada puede persistir `Work kind in {technical, investigation}`
+- la superficie de mutacion queda limitada a:
+  - `docs/project/BACKLOG.md`
+  - actualizaciones minimas de consistencia en `docs/project/OPPORTUNITIES.md`
+- el exceso no seleccionado permanece en `docs/project/OPPORTUNITIES.md`
+
+**Escalar si:**
+
+- `partial_pass = true`, o
+- hay `missing/stale`, o
+- cualquier item `investigation_BL_ready` falla el pre-gate de `hypothesis_basis` o tiene `gap_confirmed != true`, o
+- no existe batch legal unico, o
+- aparece cualquier `shared-core`, `broad` o `expansion_candidate` relevante, o
+- el batch maximo legal exigiria juicio no mecanico, o
+- el `director` tendria que empaquetar menos de lo que cabe
+
+**Evidencia minima al escalar:**
+
+- `pass_summary` completo
+- tabla de candidatos con:
+  - `subject_id`
+  - `classification`
+  - `blast_radius`
+  - `effort`
+  - `validation_tier`
+  - `disposition_hint`
+- batches legales calculados
+- batch recomendado
+- motivo exacto del bloqueo de autonomia
+
+**Fallback si no cumple:**
+
+- no mutar backlog
+- devolver `batch_candidates` + `recommended_batch`
+- cerrar la sesion con recomendacion explicita
+
+### C. Paso a ejecucion solo en sesion preautorizada como ejecucion
+
+**Autonomo si:**
+
+- `session_mode = execution` (ver regla de `session_mode` arriba)
+- no hay instruccion explicita del usuario restringiendo la sesion a read-only
+- al inicio del ciclo de discovery, el checker estaba en `next_resolution_mode = empty_backlog_discovery`
+- existe exactamente una ruta mutante valida y ya determinada dentro del flujo existente
+- la decision previa que habilita esa ruta proviene de:
+  - A1 / A2, o
+  - B con batch `narrow`
+- si la ruta proviene de B:
+  - `selected_batch_size = 1`
+  - la BL resultante tiene `Work kind in {technical, investigation}`
+  - `blast_radius = targeted`
+  - `effort in {minimal, bounded}`
+  - tras el packaging, el checker pasa a un estado compatible con ejecutar esa BL (`execute_backlog` o backlog activo consistente)
+- si la ruta proviene de A1 / A2:
+  - la mutacion sigue siendo estrictamente `governance-only`
+  - el checker sigue limpio salvo `workspace_only_dirty`
+- justo antes de mutar, no hay contradiccion material entre checker vivo, handoff vigente y packet/handoff del `director`
+
+**Escalar si:**
+
+- `session_mode != execution`, o
+- hay mas de una ruta mutante plausible, o
+- `selected_batch_size > 1`, o
+- la ejecucion tocaria `shared-core`, `broad` o `expansion`, o
+- el estado vivo cambio entre scout y mutacion, o
+- aparece cualquier duda de scope / prioridad / tesis
+
+**Evidencia minima al escalar:**
+
+- `session_mode` de entrada
+- checker al inicio y checker justo antes de mutar
+- familia que habilita la ejecucion (`A1`, `A2`, `B`)
+- ruta candidata exacta
+- batch seleccionado y tamano
+- `blast_radius`, `effort`, `work_kind`
+- motivo exacto del bloqueo de autonomia
+
+**Fallback si no cumple:**
+
+- si aun no hubo mutacion: cerrar en read-only con `Ruta recomendada` + prompt de ejecucion
+- si B ya empaqueto batch narrow: parar tras packaging; no lanzar `engineer`; devolver BL creada + prompt de ejecucion
+
+### Fuera de v1
+
+- `run-next-until-stop`
+- `expansion-curation`
+- cualquier batch con `shared-core`
+- cualquier oportunidad `broad`
+- cualquier autonomia que requiera reinterpretar tesis, modulo o prioridades
+
 ## 4. Packets y handoff
 
 Todos los hijos deben recibir prompts autosuficientes. No se asume herencia fiable del contexto del padre.
