@@ -94,11 +94,11 @@
 - **Subject type:** acquire
 - **Subject id:** TALO
 - **Canonical state:** FULL con autonomía gradual
-- **Why it matters:** TALO sigue validado al 100%, pero mantiene un gap factual abierto de coverage/manifest que hoy no está empaquetado como BL-ready y que bloquea el cierre fuerte de Module 1.
-- **Live evidence:** `PROJECT_STATE.md` mantiene el gap factual de `coverage/manifest` como limitación ticker-level del runtime actual.
-- **Unknowns remaining:** Ejecutar acquire y verificación de coverage/manifest sobre TALO para acotar el gap a una sola decisión. Si el gap se reduce a una pieza reusable, `technical_followup_opened`; si la evidencia sostiene la excepción actual, `exception_reaffirmed`; si no hay vía factual adicional, `discarded_with_evidence`.
-- **Promotion trigger:** Evidencia nueva que reduzca el problema a una sola aceptación técnica clara o que justifique una excepción documentada estable.
-- **Blast radius if promoted:** targeted
+- **Why it matters:** BL-086 confirmó que el gap ya no debe reaparecer como anomalía ticker-level nueva: TALO sigue al 100%, pero el path cache-first de SEC acquire degrada `coverage` y `cik` en manifest cuando `filings/` ya está poblado, así que el anchor factual queda vivo hasta cerrar el follow-up reusable.
+- **Live evidence:** BL-086 dejó outcome factual `technical_followup_opened`: `python3 -m elsian acquire TALO` reproduce cache-hit con `coverage={}` y `cik=null`, el CIK correcto es `0001724965`, y el cluster de enmiendas del 2024-11-12 queda explícitamente fuera de este item mientras no exista evidencia de restatement trigger que justifique otra BL.
+- **Unknowns remaining:** Ejecutar `BL-089` sobre el carril SEC acquire/manifest para preservar o recomputar `coverage` y `cik` en cache-hit sin reabrir scope TALO. Tras ese follow-up, revalidar TALO como anchor factual; no mezclar aquí el cluster de enmiendas ni abrir un experimento distinto mientras no haya evidencia nueva.
+- **Promotion trigger:** `BL-089` resuelta con evidencia de que el path cache-hit ya preserva metadatos canónicos de manifest, o evidencia nueva que justifique una BL separada y distinta para el cluster de enmiendas.
+- **Blast radius if promoted:** shared-core
 - **Expected effort:** bounded
 - **Last reviewed:** 2026-03-14
 - **Disposition:** keep

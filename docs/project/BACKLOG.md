@@ -34,17 +34,17 @@
 
 Este backlog representa solo el subconjunto **ejecutable seleccionado** de la **Fase B** del programa de capacidad de Module 1. La **Fase A** vive en `docs/project/PROJECT_STATE.md` como capacidad factual ya cerrada. `docs/project/OPPORTUNITIES.md` sigue alojando la **Fase C** no packageable, pero también puede alojar investigación ya packageable que haya quedado fuera del batch actual solo por presupuesto; esos items no pasan a Fase C por ese motivo.
 
-### BL-086 — Cerrar el gap factual de coverage/manifest en TALO
+### BL-089 — SEC acquire: preservar `coverage` y `cik` en cache-hit sin reabrir scope TALO
 - **Prioridad:** ALTA
 - **Estado:** TODO
 - **Asignado a:** engineer
 - **Módulo:** Module 1
-- **Validation tier:** targeted
-- **Work kind:** investigation
+- **Validation tier:** shared-core
+- **Work kind:** technical
 - **Depende de:** —
 - **Referencias:** OP-006
-- **Descripción:** Ejecutar un único experimento de acquire y verificación de coverage/manifest sobre TALO para cerrar el gap factual ticker-level que sigue abierto en el runtime actual. El trabajo debe permanecer acotado a TALO, sin generalizar SEC ni abrir scope adicional, y terminar en una sola salida canónica: `technical_followup_opened`, `exception_reaffirmed` o `discarded_with_evidence`.
-- **Criterio de aceptación:** Se ejecuta exactamente un experimento acotado sobre TALO; el outcome queda clasificado en una única salida canónica; si emerge follow-up técnico, el hallazgo queda reproducible y con blast radius mínimo; no se amplía el alcance a otros tickers ni mercados.
+- **Descripción:** Corregir el follow-up técnico reusable aislado por BL-086: cuando `SecEdgarFetcher.acquire()` entra por cache-hit con `filings/` ya poblado, el path actual suprime la verificación de coverage y deja `coverage={}` y `cik=null` en manifest. El scope debe permanecer mínimo y reproducible, restringido al carril SEC acquire/manifest para preservar o recomputar `coverage` y `cik` sin tocar extract/merge/eval, sin reabrir onboarding de mercado SEC y sin mezclar la verificación del cluster de enmiendas TALO del 2024-11-12.
+- **Criterio de aceptación:** Existe una corrección shared-core acotada al path SEC acquire/manifest con write-set mínimo; el caso TALO reproduce cache-hit con `coverage` no vacío y `cik=0001724965`; el fix no amplía el alcance a restatements/enmiendas ni a otros carriles fuera de SEC acquire; el outcome queda validado con gates acordes a una BL técnica narrow.
 
 ### BL-087 — Ejecutar el experimento único de SOM para promoción o excepción cerrada
 - **Prioridad:** ALTA

@@ -1,9 +1,9 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
 > Última actualización: 2026-03-14
-> Actualizado por: Copilot (Governance-only batch packaging after fresh scout reconciliation)
+> Actualizado por: Copilot (Governance closeout BL-086 after accepted investigation outcome)
 > Module 1 status: OPEN
-> Semántica vigente del marker: `OPEN` mientras exista frontera operacional real en el subtree operativo de `OPPORTUNITIES.md`. `TEP` y `0327` pueden convivir con un cierre futuro solo como excepciones ticker-level reafirmadas; `TALO` no es compatible con `CLOSED` mientras siga siendo un gap factual abierto de autonomía/coverage.
+> Semántica vigente del marker: `OPEN` mientras exista frontera operacional real en el subtree operativo de `OPPORTUNITIES.md`. `TEP` y `0327` pueden convivir con un cierre futuro solo como excepciones ticker-level reafirmadas; el frente de TALO ya no se trata como gap ticker-level nuevo, pero `CLOSED` sigue siendo incompatible mientras permanezca abierto el follow-up shared-core `BL-089` sobre SEC acquire/manifest.
 
 ## Discovery Baseline
 - last_scout_pass_at: 2026-03-13T10:36:37Z
@@ -151,12 +151,13 @@ No hay tickers WIP actualmente. Los 17 tickers están al 100%.
 
 ## Bloqueantes actuales
 
-No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Provenance Level 3. El pipeline sigue funcional end-to-end para los 17 tickers validados al 100%, `python3 -m pytest -q` queda documentado en verde local en `PROJECT_STATE`, `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` mantiene `SourceMap_v1 FULL` con 818/818, y BL-069 deja además `python3 -m elsian diagnose --all --output /tmp/elsian-bl069-parent3` alineado con el path canónico de `eval` (`17/17 evaluated`, overall 100.0%, `wrong=0`, `missed=0`). La diferencia respecto al snapshot del 2026-03-13 es operativa, no regresiva: el scout factual del 2026-03-14 sobre `main@3ea65d8` reabre Fase B con tres BL de investigación targeted en backlog (`BL-086` TALO, `BL-087` SOM, `BL-088` TEP) y deja `0327` como investigación packageable todavía válida, pero fuera del batch por presupuesto. El cómputo factual actual de `DEC-015` sigue en **16**: **14 FULL + KAR + JBH** por excepción ASX documentada. Esta ola no es `baseline-only governance wave`, así que `## Discovery Baseline` conserva la última persistencia completa del 2026-03-13 mientras la reconciliación del 2026-03-14 se absorbe en backlog y oportunidades, no como sustitución de baseline.
+No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Provenance Level 3. El pipeline sigue funcional end-to-end para los 17 tickers validados al 100%, `python3 -m pytest -q` queda documentado en verde local en `PROJECT_STATE`, `python3 -m elsian source-map TZOO --output /tmp/tzoo_source_map_bl080_fixed.json` mantiene `SourceMap_v1 FULL` con 818/818, y BL-069 deja además `python3 -m elsian diagnose --all --output /tmp/elsian-bl069-parent3` alineado con el path canónico de `eval` (`17/17 evaluated`, overall 100.0%, `wrong=0`, `missed=0`). La diferencia respecto al snapshot del 2026-03-13 sigue siendo operativa, no regresiva: la ola del 2026-03-14 abrió `BL-086`, `BL-087` y `BL-088`, y el closeout factual posterior de `BL-086` la reemplaza por `BL-089` como follow-up shared-core mínimo sobre SEC acquire/manifest, manteniendo `BL-087` y `BL-088` como investigaciones targeted y dejando `0327` como investigación packageable todavía válida pero fuera del batch por presupuesto. El cómputo factual actual de `DEC-015` sigue en **16**: **14 FULL + KAR + JBH** por excepción ASX documentada. Esta secuencia no sustituye la `Discovery Baseline` persistida del 2026-03-13; solo reconcilia backlog y oportunidades con evidencia nueva ya auditada.
 
 **Gaps y límites pendientes (no bloqueantes):**
 1. **Residual field-dependency gaps** — `fx_effect_cash`, `other_cash_adjustments`, `market_cap` y `price` siguen fuera del set canónico. Son opcionales o de market data; no bloquean validación ni BL-058.
-2. **TALO mantiene un gap factual de coverage/manifest** — los canonicals siguen recogiendo `coverage NEEDS_ACTION` o `filings_manifest` ausente para TALO. Se trata como limitación ticker-level del runtime actual, no como limitación general del mercado SEC.
+2. **El gap TALO queda reducido a follow-up shared-core en SEC acquire** — BL-086 confirmó que `coverage={}` y `cik=null` en cache-hit no son un bug TALO-específico sino una limitación reusable del path cache-first de `SecEdgarFetcher.acquire()`. El cierre canónico reabre esto como `BL-089`, no como nueva investigación ticker-level.
 3. **Adquisición no-SEC sigue siendo gradual por mercado** — `TEP` opera sobre `eu_manual` con `filings_sources` documentados; `SOM` resuelve un piloto LSE/AIM conservador, pero no canoniza todavía un programa de mercado amplio; `0327` es reproducible con `hkex_manual`, no con discovery general HKEX.
+4. **Cluster de enmiendas TALO 2024-11-12 sigue fuera de backlog activo** — existe evidencia de un `10-K/A` y dos `10-Q/A`, pero BL-086 no investigó si disparan restatement trigger sobre períodos canonizados. No se mezcla con `BL-089` hasta que exista prueba de que merece un follow-up separado.
 ## Hitos recientes
 
 - ✅ **BL-085 completado (2026-03-11)** — Cerrada la única deuda residual leve que seguía abierta tras BL-076: la cobertura unitaria específica del guard que descarta `inventories` espurios desde cash flow con named subsection en `clean.md`. El packet técnico final queda intencionalmente estrecho: solo cambia `tests/unit/test_extract_phase.py`, añade dos regresiones complementarias y no toca `elsian/extract/phase.py`. Validación factual: `python3 -m pytest -q tests/unit/test_extract_phase.py` → `70 passed`; `python3 -m elsian eval --all` → `17/17 PASS 100%`; `python3 -m pytest -q` → `1824 passed, 5 skipped, 1 warning`; auditoría independiente → ACCEPT FOR CLOSEOUT sin hallazgos materiales. Efecto operativo: desaparece el último riesgo residual explícito ligado al closeout de BL-076 y el backlog BL-ready queda vacío.
@@ -212,9 +213,9 @@ No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Proven
 
 ## Próximas prioridades
 
-La ola governance-only del 2026-03-14 reabre **Fase B** con el batch óptimo permitido por el presupuesto vigente. La reconciliación `missing` de `discovery-baseline` queda absorbida en canonicals dentro de la misma ola y el backlog vivo vuelve a tener tres investigaciones targeted, independientes y serializables:
+La secuencia governance-only del 2026-03-14 mantiene **Fase B** abierta con tres paquetes activos dentro del presupuesto vigente: dos investigaciones targeted ya abiertas y un follow-up técnico mínimo abierto como consecuencia canónica del outcome aceptado de BL-086.
 
-- **BL-086** — TALO: acquire + verificación de `coverage/manifest` para cerrar el único gap factual explícito de autonomía ticker-level.
+- **BL-089** — SEC acquire: preservar `coverage` y `cik` en cache-hit sin reabrir scope TALO ni mezclar el cluster de enmiendas.
 - **BL-087** — SOM: experimento único para decidir promoción, follow-up técnico o excepción cerrada sobre la única frontera ticker-level abierta de LSE/AIM.
 - **BL-088** — TEP: experimento único de acquire Euronext fuera del carril ya validado usando TEP como ancla.
 
@@ -224,7 +225,7 @@ Queda fuera del batch por presupuesto, no por invalidación factual:
 
 El resto del programa queda repartido así:
 - **Fase A** — capacidad cerrada actual: 16 tickers en capacidad operativa cerrada dentro de Module 1; esa cifra mezcla capacidad `FULL` y excepciones ticker-level ya cerradas, no equivale a 5 mercados cerrados de forma generalizada.
-- **Fase B** — trabajo packageable vigente: `3` BL de investigación (`BL-086`, `BL-087`, `BL-088`) abiertas por la ola governance-only del 2026-03-14, más `0327` como investigación ya packageable en `OPPORTUNITIES.md` y no seleccionada en este batch solo por presupuesto.
+- **Fase B** — trabajo packageable vigente: `3` BL activas (`BL-089` técnica shared-core, `BL-087` y `BL-088` de investigación targeted), más `0327` como investigación ya packageable en `OPPORTUNITIES.md` y no seleccionada en este batch solo por presupuesto.
 - **Fase C** — frontera abierta no packageable todavía: la generalización de mercado en LSE/AIM/HKEX/Euronext más allá de los tickers ancla actuales, los gaps opcionales de field dependency y la watchlist de excepciones ticker-level siguen viviendo en el subtree operativo estructurado de `docs/project/OPPORTUNITIES.md`.
 
 El contrato `parallel-ready` sigue vigente por `BL-072` y `DEC-029`, pero no cambia el criterio de esta fase: cualquier nueva ola técnica que reaparezca desde evidencia factual deberá volver a empaquetarse de forma **serial** y de blast radius mínimo.

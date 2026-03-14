@@ -2,6 +2,23 @@
 
 ## 2026-03-14
 
+### [4.0] Governance closeout — BL-086 archivada y reempaquetada como follow-up técnico mínimo `BL-089`
+- `docs/project/BACKLOG.md` cierra `BL-086` tras outcome factual aceptado `technical_followup_opened` y abre `BL-089` como BL `technical` de scope mínimo sobre SEC acquire/manifest: preservar o recomputar `coverage` y `cik` en cache-hit sin tocar extract/merge/eval ni mezclar el cluster de enmiendas TALO del 2024-11-12.
+- `docs/project/BACKLOG_DONE.md` archiva `BL-086` como investigación ticker-level completada con evidencia suficiente: TALO mantiene 100.0% (235/235), el CIK correcto es `0001724965`, el problema deja de tratarse como gap local y el cierre canónico exige que el siguiente scout no reabra la misma BL con la misma shape.
+- `docs/project/OPPORTUNITIES.md` reconcilia `OP-006` con la anti-regresión contractual: el item sigue vivo, pero ya referenciado explícitamente a `BL-089`, con `Blast radius if promoted: shared-core` y con el cluster de enmiendas fuera de alcance hasta nueva evidencia.
+- `docs/project/PROJECT_STATE.md` deja de describir el frente TALO como gap ticker-level nuevo y pasa a fijarlo como follow-up shared-core abierto en `BL-089`; las prioridades vivas quedan en `BL-089`, `BL-087` y `BL-088`, manteniendo a `0327` como packageable diferido por presupuesto.
+- **Validation:** `python3 scripts/check_governance.py --format json` → `backlog.active_ids=[BL-087, BL-088, BL-089]`, `governance_contract_violations=[]`; `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md docs/project/OPPORTUNITIES.md docs/project/PROJECT_STATE.md CHANGELOG.md` → limpio.
+
+### [BL-086] TALO — experimento coverage/manifest: outcome factual `technical_followup_opened`
+- Experimento de acquire ejecutado sobre TALO: `python3 -m elsian acquire TALO` confirma cache-hit con `coverage: {}` y `cik: null` en manifest.
+- CIK descubierto vía SEC EDGAR submissions API: `0001724965` (TALOS ENERGY INC., SIC 1311, TX). Registrado en `cases/TALO/case.json`.
+- SEC EDGAR tiene 8 10-Ks (FY2018–FY2025) + 23-25 10-Qs. Locales: 12 archivos únicos. Todos los `source_filing` de `expected.json` están presentes; TALO sigue al 100% (235/235).
+- Gap estructural confirmado: el cache bypass de `SecEdgarFetcher.acquire()` suprime la coverage query cuando `filings/` no está vacío → `coverage: {}` es consecuencia del diseño cache-first, no de un bug TALO-específico.
+- Cluster de enmiendas 2024-11-12 (`10-K/A` + `10-Q/A` × 2) pendiente de verificación de restatement trigger sobre períodos en expected.json.
+- Outcome factual: `technical_followup_opened`. Las actualizaciones de gobernanza (`BACKLOG.md`, `OPPORTUNITIES.md`) requieren ola governance-only por el director.
+- **Ficheros mutados:** `cases/TALO/case.json`, `CHANGELOG.md`.
+- **Validation:** `python3 -m elsian eval TALO` → 100% (235/235, inalterado); `python3 scripts/check_governance.py --format json` → verde.
+
 ### [4.0] Governance-only audit-fix adicional — `OPPORTUNITIES.md` deja de mezclar diferido packageable con Fase C
 - `docs/project/OPPORTUNITIES.md` deja explícito en su encabezado y reglas de uso que el subtree operativo puede contener tanto oportunidades todavía no packageables como trabajo ya packageable no seleccionado en el batch actual solo por presupuesto.
 - `OP-001` deja de presentar `SOM` como si su frente ticker-level siguiera siendo Fase C no packageable: el item queda descrito como investigación ya packageable, mientras la generalización abstracta de LSE/AIM sigue separada en `OP-009`.

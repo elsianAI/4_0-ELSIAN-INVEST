@@ -9,6 +9,17 @@
 
 ---
 
+### BL-086 — Cerrar el gap factual de coverage/manifest en TALO
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-14)
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** targeted
+- **Work kind:** investigation
+- **Depende de:** —
+- **Descripción:** Se cierra BL-086 como investigación ticker-level aceptada con outcome terminal `technical_followup_opened`. El experimento sobre TALO confirmó que el problema ya no debe seguir representándose como gap local del ticker: `python3 -m elsian acquire TALO` entra por cache-hit, deja `coverage={}` y `cik=null` en manifest, pero TALO mantiene `eval` 100.0% (235/235), todos los `source_filing` de `expected.json` están presentes localmente y el CIK correcto (`0001724965`) quedó identificado y registrado en `cases/TALO/case.json`. La evidencia reduce el hallazgo a un follow-up shared-core mínimo en SEC acquire/manifest y deja explícitamente fuera de alcance el cluster de enmiendas del 2024-11-12 (`10-K/A` + `10-Q/A` x2), que no fue investigado en esta BL ni queda absorbido por su cierre.
+- **Criterio de aceptación:** ✓ Se ejecutó exactamente un experimento acotado sobre TALO. ✓ El outcome canónico quedó fijado en `technical_followup_opened`. ✓ El gap dejó de tratarse como TALO-específico y se reempaquetó como follow-up técnico narrow en `BL-089`. ✓ `python3 -m elsian eval TALO` se mantiene en PASS 100.0% (235/235). ✓ `python3 scripts/check_governance.py --format json` queda sin `governance_contract_violations`. ✓ `OP-006`, `BACKLOG.md` y `PROJECT_STATE.md` quedan reconciliados para que el scout siguiente no reabra BL-086 con la misma shape.
+
 ### BL-085 — Cubrir con regresión unitaria el descarte de `inventories` espurios desde cash flow con named subsection
 - **Prioridad:** ALTA
 - **Estado:** DONE ✅ (2026-03-11)
