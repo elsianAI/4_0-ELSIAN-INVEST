@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 import sys
 from pathlib import Path
@@ -12,8 +13,8 @@ SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
-import check_governance
-import write_handoff
+check_governance = importlib.import_module("check_governance")
+write_handoff = importlib.import_module("write_handoff")
 
 
 REQUIRED_FIELDS = {

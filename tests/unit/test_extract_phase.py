@@ -6,6 +6,8 @@ from pathlib import Path
 import shutil
 from types import SimpleNamespace
 
+import pytest
+
 from elsian.extract.html_tables import TableField
 from elsian.extract.phase import (
     ExtractPhase,
@@ -26,13 +28,21 @@ from elsian.normalize.audit import AuditLog
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
+def _require_case_dir(ticker: str) -> Path:
+    case_dir = _REPO_ROOT / "cases" / ticker
+    filings_dir = case_dir / "filings"
+    if not filings_dir.exists() or not any(filings_dir.iterdir()):
+        pytest.skip(f"{ticker} filings are not present in this checkout")
+    return case_dir
+
+
 def _som_filing_text(filename: str) -> str:
-    return (_REPO_ROOT / "cases" / "SOM" / "filings" / filename).read_text()
+    return (_require_case_dir("SOM") / "filings" / filename).read_text()
 
 
 @lru_cache(maxsize=None)
 def _case_extract(ticker: str):
-    return ExtractPhase().extract(str(_REPO_ROOT / "cases" / ticker))
+    return ExtractPhase().extract(str(_require_case_dir(ticker)))
 
 
 # ── Sign normalization ───────────────────────────────────────────────
@@ -887,7 +897,7 @@ def test_extract_phase_tzoo_keeps_primary_total_equity_over_restated_rollforward
 def test_extract_phase_adtn_full_prefers_restated_quarters_and_preserves_da_scale(
     tmp_path: Path,
 ):
-    src = _REPO_ROOT / "cases" / "ADTN"
+    src = _require_case_dir("ADTN")
     dst = tmp_path / "ADTN"
     shutil.copytree(src, dst)
 
@@ -1105,7 +1115,7 @@ def test_bl084_total_debt_from_cashflow_existing_guardrail():
 def test_bl084_negative_total_debt_in_IS_discarded_via_process_table_field(tmp_path):
     """Regression: negative total_debt from income-statement is discarded."""
     import shutil
-    src = _REPO_ROOT / "cases" / "ACLS"
+    src = _require_case_dir("ACLS")
     dst = tmp_path / "ACLS"
     shutil.copytree(src, dst)
     result = ExtractPhase().extract(str(dst))

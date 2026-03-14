@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib
 import json
 import sys
 from datetime import datetime, timezone
@@ -14,7 +15,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
-import check_governance
+check_governance = importlib.import_module("check_governance")
 
 
 HANDOFF_DIRNAME = ".runtime"

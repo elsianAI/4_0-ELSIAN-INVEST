@@ -2,6 +2,13 @@
 
 ## 2026-03-14
 
+### [4.0] CI portability hardening — mirrors locales opcionales en CI y tests offline blindados ante filings gitignored
+- `tests/contracts/test_runtime_mirrors.py` deja de asumir que los mirrors locales de Codex existen en cualquier runtime: resuelve `CODEX_HOME`/`~/.codex` dinámicamente y valida skills locales solo cuando esos mirrors están presentes, manteniendo siempre obligatorios los mirrors repo-tracked.
+- `tests/unit/test_extract_phase.py`, `tests/integration/test_curate.py` y `tests/unit/test_narrative.py` ahora hacen `skip` explícito cuando un checkout limpio no trae `cases/*/filings/*` gitignored. La suite no vuelve a vender como portable una regresión que en realidad dependía de artefactos locales fuera de git.
+- `scripts/build_scout_context.py`, `scripts/check_governance.py`, `scripts/read_handoff.py` y `scripts/write_handoff.py` sustituyen imports tardíos tras `sys.path.insert(...)` por carga vía `importlib`, cerrando los `ruff E402` que tumbaban `CI / lint`.
+- **Files changed:** `tests/contracts/test_runtime_mirrors.py`, `tests/unit/test_extract_phase.py`, `tests/integration/test_curate.py`, `tests/unit/test_narrative.py`, `scripts/build_scout_context.py`, `scripts/check_governance.py`, `scripts/read_handoff.py`, `scripts/write_handoff.py`, `CHANGELOG.md`
+- **Validation:** clon limpio local con `.git` y overlay del diff actual: `python3 -m ruff check .` → clean; `python3 scripts/validate_contracts.py --all` → PASS; `python3 -m pytest -q tests/contracts` → `35 passed`; `python3 -m pytest --tb=short -q -m "not network"` → `1798 passed, 84 skipped, 1 warning`.
+
 ### [4.0] Runtime handoff v1 — continuidad local entre sesiones
 - `.gitignore` ignora `.runtime/` y `scripts/check_governance.py` clasifica `.runtime/` como `workspace_only_dirty`, evitando que el handoff local cuente como `technical_dirty` u `other_dirty`.
 - Nuevo `scripts/write_handoff.py`: escribe `.runtime/handoff.json` con `schema_version=1.0`, paths absolutos del worktree, `HEAD`, branch, `next_resolution_mode`, campos de foco/scope y un bloque `stale_if` fail-closed basado en `HEAD` y en un fingerprint del estado vivo material.

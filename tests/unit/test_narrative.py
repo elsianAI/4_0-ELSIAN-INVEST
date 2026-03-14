@@ -2,7 +2,15 @@
 
 from pathlib import Path
 
+import pytest
+
 from elsian.extract.narrative import extract_from_narrative, NarrativeField
+
+
+def _require_path(path: Path) -> Path:
+    if not path.exists():
+        pytest.skip(f"required filing fixture is not present in this checkout: {path}")
+    return path
 
 
 def test_pattern_label_verb_value():
@@ -92,7 +100,7 @@ def test_extracts_fcf_cover_bullet_with_source_year_fallback():
 def test_extracts_tep_real_world_patterns():
     base = Path("cases/TEP/filings")
 
-    revenue_text = (base / "SRC_013_PRESENTATION_2024.txt").read_text(errors="ignore")
+    revenue_text = _require_path(base / "SRC_013_PRESENTATION_2024.txt").read_text(errors="ignore")
     revenue_fields = extract_from_narrative(
         revenue_text, source_filename="SRC_013_PRESENTATION_2024.txt"
     )
@@ -111,7 +119,9 @@ def test_extracts_tep_real_world_patterns():
     }
     assert dividends_by_period["FY2021"] == 3.30
 
-    fcf_text = (base / "SRC_005_ANNUAL_REPORT_2021-12-31.txt").read_text(errors="ignore")
+    fcf_text = _require_path(base / "SRC_005_ANNUAL_REPORT_2021-12-31.txt").read_text(
+        errors="ignore"
+    )
     fcf_fields = extract_from_narrative(
         fcf_text, source_filename="SRC_005_ANNUAL_REPORT_2021-12-31.txt"
     )
