@@ -2,6 +2,13 @@
 
 ## 2026-03-14
 
+### [4.0] Governance-only wave — DEC-030 / Packet C hypothesis basis hardening
+- `docs/project/DECISIONS.md` canoniza `DEC-030` para endurecer la adecuación de hipótesis en `investigation` y `expansion`: el pre-gate pasa al `director`, se bifurca por `Work kind`, el camino negativo obliga a reconciliar `OPPORTUNITIES.md` sin abrir BL y la persistencia mínima del `hypothesis_basis` queda acotada a surfaces canónicas compatibles con `DEC-027`.
+- `docs/project/ROLES.md` refuerza `§2.1` con el contrato operativo del `hypothesis_basis`, fija los cinco campos parseables que deben persistirse en `docs/project/BACKLOG.md` cuando sí exista BL, añade el challenge explícito del `auditor` en `§2.3` y aclara en `§3` que el `orchestrator` no ejecuta ni sustituye el hypothesis check.
+- Esta ola es estrictamente `governance-only`, no toca código ni scripts y cierra con `claimed_bl_status: none`.
+- **Files changed:** `docs/project/DECISIONS.md`, `docs/project/ROLES.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` después de mutar → `governance_contract_violations=[]`, `governance_dirty=[CHANGELOG.md, docs/project/DECISIONS.md, docs/project/ROLES.md]`, `next_resolution_mode=reconcile_pending_work`; `python3 -m pytest -q tests/contracts/test_runtime_mirrors.py tests/contracts/test_validate_contracts.py` → `35 passed`; `git diff --check -- docs/project/DECISIONS.md docs/project/ROLES.md CHANGELOG.md` → limpio.
+
 ### [4.0] Baseline-only governance wave — persistida Discovery Baseline tras scout full con backlog vacío
 - `docs/project/PROJECT_STATE.md` actualiza `## Discovery Baseline` al head limpio `1bdf638d7dd9b3c23bda73d5cd64568d2441302a` y persiste las firmas vivas post-closeout (`last_cases_signature=92e38dfc5cdf1c784207608287e3d0e0080d13dc2e6283dab1bb570e8c6fc68d`, `last_operational_opportunities_signature=1dde1b1a29827918162048c56900f663b0708e60414f84df89c724e326a94382`), sin reabrir backlog ni reescribir oportunidades.
 - El scout factual completo deja el runtime sin packageables nuevos: `0` `BL-ready`, `0` `investigation_BL_ready`, `0` `expansion_candidate`, `0` `missing` y `0` `stale`; `TEP` sigue como único caso sin manifest, pero no bloquea el pass y queda absorbido como excepción ya documentada.

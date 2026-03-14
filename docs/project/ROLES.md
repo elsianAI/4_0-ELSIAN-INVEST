@@ -658,6 +658,23 @@ Decidir que trabajo pertenece a Modulo 1, en que orden debe hacerse, con que lim
     - `investigation`
     - `expansion`
   - el exceso no se guarda en `PROJECT_STATE.md`; permanece en `OPPORTUNITIES.md` y, si las firmas no cambian, reaparece como `matched + unchanged_since_last_pass`
+- **Hypothesis basis hardening**:
+  - antes de abrir una BL `investigation` o `expansion`, el `director` debe producir un `hypothesis_basis` que demuestre que el gap declarado existe; el `orchestrator` no ejecuta ni sustituye este pre-gate
+  - para `investigation`, el basis se construye desde el `case.json` del anchor, `filings_manifest.json` cuando exista y sea relevante para la finding, el `eval` del scout pass vigente y el item correspondiente en `docs/project/OPPORTUNITIES.md`
+  - para `expansion`, el basis se construye desde el item curado en `docs/project/OPPORTUNITIES.md` y los criterios vigentes de `expansion_candidate`; no exige `case.json` ni `eval` de un ancla inexistente
+  - el `director` debe clasificar el pre-check como `gap_confirmed: true | false | inconclusive`
+  - `gap_confirmed: false` o `gap_confirmed: inconclusive` no abren BL: se reconcilia `docs/project/OPPORTUNITIES.md`, se actualiza `Live evidence` y/o `Unknowns remaining`, `Disposition` permanece intacto y `Last reviewed` se refresca
+  - una finding `inconclusive` solo puede reabrirse con evidencia nueva o override explicito de Elsian; no existe timeout automatico
+  - si la BL se empaqueta, `docs/project/BACKLOG.md` debe persistir al menos estos campos parseables:
+    - `Hypothesis basis subject`
+    - `Hypothesis basis gap`
+    - `Hypothesis basis evidence`
+    - `Hypothesis basis confirmed`
+    - `Hypothesis basis snapshot`
+  - `Hypothesis basis evidence` solo puede listar surfaces versionadas o valores reproducibles; nunca rutas `/tmp` ni artefactos efimeros
+  - `Hypothesis basis snapshot` usa `HEAD + eval_signature` en `investigation` y `HEAD + n/a` en `expansion`
+  - la forma persistida en backlog debe ser minima y canonica: `scout_context_signature` puede vivir en el packet rico del `director`, pero no en la cola ejecutable
+  - para BL `technical`, este pre-gate es opcional y solo aplica cuando el motivo no es trivialmente observable
 - **Baseline-only governance wave**:
   - solo aplica tras `full scout pass` no parcial
   - requiere `0` `BL-ready`, `0` `missing`, `0` `stale`
@@ -758,6 +775,10 @@ Verificar de forma independiente que el cambio cumple vision, decisiones, gates 
 - Comprobar en cada auditoria que el trabajo sigue siendo Modulo 1.
 - Reportar cualquier deriva estrategica como finding de severidad alta.
 - Para `Work kind: investigation` o `Work kind: expansion`, validar que la BL produjo evidencia suficiente y uno de los resultados terminales permitidos, aunque no haya codigo nuevo.
+- Para `Work kind: investigation` o `Work kind: expansion`, leer `Hypothesis basis subject/gap/evidence/confirmed/snapshot` desde `docs/project/BACKLOG.md` como superficie canonica y contrastarlo contra el estado factual real.
+- Hallazgo de severidad alta si el gap no existia y la BL perdia sentido operativo desde el inicio.
+- Hallazgo de severidad media si el framing del gap era mejorable, pero la BL aun produjo evidencia util y reutilizable.
+- Hallazgo contractual si `Hypothesis basis evidence` depende de rutas `/tmp` o de artefactos no canonicos.
 
 ## 3. Routing conservador
 
@@ -799,6 +820,8 @@ El orquestador neutral decide que hijo lanzar segun la intencion y el posible bl
 **Regla**
 
 - Toda tarea mutante debe mapearse a una unica BL o a `none`. Si un cambio afecta materialmente a varias BL, el `director` debe partir el paquete antes de ejecucion.
+- El pre-gate de hipotesis para `investigation` y `expansion` pertenece al `director` durante el packaging; el `orchestrator` solo decide cuando lanzar ese hijo.
+- El `orchestrator` no puede considerar resuelto un hypothesis check por haber hecho scouting, briefing o planning; la confirmacion del gap debe quedar en el packet y, cuando exista BL, persistida en `docs/project/BACKLOG.md`.
 - En `briefing` y `planificacion`, si `capacity-scout.pass_summary.bl_ready_count > 0` o `capacity-scout.pass_summary.investigation_bl_ready_count > 0`, el `orchestrator` debe detenerse en la fase read-only, devolver findings + ruta recomendada, exponer todos los packageables relevantes y preguntar si debe pasar a ejecucion; no puede invocar a `director` dentro de esa misma fase read-only.
 - En `briefing` y `planificacion`, si `capacity-scout.pass_summary.bl_ready_count = 0`, `investigation_bl_ready_count = 0` y `missing_count + stale_count > 0`, la ruta correcta es reconciliacion governance-only; no se abre packaging tecnico.
 - En `briefing` y `planificacion`, si solo hay `expansion_candidate_count > 0`, la ruta correcta es `director -> gates -> auditor -> closeout` para seleccion y packaging de expansion.
