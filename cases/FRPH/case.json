@@ -1,0 +1,13 @@
+{
+  "ticker": "FRPH",
+  "company_name": "FRP Holdings, Inc.",
+  "exchange": "NASDAQ",
+  "country": "US",
+  "currency": "USD",
+  "source_hint": "sec",
+  "accounting_standard": "US-GAAP",
+  "cik": "844059",
+  "fiscal_year_end_month": 12,
+  "period_scope": "ANNUAL_ONLY",
+  "notes": "SEC direct issuer curated in BL-092 tranche A from local filings artifacts."
+}

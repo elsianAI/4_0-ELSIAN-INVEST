@@ -1,0 +1,12 @@
+{
+  "ticker": "DCBO",
+  "company_name": "Docebo Inc.",
+  "exchange": "NASDAQ",
+  "country": "CA",
+  "currency": "USD",
+  "source_hint": "sec",
+  "cik": "1829959",
+  "fiscal_year_end_month": 12,
+  "period_scope": "ANNUAL_ONLY",
+  "notes": "SEC direct 40-F issuer (Nasdaq + TSX dual listing). BL-092 tranche A onboarding with local corpus reuse and no re-download."
+}

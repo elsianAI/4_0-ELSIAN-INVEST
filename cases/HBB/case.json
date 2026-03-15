@@ -1,0 +1,13 @@
+{
+  "ticker": "HBB",
+  "company_name": "Hamilton Beach Brands Holding Company",
+  "exchange": "NYSE",
+  "country": "US",
+  "currency": "USD",
+  "source_hint": "sec",
+  "accounting_standard": "US-GAAP",
+  "cik": "1709164",
+  "fiscal_year_end_month": 12,
+  "period_scope": "ANNUAL_ONLY",
+  "notes": "SEC direct issuer curated in BL-092 tranche A from local filings artifacts."
+}
