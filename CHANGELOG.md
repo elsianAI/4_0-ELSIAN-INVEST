@@ -2,6 +2,13 @@
 
 ## 2026-03-15
 
+### [4.0] Governance packaging — BL-096 abierta para absorber la deuda quarterly post-DEC-031
+- `docs/project/BACKLOG.md` abre `BL-096` como follow-up `technical` targeted mínimo para `ACVA`, `DNOW`, `FRPH`, `HBB`, `JELD`, `KELYA`, `MATW`, `NVRI` y `PHIN`: todos ya tienen `case.json` en `FULL`, corpus SEC local con quarterly disponible y `expected.json` inválido bajo el nuevo enforcement cruzado de `DEC-031`.
+- La misma reconciliación deja explícita la secuencia ejecutable correcta del frente SEC: `BL-096` primero, luego `BL-094`, después `BL-095`; `BL-092` permanece `BLOCKED` solo por el blocker reusable de `DCBO`, mientras la deuda quarterly de `DNOW`/`FRPH`/`HBB` sale de esa BL y se mueve a `BL-096`.
+- `docs/project/BACKLOG_DONE.md` y `docs/project/PROJECT_STATE.md` se corrigen para no seguir vendiendo `BL-093` ni el framing del backlog SEC como cierres annual-only suficientes tras `DEC-031`.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` después de mutar; `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md docs/project/PROJECT_STATE.md CHANGELOG.md` → limpio.
+
 ### [DEC-031] Eliminación de ANNUAL_ONLY como period_scope válido
 - `ANNUAL_ONLY` eliminado del código y de governance. `FULL` es el único `period_scope` válido (DEC-031).
 - `FULL` significa "todos los períodos que el corpus soporta están curados". Para mercados sin quarterly (ASX), FULL con solo anuales en expected.json es correcto.
@@ -15,12 +22,13 @@
 
 ### [4.0] Governance closeout — BL-093 archivada tras tranche SEC green
 - `docs/project/BACKLOG.md` saca `BL-093` de la cola ejecutable tras cerrar en verde la segunda ola SEC directa; las BL vivas del frente SEC pasan a ser `BL-092` (blocked), `BL-094` y `BL-095`.
-- `docs/project/BACKLOG_DONE.md` archiva `BL-093` como packet `technical` targeted ya absorbido, sin abrir follow-up propio ni reescribir el framing de las otras BL activas.
+- `docs/project/BACKLOG_DONE.md` archiva `BL-093` como packet `technical` targeted ya absorbido; el follow-up quarterly exigido después por `DEC-031` no pertenece a este closeout histórico y queda separado más tarde en `BL-096`.
 - `PROJECT_STATE.md` se mantiene sin cambios en esta ola: la reconciliación agregada del frente SEC se difiere al cierre posterior de la secuencia restante.
 - **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `CHANGELOG.md`
 - **Validation:** `python3 scripts/check_governance.py --format json` después de mutar; `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md CHANGELOG.md` → limpio.
 
 ### [BL-093] SEC directo tranche B — JELD, KELYA, MATW, NVRI y PHIN canonizados en annual-only
+- Este cierre queda supersedido contractualmente por `DEC-031`: el corpus quarterly local sigue existiendo y la recuración obligatoria posterior se rastrea por separado en `BL-096`.
 - `cases/JELD/case.json` + `expected.json`: emisor SEC directo en `ANNUAL_ONLY`, con FY2024/FY2025 promovidos filing-backed desde el `extraction_result.json` local. `python3 -m elsian eval JELD` → `PASS 100.0% (20/20)`.
 - `cases/KELYA/case.json` + `expected.json`: misma receta annual-only filing-backed sobre FY2024/FY2025. `python3 -m elsian eval KELYA` → `PASS 100.0% (20/20)`.
 - `cases/MATW/case.json` + `expected.json`: annual-only filing-backed respetando `fiscal_year_end_month=9` y los FY2024/FY2025 del corpus local. `python3 -m elsian eval MATW` → `PASS 100.0% (20/20)`.
@@ -37,6 +45,7 @@
 - **Validation:** `python3 scripts/check_governance.py --format json` después de mutar; `git diff --check -- docs/project/BACKLOG.md CHANGELOG.md` → limpio.
 
 ### [BL-092] SEC directo tranche A — DNOW, FRPH y HBB green; DCBO probado como bloqueo 40-F/exhibit
+- Este snapshot técnico también queda supersedido contractualmente por `DEC-031`: `DNOW`, `FRPH` y `HBB` ya no pueden considerarse cerrados solo con FY anuales, y la recuración quarterly posterior se rastrea por separado en `BL-096`.
 - `cases/DNOW/case.json` y `cases/DNOW/expected.json` quedan canonizados en `ANNUAL_ONLY` filing-backed desde el corpus SEC local; `python3 -m elsian eval DNOW` → `PASS 100.0% (20/20)`.
 - `cases/HBB/case.json` y `cases/HBB/expected.json` quedan canonizados en `ANNUAL_ONLY` filing-backed desde el corpus SEC local; `python3 -m elsian eval HBB` → `PASS 100.0% (20/20)`.
 - `cases/FRPH/case.json` se fija con `fiscal_year_end_month=12` y `period_scope=ANNUAL_ONLY`; `cases/FRPH/expected.json` se reconcilia a los dos anuales realmente soportados por el corpus (`FY2023`, `FY2024`), eliminando el FY2025 espurio heredado del `truth_pack`/`expected_draft` previo. `python3 -m elsian eval FRPH` → `PASS 100.0% (20/20)`.

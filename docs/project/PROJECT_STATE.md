@@ -1,7 +1,7 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
 > Última actualización: 2026-03-15
-> Actualizado por: Codex (governance-only packaging for 37-ticker Module 1 planning wave)
+> Actualizado por: Codex (DEC-031 quarterly debt reconciliation for SEC queue)
 > Module 1 status: OPEN
 > Semántica vigente del marker: `OPEN` mientras exista frontera operacional real en el subtree operativo de `OPPORTUNITIES.md`. `SOM` y `TEP` pueden convivir con un cierre futuro como excepciones ticker-level ya reafirmadas; `0327` ya no bloquea por follow-up técnico propio y la frontera HKEX queda reducida a la generalización de mercado más allá del ticker ancla; el frente de TALO sigue reducido a watchlist factual por el cluster de enmiendas fuera de backlog activo.
 
@@ -213,7 +213,7 @@ No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Proven
 
 ## Próximas prioridades
 
-La ola governance-only del 2026-03-15 reabre el backlog ejecutable con el batch máximo viable de trabajo `technical` directo sobre el nuevo lote SEC. `BL-092`, `BL-093` y `BL-094` agrupan la canonización serial de `DCBO`, `DNOW`, `FRPH`, `HBB`, `JELD`, `KELYA`, `MATW`, `MREO`, `NVRI`, `PHIN`, `PRDO`, `SLVM` y `TRS`, todos con `filings_manifest.json` en `source=sec_edgar`, corpus local reutilizable y sin necesidad de investigación previa de acquire.
+Tras `DEC-031`, el backlog vivo del frente SEC ya no puede avanzar directamente desde los cierres annual-only previos. La siguiente acción obligatoria pasa a ser `BL-096`, follow-up `technical` targeted para recurar quarterly filing-backed en los casos SEC ya onboarded cuyo corpus local soporta `10-Q`: `ACVA`, `DNOW`, `FRPH`, `HBB`, `JELD`, `KELYA`, `MATW`, `NVRI` y `PHIN`. Solo después continúan `BL-094` (`MREO`, `PRDO`, `SLVM`, `TRS`) y `BL-095` (`DCBO` exhibit `99.2` vía `40-F`). `BL-092` permanece `BLOCKED` exclusivamente por el blocker reusable de `DCBO`; la deuda quarterly de `DNOW`/`FRPH`/`HBB` queda separada en `BL-096` y ya no se vende como cierre de la propia BL.
 
 Queda fuera del backlog, pero ya persistido operativamente en `docs/project/OPPORTUNITIES.md`:
 
@@ -223,7 +223,7 @@ Queda fuera del backlog, pero ya persistido operativamente en `docs/project/OPPO
 
 El resto del programa queda repartido así:
 - **Fase A** — capacidad cerrada actual: 17 tickers en capacidad operativa cerrada dentro de Module 1; esa cifra mezcla capacidad `FULL` y excepciones ticker-level ya cerradas, no equivale a 5 mercados cerrados de forma generalizada.
-- **Fase B** — backlog vivo del ciclo actual: `BL-092`, `BL-093` y `BL-094`, las tres olas `technical` targeted sobre SEC directo.
+- **Fase B** — backlog vivo del ciclo actual: `BL-096` como reparación quarterly obligatoria post-`DEC-031`, seguido de `BL-094` y `BL-095`; `BL-092` queda viva solo como BL bloqueada a la espera del follow-up `40-F`.
 - **Fase C** — frontera abierta no packageable todavía: la generalización de mercado en LSE/AIM/HKEX/Euronext más allá de los tickers ancla actuales, los nuevos candidatos ticker-level sin fetcher en TSX/LSE/Euronext/Nasdaq Stockholm, los gaps opcionales de field dependency y la watchlist residual de TALO sobre el cluster de enmiendas siguen viviendo en el subtree operativo estructurado de `docs/project/OPPORTUNITIES.md`.
 
 El contrato `parallel-ready` sigue vigente por `BL-072` y `DEC-029`, pero no cambia el criterio de esta fase: cualquier nueva ola técnica que reaparezca desde evidencia factual deberá volver a empaquetarse de forma **serial** y de blast radius mínimo.
