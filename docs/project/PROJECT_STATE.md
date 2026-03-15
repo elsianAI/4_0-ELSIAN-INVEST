@@ -1,7 +1,7 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
 > Última actualización: 2026-03-15
-> Actualizado por: Codex (governance-only reconciliation after local technical cleanup; canonical Module 1 state unchanged)
+> Actualizado por: Codex (governance-only packaging for 37-ticker Module 1 planning wave)
 > Module 1 status: OPEN
 > Semántica vigente del marker: `OPEN` mientras exista frontera operacional real en el subtree operativo de `OPPORTUNITIES.md`. `SOM` y `TEP` pueden convivir con un cierre futuro como excepciones ticker-level ya reafirmadas; `0327` ya no bloquea por follow-up técnico propio y la frontera HKEX queda reducida a la generalización de mercado más allá del ticker ancla; el frente de TALO sigue reducido a watchlist factual por el cluster de enmiendas fuera de backlog activo.
 
@@ -215,16 +215,18 @@ No hay bloqueantes críticos de extractor/eval ni regresiones abiertas en Proven
 
 ## Próximas prioridades
 
-La ejecución del 2026-03-14 vuelve a dejar el backlog ejecutable vacío tras absorber `BL-091` con packet shared-core green. `BL-089` ya quedó absorbida como follow-up técnico mínimo, `SOM` y `TEP` dejan de figurar como investigaciones ticker-level activas, y `0327` ya no mantiene follow-up técnico vivo propio: el ticker queda cerrado con acquire oficial HKEX absorbido y fallback manual preservado. El full scout pass posterior deja `0` `BL-ready`, `0` `investigation_BL_ready`, `0` `expansion_candidate`, `0` `missing` y `0` `stale`.
+La ola governance-only del 2026-03-15 reabre el backlog ejecutable con el batch máximo viable de trabajo `technical` directo sobre el nuevo lote SEC. `BL-092`, `BL-093` y `BL-094` agrupan la canonización serial de `DCBO`, `DNOW`, `FRPH`, `HBB`, `JELD`, `KELYA`, `MATW`, `MREO`, `NVRI`, `PHIN`, `PRDO`, `SLVM` y `TRS`, todos con `filings_manifest.json` en `source=sec_edgar`, corpus local reutilizable y sin necesidad de investigación previa de acquire.
 
-Queda fuera del backlog, pero no invalidado factualmente:
+Queda fuera del backlog, pero ya persistido operativamente en `docs/project/OPPORTUNITIES.md`:
 
-- **OP-011 / HKEX más allá de 0327** conserva la generalización abstracta de mercado; no compite mientras no exista un segundo ticker HKEX concreto ya curado y packageable.
+- **24 tickers no-SEC** del mismo lote quedan curados como `Expansion candidates` ticker-level con `source=eu_manual`, `filings_downloaded=0` y mercado identificado: TSX (`AGF`, `AIF`, `CPKR`, `DBM`, `MFI`, `PSD`, `SOIL`, `STC`, `SYZ`), LSE/LSE-AIM (`CABP`, `DWL`, `FNTL`, `FRP`, `LUCE`, `MEGP`, `MOON`, `PANR`, `RWS`, `SMWH`, `VID`), Euronext (`EVS`, `QDT`, `SES`) y Nasdaq Stockholm (`NCAB`).
+- **Estos 24 candidatos** no compiten hoy como onboarding directo porque el repo no ofrece fetcher funcional para esos carriles; cada uno queda pendiente de un pre-gate de acquire reproducible antes de abrir backlog técnico.
+- **OP-011 / HKEX más allá de 0327** conserva además la generalización abstracta de mercado ya existente; no compite mientras no exista un segundo ticker HKEX concreto ya curado y packageable.
 
 El resto del programa queda repartido así:
 - **Fase A** — capacidad cerrada actual: 17 tickers en capacidad operativa cerrada dentro de Module 1; esa cifra mezcla capacidad `FULL` y excepciones ticker-level ya cerradas, no equivale a 5 mercados cerrados de forma generalizada.
-- **Fase B** — backlog vivo del ciclo actual: vacío en este snapshot.
-- **Fase C** — frontera abierta no packageable todavía: la generalización de mercado en LSE/AIM/HKEX/Euronext más allá de los tickers ancla actuales, los gaps opcionales de field dependency y la watchlist residual de TALO sobre el cluster de enmiendas siguen viviendo en el subtree operativo estructurado de `docs/project/OPPORTUNITIES.md`.
+- **Fase B** — backlog vivo del ciclo actual: `BL-092`, `BL-093` y `BL-094`, las tres olas `technical` targeted sobre SEC directo.
+- **Fase C** — frontera abierta no packageable todavía: la generalización de mercado en LSE/AIM/HKEX/Euronext más allá de los tickers ancla actuales, los nuevos candidatos ticker-level sin fetcher en TSX/LSE/Euronext/Nasdaq Stockholm, los gaps opcionales de field dependency y la watchlist residual de TALO sobre el cluster de enmiendas siguen viviendo en el subtree operativo estructurado de `docs/project/OPPORTUNITIES.md`.
 
 El contrato `parallel-ready` sigue vigente por `BL-072` y `DEC-029`, pero no cambia el criterio de esta fase: cualquier nueva ola técnica que reaparezca desde evidencia factual deberá volver a empaquetarse de forma **serial** y de blast radius mínimo.
 

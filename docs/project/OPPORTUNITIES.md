@@ -144,17 +144,329 @@
 - **Last reviewed:** 2026-03-14
 - **Disposition:** keep
 
+#### OP-015 — AGF: candidato concreto TSX con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** AGF
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** AGF abre un candidato ticker-level concreto para TSX sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/AGF/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es AGF Management Limited via `AGF-B.TO`; requiere resolver la share class operativa antes del acquire; hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para TSX sobre AGF, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-016 — AIF: candidato concreto TSX con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** AIF
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** AIF abre un candidato ticker-level concreto para TSX sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/AIF/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es Altus Group Limited (`AIF.TO`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para TSX sobre AIF, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-017 — CABP: candidato concreto LSE con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** CABP
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** CABP abre un candidato ticker-level concreto para LSE sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/CABP/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es CAB Payments Holdings Limited (`CABP.L`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para LSE sobre CABP, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-018 — CPKR: candidato concreto TSX con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** CPKR
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** CPKR abre un candidato ticker-level concreto para TSX sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/CPKR/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es Canada Packers Inc. (`CPKR.TO`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para TSX sobre CPKR, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-019 — DBM: candidato concreto TSX con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** DBM
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** DBM abre un candidato ticker-level concreto para TSX sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/DBM/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es Doman Building Materials Group Ltd. (`DBM.TO`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para TSX sobre DBM, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-020 — DWL: candidato concreto LSE con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** DWL
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** DWL abre un candidato ticker-level concreto para LSE sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/DWL/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es Dowlais Group plc (`DWL.L`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para LSE sobre DWL, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-021 — EVS: candidato concreto Euronext Brussels con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** EVS
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** EVS abre un candidato ticker-level concreto para Euronext Brussels sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/EVS/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es EVS Broadcast Equipment SA (`EVS.BR`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para Euronext Brussels sobre EVS, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-022 — FNTL: candidato concreto LSE con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** FNTL
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** FNTL abre un candidato ticker-level concreto para LSE sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/FNTL/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es Fintel Plc (`FNTL.L`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para LSE sobre FNTL, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-023 — FRP: candidato concreto LSE con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** FRP
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** FRP abre un candidato ticker-level concreto para LSE sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/FRP/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es FRP Advisory Group plc (`FRP.L`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para LSE sobre FRP, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-024 — LUCE: candidato concreto LSE con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** LUCE
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** LUCE abre un candidato ticker-level concreto para LSE sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/LUCE/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es Luceco plc (`LUCE.L`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para LSE sobre LUCE, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-025 — MEGP: candidato concreto LSE con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** MEGP
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** MEGP abre un candidato ticker-level concreto para LSE sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/MEGP/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es ME Group International plc (`MEGP.L`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para LSE sobre MEGP, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-026 — MFI: candidato concreto TSX con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** MFI
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** MFI abre un candidato ticker-level concreto para TSX sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/MFI/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es Maple Leaf Foods Inc. (`MFI.TO`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para TSX sobre MFI, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-027 — MOON: candidato concreto LSE con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** MOON
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** MOON abre un candidato ticker-level concreto para LSE sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/MOON/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es Moonpig Group PLC (`MOON.L`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para LSE sobre MOON, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-028 — NCAB: candidato concreto Nasdaq Stockholm con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** NCAB
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** NCAB abre un candidato ticker-level concreto para Nasdaq Stockholm sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/NCAB/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es NCAB Group AB (`NCAB.ST`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para Nasdaq Stockholm sobre NCAB, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-029 — PANR: candidato concreto LSE/AIM con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** PANR
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** PANR abre un candidato ticker-level concreto para LSE/AIM sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/PANR/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es Pantheon Resources Plc (`PANR.L`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para LSE/AIM sobre PANR, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-030 — PSD: candidato concreto TSX con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** PSD
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** PSD abre un candidato ticker-level concreto para TSX sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/PSD/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es Pulse Seismic Inc. (`PSD.TO`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para TSX sobre PSD, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-031 — QDT: candidato concreto Euronext Paris con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** QDT
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** QDT abre un candidato ticker-level concreto para Euronext Paris sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/QDT/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es Quadient S.A. (`QDT.PA`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para Euronext Paris sobre QDT, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-032 — RWS: candidato concreto LSE con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** RWS
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** RWS abre un candidato ticker-level concreto para LSE sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/RWS/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es RWS Holdings plc (`RWS.L`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para LSE sobre RWS, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-033 — SES: candidato concreto Euronext Paris con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** SES
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** SES abre un candidato ticker-level concreto para Euronext Paris sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/SES/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es SES S.A. (`SESG.PA`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para Euronext Paris sobre SES, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-034 — SMWH: candidato concreto LSE con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** SMWH
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** SMWH abre un candidato ticker-level concreto para LSE sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/SMWH/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es WH Smith PLC (`SMWH.L`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para LSE sobre SMWH, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-035 — SOIL: candidato concreto TSX con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** SOIL
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** SOIL abre un candidato ticker-level concreto para TSX sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/SOIL/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es Saturn Oil & Gas Inc. (`SOIL.TO`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para TSX sobre SOIL, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-036 — STC: candidato concreto TSX con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** STC
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** STC abre un candidato ticker-level concreto para TSX sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/STC/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es Sangoma Technologies Corporation (`STC.TO`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para TSX sobre STC, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-037 — SYZ: candidato concreto TSX con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** SYZ
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** SYZ abre un candidato ticker-level concreto para TSX sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/SYZ/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es Sylogist Ltd. (`SYZ.TO`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para TSX sobre SYZ, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
+#### OP-038 — VID: candidato concreto LSE con acquire por demostrar
+- **Subject type:** ticker
+- **Subject id:** VID
+- **Canonical state:** candidato concreto no onboarded; mercado sin fetcher funcional
+- **Why it matters:** VID abre un candidato ticker-level concreto para LSE sin vender onboarding validado antes de demostrar un carril de acquire reproducible.
+- **Live evidence:** `cases/VID/` existe con `filings_manifest.json` (`source=eu_manual`, `filings_downloaded=0`, `filings_coverage_pct=0.0`), `extraction_result.json`, `expected_draft.json` y `truth_pack.json`, pero no hay `case.json` canónico ni corpus descargado. El mercado resuelto para este símbolo es Videndum Plc (`VID.L`); hoy no existe fetcher funcional de repo para ese carril fuera de `eu_manual`.
+- **Unknowns remaining:** Demostrar en un único pre-gate falsable un carril de acquire reproducible para LSE sobre VID, capaz de poblar `filings/`, `case.json` y truth filing-backed sin depender de `filings_sources` manuales permanentes.
+- **Promotion trigger:** Evidencia nueva y reproducible de que ese pre-gate queda satisfecho end-to-end sobre el ticker ancla, con corpus annual/intermedio utilizable y blast radius seriable.
+- **Blast radius if promoted:** shared-core
+- **Expected effort:** bounded
+- **Last reviewed:** 2026-03-15
+- **Disposition:** keep
+
 #### OP-009 — LSE/AIM más allá de SOM
 - **Subject type:** market
 - **Subject id:** LSE/AIM
 - **Canonical state:** mercado no generalizado
 - **Why it matters:** SOM no basta para declarar capacidad amplia del mercado; falta masa crítica o patrón reusable.
-- **Live evidence:** `PROJECT_STATE.md` y `OP-001` dejan a SOM cerrado como excepción ticker-level reafirmada, mientras esta entrada conserva la generalización de mercado que sigue siendo abstracta y no packageable por sí sola. ENQ queda ahora persistido aparte como candidato ticker-level concreto, pero su `hypothesis_basis` para onboarding técnico inmediato sigue siendo `inconclusive` y no convierte este item de mercado en packageable.
-- **Unknowns remaining:** Confirmar al menos un segundo ticker LSE/AIM concreto con pre-gate de discoverability satisfecho y evidencia suficiente para onboarding. Mientras la única abstracción de mercado siga descansando en SOM y en candidatos todavía inconclusos como ENQ, este item no es packageable.
+- **Live evidence:** `PROJECT_STATE.md` y `OP-001` dejan a SOM cerrado como excepción ticker-level reafirmada, mientras esta entrada conserva la generalización de mercado que sigue siendo abstracta y no packageable por sí sola. ENQ y los nuevos candidatos `CABP`, `DWL`, `FNTL`, `FRP`, `LUCE`, `MEGP`, `MOON`, `PANR`, `RWS`, `SMWH` y `VID` quedan ahora persistidos aparte como tickers concretos, pero todos siguen bloqueados por el mismo gap: no existe todavía un carril de acquire reproducible en repo para LSE/LSE-AIM más allá de `eu_manual`.
+- **Unknowns remaining:** Convertir al menos uno de esos candidatos concretos en un pre-gate de acquire satisfecho y reutilizable. Mientras el conjunto siga dependiendo del mismo fetcher ausente y de corpus no descargado, este item de mercado no es packageable por sí solo.
 - **Promotion trigger:** candidato concreto con valor de frontera real y packet mínimo serializable.
 - **Blast radius if promoted:** shared-core
 - **Expected effort:** broad
-- **Last reviewed:** 2026-03-14
+- **Last reviewed:** 2026-03-15
 - **Disposition:** keep
 
 #### OP-010 — Euronext más allá de TEP
@@ -162,12 +474,12 @@
 - **Subject id:** Euronext
 - **Canonical state:** mercado no generalizado
 - **Why it matters:** TEP demuestra un ticker útil, no una capacidad de mercado autónoma.
-- **Live evidence:** `PROJECT_STATE.md` deja a TEP como excepción ticker-level reafirmada tras BL-088, mientras esta entrada conserva solo la generalización abstracta del mercado Euronext, que sigue sin candidato ticker-level adicional listo ni carril reusable probado fuera del ancla ya cerrada.
-- **Unknowns remaining:** Curar un ticker concreto adicional de Euronext antes de proponer onboarding. Mientras no exista candidato ticker-level con filings discoverables y blast radius `targeted`, este item no es packageable.
+- **Live evidence:** `PROJECT_STATE.md` deja a TEP como excepción ticker-level reafirmada tras BL-088, mientras esta entrada conserva solo la generalización abstracta del mercado Euronext. `EVS`, `QDT` y `SES` quedan ahora persistidos como candidatos ticker-level concretos, pero todos mantienen `source=eu_manual`, `filings_downloaded=0` y ausencia de un carril de acquire reproducible fuera del ancla ya cerrada.
+- **Unknowns remaining:** Convertir al menos uno de esos candidatos concretos en un pre-gate de acquire satisfecho y reutilizable. Mientras no exista corpus discoverable y descargable sin `filings_sources` manuales permanentes, este item no es packageable por sí solo.
 - **Promotion trigger:** candidato concreto con capacidad nueva y scope acotado.
 - **Blast radius if promoted:** shared-core
 - **Expected effort:** broad
-- **Last reviewed:** 2026-03-14
+- **Last reviewed:** 2026-03-15
 - **Disposition:** keep
 
 #### OP-011 — HKEX más allá de 0327

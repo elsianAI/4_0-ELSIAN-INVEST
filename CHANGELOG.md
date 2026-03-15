@@ -2,6 +2,14 @@
 
 ## 2026-03-15
 
+### [4.0] Governance-only batch packaging — 37 tickers clasificados entre SEC directo y mercados sin fetcher
+- `docs/project/BACKLOG.md` reabre la cola ejecutable con `BL-092`, `BL-093` y `BL-094`, tres BLs `technical` que consumen el batch máximo viable del presupuesto Packet B para los 13 tickers con `source=sec_edgar` y corpus local reutilizable: `DCBO`, `DNOW`, `FRPH`, `HBB`, `JELD`, `KELYA`, `MATW`, `MREO`, `NVRI`, `PHIN`, `PRDO`, `SLVM` y `TRS`.
+- `docs/project/OPPORTUNITIES.md` persiste los 24 tickers restantes como `Expansion candidates` ticker-level, cada uno con mercado identificado y sin vender onboarding directo mientras el repo siga sin fetcher funcional para esos carriles: TSX (`AGF`, `AIF`, `CPKR`, `DBM`, `MFI`, `PSD`, `SOIL`, `STC`, `SYZ`), LSE/LSE-AIM (`CABP`, `DWL`, `FNTL`, `FRP`, `LUCE`, `MEGP`, `MOON`, `PANR`, `RWS`, `SMWH`, `VID`), Euronext (`EVS`, `QDT`, `SES`) y Nasdaq Stockholm (`NCAB`).
+- `docs/project/PROJECT_STATE.md` deja de describir el runtime como backlog vacío y reconcilia la nueva lectura operativa: Fase B vuelve a tener cola viva en SEC directo, mientras los mercados sin fetcher quedan explícitamente retenidos en el subtree operativo como trabajo de acquire previo.
+- Esta ola es estrictamente `governance-only`: no ejecuta onboarding, no re-descarga filings y reutiliza como evidencia los artefactos ya existentes en `cases/`.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/OPPORTUNITIES.md`, `docs/project/PROJECT_STATE.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` después de mutar; `git diff --check -- docs/project/BACKLOG.md docs/project/OPPORTUNITIES.md docs/project/PROJECT_STATE.md CHANGELOG.md` → limpio.
+
 ### [4.0] Reconciliación técnica local — retiro de batch ambiguo en `cases/` (claimed_bl_status: none)
 - Se retira del árbol repo-trackable el batch ambiguo local pendiente (`case.json` y `expected.json`) para `AGF`, `AIF`, `CABP`, `CPKR`, `DBM`, `DCBO`, `DNOW`, `DWL`, `EVS`, `FNTL`, `FRP`, `FRPH`, `HBB`, `JELD`, `KELYA`, `LUCE`, `MATW`, `MEGP`, `MFI`, `MOON`, `MREO`, `NCAB`, `NVRI`, `PANR`, `PHIN`, `PRDO`, `PSD`, `QDT`, `RWS`, `SES`, `SLVM`, `SMWH`, `SOIL`, `STC`, `SYZ`, `TRS` y `VID`.
 - No se intenta salvar, curar, promover ni preservar ningún subconjunto del lote; tampoco se abre BL nueva.
