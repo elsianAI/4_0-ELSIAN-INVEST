@@ -2,6 +2,22 @@
 
 ## 2026-03-15
 
+### [4.0] Governance closeout — BL-093 archivada tras tranche SEC green
+- `docs/project/BACKLOG.md` saca `BL-093` de la cola ejecutable tras cerrar en verde la segunda ola SEC directa; las BL vivas del frente SEC pasan a ser `BL-092` (blocked), `BL-094` y `BL-095`.
+- `docs/project/BACKLOG_DONE.md` archiva `BL-093` como packet `technical` targeted ya absorbido, sin abrir follow-up propio ni reescribir el framing de las otras BL activas.
+- `PROJECT_STATE.md` se mantiene sin cambios en esta ola: la reconciliación agregada del frente SEC se difiere al cierre posterior de la secuencia restante.
+- **Files changed:** `docs/project/BACKLOG.md`, `docs/project/BACKLOG_DONE.md`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/check_governance.py --format json` después de mutar; `git diff --check -- docs/project/BACKLOG.md docs/project/BACKLOG_DONE.md CHANGELOG.md` → limpio.
+
+### [BL-093] SEC directo tranche B — JELD, KELYA, MATW, NVRI y PHIN canonizados en annual-only
+- `cases/JELD/case.json` + `expected.json`: emisor SEC directo en `ANNUAL_ONLY`, con FY2024/FY2025 promovidos filing-backed desde el `extraction_result.json` local. `python3 -m elsian eval JELD` → `PASS 100.0% (20/20)`.
+- `cases/KELYA/case.json` + `expected.json`: misma receta annual-only filing-backed sobre FY2024/FY2025. `python3 -m elsian eval KELYA` → `PASS 100.0% (20/20)`.
+- `cases/MATW/case.json` + `expected.json`: annual-only filing-backed respetando `fiscal_year_end_month=9` y los FY2024/FY2025 del corpus local. `python3 -m elsian eval MATW` → `PASS 100.0% (20/20)`.
+- `cases/NVRI/case.json` + `expected.json`: annual-only filing-backed sobre FY2024/FY2025 sin tocar extractor ni acquire. `python3 -m elsian eval NVRI` → `PASS 100.0% (20/20)`.
+- `cases/PHIN/case.json` + `expected.json`: annual-only filing-backed sobre FY2024/FY2025 del corpus SEC local. `python3 -m elsian eval PHIN` → `PASS 100.0% (20/20)`.
+- **Files changed:** `cases/JELD/case.json`, `cases/JELD/expected.json`, `cases/KELYA/case.json`, `cases/KELYA/expected.json`, `cases/MATW/case.json`, `cases/MATW/expected.json`, `cases/NVRI/case.json`, `cases/NVRI/expected.json`, `cases/PHIN/case.json`, `cases/PHIN/expected.json`, `CHANGELOG.md`
+- **Validation:** `python3 scripts/validate_contracts.py --schema case --path cases/JELD/case.json` → PASS; `python3 scripts/validate_contracts.py --schema expected --path cases/JELD/expected.json` → PASS; `python3 scripts/validate_contracts.py --schema case --path cases/KELYA/case.json` → PASS; `python3 scripts/validate_contracts.py --schema expected --path cases/KELYA/expected.json` → PASS; `python3 scripts/validate_contracts.py --schema case --path cases/MATW/case.json` → PASS; `python3 scripts/validate_contracts.py --schema expected --path cases/MATW/expected.json` → PASS; `python3 scripts/validate_contracts.py --schema case --path cases/NVRI/case.json` → PASS; `python3 scripts/validate_contracts.py --schema expected --path cases/NVRI/expected.json` → PASS; `python3 scripts/validate_contracts.py --schema case --path cases/PHIN/case.json` → PASS; `python3 scripts/validate_contracts.py --schema expected --path cases/PHIN/expected.json` → PASS; `python3 -m elsian eval JELD` → `PASS 100.0% (20/20)`; `python3 -m elsian eval KELYA` → `PASS 100.0% (20/20)`; `python3 -m elsian eval MATW` → `PASS 100.0% (20/20)`; `python3 -m elsian eval NVRI` → `PASS 100.0% (20/20)`; `python3 -m elsian eval PHIN` → `PASS 100.0% (20/20)`.
+
 ### [4.0] Governance packaging — BL-092 bloqueada y follow-up `BL-095` abierto para SEC 40-F directo
 - `docs/project/BACKLOG.md` deja `BL-092` en `BLOCKED` tras cerrar la tranche localmente para `DNOW`, `FRPH` y `HBB`: el único blocker vivo es `DCBO`, cuyo corpus SEC directo sigue trayendo solo wrappers `40-F`/`6-K` y no el Exhibit `99.2` anual enlazado desde el `40-F`.
 - La misma ola abre `BL-095` como follow-up `technical` `shared-core` mínimo para extender el carril SEC directo a exhibits financieros anuales enlazados por `40-F`, sin reordenar `BL-093` y `BL-094` ni absorber la curación ticker-level pendiente de `DCBO` dentro de la propia ola de governance.

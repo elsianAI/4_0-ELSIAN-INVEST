@@ -1,0 +1,14 @@
+{
+  "ticker": "KELYA",
+  "exchange": "NASDAQ",
+  "country": "US",
+  "currency": "USD",
+  "cik": "0000055135",
+  "source_hint": "sec",
+  "period_scope": "ANNUAL_ONLY",
+  "filings_expected_count": null,
+  "notes": "SEC direct issuer curated in BL-093 tranche B from local filings artifacts.",
+  "fiscal_year_end_month": 12,
+  "company_name": "KELLY SERVICES, INC.",
+  "accounting_standard": "US-GAAP"
+}

@@ -1,0 +1,103 @@
+{
+  "version": "1.0",
+  "ticker": "PHIN",
+  "currency": "USD",
+  "period_scope": "ANNUAL_ONLY",
+  "restatement_policy": "as_reported_unless_explicit_restatement",
+  "scale": "as_reported",
+  "scale_notes": "Annual values curated from local SEC filings for BL-093 tranche B. Values keep filing presentation units.",
+  "periods": {
+    "FY2024": {
+      "fecha_fin": "2024-12-31",
+      "tipo_periodo": "anual",
+      "fields": {
+        "ingresos": {
+          "value": 3403.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "ebit": {
+          "value": 259.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "net_income": {
+          "value": 79.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "total_assets": {
+          "value": 3768.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "total_liabilities": {
+          "value": 2194.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "total_equity": {
+          "value": 1574.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cash_and_equivalents": {
+          "value": 484.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cfo": {
+          "value": 308.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "capex": {
+          "value": -105.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "shares_outstanding": {
+          "value": 44.0,
+          "source_filing": "SRC_002_10-K_FY2024.htm"
+        }
+      }
+    },
+    "FY2025": {
+      "fecha_fin": "2025-12-31",
+      "tipo_periodo": "anual",
+      "fields": {
+        "ingresos": {
+          "value": 3483.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "ebit": {
+          "value": 254.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "net_income": {
+          "value": 130.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "total_assets": {
+          "value": 3817.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "total_liabilities": {
+          "value": 2230.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "total_equity": {
+          "value": 1587.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cash_and_equivalents": {
+          "value": 359.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "cfo": {
+          "value": 312.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "capex": {
+          "value": -124.0,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        },
+        "shares_outstanding": {
+          "value": 39.3,
+          "source_filing": "SRC_001_10-K_FY2025.htm"
+        }
+      }
+    }
+  }
+}

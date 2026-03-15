@@ -46,18 +46,6 @@ Este backlog representa solo el subconjunto **ejecutable seleccionado** de la **
 - **Descripción:** SEC directo con fetcher funcional y corpus local ya presente; mezcla un 40-F (`DCBO`) y tres emisores domésticos para abrir una primera ola acotada de canonización sin redescarga. Cada ticker ya tiene `filings_manifest.json` con `source=sec_edgar`, `expected_draft.json`, `truth_pack.json` y `extraction_result.json`; el packet debe reutilizar esos artefactos locales y evitar redescarga salvo evidencia nueva.
 - **Criterio de aceptación:** `cases/<ticker>/case.json` canonizado para DCBO, DNOW, FRPH y HBB; `expected.json` filing-backed curado por ticker; artifacts locales reconciliados sin degradar acquire; `python3 -m elsian eval <ticker>` PASS para cada ticker de la tranche; `python3 scripts/validate_contracts.py --schema case` / `--schema expected` PASS en todos los casos tocados.
 
-### BL-093 — Onboarding SEC directo tranche B (JELD, KELYA, MATW, NVRI, PHIN)
-- **Prioridad:** ALTA
-- **Estado:** TODO
-- **Asignado a:** elsian-engineer
-- **Módulo:** Module 1
-- **Validation tier:** targeted
-- **Work kind:** technical
-- **Depende de:** none
-- **Referencias:** VISION.md, docs/project/OPPORTUNITIES.md
-- **Descripción:** Segunda ola SEC homogénea sobre cinco tickers con `filings_manifest.json` green y `extraction_result.json` ya materializado; el trabajo pendiente es canonizar `case.json`, curar truth y validar targeted. Cada ticker ya tiene `filings_manifest.json` con `source=sec_edgar`, `expected_draft.json`, `truth_pack.json` y `extraction_result.json`; el packet debe reutilizar esos artefactos locales y evitar redescarga salvo evidencia nueva.
-- **Criterio de aceptación:** `cases/<ticker>/case.json` canonizado para JELD, KELYA, MATW, NVRI y PHIN; `expected.json` filing-backed curado por ticker; artifacts locales reconciliados sin degradar acquire; `python3 -m elsian eval <ticker>` PASS para cada ticker de la tranche; `python3 scripts/validate_contracts.py --schema case` / `--schema expected` PASS en todos los casos tocados.
-
 ### BL-094 — Onboarding SEC directo tranche C (MREO, PRDO, SLVM, TRS)
 - **Prioridad:** ALTA
 - **Estado:** TODO

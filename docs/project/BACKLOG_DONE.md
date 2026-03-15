@@ -9,6 +9,18 @@
 
 ---
 
+### BL-093 — Onboarding SEC directo tranche B (JELD, KELYA, MATW, NVRI, PHIN)
+- **Prioridad:** ALTA
+- **Estado:** DONE ✅ (2026-03-15)
+- **Asignado a:** engineer
+- **Módulo:** Module 1
+- **Validation tier:** targeted
+- **Work kind:** technical
+- **Depende de:** —
+- **Referencias:** VISION.md, docs/project/OPPORTUNITIES.md
+- **Descripción:** Se cierra BL-093 como ola targeted anual filing-backed sobre cinco emisores SEC directos con corpus local ya presente. `JELD`, `KELYA`, `MATW`, `NVRI` y `PHIN` quedan canonizados en `ANNUAL_ONLY` sin tocar shared-core ni redescargar filings: `case.json` fija el metadato mínimo del emisor y `expected.json` promueve los dos FY anuales vigentes del `extraction_result.json` local (`FY2024`, `FY2025`) con `source_filing` explícito. La ola no reabre quarterlies ni cambia el carril SEC; simplemente absorbe la canonización pendiente de la tranche B sobre artefactos ya materializados.
+- **Criterio de aceptación:** ✓ `cases/JELD/case.json` / `expected.json` PASS por contrato y `python3 -m elsian eval JELD` → PASS 100.0% (20/20). ✓ `cases/KELYA/case.json` / `expected.json` PASS y `python3 -m elsian eval KELYA` → PASS 100.0% (20/20). ✓ `cases/MATW/case.json` / `expected.json` PASS y `python3 -m elsian eval MATW` → PASS 100.0% (20/20). ✓ `cases/NVRI/case.json` / `expected.json` PASS y `python3 -m elsian eval NVRI` → PASS 100.0% (20/20). ✓ `cases/PHIN/case.json` / `expected.json` PASS y `python3 -m elsian eval PHIN` → PASS 100.0% (20/20). ✓ `BL-093` sale de `docs/project/BACKLOG.md` y no deja follow-up abierto propio.
+
 ### BL-091 — HKEX acquire: implementar búsqueda oficial y descarga PDF reusable para 0327
 - **Prioridad:** ALTA
 - **Estado:** DONE ✅ (2026-03-14)
