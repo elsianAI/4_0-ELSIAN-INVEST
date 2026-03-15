@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-03-15
+
+### [4.0] Reconciliación técnica local — retiro de batch ambiguo en `cases/` (claimed_bl_status: none)
+- Se retira del árbol repo-trackable el batch ambiguo local pendiente (`case.json` y `expected.json`) para `AGF`, `AIF`, `CABP`, `CPKR`, `DBM`, `DCBO`, `DNOW`, `DWL`, `EVS`, `FNTL`, `FRP`, `FRPH`, `HBB`, `JELD`, `KELYA`, `LUCE`, `MATW`, `MEGP`, `MFI`, `MOON`, `MREO`, `NCAB`, `NVRI`, `PANR`, `PHIN`, `PRDO`, `PSD`, `QDT`, `RWS`, `SES`, `SLVM`, `SMWH`, `SOIL`, `STC`, `SYZ`, `TRS` y `VID`.
+- No se intenta salvar, curar, promover ni preservar ningún subconjunto del lote; tampoco se abre BL nueva.
+
 ## 2026-03-14
 
 ### [4.0] Governance-only wave — ENQ curado como candidato LSE/AIM no validado

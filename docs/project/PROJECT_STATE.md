@@ -1,7 +1,7 @@
 # ELSIAN-INVEST 4.0 — Estado del Proyecto
 
-> Última actualización: 2026-03-14
-> Actualizado por: Codex (baseline-only governance after full empty-backlog scout)
+> Última actualización: 2026-03-15
+> Actualizado por: Codex (governance-only reconciliation after local technical cleanup; canonical Module 1 state unchanged)
 > Module 1 status: OPEN
 > Semántica vigente del marker: `OPEN` mientras exista frontera operacional real en el subtree operativo de `OPPORTUNITIES.md`. `SOM` y `TEP` pueden convivir con un cierre futuro como excepciones ticker-level ya reafirmadas; `0327` ya no bloquea por follow-up técnico propio y la frontera HKEX queda reducida a la generalización de mercado más allá del ticker ancla; el frente de TALO sigue reducido a watchlist factual por el cluster de enmiendas fuera de backlog activo.
 
