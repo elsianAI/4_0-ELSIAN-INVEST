@@ -47,7 +47,7 @@ def _make_scaffold_case_args(**overrides: Any) -> argparse.Namespace:
         "ticker": "NEWCO",
         "source_hint": "sec",
         "currency": "USD",
-        "period_scope": "ANNUAL_ONLY",
+        "period_scope": "FULL",
         "exchange": "NASDAQ",
         "country": "US",
         "cik": None,

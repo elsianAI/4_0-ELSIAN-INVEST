@@ -2,7 +2,7 @@
   "version": "1.0",
   "ticker": "PHIN",
   "currency": "USD",
-  "period_scope": "ANNUAL_ONLY",
+  "period_scope": "FULL",
   "restatement_policy": "as_reported_unless_explicit_restatement",
   "scale": "as_reported",
   "scale_notes": "Annual values curated from local SEC filings for BL-093 tranche B. Values keep filing presentation units.",

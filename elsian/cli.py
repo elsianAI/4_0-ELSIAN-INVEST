@@ -1093,7 +1093,7 @@ def cmd_scaffold_case(args: argparse.Namespace) -> None:
             ticker=args.ticker,
             source_hint=args.source_hint,
             currency=args.currency,
-            period_scope=getattr(args, "period_scope", "ANNUAL_ONLY"),
+            period_scope=getattr(args, "period_scope", "FULL"),
             exchange=getattr(args, "exchange", None),
             country=getattr(args, "country", None),
             cik=getattr(args, "cik", None),
@@ -1112,7 +1112,7 @@ def cmd_scaffold_case(args: argparse.Namespace) -> None:
     print(f"  CASE_NOTES:   {notes_md_path}")
     print(f"  Source:       {args.source_hint}")
     print(f"  Currency:     {args.currency.upper()}")
-    print(f"  Period scope: {getattr(args, 'period_scope', 'ANNUAL_ONLY')}")
+    print(f"  Period scope: {getattr(args, 'period_scope', 'FULL')}")
     print(f"  Next:         review CASE_NOTES.md, then run: elsian acquire {ticker_upper}")
 
 
@@ -1394,9 +1394,9 @@ def main() -> None:
     p_scaffold_case.add_argument(
         "--period-scope",
         dest="period_scope",
-        choices=["ANNUAL_ONLY", "FULL"],
-        default="ANNUAL_ONLY",
-        help="Period scope (default: ANNUAL_ONLY)",
+        choices=["FULL"],
+        default="FULL",
+        help="Period scope (default: FULL; DEC-031 eliminated ANNUAL_ONLY)",
     )
     p_scaffold_case.add_argument("--exchange", default=None, help="Exchange name, e.g. NASDAQ")
     p_scaffold_case.add_argument("--country", default=None, help="ISO country code, e.g. US")

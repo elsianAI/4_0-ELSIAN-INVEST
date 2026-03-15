@@ -240,7 +240,7 @@ class TruthPackAssembler:
         metadata = {
             "total_periods": len(periods),
             "total_fields": total_fields,
-            "period_scope": case_config.get("period_scope", "ANNUAL_ONLY"),
+            "period_scope": case_config.get("period_scope", "FULL"),
             "source_hint": case_config.get("source_hint", "sec"),
             "fiscal_year_end_month": case_config.get("fiscal_year_end_month", 12),
         }

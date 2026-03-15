@@ -29,7 +29,7 @@ def _make_case(
     source_hint: str = "sec",
     country: str = "US",
     cik: str | None = "1234567",
-    period_scope: str = "ANNUAL_ONLY",
+    period_scope: str = "FULL",
     manifest: dict | None = None,
 ) -> Path:
     """Create a minimal case directory with case.json and optional manifest."""

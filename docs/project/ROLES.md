@@ -873,7 +873,7 @@ El orquestador neutral decide que hijo lanzar segun la intencion y el posible bl
 - `investigation`:
   - solo puede cerrar como `promoted`, `exception_reaffirmed`, `technical_followup_opened` o `discarded_with_evidence`.
 - `expansion`:
-  - solo puede cerrar como `onboarded_to_annual_only`, `technical_followup_opened` o `discarded_candidate`.
+  - solo puede cerrar como `onboarded_full`, `technical_followup_opened` o `discarded_candidate`.
 - `auditor` y `closeout` aceptan BLs `investigation` o `expansion` sin codigo nuevo si la evidencia se genero, la decision terminal quedo tomada y `OPPORTUNITIES.md` / canonicals quedaron reconciliados de forma consistente.
 
 ### 3.1 Paralelizacion mutante controlada

@@ -155,7 +155,7 @@ def test_cross_case_consistency_passes_for_tracked_cases():
 def test_cross_case_ticker_mismatch_detected():
     """_check_cross_ticker_data detects ticker mismatch between case.json and expected.json."""
     module = _load_module()
-    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "ANNUAL_ONLY"}
+    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "FULL"}
     expected_data = {"ticker": "BAR", "currency": "USD"}
 
     issues = module._check_cross_ticker_data("FOO", case_data, expected_data)
@@ -166,7 +166,7 @@ def test_cross_case_ticker_mismatch_detected():
 def test_cross_case_currency_mismatch_detected():
     """_check_cross_ticker_data detects currency mismatch."""
     module = _load_module()
-    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "ANNUAL_ONLY"}
+    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "FULL"}
     expected_data = {"ticker": "FOO", "currency": "EUR"}
 
     issues = module._check_cross_ticker_data("FOO", case_data, expected_data)
@@ -174,21 +174,24 @@ def test_cross_case_currency_mismatch_detected():
     assert any("currency mismatch" in i for i in issues)
 
 
-def test_cross_case_period_scope_mismatch_detected():
-    """_check_cross_ticker_data detects period_scope mismatch when expected.json declares one."""
+def test_annual_only_rejected_in_case_validation():
+    """DEC-031: ANNUAL_ONLY is no longer a valid period_scope."""
     module = _load_module()
-    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "ANNUAL_ONLY"}
-    expected_data = {"ticker": "FOO", "currency": "USD", "period_scope": "FULL"}
-
-    issues = module._check_cross_ticker_data("FOO", case_data, expected_data)
-
-    assert any("period_scope mismatch" in i for i in issues)
+    case_data = {
+        "ticker": "FOO",
+        "currency": "USD",
+        "source_hint": "sec",
+        "period_scope": "ANNUAL_ONLY",
+        "fiscal_year_end_month": 12,
+    }
+    issues = module.validate_case_data(case_data, Path("cases/FOO/case.json"))
+    assert any("DEC-031" in i for i in issues)
 
 
 def test_cross_case_period_scope_absent_in_expected_not_flagged():
     """No mismatch when expected.json omits period_scope (common pattern)."""
     module = _load_module()
-    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "ANNUAL_ONLY"}
+    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "FULL"}
     expected_data = {"ticker": "FOO", "currency": "USD"}  # no period_scope
 
     issues = module._check_cross_ticker_data("FOO", case_data, expected_data)
@@ -199,7 +202,7 @@ def test_cross_case_period_scope_absent_in_expected_not_flagged():
 def test_cross_case_derived_artifact_ticker_mismatch_detected():
     """_check_cross_ticker_data detects ticker mismatch in a tracked derived artifact."""
     module = _load_module()
-    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "ANNUAL_ONLY"}
+    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "FULL"}
     expected_data = {"ticker": "FOO", "currency": "USD"}
     derived = [("truth_pack.json", {"ticker": "BAR"})]
 
@@ -244,7 +247,7 @@ def test_validate_task_manifest_contract_rejects_invalid_kind():
 def test_cross_case_derived_extraction_result_currency_mismatch_detected():
     """_check_cross_ticker_data detects currency mismatch in a tracked extraction_result."""
     module = _load_module()
-    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "ANNUAL_ONLY"}
+    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "FULL"}
     expected_data = {"ticker": "FOO", "currency": "USD"}
     derived = [("extraction_result.json", {"ticker": "FOO", "currency": "EUR"})]
 
@@ -256,7 +259,7 @@ def test_cross_case_derived_extraction_result_currency_mismatch_detected():
 def test_cross_case_derived_truth_pack_currency_mismatch_detected():
     """_check_cross_ticker_data detects currency mismatch in a tracked truth_pack."""
     module = _load_module()
-    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "ANNUAL_ONLY"}
+    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "FULL"}
     expected_data = {"ticker": "FOO", "currency": "USD"}
     derived = [("truth_pack.json", {"ticker": "FOO", "currency": "EUR"})]
 
@@ -268,9 +271,10 @@ def test_cross_case_derived_truth_pack_currency_mismatch_detected():
 def test_cross_case_derived_truth_pack_period_scope_mismatch_detected():
     """_check_cross_ticker_data detects metadata.period_scope mismatch in a tracked truth_pack."""
     module = _load_module()
-    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "ANNUAL_ONLY"}
+    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "FULL"}
     expected_data = {"ticker": "FOO", "currency": "USD"}
-    derived = [("truth_pack.json", {"ticker": "FOO", "currency": "USD", "metadata": {"period_scope": "FULL"}})]
+    # Use a stale/wrong value to trigger mismatch detection
+    derived = [("truth_pack.json", {"ticker": "FOO", "currency": "USD", "metadata": {"period_scope": "STALE_VALUE"}})]
 
     issues = module._check_cross_ticker_data("FOO", case_data, expected_data, derived)
 
@@ -280,7 +284,7 @@ def test_cross_case_derived_truth_pack_period_scope_mismatch_detected():
 def test_cross_case_derived_no_currency_key_not_flagged():
     """No currency flag when a derived artifact doesn't expose currency (e.g. filings_manifest)."""
     module = _load_module()
-    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "ANNUAL_ONLY"}
+    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "FULL"}
     expected_data = {"ticker": "FOO", "currency": "USD"}
     derived = [("filings_manifest.json", {"ticker": "FOO"})]  # no currency key
 
@@ -292,7 +296,7 @@ def test_cross_case_derived_no_currency_key_not_flagged():
 def test_cross_case_derived_truth_pack_no_period_scope_in_metadata_not_flagged():
     """No period_scope flag when truth_pack metadata exists but omits period_scope."""
     module = _load_module()
-    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "ANNUAL_ONLY"}
+    case_data = {"ticker": "FOO", "currency": "USD", "period_scope": "FULL"}
     expected_data = {"ticker": "FOO", "currency": "USD"}
     # metadata present but without period_scope key
     derived = [("truth_pack.json", {"ticker": "FOO", "currency": "USD", "metadata": {"total_periods": 4}})]

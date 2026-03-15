@@ -1,7 +1,6 @@
-"""Scope consistency: case.json period_scope must match expected.json periods.
+"""Scope consistency: case.json period_scope must always be FULL (DEC-031).
 
-If expected.json contains Q* or H* periods, case.json MUST have period_scope=FULL.
-If expected.json only has FY* periods, period_scope must be ANNUAL_ONLY or absent.
+ANNUAL_ONLY has been eliminated. All tickers must have period_scope=FULL.
 """
 
 import json
@@ -37,16 +36,10 @@ def test_period_scope_matches_expected(ticker: str) -> None:
     case_data = _load_json(case_path)
     expected_data = _load_json(expected_path)
 
-    scope = case_data.get("period_scope", "ANNUAL_ONLY")
-    has_non_fy = _has_non_annual_periods(expected_data)
+    scope = case_data.get("period_scope", "FULL")
 
-    if has_non_fy:
-        assert scope == "FULL", (
-            f"{ticker}: expected.json has non-FY periods but "
-            f"case.json period_scope is '{scope}' (should be 'FULL')"
-        )
-    else:
-        assert scope in ("ANNUAL_ONLY", None), (
-            f"{ticker}: expected.json only has FY periods but "
-            f"case.json period_scope is '{scope}' (should be 'ANNUAL_ONLY' or absent)"
-        )
+    # DEC-031: ANNUAL_ONLY eliminated — period_scope must always be FULL
+    assert scope == "FULL", (
+        f"{ticker}: case.json period_scope is '{scope}' but must be 'FULL' "
+        f"(DEC-031: ANNUAL_ONLY eliminated)"
+    )

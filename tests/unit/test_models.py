@@ -98,7 +98,7 @@ def test_eval_report_to_dict_includes_readiness_fields():
 def test_case_config_defaults():
     c = CaseConfig()
     assert c.source_hint == "sec"
-    assert c.period_scope == "ANNUAL_ONLY"
+    assert c.period_scope == "FULL"
     assert c.fiscal_year_end_month == 12
 
 

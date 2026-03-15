@@ -7,6 +7,6 @@
   "source_hint": "sec",
   "cik": "1829959",
   "fiscal_year_end_month": 12,
-  "period_scope": "ANNUAL_ONLY",
+  "period_scope": "FULL",
   "notes": "SEC direct 40-F issuer (Nasdaq + TSX dual listing). BL-092 tranche A onboarding with local corpus reuse and no re-download."
 }

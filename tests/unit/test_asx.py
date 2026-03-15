@@ -107,13 +107,14 @@ class TestAcquireBehavior:
             assert result.filings_downloaded == 2
             assert result.source == "asx"
 
-    def test_annual_only_uses_zero_halfyear_target(self, monkeypatch):
+    def test_full_scope_requests_halfyear_reports(self, monkeypatch):
+        """DEC-031: with FULL scope, ASX fetcher should request half-year reports."""
         with tempfile.TemporaryDirectory() as td:
             case = CaseConfig(
                 ticker="KAR",
                 source_hint="asx",
                 case_dir=td,
-                period_scope="ANNUAL_ONLY",
+                period_scope="FULL",
             )
 
             captured: dict[str, int] = {}
@@ -158,7 +159,5 @@ class TestAcquireBehavior:
 
             result = AsxFetcher().acquire(case)
 
-            assert captured["halfyear_target"] == 0
-            assert result.coverage["halfyear"]["target"] == 0
-            assert result.coverage["halfyear"]["downloaded"] == 0
-            assert result.filings_downloaded == 2  # annual + results
+            assert captured["halfyear_target"] > 0
+            assert result.filings_downloaded == 3  # annual + halfyear + results

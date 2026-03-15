@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from dataclasses import fields as dataclass_fields
@@ -132,8 +133,8 @@ def validate_case_data(data: Any, path: Path) -> list[str]:
         issues.append(f"{path}: currency must be a non-empty string")
     if not _is_non_empty_string(data.get("source_hint")):
         issues.append(f"{path}: source_hint must be a non-empty string")
-    if data.get("period_scope") not in {"ANNUAL_ONLY", "FULL"}:
-        issues.append(f"{path}: period_scope must be ANNUAL_ONLY or FULL")
+    if data.get("period_scope") != "FULL":
+        issues.append(f"{path}: period_scope must be FULL (DEC-031: ANNUAL_ONLY eliminated)")
 
     nullable_strings = {
         "company_name",
@@ -235,8 +236,8 @@ def validate_expected_data(data: Any, path: Path) -> list[str]:
         issues.append(f"{path}: currency must be a non-empty string")
     if not _is_non_empty_string(data.get("scale")):
         issues.append(f"{path}: scale must be a non-empty string")
-    if "period_scope" in data and data["period_scope"] not in {"ANNUAL_ONLY", "FULL"}:
-        issues.append(f"{path}: period_scope must be ANNUAL_ONLY or FULL")
+    if "period_scope" in data and data["period_scope"] != "FULL":
+        issues.append(f"{path}: period_scope must be FULL (DEC-031: ANNUAL_ONLY eliminated)")
 
     periods = data.get("periods")
     if not isinstance(periods, dict) or not periods:
@@ -304,6 +305,37 @@ def validate_expected_data(data: Any, path: Path) -> list[str]:
                         issues.append(f"{field_loc}: restatement.original_value must be numeric")
                     if restatement.get("original_source_filing") == field_data.get("source_filing"):
                         issues.append(f"{field_loc}: original_source_filing must differ from source_filing")
+
+    # DEC-031 enforcement: if corpus has quarterly filings, expected.json must
+    # include at least one quarterly period.
+    case_dir = path.parent
+    manifest_path = case_dir / "filings_manifest.json"
+    if manifest_path.exists():
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            # Check both filings array and coverage summary
+            has_quarterly_filings = any(
+                f.get("filing_kind") == "quarterly"
+                for f in manifest.get("filings", [])
+            )
+            coverage = manifest.get("coverage", {})
+            quarterly_coverage = coverage.get("quarterly", {})
+            if quarterly_coverage.get("downloaded", 0) > 0:
+                has_quarterly_filings = True
+            if has_quarterly_filings:
+                period_keys = list(periods.keys()) if isinstance(periods, dict) else []
+                has_quarterly_period = any(
+                    re.match(r"^(Q\d|H\d)-\d{4}$", k) for k in period_keys
+                )
+                if not has_quarterly_period:
+                    issues.append(
+                        f"{path}: quarterly filings exist in corpus "
+                        f"(filings_manifest.json) but expected.json has no "
+                        f"quarterly periods — DEC-031 requires curating all "
+                        f"periods the corpus supports"
+                    )
+        except (json.JSONDecodeError, OSError):
+            pass  # manifest unreadable — skip cross-validation
 
     return issues
 

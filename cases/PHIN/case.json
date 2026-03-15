@@ -5,7 +5,7 @@
   "currency": "USD",
   "cik": "0001968915",
   "source_hint": "sec",
-  "period_scope": "ANNUAL_ONLY",
+  "period_scope": "FULL",
   "filings_expected_count": null,
   "notes": "SEC direct issuer curated in BL-093 tranche B from local filings artifacts.",
   "fiscal_year_end_month": 12,

@@ -26,7 +26,7 @@ CASES_DIR = ROOT / "cases"
 # Allowed enum values — must stay in sync with task_manifest.schema.json
 TASK_KINDS = ("technical", "governance", "mixed")
 VALIDATION_TIERS = ("targeted", "shared-core", "governance-only")
-PERIOD_SCOPES = ("ANNUAL_ONLY", "FULL")
+PERIOD_SCOPES = ("FULL",)
 
 
 # ---------------------------------------------------------------------------
@@ -188,7 +188,7 @@ def build_case_seed(
     ticker: str,
     source_hint: str,
     currency: str,
-    period_scope: str = "ANNUAL_ONLY",
+    period_scope: str = "FULL",
     exchange: str | None = None,
     country: str | None = None,
     cik: str | None = None,
@@ -244,7 +244,7 @@ def build_case_seed(
         "- [ ] Verify CIK (for SEC) or equivalent regulator identifier\n"
         "- [ ] Verify fiscal_year_end_month (default = 12 for Dec-31 FY)\n"
         "- [ ] Set filings_expected_count in case.json\n"
-        "- [ ] Confirm period_scope (ANNUAL_ONLY vs FULL)\n\n"
+        "- [ ] Verify period_scope is FULL (DEC-031: ANNUAL_ONLY eliminated)\n\n"
         "## Risks\n\n"
         "- [ ] Non-standard fiscal year may require period labeling adjustments\n"
         "- [ ] Currency / scale ambiguity in filings (thousands vs millions)\n"
@@ -266,7 +266,7 @@ def write_case_seed(
     ticker: str,
     source_hint: str,
     currency: str,
-    period_scope: str = "ANNUAL_ONLY",
+    period_scope: str = "FULL",
     exchange: str | None = None,
     country: str | None = None,
     cik: str | None = None,

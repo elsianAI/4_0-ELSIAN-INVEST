@@ -130,7 +130,7 @@ class DiscoveryResult:
     web_ir: str | None = None
     fiscal_year_end_month: int | None = None
     sector: str | None = None
-    period_scope: str = "ANNUAL_ONLY"
+    period_scope: str = "FULL"
     warnings: list[str] = field(default_factory=list)
 
     def to_case_dict(self) -> dict[str, Any]:
@@ -368,7 +368,7 @@ def _discover_non_us(
         country=country,
         source_hint=source_hint,
         accounting_standard=acct_std,
-        period_scope="ANNUAL_ONLY",
+        period_scope="FULL",
     )
 
     # Yahoo Finance chart API for basic metadata

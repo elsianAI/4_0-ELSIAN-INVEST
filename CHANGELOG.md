@@ -2,6 +2,17 @@
 
 ## 2026-03-15
 
+### [DEC-031] Eliminación de ANNUAL_ONLY como period_scope válido
+- `ANNUAL_ONLY` eliminado del código y de governance. `FULL` es el único `period_scope` válido (DEC-031).
+- `FULL` significa "todos los períodos que el corpus soporta están curados". Para mercados sin quarterly (ASX), FULL con solo anuales en expected.json es correcto.
+- Enforcement cruzado en `validate_contracts.py`: si `filings_manifest.json` tiene filings quarterly, `expected.json` debe incluir al menos un período quarterly.
+- Defaults actualizados en `case.py`, `scaffold.py`, `discover.py`, `cli.py`, `coverage_audit.py`, `truth_pack.py`.
+- 17 `case.json` existentes actualizados de `ANNUAL_ONLY` a `FULL` (KAR, JBH, SOM, DCBO, DNOW, FRPH, HBB, JELD, KELYA, MATW, NVRI, PHIN, ACVA, MREO, PRDO, SLVM, TRS).
+- `ROLES.md`: `onboarded_to_annual_only` reemplazado por `onboarded_full` como outcome terminal de `expansion`.
+- `PROJECT_STATE.md`: KAR y JBH reclasificados como FULL; métricas actualizadas a 16 FULL.
+- **Files changed:** `docs/project/DECISIONS.md`, `docs/project/ROLES.md`, `docs/project/PROJECT_STATE.md`, `elsian/models/case.py`, `elsian/scaffold.py`, `elsian/discover/discover.py`, `elsian/cli.py`, `elsian/evaluate/coverage_audit.py`, `elsian/assemble/truth_pack.py`, `scripts/validate_contracts.py`, `tests/contracts/test_validate_contracts.py`, `tests/integration/test_scope_consistency.py`, `tests/integration/test_scaffold_command.py`, `tests/unit/test_scaffold.py`, `tests/unit/test_models.py`, `tests/unit/test_onboarding.py`, `tests/unit/test_discover.py`, `tests/unit/test_asx.py`, `tests/unit/test_coverage_audit.py`, 17 `cases/*/case.json`, `CHANGELOG.md`
+- **Validation:** pendiente de verificación completa post-mutación.
+
 ### [4.0] Governance closeout — BL-093 archivada tras tranche SEC green
 - `docs/project/BACKLOG.md` saca `BL-093` de la cola ejecutable tras cerrar en verde la segunda ola SEC directa; las BL vivas del frente SEC pasan a ser `BL-092` (blocked), `BL-094` y `BL-095`.
 - `docs/project/BACKLOG_DONE.md` archiva `BL-093` como packet `technical` targeted ya absorbido, sin abrir follow-up propio ni reescribir el framing de las otras BL activas.

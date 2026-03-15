@@ -163,7 +163,7 @@ def evaluate_case(case_dir: Path) -> dict:
         "exchange":         case_data.get("exchange") or case_data.get("market", ""),
         "currency":         case_data.get("currency", ""),
         "cik":              cik,
-        "period_scope":     case_data.get("period_scope", "ANNUAL_ONLY"),
+        "period_scope":     case_data.get("period_scope", "FULL"),
         "has_manifest":     manifest is not None,
         "metrics":          metrics,
         "required_actions": required,

@@ -2,7 +2,7 @@
   "version": "1.0",
   "ticker": "ACVA",
   "currency": "USD",
-  "period_scope": "ANNUAL_ONLY",
+  "period_scope": "FULL",
   "scale": "as_reported",
   "scale_notes": "Annual truth curated from SEC iXBRL-backed 10-K filings for FY2022-FY2025. Values are stored as reported in the filing presentation, including share counts reported in thousands when the source filing does so.",
   "periods": {

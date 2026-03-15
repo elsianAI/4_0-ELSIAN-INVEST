@@ -7,7 +7,7 @@
   "country": "GB",
   "accounting_standard": "US-GAAP",
   "web_ir": "https://investors.somero.com",
-  "period_scope": "ANNUAL_ONLY",
+  "period_scope": "FULL",
   "fiscal_year_end_month": 12,
   "filings_expected_count": 6,
   "notes": "US company listed on AIM London. Reports in USD under US-GAAP. Filings are PDF annual reports and investor presentations from the IR website. No SEC EDGAR. Annual Report 2024 covers FY2024+FY2023 (US$000). H1 2025 Interim Presentation has historical results table FY2009-FY2024 (US$ millions). Acquire path uses conservative IR auto-discovery from investors.somero.com; the tracked filings/ directory keeps the existing canonical source filenames."

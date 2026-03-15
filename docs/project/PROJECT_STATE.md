@@ -22,10 +22,8 @@ Ver ROADMAP.md para descripción completa de fases.
 | Métrica | Valor | Target Fase 1→2 | Fecha |
 |---|---|---|---|
 | Tickers validados 100% | **17** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, CROX, TEP, SOM, 0327, KAR, ADTN, JBH) | — | 2026-03-11 |
-| Tickers que cuentan para DEC-015 | **16** (14 FULL + 2 `ANNUAL_ONLY` justificados en ASX: KAR, JBH) | ≥15 | 2026-03-11 |
-| Tickers FULL 100% | **14** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, CROX, TEP, ADTN, 0327) | — | 2026-03-09 |
-| Tickers ANNUAL_ONLY justificado | **2** (KAR, JBH) | — | 2026-03-11 |
-| Tickers ANNUAL_ONLY promocionable | **0** | — | 2026-03-11 |
+| Tickers que cuentan para DEC-015 | **16** (16 FULL; KAR y JBH cuentan como FULL per DEC-031 — ASX no publica quarterly) | ≥15 | 2026-03-15 |
+| Tickers FULL 100% | **16** (TZOO, NVDA, SONO, GCT, TALO, PR, IOSP, NEXN, ACLS, INMD, CROX, TEP, ADTN, 0327, KAR, JBH) | — | 2026-03-15 |
 | Tickers en frontera abierta | **0** | — | 2026-03-14 |
 | Tickers WIP | 0 | 0 | 2026-03-11 |
 | Total campos validados | 4,652 | — | 2026-03-11 |
@@ -33,7 +31,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | Tests pasando | 1883 passed, 5 skipped, 1 warning en `python3 -m pytest -q` local | — | 2026-03-14 |
 | Líneas de código (aprox.) | ~12,000 + ~6,500 tests | 2026-03-07 |
 
-*Interpretación canónica vigente de `DEC-015`: cuentan hoy **16** tickers, exactamente **14 `FULL` + `KAR` + `JBH`**. `DEC-015` permite contar tickers `ANNUAL_ONLY` cuando se confirma que el mercado/regulador no publica quarterlies, y la lectura operativa actual formaliza de forma explícita que `KAR` y `JBH` entran bajo esa misma excepción documentada de ASX. `ADTN` cuenta como `FULL` tras el cierre targeted de `BL-081` (`8A+15Q`, 520/520), y `0327` queda validado como `FULL` con `3A+3H` bajo un carril HKEX oficial ya absorbido en `elsian/acquire/hkex.py`, con fallback manual todavía disponible sobre el corpus versionado. `BL-076` no alteró el hito previo de **15/15**; el cómputo factual actual de `DEC-015` asciende a **16** (`14 FULL + KAR + JBH`) y no coexiste aquí con una lectura alternativa. `SOM` no cuenta hoy para `DEC-015`: BL-087 cierra la investigación ticker-level con outcome `exception_reaffirmed`, pero la evidencia H1 disponible sigue siendo insuficiente para promoción a `FULL` y no equivale a la excepción estructural ASX que sí permite contar `KAR` y `JBH`.
+*Interpretación canónica vigente de `DEC-015`: cuentan hoy **16** tickers, todos `FULL`. Per `DEC-031`, `ANNUAL_ONLY` ya no es un `period_scope` válido; `FULL` significa "todos los períodos que el corpus soporta están curados". `KAR` y `JBH` son `FULL` porque ASX no publica quarterly y sus `expected.json` cubren todo lo disponible. `ADTN` cuenta como `FULL` tras el cierre targeted de `BL-081` (`8A+15Q`, 520/520), y `0327` queda validado como `FULL` con `3A+3H` bajo un carril HKEX oficial ya absorbido en `elsian/acquire/hkex.py`. `SOM` no cuenta hoy para `DEC-015`: BL-087 cierra la investigación ticker-level con outcome `exception_reaffirmed`, pero la evidencia H1 disponible sigue siendo insuficiente y no equivale a la excepción estructural ASX.
 
 ## Tickers validados
 
@@ -53,7 +51,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | ACLS | 486 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 6A+15Q) |
 | INMD | 234 | SEC (US) | 20-F/6-K HTML (IFRS) | ✅ VALIDATED (FULL: 6A+6Q — BL-040 promoted) |
 | CROX | 326 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL — BL-041 DONE) |
-| SOM | 203 | LSE/AIM (GB) | PDF (US-GAAP, USD) | ✅ VALIDATED (ANNUAL_ONLY: 16A, 203/203 — BL-087 `exception_reaffirmed`) |
+| SOM | 203 | LSE/AIM (GB) | PDF (US-GAAP, USD) | ✅ VALIDATED (FULL: 16A, 203/203 — BL-087 `exception_reaffirmed`) |
 | 0327 | 146 | HKEX (HK) | PDF/TXT HKEX official + fallback manual (HKFRS, HKD) | ✅ VALIDATED (FULL: 3A+3H — BL-083/BL-091, reproducible desde git) |
 | ADTN | 520 | SEC (US) | 10-K/10-Q HTML | ✅ VALIDATED (FULL: 8A+15Q — BL-081 DONE) |
 
@@ -71,13 +69,13 @@ Ver ROADMAP.md para descripción completa de fases.
 | TEP | Euronext (FR) | FULL | documented exception | A |
 | TALO | SEC (US) | FULL | gradual | B |
 | NVDA | SEC (US) | FULL | autonomous | A |
-| KAR | ASX (AU) | ANNUAL_ONLY justificado | autonomous | A |
-| JBH | ASX (AU) | ANNUAL_ONLY justificado | autonomous | A |
+| KAR | ASX (AU) | FULL | autonomous | A |
+| JBH | ASX (AU) | FULL | autonomous | A |
 | PR | SEC (US) | FULL | autonomous | A |
 | ACLS | SEC (US) | FULL | autonomous | A |
 | INMD | SEC (US) | FULL | autonomous | A |
 | CROX | SEC (US) | FULL | autonomous | A |
-| SOM | LSE/AIM (GB) | ANNUAL_ONLY exception_reaffirmed | documented exception | A |
+| SOM | LSE/AIM (GB) | FULL exception_reaffirmed | documented exception | A |
 | 0327 | HKEX (HK) | FULL | gradual | A |
 | ADTN | SEC (US) | FULL | autonomous | A |
 
@@ -86,7 +84,7 @@ Ver ROADMAP.md para descripción completa de fases.
 | Mercado | Tickers actuales | Clasificación factual | Autonomía operativa mercado | Fase programa |
 |---|---|---|---|---|
 | SEC (US) | TZOO, GCT, IOSP, NEXN, SONO, TALO, NVDA, PR, ACLS, INMD, CROX, ADTN | Capacidad FULL operativa | autonomous | A |
-| ASX (AU) | KAR, JBH | ANNUAL_ONLY justificado | autonomous | A |
+| ASX (AU) | KAR, JBH | FULL (sin quarterly en mercado) | autonomous | A |
 | Euronext (FR) | TEP | Capacidad FULL en un ticker; mercado no generalizado | gradual | C |
 | LSE/AIM (GB) | SOM | ticker anchor cerrado; mercado no generalizado | gradual | C |
 | HKEX (HK) | 0327 | Capacidad live en un ticker; mercado no generalizado | gradual | C |

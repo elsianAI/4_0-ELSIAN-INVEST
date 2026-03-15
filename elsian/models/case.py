@@ -20,7 +20,7 @@ class CaseConfig:
     source_hint: str = "sec"
     currency: str = "USD"
     fiscal_year_end_month: int = 12
-    period_scope: str = "ANNUAL_ONLY"
+    period_scope: str = "FULL"
     case_dir: str = ""
     cik: str | None = None
     exchange: str | None = None
@@ -77,7 +77,7 @@ class CaseConfig:
             source_hint=data.get("source_hint", "sec"),
             currency=data.get("currency", "USD"),
             fiscal_year_end_month=data.get("fiscal_year_end_month", 12),
-            period_scope=data.get("period_scope", "ANNUAL_ONLY"),
+            period_scope=data.get("period_scope", "FULL"),
             case_dir=str(case_dir),
             cik=data.get("cik"),
             exchange=data.get("exchange"),

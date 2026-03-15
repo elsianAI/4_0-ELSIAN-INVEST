@@ -139,7 +139,7 @@ class TestRunDiscoverStep:
             "ticker": "TEST",
             "source_hint": "sec",
             "currency": "USD",
-            "period_scope": "ANNUAL_ONLY",
+            "period_scope": "FULL",
         }
         (tmp_path / "case.json").write_text(
             json.dumps(case), encoding="utf-8"
@@ -173,7 +173,7 @@ class TestRunDiscoverStep:
         mock_result.source_hint = "sec"
         mock_result.exchange = "NYSE"
         mock_result.currency = "USD"
-        mock_result.period_scope = "ANNUAL_ONLY"
+        mock_result.period_scope = "FULL"
         mock_result.warnings = []
         mock_result.to_case_dict.return_value = {
             "ticker": "FAKE",
@@ -331,7 +331,7 @@ class TestRunOnboardingSmoke:
             "ticker": "TEST",
             "source_hint": "sec",
             "currency": "USD",
-            "period_scope": "ANNUAL_ONLY",
+            "period_scope": "FULL",
         }
         (tmp_path / "case.json").write_text(json.dumps(case), encoding="utf-8")
         filings = tmp_path / "filings"
@@ -439,7 +439,7 @@ class TestAuditBlockerRegressions:
             "ticker": "TEST",
             "source_hint": "sec",
             "currency": "USD",
-            "period_scope": "ANNUAL_ONLY",
+            "period_scope": "FULL",
         }
         (tmp_path / "case.json").write_text(
             __import__("json").dumps(case), encoding="utf-8"

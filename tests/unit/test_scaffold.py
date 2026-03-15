@@ -317,7 +317,7 @@ class TestBuildCaseSeedValid:
 
     def test_default_period_scope_annual_only(self) -> None:
         case, _ = build_case_seed(**self._defaults())
-        assert case["period_scope"] == "ANNUAL_ONLY"
+        assert case["period_scope"] == "FULL"
 
     def test_full_period_scope_accepted(self) -> None:
         case, _ = build_case_seed(**self._defaults(), period_scope="FULL")

@@ -139,7 +139,7 @@ class TestDiscoveryResult(unittest.TestCase):
             cik="320193",
             fiscal_year_end_month=9,
             sector="Electronic Equipment",
-            period_scope="ANNUAL_ONLY",
+            period_scope="FULL",
         )
         d = r.to_case_dict()
         self.assertEqual(d["ticker"], "AAPL")
@@ -550,7 +550,7 @@ class TestCaseJsonFormat(unittest.TestCase):
     def test_period_scope_default(self):
         r = DiscoveryResult(ticker="TEST")
         d = r.to_case_dict()
-        self.assertEqual(d.get("period_scope"), "ANNUAL_ONLY")
+        self.assertEqual(d.get("period_scope"), "FULL")
 
 
 if __name__ == "__main__":

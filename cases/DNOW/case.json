@@ -8,6 +8,6 @@
   "accounting_standard": "US-GAAP",
   "cik": "1599617",
   "fiscal_year_end_month": 12,
-  "period_scope": "ANNUAL_ONLY",
+  "period_scope": "FULL",
   "notes": "SEC direct issuer curated in BL-092 tranche A from local filings artifacts."
 }
