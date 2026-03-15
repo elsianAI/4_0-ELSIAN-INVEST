@@ -1421,9 +1421,19 @@ Cuando el diff toca `docs/project/ROLES.md`, cambia routing, cambia el contrato 
 - `/Users/ismaelsanchezgarcia/.codex/skills/elsian-director/SKILL.md`
 - `/Users/ismaelsanchezgarcia/.codex/skills/elsian-engineer/SKILL.md`
 
+**Mirrors bloqueantes Claude Code repo-tracked**
+
+- `.claude/CLAUDE.md`
+- `.claude/commands/orchestrator.md`
+- `.claude/commands/kickoff.md`
+- `.claude/commands/capacity-scout.md`
+- `.claude/commands/director.md`
+- `.claude/commands/engineer.md`
+
 **Politica de ausencia**
 
 - Si el runtime bajo cierre es `Codex`, la ausencia de una skill requerida deja `closeout` rojo.
+- Si el runtime bajo cierre es `Claude Code`, la ausencia de un command requerido deja `closeout` rojo.
 - Si el runtime bajo cierre no depende de esos mirrors locales, la ausencia se registra como `not_applicable`.
 - En esta oleada no hace falta incluir al `auditor` entre los mirrors obligatorios.
 

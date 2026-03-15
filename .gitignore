@@ -48,6 +48,9 @@ _run_*.py
 *.swp
 *.swo
 
+# Claude Code session artifacts (not repo-tracked)
+.claude/worktrees/
+
 # Generated analysis output
 cases/*/truth_pack.json
 cases/*/source_map.json
